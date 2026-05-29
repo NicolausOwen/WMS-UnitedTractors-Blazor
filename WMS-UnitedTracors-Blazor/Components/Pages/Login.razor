@@ -1,0 +1,81 @@
+@page "/login"
+@layout Layout.AuthLayout
+@attribute [AllowAnonymous]
+@using Microsoft.AspNetCore.Components.Web
+
+<PageTitle>UT WMS - Authentication</PageTitle>
+
+<div class="text-center mb-6">
+    <h2 style="font-family: 'Syne', sans-serif;" class="text-[1.35rem] font-bold text-[#1a1a1a]">Welcome Back</h2>
+    <p class="text-[0.875rem] text-[#8a8880] mt-2">United Tractors Inventory System</p>
+</div>
+
+@if (IsError)
+{
+    <div class="mb-4 bg-[#fef0f0] border border-[#f8c0c0] text-[#d94040] px-4 py-3 rounded-lg text-sm font-semibold">
+        Email atau password salah.
+    </div>
+}
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="mb-4 bg-[#fef0f0] border border-[#f8c0c0] text-[#d94040] px-4 py-3 rounded-lg text-sm font-semibold">
+        @errorMessage
+    </div>
+}
+
+<form method="POST" action="/api/auth/login">
+    <AntiforgeryToken />
+
+    <!-- Email Address -->
+    <div class="mb-4">
+        <label for="email" class="ut-label">Email</label>
+        <input id="email" class="ut-input block w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]" type="email" name="email" required autofocus autocomplete="username" />
+    </div>
+
+    <!-- Password -->
+    <div class="mb-4">
+        <div class="flex items-center justify-between">
+            <label for="password" class="ut-label">Password</label>
+        </div>
+        <input id="password" class="ut-input block w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]" type="password" name="password" required autocomplete="current-password" />
+    </div>
+
+    <!-- Remember Me -->
+    <div class="block mb-5">
+        <label for="remember_me" class="inline-flex items-center cursor-pointer">
+            <input id="remember_me" type="checkbox" class="rounded border-[#e5e3dc] text-[#e8a000] shadow-sm focus:ring-[#e8a000] w-4 h-4" name="remember_me" value="true">
+            <span class="ms-3 text-sm text-[#8a8880]">Keep me signed in</span>
+        </label>
+    </div>
+
+    <div class="mt-6 flex flex-col gap-3">
+        <button type="submit" class="px-5 py-2 bg-[#e8a000] hover:bg-[#d49300] text-[#1a1a1a] text-sm font-bold rounded-lg transition active:scale-95 cursor-pointer w-full text-center">
+            Log in
+        </button>
+        <div class="relative flex items-center justify-center w-full my-1">
+            <div class="absolute inset-0 flex items-center">
+                <div class="w-full border-t border-[#e5e3dc]"></div>
+            </div>
+            <div class="relative px-3 bg-white text-xs text-[#8a8880] uppercase tracking-wider font-bold">Or</div>
+        </div>
+        <a href="/auth/microsoft" class="flex items-center justify-center gap-2 px-5 py-2 bg-white border border-[#e5e3dc] hover:bg-[#f5f4f0] text-[#1a1a1a] text-sm font-bold rounded-lg transition active:scale-95 cursor-pointer w-full text-center">
+            <svg class="w-4 h-4" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10 0H0v10h10V0z" fill="#f25022"/>
+                <path d="M21 0H11v10h10V0z" fill="#7fba00"/>
+                <path d="M10 11H0v10h10V11z" fill="#00a4ef"/>
+                <path d="M21 11H11v10h10V11z" fill="#ffb900"/>
+            </svg>
+            Log in with Microsoft
+        </a>
+    </div>
+</form>
+
+@code {
+    [SupplyParameterFromQuery]
+    private string? error { get; set; }
+    
+    [SupplyParameterFromQuery]
+    private string? errorMessage { get; set; }
+
+    private bool IsError => error == "1";
+}

@@ -6,21 +6,25 @@
 @implements IDisposable
 @inject DashboardService DashboardService
 @inject CartService CartService
+@inject TransactionService TransactionService
+@inject UserService UserService
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthStateProvider
 @rendermode InteractiveServer
 
 <PageTitle>Dashboard</PageTitle>
 
-<div class="w-full min-h-screen bg-[#f5f4f0] px-4 md:px-10 py-6 pb-24 md:pb-12 font-sans">
-    @if (!string.IsNullOrEmpty(ErrorMessage))
-    {
-        <div class="mb-6 flex items-center gap-3 bg-[#fef0f0] border border-[#f8c0c0] text-[#d94040] px-4 py-3 rounded-lg text-sm font-semibold">
-            <svg class="w-4 h-4 shrink-0 text-[#d94040]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-            @ErrorMessage
-        </div>
-    }
+@if (!string.IsNullOrEmpty(ErrorMessage))
+{
+    <div class="mb-6 flex items-center gap-3 bg-[#fef0f0] border border-[#f8c0c0] text-[#d94040] px-4 py-3 rounded-lg text-sm font-semibold mx-4 md:mx-10 mt-6">
+        <svg class="w-4 h-4 shrink-0 text-[#d94040]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        @ErrorMessage
+    </div>
+}
 
+<div class="w-full min-h-screen bg-[#f5f4f0] px-4 md:px-10 py-6 pb-24 md:pb-12 font-sans">
+    
+    @* Metric Cards *@
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         <div class="bg-white border border-[#e5e3dc] rounded-[10px] p-5 sm:px-6">
             <p class="text-[0.65rem] font-bold tracking-[0.12em] uppercase text-[#8a8880] mb-1.5">Total Items</p>
@@ -34,15 +38,37 @@
             <p class="text-[0.65rem] font-bold tracking-[0.12em] uppercase text-[#8a8880] mb-1.5">Pending Approval</p>
             <div class="flex items-center gap-2">
                 <p class="font-sans text-4xl font-bold text-[#1a1a1a] leading-none">@PendingApprovals</p>
-                @if (PendingApprovals > 0)
-                {
+                @if (PendingApprovals > 0) {
                     <span class="inline-flex items-center px-[0.55rem] py-[0.15rem] bg-[#fef3c7] border border-[#fde68a] text-[#92400e] text-[0.62rem] font-bold rounded-[5px] tracking-[0.04em]">Needs review</span>
                 }
             </div>
         </div>
     </div>
 
+    @* Quick Actions *@
+    <div class="flex flex-wrap items-center gap-3 mb-8">
+        @if (UserRole == "superadmin" || UserRole == "staff") {
+        <a href="Tracking" class="inline-flex items-center gap-2 px-[1.1rem] py-[0.6rem] bg-[#1a1a1a] hover:bg-[#333333] active:scale-[0.98] text-white text-[0.75rem] font-bold tracking-[0.06em] uppercase rounded-lg transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
+            Return Item
+        </a>
+        }
+        @if (UserRole == "superadmin" || UserRole == "manager" || UserRole == "admin") {
+        <a href="Approval" class="inline-flex items-center gap-2 px-[1.1rem] py-[0.6rem] bg-[#1a1a1a] hover:bg-[#333333] active:scale-[0.98] text-white text-[0.75rem] font-bold tracking-[0.06em] uppercase rounded-lg transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+            Review Approvals
+        </a>
+        }
+        @if (UserRole != "manager") {
+        <a href="Tracking" class="inline-flex items-center gap-2 px-[1.1rem] py-[0.6rem] bg-transparent border border-[#e5e3dc] hover:bg-[#f5f4f0] active:scale-[0.98] text-[#5a5855] text-[0.75rem] font-bold tracking-[0.06em] uppercase rounded-lg transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            Usage Tracking
+        </a>
+        }
+    </div>
+
     <div class="bg-white border border-[#e5e3dc] rounded-xl overflow-hidden shadow-sm">
+        @* Header *@
         <div class="px-6 py-4 border-b border-[#f0ede5] flex flex-col gap-4">
             <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                 <div>
@@ -51,157 +77,313 @@
                 </div>
             </div>
 
-            @if (Categories != null && Categories.Any())
-            {
-                <div class="flex items-center gap-2 mt-4 overflow-x-auto pb-1">
-                    <button @onclick="() => FilterByCategory(null)"
-                            class="px-3 py-1 bg-white border border-[#e5e3dc] hover:border-[#1a1a1a] text-xs font-semibold text-[#5a5855] hover:text-[#1a1a1a] rounded-full transition cursor-pointer shrink-0 @(!SelectedCategoryId.HasValue ? "!bg-[#1a1a1a] !border-[#1a1a1a] !text-white hover:!text-white" : "")">
-                        All
+            @* Category Pills *@
+            @if (Categories != null && Categories.Any()) {
+            <div class="flex items-center gap-2 mt-4 overflow-x-auto pb-1">
+                <button @onclick="() => FilterByCategory(null)"
+                   class="px-3 py-1 bg-white border border-[#e5e3dc] hover:border-[#1a1a1a] text-xs font-semibold text-[#5a5855] hover:text-[#1a1a1a] rounded-full transition cursor-pointer shrink-0 @(!SelectedCategoryId.HasValue ? "!bg-[#1a1a1a] !border-[#1a1a1a] !text-white hover:!text-white" : "")">
+                    All
+                </button>
+                @foreach(var cat in Categories) {
+                    <button @onclick="() => FilterByCategory(cat.id)"
+                       class="px-3 py-1 bg-white border border-[#e5e3dc] hover:border-[#1a1a1a] text-xs font-semibold text-[#5a5855] hover:text-[#1a1a1a] rounded-full transition cursor-pointer shrink-0 @(SelectedCategoryId == cat.id ? "!bg-[#1a1a1a] !border-[#1a1a1a] !text-white hover:!text-white" : "")">
+                        @cat.name
                     </button>
-                    @foreach (var cat in Categories)
-                    {
-                        <button @onclick="() => FilterByCategory(cat.id)"
-                                class="px-3 py-1 bg-white border border-[#e5e3dc] hover:border-[#1a1a1a] text-xs font-semibold text-[#5a5855] hover:text-[#1a1a1a] rounded-full transition cursor-pointer shrink-0 @(SelectedCategoryId == cat.id ? "!bg-[#1a1a1a] !border-[#1a1a1a] !text-white hover:!text-white" : "")">
-                            @cat.name
-                        </button>
-                    }
-                </div>
+                }
+            </div>
             }
         </div>
 
-        @if (CatalogProducts == null)
-        {
-            <div class="p-8 text-center text-gray-500">Loading catalog...</div>
+        @* Table *@
+        @if(CatalogProducts == null) {
+             <div class="px-6 py-16 text-center text-[#8a8880]">Loading...</div>
         }
-        else if (CatalogProducts.Any())
-        {
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 p-4">
-                @foreach (var product in CatalogProducts)
-                {
-                    <div @onclick="() => OpenProductModal(product)" class="bg-white border border-[#e5e3dc] rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 hover:border-[#e8a000] transition-all duration-300 flex flex-col group cursor-pointer text-left focus:outline-none focus:ring-2 focus:ring-[#e8a000]" tabindex="0" role="button">
-                        <div class="aspect-square relative bg-[#f5f4f0] flex items-center justify-center overflow-hidden border-b border-[#f0ede5]">
-                            @if (!string.IsNullOrEmpty(product.image))
-                            {
-                                <img src="/storage/@product.image" alt="@product.name" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
-                            }
-                            @if (product.current_stock <= 0)
-                            {
-                                <div class="absolute top-2 left-2 flex flex-col gap-1">
-                                    <span class="px-2 py-0.5 bg-[#fef0f0] border border-[#f8c0c0] text-[#d94040] text-[0.6rem] font-bold rounded shadow-sm tracking-wider uppercase">Habis</span>
-                                </div>
-                            }
-                        </div>
-                        
-                        <div class="p-3.5 flex flex-col flex-grow">
-                            <div class="flex items-center justify-between gap-1 mb-1.5">
-                                <span class="text-[0.65rem] font-bold text-[#8a8880] truncate group-hover:text-[#e8a000] transition-colors">
-                                    @(product.Category?.name ?? "--")
-                                </span>
-                                <code class="text-[0.55rem] font-medium text-[#8a8880] bg-[#f0ede5] px-1.5 py-0.5 rounded">@product.sku</code>
-                            </div>
-                            
-                            <h4 class="text-base font-extrabold text-[#1a1a1a] leading-snug line-clamp-4 mb-3 flex-grow group-hover:text-[#e8a000] transition-colors" title="@product.name">
-                                @product.name
-                            </h4>
-                            
-                            <div class="mt-auto">
-                                <div class="flex items-center justify-between text-xs pb-1 border-b border-transparent">
-                                    <div class="flex flex-col gap-0.5">
-                                        <span class="text-[#8a8880] text-[0.65rem]">Kredit</span>
-                                        <span class="font-bold text-[#e8a000]">@product.value <span class="font-normal text-[0.65rem] text-[#8a8880]">pts</span></span>
-                                    </div>
-                                    <div class="flex flex-col gap-0.5 text-right">
-                                        <span class="text-[#8a8880] text-[0.65rem]">Stok</span>
-                                        <span class="font-bold @(product.current_stock <= 0 ? "text-[#d94040]" : "text-[#1a7a30]")">
-                                            @product.current_stock <span class="font-normal text-[0.65rem] text-[#8a8880]">@(product.Unit?.name ?? "unit")</span>
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                }
-            </div>
-            
-            @if (TotalPages > 1)
-            {
-                <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between bg-white">
-                    <span class="text-sm text-gray-500">Showing page @CurrentPage of @TotalPages</span>
-                    <div class="flex gap-2">
-                        <button disabled="@(CurrentPage == 1)" @onclick="() => LoadData(CurrentPage - 1)" class="px-3 py-1 border rounded hover:bg-gray-50 disabled:opacity-50">Previous</button>
-                        <button disabled="@(CurrentPage == TotalPages)" @onclick="() => LoadData(CurrentPage + 1)" class="px-3 py-1 border rounded hover:bg-gray-50 disabled:opacity-50">Next</button>
-                    </div>
-                </div>
-            }
-        }
-        else
-        {
-            <div class="px-6 py-16 text-center">
-                <p class="text-[0.85rem] text-[#8a8880]">No products found.</p>
-            </div>
-        }
-    </div>
-</div>
-
-@if (ShowProductModal && SelectedProduct != null)
-{
-    <div class="fixed inset-0 z-[70] flex min-h-full items-center justify-center p-4 text-center">
-        <div class="fixed inset-0 backdrop-blur-sm bg-[#1a1a1a]/65 transition-opacity" @onclick="CloseProductModal"></div>
-        <div class="relative transform overflow-hidden rounded-xl bg-white text-left shadow-2xl transition-all w-full max-w-2xl border border-[#e5e3dc] z-10">
-            <div class="px-5 py-4 border-b border-[#f0ede5] flex items-center justify-between">
-                <h3 class="font-bold text-[#1a1a1a] text-sm">Detail Produk</h3>
-                <button type="button" @onclick="CloseProductModal" class="text-[#a09e99] hover:text-[#1a1a1a] transition p-1 bg-[#f5f4f0] rounded-full">
-                    X
-                </button>
-            </div>
-            <div class="px-5 py-4 pb-4">
-                <div class="flex gap-4 mb-4">
-                    <div class="w-1/3 aspect-square bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center">
-                        @if (!string.IsNullOrEmpty(SelectedProduct.image))
-                        {
-                            <img src="/storage/@SelectedProduct.image" class="w-full h-full object-cover" />
+        else if(CatalogProducts.Any()) {
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 p-4" id="catalogGrid">
+            @foreach(var product in CatalogProducts) {
+                
+            <div @onclick="() => OpenProductModal(product)" class="bg-white border border-[#e5e3dc] rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 hover:border-[#e8a000] transition-all duration-300 flex flex-col group product-item cursor-pointer text-left focus:outline-none focus:ring-2 focus:ring-[#e8a000]" tabindex="0" role="button">
+                @* Image Container *@
+                <div class="aspect-square relative bg-[#f5f4f0] flex items-center justify-center overflow-hidden border-b border-[#f0ede5]">
+                    <img src="@(!string.IsNullOrEmpty(product.image) ? $"/storage/{product.image}" : "")" alt="@product.name" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                    
+                    @* Stock Badges Overlay *@
+                    <div class="absolute top-2 left-2 flex flex-col gap-1">
+                        @if(product.current_stock <= 0) {
+                            <span class="px-2 py-0.5 bg-[#fef0f0] border border-[#f8c0c0] text-[#d94040] text-[0.6rem] font-bold rounded shadow-sm tracking-wider uppercase">Habis</span>
                         }
                     </div>
-                    <div class="w-2/3">
-                        <h4 class="text-lg font-bold">@SelectedProduct.name</h4>
-                        <p class="text-xs text-gray-500 mb-2">SKU: @SelectedProduct.sku</p>
-                        <p class="text-sm font-semibold text-yellow-600 mb-2">@SelectedProduct.value pts</p>
-                        <p class="text-sm">Stok Tersedia: <b>@SelectedProduct.current_stock</b> @(SelectedProduct.Unit?.name ?? "unit")</p>
-                        
-                        <div class="mt-4">
-                            <label class="block text-xs font-semibold mb-1">Tipe Request</label>
-                            <select @bind="SelectedRequestType" class="w-full border rounded p-2 text-sm">
-                                <option value="BORROW">Pinjam (Borrow)</option>
-                                <option value="GIVEAWAY">Minta (Giveaway)</option>
-                            </select>
-                        </div>
-                        
-                        <div class="mt-4">
-                            <label class="block text-xs font-semibold mb-1">Jumlah</label>
-                            <input type="number" @bind="SelectedQuantity" min="1" max="@SelectedProduct.current_stock" class="w-full border rounded p-2 text-sm" />
+                </div>
+                
+                @* Product Info *@
+                <div class="p-3.5 flex flex-col flex-grow">
+                    <div class="flex items-center justify-between gap-1 mb-1.5">
+                        <span class="text-[0.65rem] font-bold text-[#8a8880] truncate group-hover:text-[#e8a000] transition-colors">
+                            @(product.Category != null ? product.Category.name : "--")
+                        </span>
+                        <code class="text-[0.55rem] font-medium text-[#8a8880] bg-[#f0ede5] px-1.5 py-0.5 rounded">@product.sku</code>
+                    </div>
+                    
+                    <h4 class="text-base font-extrabold text-[#1a1a1a] leading-snug line-clamp-4 mb-3 flex-grow group-hover:text-[#e8a000] transition-colors" title="@product.name">
+                        @product.name
+                    </h4>
+                    
+                    @* Stock Info *@
+                    <div class="mt-auto">
+                        <div class="flex items-center justify-between text-xs pb-1 border-b border-transparent">
+                            <div class="flex flex-col gap-0.5">
+                                <span class="text-[#8a8880] text-[0.65rem]">Kredit</span>
+                                <span class="font-bold text-[#e8a000]">@product.value <span class="font-normal text-[0.65rem] text-[#8a8880]">pts</span></span>
+                            </div>
+                            <div class="flex flex-col gap-0.5 text-right">
+                                <span class="text-[#8a8880] text-[0.65rem]">Stok</span>
+                                <span class="font-bold @(product.current_stock <= 0 ? "text-[#d94040]" : "text-[#1a7a30]")">
+                                    @product.current_stock <span class="font-normal text-[0.65rem] text-[#8a8880]">@(product.Unit != null ? product.Unit.name : "unit")</span>
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="border-t pt-4 flex justify-between items-center">
-                    <div>
-                        <span class="text-xs text-gray-500">Total Kredit</span>
-                        <div class="font-bold">@(SelectedRequestType == "GIVEAWAY" ? SelectedProduct.value * SelectedQuantity : 0) pts</div>
+            </div>
+            }
+        </div>
+        } else {
+        <div class="px-6 py-16 text-center">
+            <p class="text-[0.85rem] text-[#8a8880]">No products found.</p>
+        </div>
+        }
+    </div>
+
+    @if (TotalPages > 1)
+    {
+        <div class="mt-4 shadow-sm border border-[#e5e3dc] rounded-xl overflow-hidden bg-white flex items-center justify-between px-6 py-4">
+            <span class="text-sm text-gray-500 font-medium">Showing page @CurrentPage of @TotalPages</span>
+            <div class="flex gap-2">
+                <button disabled="@(CurrentPage == 1)" @onclick="() => LoadData(CurrentPage - 1)" class="px-3 py-1.5 border border-[#e5e3dc] rounded-md text-sm font-semibold hover:bg-gray-50 disabled:opacity-50 transition">Previous</button>
+                <button disabled="@(CurrentPage == TotalPages)" @onclick="() => LoadData(CurrentPage + 1)" class="px-3 py-1.5 border border-[#e5e3dc] rounded-md text-sm font-semibold hover:bg-gray-50 disabled:opacity-50 transition">Next</button>
+            </div>
+        </div>
+    }
+
+    @* Footer *@
+    <div class="flex items-center justify-between mt-8 pt-6 border-t border-[#e5e3dc] text-[0.72rem] text-[#8a8880]">
+        <span>© 2026 United Tractors Corporate University (corpu)</span>
+        <span class="inline-flex items-center gap-1.5 font-semibold text-[#1a7a30]">
+            <span class="w-2 h-2 rounded-full bg-[#1a7a30] inline-block"></span>
+            System Operational
+        </span>
+    </div>
+
+</div>
+
+@* Floating Cart Button *@
+@if(UserRole == "superadmin" || UserRole == "admin" || UserRole == "staff") {
+<button type="button" @onclick='() => ShowCartModal = true' class="fixed bottom-24 sm:bottom-8 right-8 z-50 flex items-center justify-center w-[3.5rem] h-[3.5rem] bg-[#e8a000] hover:bg-[#d49300] active:scale-[0.95] rounded-full shadow-2xl transition-transform border-4 border-white" title="View Cart">
+    <svg class="w-7 h-7 text-[#1a1a1a]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+    @if(CartService.Items.Any()) {
+        <span id="cartBadge" class="absolute -top-1.5 -right-1.5 inline-flex items-center justify-center min-w-[1.4rem] h-[1.4rem] px-1 bg-[#d94040] text-white text-[0.7rem] font-bold rounded-full shadow-sm border-2 border-white">@CartService.Items.Sum(i => i.Quantity)</span>
+    }
+</button>
+}
+
+@if (ShowCartModal)
+{
+    <div id="borrowModal" class="fixed inset-0 z-[60] flex" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 backdrop-blur-sm transition-opacity bg-[#1a1a1a]/65" @onclick="() => ShowCartModal = false"></div>
+        <div class="fixed inset-0 z-10 overflow-y-auto">
+            <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+                <div class="relative transform overflow-hidden rounded-xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg border border-[#e5e3dc]" @onclick:stopPropagation="true">
+                    
+                    <div class="bg-white px-6 pt-6 pb-4">
+                        <div class="flex items-center justify-between mb-5">
+                            <h3 class="font-syne text-[1.05rem] font-bold text-[#1a1a1a]">Request Items</h3>
+                            <button type="button" @onclick="() => ShowCartModal = false" class="text-[#a09e99] bg-transparent border-0 cursor-pointer p-1 hover:text-gray-700 transition">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                            </button>
+                        </div>
+
+                        @if(CartService.Items.Count == 0)
+                        {
+                            <div class="text-center py-8">
+                                <p class="text-sm text-[#8a8880]">Keranjang kosong. Silakan tambahkan barang dari katalog.</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="mt-4 mb-4 bg-[#faf9f5] p-4 rounded-[10px] border border-[#e5e3dc]">
+                                <div class="flex justify-between items-center mb-2">
+                                    <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880]">Items to Borrow</label>
+                                </div>
+                                <div class="space-y-3 max-h-60 overflow-y-auto pr-2">
+                                    @foreach(var item in CartService.Items)
+                                    {
+                                        <div class="flex flex-wrap items-start gap-2 item-row">
+                                            <div class="flex-1" style="min-width: 150px;">
+                                                <input type="text" class="w-full px-3.5 py-2.5 text-xs bg-[#ecebe8] border border-[#e5e3dc] rounded-lg outline-none text-[#5a5855] cursor-not-allowed font-semibold truncate" readonly value="@item.Name">
+                                            </div>
+                                            <div style="flex: 0 0 80px;" class="flex items-center">
+                                                <input type="number" class="w-full px-2 py-2.5 text-xs bg-white border border-[#e5e3dc] rounded-lg outline-none text-[#1a1a1a] text-center focus:border-[#e8a000]" min="1" max="@item.MaxStock" @bind="item.Quantity" @bind:event="oninput">
+                                            </div>
+                                            <button type="button" class="flex-none p-2.5 text-[#d94040] hover:bg-[#fef0f0] rounded-lg bg-transparent border-0 cursor-pointer transition" @onclick="() => CartService.RemoveItem(item)">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                            </button>
+                                        </div>
+                                    }
+                                </div>
+                                <div class="flex justify-between items-center mt-4 border-t border-[#e5e3dc] pt-3">
+                                    <span class="text-[0.65rem] font-bold tracking-wider uppercase text-[#8a8880]">Total Kredit Dibutuhkan</span>
+                                    <span class="text-[0.8rem] font-bold text-[#e8a000]">@CartService.GetTotalCredit() <span class="font-normal text-[0.65rem] text-[#8a8880]">pts</span></span>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Nama Pemohon</label>
+                                    <input type="text" readonly value="@ApplicantName" class="w-full px-3.5 py-2.5 text-xs bg-[#ecebe8] border border-[#e5e3dc] rounded-lg outline-none text-[#5a5855] cursor-not-allowed">
+                                </div>
+                                <div>
+                                    <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">NRP Pemohon</label>
+                                    <input type="text" readonly value="@ApplicantNrp" class="w-full px-3.5 py-2.5 text-xs bg-[#ecebe8] border border-[#e5e3dc] rounded-lg outline-none text-[#5a5855] cursor-not-allowed">
+                                </div>
+                            </div>
+
+                            <div class="mt-4">
+                                <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Event / Program</label>
+                                <input type="text" @bind="EventName" placeholder="Name of event or program" class="w-full px-3.5 py-2.5 text-xs bg-[#f5f4f0] border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none text-[#1a1a1a]">
+                            </div>
+
+                            <div class="mt-4">
+                                <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Tanggal Event</label>
+                                <input type="date" @bind="EventDate" class="w-full px-3.5 py-2.5 text-xs bg-[#f5f4f0] border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none text-[#1a1a1a]">
+                            </div>
+
+                            <div class="mt-4">
+                                <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Dokumentasi (Link GDrive)</label>
+                                <input type="url" @bind="DocumentationLink" placeholder="https://drive.google.com/..." class="w-full px-3.5 py-2.5 text-xs bg-[#f5f4f0] border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none text-[#1a1a1a]">
+                            </div>
+
+                            <div class="mt-4">
+                                <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Catatan Tambahan</label>
+                                <textarea @bind="Notes" rows="2" placeholder="Optional notes..." class="w-full px-3.5 py-2.5 text-xs bg-[#f5f4f0] border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none text-[#1a1a1a] resize-none"></textarea>
+                            </div>
+                        }
                     </div>
-                    <button @onclick="AddToCart" class="px-6 py-2 bg-yellow-500 hover:bg-yellow-600 text-black font-bold rounded-lg transition">
-                        + Keranjang
-                    </button>
+
+                    <div class="px-6 py-4 flex flex-row-reverse gap-3 bg-[#faf9f5] border-t border-[#f0ede5]">
+                        @if(CartService.Items.Count > 0)
+                        {
+                            <button type="button" @onclick="SubmitBorrowRequest" class="px-5 py-2.5 bg-[#e8a000] hover:bg-[#d49300] active:scale-[0.98] text-[#1a1a1a] text-xs font-bold tracking-wider rounded-lg transition cursor-pointer">
+                                Submit Request
+                            </button>
+                        }
+                        <button type="button" @onclick="() => ShowCartModal = false" class="inline-flex justify-center px-5 py-2.5 bg-white border border-[#e5e3dc] hover:bg-[#f0ede5] text-[#3a3835] text-xs font-bold rounded-lg transition cursor-pointer">
+                            Cancel
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 }
 
-@if (CartService.Items.Any())
+@* Add to Cart Modal (Olshop Style) Blazor Port *@
+@if (ShowProductModal && SelectedProduct != null)
 {
-    <button @onclick='() => Navigation.NavigateTo("/Borrow")' class="fixed bottom-8 right-8 z-50 flex items-center justify-center w-14 h-14 bg-yellow-500 hover:bg-yellow-600 rounded-full shadow-2xl transition-transform border-4 border-white">
-        🛒
-        <span class="absolute -top-1.5 -right-1.5 inline-flex items-center justify-center min-w-[1.4rem] h-[1.4rem] px-1 bg-red-500 text-white text-xs font-bold rounded-full shadow-sm border-2 border-white">@CartService.Items.Sum(i => i.Quantity)</span>
-    </button>
+    <div id="addToCartModal" class="fixed inset-0 z-[70] flex" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 backdrop-blur-sm transition-opacity bg-[#1a1a1a]/65" @onclick="CloseProductModal"></div>
+        <div class="fixed inset-0 z-10 overflow-y-auto md:pl-[var(--ut-sidebar-w)] transition-all flex items-end sm:items-center justify-center sm:p-4 text-center">
+            <div class="relative transform overflow-hidden rounded-t-2xl sm:rounded-xl bg-white text-left shadow-2xl transition-all w-full max-w-5xl sm:my-8 border-t sm:border border-[#e5e3dc]" @onclick:stopPropagation="true">
+                <div class="px-5 py-4 border-b border-[#f0ede5] flex items-center justify-between sticky top-0 bg-white z-10">
+                    <h3 class="font-bold text-[#1a1a1a] text-sm" id="addToCartTitle">Detail Produk</h3>
+                    <button type="button" @onclick="CloseProductModal" class="text-[#a09e99] hover:text-[#1a1a1a] transition p-1 bg-[#f5f4f0] rounded-full">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+                
+                <div class="px-5 py-4 pb-20 sm:pb-4">
+                    <div class="grid grid-cols-1 lg:grid-cols-[0.85fr_1.15fr] gap-5">
+                        <div class="space-y-5">
+                            @* Image Carousel *@
+                            <div class="relative w-full aspect-square lg:aspect-[4/3] bg-[#f5f4f0] rounded-xl overflow-hidden border border-[#e5e3dc]">
+                                @if (!string.IsNullOrEmpty(SelectedProduct.image))
+                                {
+                                    <img src="/storage/@SelectedProduct.image" class="w-full h-full object-cover">
+                                }
+                                else
+                                {
+                                    <div class="w-full h-full flex items-center justify-center">
+                                        <svg class="w-12 h-12 text-[#d1d0cb]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                                    </div>
+                                }
+                            </div>
+                            
+                            @* Description *@
+                            @if (!string.IsNullOrEmpty(SelectedProduct.description))
+                            {
+                            <div class="w-full bg-[#f9f8f6] border border-[#e5e3dc] rounded-xl p-4">
+                                <h5 class="text-xs font-bold text-[#1a1a1a] mb-1.5">Deskripsi Produk</h5>
+                                <p class="text-xs text-[#5a5855] leading-relaxed whitespace-pre-wrap break-all">@SelectedProduct.description</p>
+                            </div>
+                            }
+                        </div>
+
+                        <div class="flex flex-col justify-between gap-5 min-w-0">
+                            <div class="space-y-5">
+                                @* Product Info *@
+                                <div>
+                                    <div class="flex justify-between items-start gap-4 mb-1">
+                                        <h4 class="text-base font-bold text-[#1a1a1a] leading-tight">@SelectedProduct.name</h4>
+                                        <div class="text-right shrink-0">
+                                            <span class="text-xs text-[#8a8880]">Kredit</span>
+                                            <div class="font-bold text-[#e8a000] text-lg leading-none"><span>@SelectedProduct.value</span><span class="text-[0.6rem] font-normal text-[#8a8880] ml-0.5">pts</span></div>
+                                        </div>
+                                    </div>
+                                    <code class="text-[0.65rem] font-medium text-[#8a8880] bg-[#f0ede5] px-1.5 py-0.5 rounded">@SelectedProduct.sku</code>
+                                </div>
+
+                                <div class="h-px w-full bg-[#f0ede5]"></div>
+
+                                @* Transaction Settings *@
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-semibold text-[#5a5855] mb-1">Tipe Transaksi</label>
+                                        <select @bind="SelectedRequestType" class="w-full border border-[#e5e3dc] rounded-lg px-3 py-2 text-sm text-[#5a5855] font-semibold bg-white outline-none focus:border-[#e8a000]">
+                                            @if (SelectedProduct.is_returnable == 1) {
+                                                <option value="BORROW">Pinjam</option>
+                                            }
+                                            <option value="GIVEAWAY">Minta / Ambil</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-[#5a5855] mb-1">Jumlah</label>
+                                        <div class="flex items-center border border-[#e5e3dc] rounded-lg overflow-hidden bg-white">
+                                            <button type="button" @onclick="() => { if(SelectedQuantity > 1) SelectedQuantity--; }" class="w-8 h-8 flex items-center justify-center text-[#5a5855] hover:bg-[#f5f4f0] transition">-</button>
+                                            <input type="number" @bind="SelectedQuantity" @bind:event="oninput" min="1" max="@SelectedProduct.current_stock" class="flex-1 w-full text-center py-1.5 text-sm outline-none bg-transparent">
+                                            <button type="button" @onclick="() => { if(SelectedQuantity < SelectedProduct.current_stock) SelectedQuantity++; }" class="w-8 h-8 flex items-center justify-center text-[#5a5855] hover:bg-[#f5f4f0] transition">+</button>
+                                        </div>
+                                        <p class="text-[0.65rem] text-[#8a8880] mt-1">Sisa @SelectedProduct.current_stock @(SelectedProduct.Unit?.name ?? "unit")</p>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <div class="rounded-3xl border border-[#e5e3dc] bg-[#f9f8f6] p-5 shadow-sm">
+                                <div class="flex items-center justify-between gap-4">
+                                    <div>
+                                        <span class="text-[0.65rem] text-[#8a8880] font-semibold uppercase tracking-wider">Total Kredit</span>
+                                        <div class="text-2xl font-extrabold text-[#1a1a1a]"><span>@(SelectedRequestType == "GIVEAWAY" ? SelectedProduct.value * SelectedQuantity : 0)</span> <span class="text-[0.65rem] font-normal text-[#8a8880]">pts</span></div>
+                                    </div>
+                                    <button type="button" @onclick="AddToCart" class="px-6 py-3 bg-[#e8a000] hover:bg-[#d49300] active:scale-[0.98] text-[#1a1a1a] text-sm font-bold rounded-2xl transition shadow-sm">
+                                        + Keranjang
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 }
 
 @code {
@@ -223,12 +405,21 @@
     private string? ErrorMessage;
     
     private bool ShowProductModal = false;
+    private bool ShowCartModal = false;
     private Product? SelectedProduct;
     private int SelectedQuantity = 1;
     private string SelectedRequestType = "BORROW";
     
     private int CurrentUserId = 0;
     private string? UserRole;
+    private string? ApplicantName;
+    private string? ApplicantNrp;
+    private int? UserDivisionId;
+    
+    private string? EventName;
+    private DateTime? EventDate;
+    private string? DocumentationLink;
+    private string? Notes;
 
     protected override async Task OnInitializedAsync()
     {
@@ -245,6 +436,18 @@
                 CurrentUserId = id;
             }
             UserRole = user.FindFirst(ClaimTypes.Role)?.Value;
+            ApplicantName = user.Identity.Name;
+            
+            // Get user's exact details from db
+            if(CurrentUserId > 0)
+            {
+                var profile = await UserService.GetUserByIdAsync(CurrentUserId);
+                if (profile != null)
+                {
+                    ApplicantNrp = profile.nrp;
+                    UserDivisionId = profile.division_id;
+                }
+            }
         }
 
         await LoadData(1);
@@ -312,6 +515,54 @@
                 UnitName = SelectedProduct.Unit?.name ?? "unit"
             });
             CloseProductModal();
+            ShowCartModal = true;
+        }
+    }
+    
+    private async Task SubmitBorrowRequest()
+    {
+        if (string.IsNullOrEmpty(EventName) || !EventDate.HasValue || string.IsNullOrEmpty(DocumentationLink))
+        {
+            ErrorMessage = "Harap isi Nama Event, Tanggal Event, dan Link Dokumentasi.";
+            ShowCartModal = false;
+            return;
+        }
+
+        var req = new UT_WMSDotnet.ViewModels.TransactionRequestViewModel
+        {
+            type = "OUT",
+            applicant_name = ApplicantName,
+            applicant_nrp = ApplicantNrp,
+            division_id = UserDivisionId,
+            event_name = EventName,
+            event_date = EventDate,
+            documentation_link = DocumentationLink,
+            notes = Notes,
+            items = CartService.Items.Select(i => new UT_WMSDotnet.ViewModels.TransactionItemViewModel
+            {
+                sku = i.Sku,
+                quantity = i.Quantity,
+                request_type = i.RequestType,
+                borrow_start_date = i.RequestType == "BORROW" ? DateTime.Today : null,
+                expected_return_date = i.RequestType == "BORROW" ? DateTime.Today.AddDays(7) : null
+            }).ToList()
+        };
+
+        var error = await TransactionService.StoreTransactionAsync(req, CurrentUserId);
+        if (error == null)
+        {
+            CartService.ClearCart();
+            ShowCartModal = false;
+            EventName = null;
+            EventDate = null;
+            DocumentationLink = null;
+            Notes = null;
+            Navigation.NavigateTo("/Tracking");
+        }
+        else
+        {
+            ErrorMessage = error;
+            ShowCartModal = false;
         }
     }
     

@@ -1,226 +1,393 @@
 @page "/Reports"
+@using System.Text.Json
 @using UT_WMSDotnet.Models
 @using UT_WMSDotnet.ViewModels
 @using WMS_UnitedTracors_Blazor.Services
 @inject ReportService ReportService
 @inject DivisionService DivisionService
+@inject IJSRuntime JSRuntime
 @rendermode InteractiveServer
 
-<PageTitle>Laporan / Reports</PageTitle>
+<PageTitle>Reports</PageTitle>
 
-<div class="px-4 md:px-10 py-6 pb-24 font-sans bg-[#f5f4f0] min-h-screen">
-    <div class="flex justify-between items-center mb-6">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">Laporan</h2>
-    </div>
+<div class="py-12 bg-[#f5f4f0] min-h-screen">
+    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight mb-6">
+            Report Dashboard
+        </h2>
 
-    @if (Summary != null)
-    {
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div class="bg-white rounded-xl shadow-sm border border-[#e5e3dc] p-6 border-l-4 border-l-yellow-500">
-                <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Peminjaman</h3>
-                <div class="text-3xl font-bold text-gray-900 mb-4">@Summary["peminjaman"].Count <span class="text-sm font-normal text-gray-500">transaksi</span></div>
-                <div class="flex justify-between text-xs font-bold text-gray-500">
-                    <span>Approved: <span class="text-green-600">@Summary["peminjaman"].Approved</span></span>
-                    <span>Total Qty: <span class="text-gray-900">@Summary["peminjaman"].TotalQty</span></span>
+        <div class="bg-white border border-[#e5e3dc] rounded-lg shadow-sm p-6 mb-8">
+            <div class="flex flex-wrap items-end gap-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Start Date</label>
+                    <input type="date" @bind="StartDate" class="rounded-md border-gray-300 shadow-sm focus:border-[#e8a000] focus:ring-[#e8a000] sm:text-sm">
                 </div>
-            </div>
-            <div class="bg-white rounded-xl shadow-sm border border-[#e5e3dc] p-6 border-l-4 border-l-blue-500">
-                <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Request Barang</h3>
-                <div class="text-3xl font-bold text-gray-900 mb-4">@Summary["request_barang"].Count <span class="text-sm font-normal text-gray-500">transaksi</span></div>
-                <div class="flex justify-between text-xs font-bold text-gray-500">
-                    <span>Approved: <span class="text-green-600">@Summary["request_barang"].Approved</span></span>
-                    <span>Total Qty: <span class="text-gray-900">@Summary["request_barang"].TotalQty</span></span>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">End Date</label>
+                    <input type="date" @bind="EndDate" class="rounded-md border-gray-300 shadow-sm focus:border-[#e8a000] focus:ring-[#e8a000] sm:text-sm">
                 </div>
-            </div>
-            <div class="bg-white rounded-xl shadow-sm border border-[#e5e3dc] p-6 border-l-4 border-l-purple-500">
-                <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Adjust Barang</h3>
-                <div class="text-3xl font-bold text-gray-900 mb-4">@Summary["adjust_barang"].Count <span class="text-sm font-normal text-gray-500">transaksi</span></div>
-                <div class="flex justify-between text-xs font-bold text-gray-500">
-                    <span>Approved: <span class="text-green-600">@Summary["adjust_barang"].Approved</span></span>
-                    <span>Total Qty: <span class="text-gray-900">@Summary["adjust_barang"].TotalQty</span></span>
+                <div>
+                    <button type="button" @onclick="ApplyFilter" class="px-4 py-2.5 bg-[#1a1a1a] text-white text-sm font-semibold rounded-md shadow-sm hover:bg-gray-800 transition">Apply</button>
+                    <button type="button" @onclick="ResetFilter" class="ml-2 px-4 py-2.5 bg-gray-100 text-gray-700 text-sm font-semibold rounded-md hover:bg-gray-200 transition inline-block border border-gray-200">Reset</button>
                 </div>
+                <!-- PDF buttons can be added here if needed, but skipping for pure UI migration to Blazor unless we have endpoints -->
             </div>
         </div>
-    }
 
-    <div class="bg-white rounded-xl shadow-sm border border-[#e5e3dc] overflow-hidden mb-6">
-        <div class="px-6 py-4 border-b border-[#f0ede5] bg-[#faf9f5]">
-            <h3 class="font-bold text-[#1a1a1a] mb-4">Filter Laporan</h3>
-            <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 mb-1">Tipe Laporan</label>
-                    <select @bind="SelectedReportType" class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500">
-                        <option value="peminjaman">Peminjaman (Borrow)</option>
-                        <option value="request_barang">Request Barang (Giveaway)</option>
-                        <option value="adjust_barang">Adjust Barang (Stock In)</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 mb-1">Mulai Tanggal</label>
-                    <input type="date" @bind="StartDate" class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500" />
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 mb-1">Sampai Tanggal</label>
-                    <input type="date" @bind="EndDate" class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500" />
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 mb-1">Divisi (Khusus Keluar)</label>
-                    <select @bind="DivisionId" class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500">
-                        <option value="">Semua Divisi...</option>
-                        @if (Divisions != null)
-                        {
-                            @foreach (var div in Divisions)
-                            {
-                                <option value="@div.Id">@div.Name</option>
-                            }
-                        }
-                    </select>
-                </div>
-                <div class="flex items-end">
-                    <button @onclick="() => LoadData(1)" class="w-full px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-bold shadow-sm hover:bg-gray-800 transition">Terapkan Filter</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="bg-white rounded-xl shadow-sm border border-[#e5e3dc] overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="w-full text-left">
-                <thead>
-                    <tr class="bg-[#faf9f5] border-b border-[#e5e3dc]">
-                        <th class="py-3 px-6 text-xs font-bold text-[#8a8880] uppercase tracking-wider">Tanggal</th>
-                        <th class="py-3 px-6 text-xs font-bold text-[#8a8880] uppercase tracking-wider">Transaksi</th>
-                        <th class="py-3 px-6 text-xs font-bold text-[#8a8880] uppercase tracking-wider">Produk</th>
-                        <th class="py-3 px-6 text-xs font-bold text-[#8a8880] uppercase tracking-wider text-center">Qty</th>
-                        <th class="py-3 px-6 text-xs font-bold text-[#8a8880] uppercase tracking-wider">Pemohon</th>
-                        <th class="py-3 px-6 text-xs font-bold text-[#8a8880] uppercase tracking-wider">Status</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-[#f0ede5]">
-                    @if (Transactions == null)
-                    {
-                        <tr><td colspan="6" class="p-6 text-center text-gray-500">Loading...</td></tr>
-                    }
-                    else if (!Transactions.Any())
-                    {
-                        <tr><td colspan="6" class="p-6 text-center text-gray-500">Tidak ada data untuk filter ini.</td></tr>
-                    }
-                    else
-                    {
-                        @foreach (var t in Transactions)
-                        {
-                            <tr class="hover:bg-[#faf9f5]">
-                                <td class="py-3 px-6">
-                                    <div class="text-sm font-bold text-[#1a1a1a]">@t.created_at.ToString("dd MMM yyyy")</div>
-                                    <div class="text-xs text-[#8a8880]">@t.created_at.ToString("HH:mm")</div>
-                                </td>
-                                <td class="py-3 px-6">
-                                    <div class="text-[10px] font-bold text-[#8a8880] uppercase tracking-wider mb-1">
-                                        @(t.type == "IN" ? "STOCK IN" : "STOCK OUT")
-                                    </div>
-                                    @if (!string.IsNullOrEmpty(t.event_name))
-                                    {
-                                        <div class="text-sm font-bold text-[#1a1a1a]">@t.event_name</div>
-                                    }
-                                </td>
-                                <td class="py-3 px-6">
-                                    <div class="text-sm font-bold text-[#1a1a1a]">@(t.Product?.name ?? "-")</div>
-                                    <div class="text-xs text-[#8a8880]">@(t.Product?.sku ?? "-")</div>
-                                </td>
-                                <td class="py-3 px-6 text-sm text-center font-bold text-[#1a1a1a]">
-                                    @t.quantity
-                                </td>
-                                <td class="py-3 px-6">
-                                    <div class="text-sm font-bold text-[#1a1a1a]">@(t.Requester?.name ?? "-")</div>
-                                    <div class="text-xs text-[#8a8880]">@(t.Division?.name ?? "-")</div>
-                                </td>
-                                <td class="py-3 px-6">
-                                    @if (t.status == "APPROVED")
-                                    {
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-[#eef9f0] text-[#1a7a30] border border-[#b8e8c0]">APPROVED</span>
-                                    }
-                                    else if (t.status == "PENDING")
-                                    {
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-[#fff8e6] text-[#b37a00] border border-[#ffe099]">PENDING</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-[#fef0f0] text-[#d94040] border border-[#f8c0c0]">@t.status</span>
-                                    }
-                                </td>
-                            </tr>
-                        }
-                    }
-                </tbody>
-            </table>
-        </div>
-        @if (TotalPages > 1)
+        @if (Summary != null && ExecSummary != null)
         {
-            <div class="px-6 py-4 border-t border-[#f0ede5] flex justify-between items-center bg-[#faf9f5]">
-                <span class="text-xs text-[#8a8880]">Halaman @CurrentPage dari @TotalPages</span>
-                <div class="flex gap-2">
-                    <button disabled="@(CurrentPage == 1)" @onclick="() => LoadData(CurrentPage - 1)" class="px-3 py-1 bg-white border border-[#e5e3dc] rounded text-sm disabled:opacity-50 hover:bg-gray-50">Prev</button>
-                    <button disabled="@(CurrentPage == TotalPages)" @onclick="() => LoadData(CurrentPage + 1)" class="px-3 py-1 bg-white border border-[#e5e3dc] rounded text-sm disabled:opacity-50 hover:bg-gray-50">Next</button>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <!-- Peminjaman -->
+                <a href="/Reports" class="block bg-white border border-[#e5e3dc] rounded-lg shadow-sm hover:shadow-md transition p-6 group">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
+                            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+                        </div>
+                        <span class="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded-full group-hover:bg-blue-100 transition">View Details &rarr;</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900 mb-1">Peminjaman Barang</h3>
+                    <p class="text-sm text-gray-500 mb-4">Barang dipinjam <span class="font-semibold text-gray-700">(BORROW)</span></p>
+                    <div class="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100">
+                        <div>
+                            <div class="text-2xl font-bold text-gray-900">@Summary["peminjaman"].Count</div>
+                            <div class="text-xs text-gray-500">Total Transaksi</div>
+                        </div>
+                        <div>
+                            <div class="text-2xl font-bold text-gray-900">@Summary["peminjaman"].TotalQty</div>
+                            <div class="text-xs text-gray-500">Total Qty</div>
+                        </div>
+                        <div>
+                            <div class="text-lg font-bold text-emerald-600">@Summary["peminjaman"].Approved</div>
+                            <div class="text-xs text-gray-500">Approved</div>
+                        </div>
+                        <div>
+                            <div class="text-lg font-bold text-amber-600">@Summary["peminjaman"].Pending</div>
+                            <div class="text-xs text-gray-500">Pending</div>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- Request Barang -->
+                <a href="/Reports" class="block bg-white border border-[#e5e3dc] rounded-lg shadow-sm hover:shadow-md transition p-6 group">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 rounded-lg bg-purple-100 flex items-center justify-center">
+                            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                        </div>
+                        <span class="text-xs font-semibold text-purple-600 bg-purple-50 px-2 py-1 rounded-full group-hover:bg-purple-100 transition">View Details &rarr;</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900 mb-1">Request Barang</h3>
+                    <p class="text-sm text-gray-500 mb-4">Barang giveaway <span class="font-semibold text-gray-700">(GIVEAWAY)</span></p>
+                    <div class="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100">
+                        <div>
+                            <div class="text-2xl font-bold text-gray-900">@Summary["request_barang"].Count</div>
+                            <div class="text-xs text-gray-500">Total Transaksi</div>
+                        </div>
+                        <div>
+                            <div class="text-2xl font-bold text-gray-900">@Summary["request_barang"].TotalQty</div>
+                            <div class="text-xs text-gray-500">Total Qty</div>
+                        </div>
+                        <div>
+                            <div class="text-lg font-bold text-emerald-600">@Summary["request_barang"].Approved</div>
+                            <div class="text-xs text-gray-500">Approved</div>
+                        </div>
+                        <div>
+                            <div class="text-lg font-bold text-amber-600">@Summary["request_barang"].Pending</div>
+                            <div class="text-xs text-gray-500">Pending</div>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- Adjust Barang -->
+                <a href="/Reports" class="block bg-white border border-[#e5e3dc] rounded-lg shadow-sm hover:shadow-md transition p-6 group">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 rounded-lg bg-emerald-100 flex items-center justify-center">
+                            <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </div>
+                        <span class="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full group-hover:bg-emerald-100 transition">View Details &rarr;</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900 mb-1">Adjust Barang</h3>
+                    <p class="text-sm text-gray-500 mb-4">Stock masuk <span class="font-semibold text-gray-700">(STOCK IN)</span></p>
+                    <div class="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100">
+                        <div>
+                            <div class="text-2xl font-bold text-gray-900">@Summary["adjust_barang"].Count</div>
+                            <div class="text-xs text-gray-500">Total Transaksi</div>
+                        </div>
+                        <div>
+                            <div class="text-2xl font-bold text-gray-900">@Summary["adjust_barang"].TotalQty</div>
+                            <div class="text-xs text-gray-500">Total Qty</div>
+                        </div>
+                        <div>
+                            <div class="text-lg font-bold text-emerald-600">@Summary["adjust_barang"].Approved</div>
+                            <div class="text-xs text-gray-500">Approved</div>
+                        </div>
+                        <div>
+                            <div class="text-lg font-bold text-amber-600">@Summary["adjust_barang"].Pending</div>
+                            <div class="text-xs text-gray-500">Pending</div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Executive Summary -->
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+                <div class="lg:col-span-1 flex flex-col gap-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-white border border-[#e5e3dc] rounded-lg shadow-sm p-5">
+                            <p class="text-[0.65rem] font-bold tracking-wider uppercase text-gray-500 mb-1">Total Dipinjam</p>
+                            <p class="text-2xl font-bold text-gray-900">@ExecSummary.TotalBorrowed</p>
+                        </div>
+                        <div class="bg-white border border-[#e5e3dc] rounded-lg shadow-sm p-5">
+                            <p class="text-[0.65rem] font-bold tracking-wider uppercase text-gray-500 mb-1">Sudah Kembali</p>
+                            <p class="text-2xl font-bold text-gray-900">@ExecSummary.TotalReturned</p>
+                        </div>
+                        <div class="bg-white border border-[#e5e3dc] rounded-lg shadow-sm p-5">
+                            <p class="text-[0.65rem] font-bold tracking-wider uppercase text-gray-500 mb-1">Masih Dipinjam</p>
+                            <p class="text-2xl font-bold text-gray-900">@ExecSummary.MasihDipinjam</p>
+                        </div>
+                        <div class="bg-white border border-[#e5e3dc] rounded-lg shadow-sm p-5">
+                            <p class="text-[0.65rem] font-bold tracking-wider uppercase text-gray-500 mb-1">Barang Keluar</p>
+                            <p class="text-2xl font-bold text-gray-900">@ExecSummary.TotalItemsOut</p>
+                        </div>
+                    </div>
+                    <div class="bg-white border border-[#e5e3dc] rounded-lg shadow-sm p-5">
+                        <p class="text-[0.65rem] font-bold tracking-wider uppercase text-gray-500 mb-1">Pending Return</p>
+                        <p class="text-2xl font-bold text-gray-900">@ExecSummary.PendingReturns</p>
+                    </div>
+                </div>
+                <div class="lg:col-span-3 bg-white border border-[#e5e3dc] rounded-lg shadow-sm p-5">
+                    <p class="text-[0.65rem] font-bold tracking-wider uppercase text-gray-500 mb-3">Status Peminjaman</p>
+                    <div style="position:relative;height:250px;" class="flex items-center justify-center">
+                        <canvas id="chartExecutiveSummary"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <div class="bg-white border border-[#e5e3dc] rounded-lg shadow-sm p-5">
+                    <p class="text-[0.65rem] font-bold tracking-wider uppercase text-gray-500 mb-3">Peminjaman Barang (12 Bulan)</p>
+                    <div style="position:relative;height:250px;">
+                        <canvas id="chartPeminjaman"></canvas>
+                    </div>
+                </div>
+                <div class="bg-white border border-[#e5e3dc] rounded-lg shadow-sm p-5">
+                    <p class="text-[0.65rem] font-bold tracking-wider uppercase text-gray-500 mb-3">Barang Keluar (12 Bulan)</p>
+                    <div style="position:relative;height:250px;">
+                        <canvas id="chartBarangKeluar"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Transactions -->
+            <div class="bg-white border border-[#e5e3dc] rounded-lg shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                    <h3 class="font-bold text-gray-900">Recent Transactions</h3>
+                    <a href="/Transactions/History" class="text-sm font-semibold text-[#e8a000] hover:underline">View All</a>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left whitespace-nowrap">
+                        <thead class="text-gray-500 text-[0.65rem] uppercase tracking-wider border-b border-gray-100 bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 font-semibold">Date</th>
+                                <th class="px-4 py-3 font-semibold">Product</th>
+                                <th class="px-4 py-3 font-semibold">Type</th>
+                                <th class="px-4 py-3 font-semibold">Qty</th>
+                                <th class="px-4 py-3 font-semibold">Division</th>
+                                <th class="px-4 py-3 font-semibold">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            @if (ExecSummary.RecentTransactions != null && ExecSummary.RecentTransactions.Any())
+                            {
+                                @foreach (var item in ExecSummary.RecentTransactions)
+                                {
+                                    <tr class="hover:bg-gray-50 transition">
+                                        <td class="px-6 py-3 text-sm text-gray-600">@item.created_at.ToString("dd/MM/yyyy HH:mm")</td>
+                                        <td class="px-4 py-3">
+                                            <div class="text-sm font-semibold text-gray-900">@(item.Product?.name)</div>
+                                            <code class="text-xs text-gray-500">@(item.Product?.sku)</code>
+                                        </td>
+                                        <td class="px-4 py-3">
+                                            @if (item.type == "IN")
+                                            {
+                                                <span class="inline-flex items-center px-2 py-0.5 border border-[#b8e8c0] rounded-md text-[0.65rem] font-bold bg-[#eef9f0] text-[#1a7a30]">STOCK IN</span>
+                                            }
+                                            else if (item.request_type == "BORROW")
+                                            {
+                                                <span class="inline-flex items-center px-2 py-0.5 border border-[#bae6fd] rounded-md text-[0.65rem] font-bold bg-[#e0f2fe] text-[#1a6b8a]">BORROW</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="inline-flex items-center px-2 py-0.5 border border-[#e5e3dc] rounded-md text-[0.65rem] font-bold bg-[#f5f4f0] text-[#8a8780]">GIVEAWAY</span>
+                                            }
+                                        </td>
+                                        <td class="px-4 py-3 text-sm font-bold text-gray-900">@item.quantity</td>
+                                        <td class="px-4 py-3 text-sm text-gray-700">@(item.Division?.name ?? "-")</td>
+                                        <td class="px-4 py-3">
+                                            @if (item.status == "PENDING")
+                                            {
+                                                <span class="inline-flex items-center px-2 py-0.5 border border-[#fde68a] rounded-md text-[0.65rem] font-bold bg-[#fef3c7] text-[#92400e]">WAITING</span>
+                                            }
+                                            else if (item.status == "APPROVED")
+                                            {
+                                                <span class="inline-flex items-center px-2 py-0.5 border border-[#b8e8c0] rounded-md text-[0.65rem] font-bold bg-[#eef9f0] text-[#1a7a30]">APPROVED</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="inline-flex items-center px-2 py-0.5 border border-[#f8c0c0] rounded-md text-[0.65rem] font-bold bg-[#fef0f0] text-[#d94040]">REJECTED</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="6" class="px-6 py-8 text-center text-gray-500">No transactions found</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
                 </div>
             </div>
         }
     </div>
 </div>
 
+<script>
+    window.renderReportCharts = function (data) {
+        if (typeof Chart === 'undefined') return;
+
+        // Ensure previous charts are destroyed
+        if (window.chartP) window.chartP.destroy();
+        if (window.chartB) window.chartB.destroy();
+        if (window.chartES) window.chartES.destroy();
+
+        const chartPeminjaman = document.getElementById('chartPeminjaman');
+        const chartBarangKeluar = document.getElementById('chartBarangKeluar');
+        const chartES = document.getElementById('chartExecutiveSummary');
+
+        if (chartPeminjaman) {
+            window.chartP = new Chart(chartPeminjaman, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Peminjaman',
+                        data: data.peminjaman,
+                        backgroundColor: '#e8a000',
+                        borderRadius: 4,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { precision: 0 } }
+                    }
+                }
+            });
+        }
+
+        if (chartBarangKeluar) {
+            window.chartB = new Chart(chartBarangKeluar, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Barang Keluar',
+                        data: data.barangKeluar,
+                        backgroundColor: '#1a1a1a',
+                        borderRadius: 4,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { precision: 0 } }
+                    }
+                }
+            });
+        }
+
+        if (chartES) {
+            window.chartES = new Chart(chartES, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Dipinjam', 'Sudah Kembali', 'Masih Dipinjam'],
+                    datasets: [{
+                        data: [data.totalBorrowed, data.totalReturned, data.masihDipinjam],
+                        backgroundColor: ['#e8a000', '#1a7a30', '#d94040'],
+                        borderWidth: 0,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '65%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 16,
+                                usePointStyle: true,
+                                font: { size: 11, weight: '600' },
+                                color: '#3a3835'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }
+</script>
+
 @code {
     private Dictionary<string, ReportSummaryDto>? Summary;
-    private List<Transaction>? Transactions;
-    private List<DivisionDto>? Divisions;
+    private ExecutiveSummaryDto? ExecSummary;
 
-    private int CurrentPage = 1;
-    private int TotalPages = 1;
-
-    // Filters
-    private string SelectedReportType = "peminjaman";
     private DateTime StartDate = DateTime.Now.AddMonths(-1).Date;
     private DateTime EndDate = DateTime.Now.Date;
-    private int? DivisionId = null;
 
     protected override async Task OnInitializedAsync()
     {
-        var divResult = await DivisionService.GetDivisionsAsync(1, 100);
-        Divisions = divResult.Divisions;
-        await LoadSummary();
-        await LoadData(1);
+        await LoadData();
     }
 
-    private async Task LoadSummary()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (ExecSummary != null)
+        {
+            await JSRuntime.InvokeVoidAsync("renderReportCharts", new
+            {
+                labels = ExecSummary.ChartLabels,
+                peminjaman = ExecSummary.ChartPeminjaman,
+                barangKeluar = ExecSummary.ChartBarangKeluar,
+                totalBorrowed = ExecSummary.TotalBorrowed,
+                totalReturned = ExecSummary.TotalReturned,
+                masihDipinjam = ExecSummary.MasihDipinjam
+            });
+        }
+    }
+
+    private async Task ApplyFilter()
+    {
+        await LoadData();
+    }
+
+    private async Task ResetFilter()
+    {
+        StartDate = DateTime.Now.AddMonths(-1).Date;
+        EndDate = DateTime.Now.Date;
+        await LoadData();
+    }
+
+    private async Task LoadData()
     {
         Summary = await ReportService.GetSummaryAsync(StartDate, EndDate);
-    }
-
-    private async Task LoadData(int page)
-    {
-        CurrentPage = page;
-        
-        string type = "OUT";
-        string? requestType = null;
-
-        if (SelectedReportType == "peminjaman")
-        {
-            type = "OUT";
-            requestType = "BORROW";
-        }
-        else if (SelectedReportType == "request_barang")
-        {
-            type = "OUT";
-            requestType = "GIVEAWAY";
-        }
-        else if (SelectedReportType == "adjust_barang")
-        {
-            type = "IN";
-            requestType = null;
-        }
-
-        var result = await ReportService.GetReportDataAsync(type, requestType, StartDate, EndDate, DivisionId, null, CurrentPage, 20);
-        Transactions = result.Transactions;
-        TotalPages = result.TotalPages;
-        
-        await LoadSummary();
+        ExecSummary = await ReportService.GetExecutiveSummaryAsync(StartDate, EndDate);
     }
 }

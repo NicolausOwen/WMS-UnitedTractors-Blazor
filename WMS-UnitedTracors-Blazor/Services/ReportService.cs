@@ -12,6 +12,21 @@ public class ReportSummaryDto
     public int Pending { get; set; }
 }
 
+public class ExecutiveSummaryDto
+{
+    public int TotalBorrowed { get; set; }
+    public int TotalReturned { get; set; }
+    public int MasihDipinjam { get; set; }
+    public int TotalItemsOut { get; set; }
+    public int PendingReturns { get; set; }
+    
+    public List<string> ChartLabels { get; set; } = new();
+    public List<int> ChartPeminjaman { get; set; } = new();
+    public List<int> ChartBarangKeluar { get; set; } = new();
+    
+    public List<Transaction> RecentTransactions { get; set; } = new();
+}
+
 public class ReportService
 {
     private readonly ApplicationDbContext _context;
@@ -92,5 +107,59 @@ public class ReportService
             .ToListAsync();
 
         return (transactions, totalItems, totalPages);
+    }
+    
+    public async Task<ExecutiveSummaryDto> GetExecutiveSummaryAsync(DateTime? startDateParam, DateTime? endDateParam)
+    {
+        var dates = ApplyDateFilter(startDateParam, endDateParam);
+        var startDate = dates.Item1;
+        var endDate = dates.Item2;
+        
+        var summary = new ExecutiveSummaryDto();
+        
+        summary.TotalBorrowed = await _context.Transactions.Where(t => t.type == "OUT" && t.request_type == "BORROW" && t.status == "APPROVED").SumAsync(t => t.quantity ?? 0);
+        summary.TotalReturned = await _context.Transactions.Where(t => t.type == "OUT" && t.request_type == "BORROW" && t.status == "APPROVED").SumAsync(t => t.returned_quantity ?? 0);
+        summary.TotalItemsOut = await _context.Transactions.Where(t => t.type == "OUT" && t.status == "APPROVED").SumAsync(t => t.quantity ?? 0);
+        summary.PendingReturns = await _context.Transactions.Where(t => t.status == "APPROVED" && t.pending_return_quantity > 0).CountAsync();
+        summary.MasihDipinjam = summary.TotalBorrowed - summary.TotalReturned;
+        
+        var recentTransactions = await _context.Transactions
+            .Include(t => t.Product)
+            .Include(t => t.Division)
+            .Where(t => t.created_at >= startDate && t.created_at <= endDate)
+            .OrderByDescending(t => t.created_at)
+            .Take(10)
+            .ToListAsync();
+            
+        summary.RecentTransactions = recentTransactions;
+        
+        var elevenMonthsAgo = DateTime.Now.AddMonths(-11);
+        var startOfElevenMonthsAgo = new DateTime(elevenMonthsAgo.Year, elevenMonthsAgo.Month, 1);
+
+        var peminjamanDataRaw = await _context.Transactions
+            .Where(t => t.type == "OUT" && t.request_type == "BORROW" && t.status == "APPROVED" && t.created_at >= startOfElevenMonthsAgo)
+            .GroupBy(t => new { t.created_at.Year, t.created_at.Month })
+            .Select(g => new { g.Key.Year, g.Key.Month, Total = g.Sum(x => x.quantity ?? 0) })
+            .ToListAsync();
+
+        var barangKeluarDataRaw = await _context.Transactions
+            .Where(t => t.type == "OUT" && t.status == "APPROVED" && t.created_at >= startOfElevenMonthsAgo)
+            .GroupBy(t => new { t.created_at.Year, t.created_at.Month })
+            .Select(g => new { g.Key.Year, g.Key.Month, Total = g.Sum(x => x.quantity ?? 0) })
+            .ToListAsync();
+
+        for (int i = 11; i >= 0; i--)
+        {
+            var date = DateTime.Now.AddMonths(-i);
+            summary.ChartLabels.Add(date.ToString("MMM yyyy", System.Globalization.CultureInfo.InvariantCulture));
+            
+            var pemTotal = peminjamanDataRaw.FirstOrDefault(p => p.Year == date.Year && p.Month == date.Month)?.Total ?? 0;
+            var bkTotal = barangKeluarDataRaw.FirstOrDefault(p => p.Year == date.Year && p.Month == date.Month)?.Total ?? 0;
+            
+            summary.ChartPeminjaman.Add(pemTotal);
+            summary.ChartBarangKeluar.Add(bkTotal);
+        }
+        
+        return summary;
     }
 }

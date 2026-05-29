@@ -37,7 +37,7 @@ public class ProfileService
             user_id = userId,
             name = model.name,
             email = model.email,
-            nrp = model.nrp,
+            nrp = model.nrp ?? "",
             division_id = model.division_id,
             status = "PENDING",
             created_at = DateTime.UtcNow,
@@ -64,6 +64,21 @@ public class ProfileService
         _context.Update(user);
         await _context.SaveChangesAsync();
 
+        return null;
+    }
+
+    public async Task<string?> DeleteAccountAsync(int userId, string password)
+    {
+        var user = await _context.Users.FindAsync(userId);
+        if (user == null) return "User not found.";
+
+        if (!BCrypt.Net.BCrypt.Verify(password, user.password))
+        {
+            return "Password tidak valid.";
+        }
+
+        _context.Users.Remove(user);
+        await _context.SaveChangesAsync();
         return null;
     }
 }

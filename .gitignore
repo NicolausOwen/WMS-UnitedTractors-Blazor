@@ -362,3 +362,4 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /WMS-UnitedTracors-Blazor/old_dotnet_mvc
+/WMS-UnitedTracors-Blazor/old_dotnet_build

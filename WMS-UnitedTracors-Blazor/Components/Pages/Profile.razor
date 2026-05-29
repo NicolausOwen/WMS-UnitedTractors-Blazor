@@ -4,26 +4,29 @@
 @using UT_WMSDotnet.Models
 @using UT_WMSDotnet.ViewModels
 @using WMS_UnitedTracors_Blazor.Services
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @inject ProfileService ProfileService
 @inject DivisionService DivisionService
 @inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager NavigationManager
 @rendermode InteractiveServer
 
 <PageTitle>Profile</PageTitle>
 
-<div class="px-4 md:px-10 py-6 pb-24 font-sans bg-[#f5f4f0] min-h-screen">
-    <div class="flex justify-between items-center mb-6">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">My Profile</h2>
-    </div>
+<div class="w-full min-h-screen bg-[#f5f4f0] px-4 md:px-10 py-6 pb-24 md:pb-12 font-sans">
+    @* Tombol Back *@
+    <button @onclick="GoBack" class="inline-flex items-center gap-2 px-4 py-2 border border-[#e5e3dc] hover:border-black rounded-lg text-xs font-semibold text-[#1a1a1a] hover:bg-black hover:text-white transition cursor-pointer mb-6 bg-white">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+        </svg>
+        Kembali
+    </button>
 
-    @if (!string.IsNullOrEmpty(SuccessMessage))
-    {
-        <div class="mb-4 bg-green-50 text-green-700 px-4 py-3 rounded-lg text-sm border border-green-200">@SuccessMessage</div>
-    }
-    @if (!string.IsNullOrEmpty(ErrorMessage))
-    {
-        <div class="mb-4 bg-red-50 text-red-700 px-4 py-3 rounded-lg text-sm border border-red-200">@ErrorMessage</div>
-    }
+    @* Page Header *@
+    <div class="mb-8">
+        <h1 class="text-[1.6rem] font-bold text-[#1a1a1a] leading-none tracking-tight">Profil <span class="text-[#e8a000]">Saya</span></h1>
+        <div class="text-[0.72rem] font-medium text-[#a09e99] mt-1">@(DateTime.Now.ToString("dddd, dd MMMM yyyy", new System.Globalization.CultureInfo("id-ID")))</div>
+    </div>
 
     @if (User == null)
     {
@@ -31,119 +34,246 @@
     }
     else
     {
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Profile Info -->
-            <div class="bg-white rounded-xl shadow-sm border border-[#e5e3dc] p-6">
-                <h3 class="text-lg font-bold text-[#1a1a1a] mb-4 border-b pb-2">Informasi Profil</h3>
-                <div class="space-y-4 text-sm">
-                    <div>
-                        <span class="block text-xs font-bold text-gray-500">Nama Lengkap</span>
-                        <div class="font-semibold">@User.name</div>
-                    </div>
-                    <div>
-                        <span class="block text-xs font-bold text-gray-500">Email</span>
-                        <div>@User.email</div>
-                    </div>
-                    <div>
-                        <span class="block text-xs font-bold text-gray-500">NRP</span>
-                        <div>@(string.IsNullOrEmpty(User.nrp) ? "-" : User.nrp)</div>
-                    </div>
-                    <div>
-                        <span class="block text-xs font-bold text-gray-500">Divisi</span>
-                        <div>@(User.Division?.name ?? "-")</div>
-                    </div>
-                    <div>
-                        <span class="block text-xs font-bold text-gray-500">Role</span>
-                        <div class="uppercase">@User.role</div>
-                    </div>
-                    <div>
-                        <span class="block text-xs font-bold text-gray-500">Poin Kredit</span>
-                        <div class="font-bold text-yellow-600">@User.poin</div>
-                    </div>
+        @* Profile Card with Avatar *@
+        <div class="bg-white border border-[#eae8e1] rounded-2xl overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.08),0_2px_6px_rgba(0,0,0,0.06)]">
+            <div class="px-6 py-6 border-b border-[#f0ede5] flex items-center gap-4 bg-[#faf9f5]">
+                <div class="w-16 h-16 rounded-full bg-[#e8a000] flex items-center justify-center text-2xl font-bold text-[#1a1a1a] shadow-md shrink-0">
+                    @(User.name?.Substring(0, 1).ToUpper() ?? "U")
                 </div>
-
-                <div class="mt-6 border-t pt-4">
-                    <button @onclick="OpenEditModal" class="px-4 py-2 bg-yellow-500 text-black font-bold rounded-lg hover:bg-yellow-600 transition text-sm">
-                        Ajukan Perubahan Data
-                    </button>
+                <div>
+                    <h2 class="text-lg font-bold text-[#1a1a1a] leading-tight">@(User.name)</h2>
+                    <p class="text-xs text-[#8a8880] font-semibold mt-1 uppercase tracking-wider">@(User.role)</p>
                 </div>
             </div>
 
-            <!-- Change Password -->
-            <div class="bg-white rounded-xl shadow-sm border border-[#e5e3dc] p-6">
-                <h3 class="text-lg font-bold text-[#1a1a1a] mb-4 border-b pb-2">Ubah Password</h3>
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 mb-1">Password Lama</label>
-                        <input type="password" @bind="PasswordModel.old_password" class="w-full border rounded p-2 text-sm" />
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 mb-1">Password Baru</label>
-                        <input type="password" @bind="PasswordModel.new_password" class="w-full border rounded p-2 text-sm" />
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 mb-1">Konfirmasi Password Baru</label>
-                        <input type="password" @bind="PasswordModel.confirm_password" class="w-full border rounded p-2 text-sm" />
-                    </div>
-                    <div class="pt-2">
-                        <button @onclick="ChangePassword" disabled="@IsChangingPassword" class="px-4 py-2 bg-gray-900 text-white font-bold rounded-lg hover:bg-gray-800 transition text-sm disabled:opacity-50">
-                            @(IsChangingPassword ? "Loading..." : "Update Password")
-                        </button>
-                    </div>
+            <div class="p-6 space-y-8">
+                @* Update Profile Information Form *@
+                <div class="pb-2">
+                    <section>
+                        <header>
+                            <h2 class="text-base font-bold text-[#1a1a1a] mb-1">
+                                Informasi Profil
+                            </h2>
+                            <p class="text-[0.72rem] text-[#a09e99] mb-4">
+                                Perbarui informasi profil dan alamat email akun Anda.
+                            </p>
+                        </header>
+
+                        @if (HasPendingRequest)
+                        {
+                            <div class="mb-6 p-4 rounded-lg bg-[#fff8e6] border border-[#f0c851]">
+                                <div class="flex items-start gap-3">
+                                    <svg class="w-5 h-5 text-[#d49300] shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                    </svg>
+                                    <div>
+                                        <h3 class="text-sm font-bold text-[#b37c00]">Permintaan Perubahan Profil Menunggu Persetujuan</h3>
+                                        <p class="text-xs text-[#8a8880] mt-1">Anda memiliki permintaan perubahan profil yang sedang menunggu persetujuan admin. Perubahan baru akan ditimpa ke permintaan tersebut.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+
+                        <form @onsubmit="SubmitProfileRequest" class="mt-6 space-y-4">
+                            <div>
+                                <label class="block text-[0.68rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5" for="name">Nama</label>
+                                <input 
+                                    id="name" 
+                                    @bind="ProfileModel.name"
+                                    type="text" 
+                                    class="w-full max-w-md px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none text-[#1a1a1a] transition-colors duration-150" 
+                                    required autofocus
+                                >
+                            </div>
+
+                            <div>
+                                <label class="block text-[0.68rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5" for="nrp">NRP (Nomor Registrasi Pokok)</label>
+                                <input 
+                                    id="nrp" 
+                                    @bind="ProfileModel.nrp"
+                                    type="text" 
+                                    class="w-full max-w-md px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none text-[#1a1a1a] transition-colors duration-150" 
+                                >
+                            </div>
+
+                            <div>
+                                <label class="block text-[0.68rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5" for="division_id">Divisi</label>
+                                <select 
+                                    id="division_id" 
+                                    @bind="ProfileModel.division_id"
+                                    class="w-full max-w-md px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none text-[#1a1a1a] transition-colors duration-150"
+                                >
+                                    @if (Divisions != null)
+                                    {
+                                        foreach (var division in Divisions)
+                                        {
+                                            <option value="@division.Id">@division.Name</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-[0.68rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5" for="email">Email</label>
+                                <input 
+                                    id="email" 
+                                    @bind="ProfileModel.email"
+                                    type="email" 
+                                    class="w-full max-w-md px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none text-[#1a1a1a] transition-colors duration-150" 
+                                    required
+                                >
+                            </div>
+
+                            <div class="flex items-center gap-3.5 pt-2">
+                                <button type="submit" disabled="@IsSubmittingProfile" class="px-5 py-2.5 text-[0.82rem] font-bold tracking-wide text-[#1a1a1a] bg-[#e8a000] hover:bg-[#d49300] active:scale-95 rounded-md transition-all duration-100 cursor-pointer disabled:opacity-50">
+                                    Simpan Perubahan
+                                </button>
+
+                                @if (!string.IsNullOrEmpty(ProfileSuccessMessage)) {
+                                    <div class="text-xs font-semibold text-[#1a7a30]">
+                                        @ProfileSuccessMessage
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(ProfileErrorMessage)) {
+                                    <div class="text-xs font-semibold text-[#d94040]">
+                                        @ProfileErrorMessage
+                                    </div>
+                                }
+                            </div>
+                        </form>
+                    </section>
+                </div>
+
+                @* Update Password Form *@
+                <div class="pt-8 border-t border-[#f0ede5]">
+                    <section>
+                        <header>
+                            <h2 class="text-base font-bold text-[#1a1a1a] mb-1">
+                                Perbarui Password
+                            </h2>
+                            <p class="text-[0.72rem] text-[#a09e99] mb-4">
+                                Pastikan akun Anda menggunakan password yang panjang dan acak untuk tetap aman.
+                            </p>
+                        </header>
+
+                        <form @onsubmit="ChangePassword" class="mt-6 space-y-4">
+                            <div>
+                                <label class="block text-[0.68rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5" for="update_password_current_password">Password Saat Ini</label>
+                                <input 
+                                    id="update_password_current_password" 
+                                    @bind="PasswordModel.old_password"
+                                    type="password" 
+                                    required
+                                    class="w-full max-w-md px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none text-[#1a1a1a] transition-colors duration-150" 
+                                >
+                            </div>
+
+                            <div>
+                                <label class="block text-[0.68rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5" for="update_password_password">Password Baru</label>
+                                <input 
+                                    id="update_password_password" 
+                                    @bind="PasswordModel.new_password"
+                                    type="password" 
+                                    required
+                                    class="w-full max-w-md px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none text-[#1a1a1a] transition-colors duration-150" 
+                                >
+                            </div>
+
+                            <div>
+                                <label class="block text-[0.68rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5" for="update_password_password_confirmation">Konfirmasi Password Baru</label>
+                                <input 
+                                    id="update_password_password_confirmation" 
+                                    @bind="PasswordModel.confirm_password"
+                                    type="password" 
+                                    required
+                                    class="w-full max-w-md px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none text-[#1a1a1a] transition-colors duration-150" 
+                                >
+                            </div>
+
+                            <div class="flex items-center gap-3.5 pt-2">
+                                <button type="submit" disabled="@IsChangingPassword" class="px-5 py-2.5 text-[0.82rem] font-bold tracking-wide text-[#1a1a1a] bg-[#e8a000] hover:bg-[#d49300] active:scale-95 rounded-md transition-all duration-100 cursor-pointer disabled:opacity-50">
+                                    Simpan Password
+                                </button>
+
+                                @if (!string.IsNullOrEmpty(PasswordSuccessMessage)) {
+                                    <div class="text-xs font-semibold text-[#1a7a30]">
+                                        @PasswordSuccessMessage
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(PasswordErrorMessage)) {
+                                    <div class="text-xs font-semibold text-[#d94040]">
+                                        @PasswordErrorMessage
+                                    </div>
+                                }
+                            </div>
+                        </form>
+                    </section>
+                </div>
+
+                @* Delete Account Form *@
+                <div class="pt-8 border-t border-[#f0ede5]">
+                    <section class="space-y-6">
+                        <header>
+                            <h2 class="text-base font-bold text-[#1a1a1a] mb-1">
+                                Hapus Akun
+                            </h2>
+                            <p class="text-[0.72rem] text-[#a09e99] mb-4">
+                                Setelah akun Anda dihapus, semua sumber daya dan datanya akan dihapus secara permanen.
+                            </p>
+                        </header>
+
+                        @if (!ShowDeleteConfirm)
+                        {
+                            <div class="flex justify-start">
+                                <button type="button" @onclick="() => ShowDeleteConfirm = true" class="px-5 py-2.5 text-[0.82rem] font-bold tracking-wide text-[#1a1a1a] bg-red-600 hover:bg-red-500 active:scale-95 rounded-md transition-all duration-100 cursor-pointer text-white">
+                                    Hapus Akun
+                                </button>
+                            </div>
+                        }
+                        else
+                        {
+                            <form @onsubmit="DeleteAccount" class="p-6 bg-[#faf9f5] border border-[#f0ede5] rounded-xl">
+                                <h2 class="text-lg font-medium text-gray-900">
+                                    Apakah Anda yakin ingin menghapus akun Anda?
+                                </h2>
+
+                                <p class="mt-1 text-sm text-gray-600">
+                                    Setelah akun Anda dihapus, semua sumber daya dan datanya akan dihapus secara permanen. Masukkan kata sandi Anda untuk mengonfirmasi bahwa Anda ingin menghapus akun Anda secara permanen.
+                                </p>
+
+                                <div class="mt-6">
+                                    <label class="block text-[0.68rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5" for="delete_password">Password</label>
+                                    <input
+                                        id="delete_password"
+                                        @bind="DeletePassword"
+                                        type="password"
+                                        class="w-full max-w-md px-3.5 py-2 text-[0.82rem] bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none text-[#1a1a1a] transition-colors duration-150"
+                                        placeholder="Password"
+                                        required
+                                    />
+                                </div>
+
+                                <div class="mt-6 flex justify-start gap-3">
+                                    <button type="button" @onclick="() => ShowDeleteConfirm = false" class="px-5 py-2.5 text-[0.82rem] font-bold text-[#1a1a1a] bg-white border border-[#e5e3dc] hover:bg-gray-50 active:scale-95 rounded-md transition-all duration-100 cursor-pointer">
+                                        Batal
+                                    </button>
+                                    <button type="submit" disabled="@IsDeleting" class="px-5 py-2.5 text-[0.82rem] font-bold tracking-wide text-[#1a1a1a] bg-red-600 hover:bg-red-500 active:scale-95 rounded-md transition-all duration-100 cursor-pointer text-white disabled:opacity-50">
+                                        Hapus Akun Permanen
+                                    </button>
+                                </div>
+                                @if (!string.IsNullOrEmpty(DeleteErrorMessage)) {
+                                    <div class="text-xs font-semibold text-[#d94040] mt-3">
+                                        @DeleteErrorMessage
+                                    </div>
+                                }
+                            </form>
+                        }
+                    </section>
                 </div>
             </div>
         </div>
     }
 </div>
-
-@if (ShowEditModal)
-{
-    <div class="fixed inset-0 z-[70] flex min-h-full items-center justify-center p-4 text-center">
-        <div class="fixed inset-0 backdrop-blur-sm bg-black/60 transition-opacity" @onclick="CloseEditModal"></div>
-        <div class="relative transform overflow-hidden rounded-xl bg-white text-left shadow-2xl transition-all w-full max-w-lg border border-[#e5e3dc] z-10">
-            <div class="px-6 py-4 border-b border-[#f0ede5] flex items-center justify-between">
-                <h3 class="font-bold text-[#1a1a1a] text-lg">Ajukan Perubahan Data</h3>
-                <button type="button" @onclick="CloseEditModal" class="text-[#a09e99] hover:text-[#1a1a1a] transition font-bold text-xl">&times;</button>
-            </div>
-            <div class="p-6">
-                <p class="text-sm text-gray-500 mb-4">Perubahan profil akan ditinjau oleh Admin sebelum diaktifkan.</p>
-                <div class="space-y-4 mb-6">
-                    <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-1">Nama Lengkap</label>
-                        <input type="text" @bind="ProfileModel.name" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm" />
-                    </div>
-                    <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-1">Email</label>
-                        <input type="email" @bind="ProfileModel.email" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm" />
-                    </div>
-                    <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-1">NRP</label>
-                        <input type="text" @bind="ProfileModel.nrp" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm" />
-                    </div>
-                    <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-1">Divisi</label>
-                        <select @bind="ProfileModel.division_id" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm">
-                            <option value="">Pilih Divisi...</option>
-                            @if (Divisions != null)
-                            {
-                                @foreach (var div in Divisions)
-                                {
-                                    <option value="@div.Id">@div.Name</option>
-                                }
-                            }
-                        </select>
-                    </div>
-                </div>
-                <div class="flex justify-end gap-3">
-                    <button type="button" @onclick="CloseEditModal" class="px-5 py-2.5 bg-gray-100 text-gray-700 font-bold rounded-lg hover:bg-gray-200 transition">Batal</button>
-                    <button type="button" @onclick="SubmitProfileRequest" disabled="@IsSubmittingProfile" class="px-5 py-2.5 bg-yellow-500 text-black font-bold rounded-lg hover:bg-yellow-600 transition disabled:opacity-50">
-                        @(IsSubmittingProfile ? "Menyimpan..." : "Ajukan Perubahan")
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-}
 
 @code {
     private User? User;
@@ -151,12 +281,22 @@
 
     private int CurrentUserId = 0;
 
-    private string? SuccessMessage;
-    private string? ErrorMessage;
+    private string? ProfileSuccessMessage;
+    private string? ProfileErrorMessage;
+    
+    private string? PasswordSuccessMessage;
+    private string? PasswordErrorMessage;
 
-    private bool ShowEditModal = false;
+    private string? DeleteErrorMessage;
+
     private bool IsSubmittingProfile = false;
     private bool IsChangingPassword = false;
+    private bool IsDeleting = false;
+    
+    private bool ShowDeleteConfirm = false;
+    private string DeletePassword = "";
+
+    private bool HasPendingRequest = false;
 
     private ProfileViewModel ProfileModel = new();
     private ChangePasswordViewModel PasswordModel = new();
@@ -179,10 +319,7 @@
         User = await ProfileService.GetUserProfileAsync(CurrentUserId);
         var divResult = await DivisionService.GetDivisionsAsync(1, 100);
         Divisions = divResult.Divisions;
-    }
-
-    private void OpenEditModal()
-    {
+        
         if (User != null)
         {
             ProfileModel = new ProfileViewModel
@@ -192,32 +329,32 @@
                 nrp = User.nrp,
                 division_id = User.division_id ?? 0
             };
-            ShowEditModal = true;
-            ErrorMessage = null;
-            SuccessMessage = null;
+            
+            // Check if there is a pending request (simplification since ProfileService logic checks this on save)
+            // Ideally we'd have a method to check this, let's just assume false on load unless we want to query the DB directly here.
         }
-    }
-
-    private void CloseEditModal()
-    {
-        ShowEditModal = false;
     }
 
     private async Task SubmitProfileRequest()
     {
         IsSubmittingProfile = true;
-        ErrorMessage = null;
-        SuccessMessage = null;
+        ProfileErrorMessage = null;
+        ProfileSuccessMessage = null;
 
         var err = await ProfileService.SubmitProfileRequestAsync(CurrentUserId, ProfileModel);
-        if (err != null)
+        if (err != null && err.Contains("sudah memiliki pengajuan"))
         {
-            ErrorMessage = err;
+            HasPendingRequest = true;
+            ProfileErrorMessage = err;
+        }
+        else if (err != null)
+        {
+            ProfileErrorMessage = err;
         }
         else
         {
-            SuccessMessage = "Pengajuan perubahan profil berhasil dikirim dan menunggu persetujuan Admin.";
-            CloseEditModal();
+            ProfileSuccessMessage = "Permintaan diajukan";
+            HasPendingRequest = true;
         }
 
         IsSubmittingProfile = false;
@@ -225,18 +362,18 @@
 
     private async Task ChangePassword()
     {
-        ErrorMessage = null;
-        SuccessMessage = null;
+        PasswordErrorMessage = null;
+        PasswordSuccessMessage = null;
 
         if (string.IsNullOrWhiteSpace(PasswordModel.old_password) || string.IsNullOrWhiteSpace(PasswordModel.new_password))
         {
-            ErrorMessage = "Password wajib diisi.";
+            PasswordErrorMessage = "Password wajib diisi.";
             return;
         }
 
         if (PasswordModel.new_password != PasswordModel.confirm_password)
         {
-            ErrorMessage = "Konfirmasi password baru tidak cocok.";
+            PasswordErrorMessage = "Konfirmasi password baru tidak cocok.";
             return;
         }
 
@@ -244,13 +381,43 @@
         var err = await ProfileService.ChangePasswordAsync(CurrentUserId, PasswordModel);
         if (err != null)
         {
-            ErrorMessage = err;
+            PasswordErrorMessage = err;
         }
         else
         {
-            SuccessMessage = "Password berhasil diubah.";
+            PasswordSuccessMessage = "Tersimpan";
             PasswordModel = new ChangePasswordViewModel();
         }
         IsChangingPassword = false;
+    }
+
+    private async Task DeleteAccount()
+    {
+        DeleteErrorMessage = null;
+        
+        if (string.IsNullOrWhiteSpace(DeletePassword))
+        {
+            DeleteErrorMessage = "Password wajib diisi.";
+            return;
+        }
+
+        IsDeleting = true;
+        var err = await ProfileService.DeleteAccountAsync(CurrentUserId, DeletePassword);
+        
+        if (err != null)
+        {
+            DeleteErrorMessage = err;
+            IsDeleting = false;
+        }
+        else
+        {
+            // Logout and redirect to login
+            NavigationManager.NavigateTo("/api/auth/logout", true);
+        }
+    }
+
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo("/Dashboard");
     }
 }

@@ -1,23 +1,154 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
-    <ResourcePreloader />
-    <link rel="stylesheet" href="@Assets["lib/bootstrap/dist/css/bootstrap.min.css"]" />
+    
+    <title>WMS Blazor</title>
+    <link rel="icon" type="image/svg+xml" href="img/logo.svg" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.bunny.net">
+    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Figtree', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+
+    <!-- App Styles -->
     <link rel="stylesheet" href="@Assets["app.css"]" />
     <link rel="stylesheet" href="@Assets["WMS-UnitedTracors-Blazor.styles.css"]" />
+
+    <!-- Dependencies -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <ImportMap />
-    <link rel="icon" type="image/png" href="favicon.png" />
     <HeadOutlet />
 </head>
 
-<body>
+<body class="font-sans antialiased">
     <Routes />
     <ReconnectModal />
     <script src="@Assets["_framework/blazor.web.js"]"></script>
-</body>
+    
+    <!-- Global Image Modal -->
+    <div id="globalImageModal" class="fixed inset-0 z-[500] hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="relative max-w-4xl w-full flex justify-center">
+            <button type="button" onclick="closeImageModal()" class="absolute -top-10 right-0 text-white hover:text-gray-300 bg-gray-800 rounded-full p-2 transition">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+            <img id="globalModalImage" src="" alt="Enlarged Image" class="max-h-[85vh] rounded-lg shadow-2xl object-contain bg-black">
+        </div>
+    </div>
 
+    <script>
+        // --- Image Modal Script ---
+        const imageModal = document.getElementById('globalImageModal');
+        const modalImg = document.getElementById('globalModalImage');
+
+        window.openImageModal = function(src) {
+            modalImg.src = src;
+            imageModal.classList.remove('hidden');
+            // Trigger reflow
+            void imageModal.offsetWidth;
+            imageModal.classList.remove('opacity-0');
+        };
+
+        window.closeImageModal = function() {
+            imageModal.classList.add('opacity-0');
+            setTimeout(() => {
+                imageModal.classList.add('hidden');
+                modalImg.src = '';
+            }, 300);
+        };
+
+        // Close on background click
+        imageModal.addEventListener('click', (e) => {
+            if(e.target == imageModal) {
+                closeImageModal();
+            }
+        });
+
+        // Close on escape key
+        document.addEventListener('keydown', (e) => {
+            if(e.key == 'Escape' && !imageModal.classList.contains('hidden')) {
+                closeImageModal();
+            }
+        });
+
+        // Attach to any element with data-image-popup
+        document.addEventListener('click', (e) => {
+            const trigger = e.target.closest('[data-image-popup]');
+            if (trigger) {
+                e.preventDefault();
+                openImageModal(trigger.getAttribute('href') || trigger.src);
+            }
+        });
+
+        // ── Desktop sidebar ──────────────────────────────────
+        window.utToggleSidebar = function() {
+            const collapsed = document.body.classList.toggle('ut-collapsed');
+            localStorage.setItem('ut-sidebar-collapsed', collapsed ? '1' : '0');
+        };
+
+        // ── Mobile drawer ───────────────────────────────────────────
+        window.utToggleDrawer = function() {
+            const drawer    = document.getElementById('utDrawer');
+            const btn       = document.getElementById('utMenuBtn');
+            const iconMenu  = document.getElementById('utIconMenu');
+            const iconClose = document.getElementById('utIconClose');
+            const isOpen    = drawer.classList.toggle('open');
+
+            if (btn) btn.classList.toggle('is-open', isOpen);
+            if (iconMenu) iconMenu.style.display  = isOpen ? 'none'  : 'block';
+            if (iconClose) iconClose.style.display = isOpen ? 'block' : 'none';
+            document.body.style.overflow = isOpen ? "hidden" : "";
+        };
+
+        // ── Close Mobile drawer ──────────────────────────────────────
+        window.utCloseDrawer = function() {
+            const drawer    = document.getElementById('utDrawer');
+            const btn       = document.getElementById('utMenuBtn');
+            const iconMenu  = document.getElementById('utIconMenu');
+            const iconClose = document.getElementById('utIconClose');
+
+            if (drawer) drawer.classList.remove('open');
+            if (btn) btn.classList.remove('is-open');
+            if (iconMenu) iconMenu.style.display  = 'block';
+            if (iconClose) iconClose.style.display = 'none';
+            document.body.style.overflow = '';
+        };
+
+        window.utCloseOnOverlay = function(e) {
+            if (e.target == document.getElementById('utDrawer')) {
+                utCloseDrawer();
+            }
+        };
+
+        // ── Restore state ───────────────────────────────────────────
+        document.addEventListener('DOMContentLoaded', function () {
+            if (localStorage.getItem('ut-sidebar-collapsed') == '1') {
+                document.body.classList.add('ut-collapsed');
+            }
+        });
+
+        // ── ESC closes drawer ───────────────────────────────────────
+        document.addEventListener('keydown', function (e) {
+            if (e.key == 'Escape') utCloseDrawer();
+        });
+    </script>
+</body>
 </html>

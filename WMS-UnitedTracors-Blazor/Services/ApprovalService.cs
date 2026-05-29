@@ -32,7 +32,7 @@ public class ApprovalService
             query = query.Where(t => t.status == "PENDING");
             if (userRole == "manager")
             {
-                query = query.Where(t => t.Product.is_returnable == 0);
+                query = query.Where(t => t.Product != null && t.Product.is_returnable == 0);
             }
         }
 
@@ -72,7 +72,7 @@ public class ApprovalService
         if (transaction == null) return "Transaction not found.";
         if (transaction.status != "PENDING") return "Transaction is no longer pending.";
 
-        if (userRole == "manager" && transaction.Product.is_returnable == 1)
+        if (userRole == "manager" && transaction.Product != null && transaction.Product.is_returnable == 1)
         {
             return "Managers cannot approve borrowing transactions. Only admins can.";
         }
@@ -80,19 +80,19 @@ public class ApprovalService
         using var dbTransaction = await _context.Database.BeginTransactionAsync();
         try
         {
-            var stockBefore = transaction.Product.current_stock;
+            var stockBefore = transaction.Product!.current_stock;
 
             if (transaction.type == "IN")
             {
-                transaction.Product.current_stock += transaction.quantity ?? 0;
+                transaction.Product!.current_stock += transaction.quantity ?? 0;
             }
             else
             {
-                if (transaction.Product.current_stock < transaction.quantity) throw new Exception("Insufficient stock");
-                transaction.Product.current_stock -= transaction.quantity ?? 0;
+                if (transaction.Product!.current_stock < transaction.quantity) throw new Exception("Insufficient stock");
+                transaction.Product!.current_stock -= transaction.quantity ?? 0;
             }
 
-            _context.Products.Update(transaction.Product);
+            _context.Products.Update(transaction.Product!);
 
             if (transaction.product_variant_id.HasValue)
             {
@@ -112,9 +112,9 @@ public class ApprovalService
             var stockLog = new StockLog
             {
                 transaction_id = transaction.id,
-                product_id = transaction.Product.id,
+                product_id = transaction.Product!.id,
                 stock_before = stockBefore,
-                stock_after = transaction.Product.current_stock,
+                stock_after = transaction.Product!.current_stock,
                 created_at = DateTime.UtcNow,
                 updated_at = DateTime.UtcNow
             };
@@ -142,7 +142,7 @@ public class ApprovalService
         if (transaction == null) return "Transaction not found.";
         if (transaction.status != "PENDING") return "Transaction is no longer pending.";
 
-        if (userRole == "manager" && transaction.Product.is_returnable == 1)
+        if (userRole == "manager" && transaction.Product != null && transaction.Product.is_returnable == 1)
         {
             return "Managers cannot reject borrowing transactions. Only admins can.";
         }
@@ -154,10 +154,10 @@ public class ApprovalService
 
         if (transaction.type == "OUT" && transaction.Product != null && transaction.Requester != null)
         {
-            if (transaction.request_type == "GIVEAWAY")
+            if (transaction.request_type == "GIVEAWAY" && transaction.Product != null)
             {
                 int pointsToRefund = transaction.Product.value * (transaction.quantity ?? 0);
-                if (pointsToRefund > 0)
+                if (pointsToRefund > 0 && transaction.Requester != null)
                 {
                     transaction.Requester.poin += pointsToRefund;
                     _context.Users.Update(transaction.Requester);
@@ -176,7 +176,7 @@ public class ApprovalService
         if (transaction == null) return "Transaction not found.";
         if (transaction.status != "PENDING") return "Transaction is no longer pending.";
 
-        if (userRole == "manager" && transaction.Product.is_returnable == 1)
+        if (userRole == "manager" && transaction.Product != null && transaction.Product.is_returnable == 1)
             return "Managers cannot request revision for borrowing transactions. Only admins can.";
 
         if (string.IsNullOrWhiteSpace(revisionReason)) return "Catatan revisi wajib diisi.";
@@ -184,6 +184,62 @@ public class ApprovalService
         transaction.status = "REVISION";
         transaction.approver_id = currentUserId;
         transaction.rejection_reason = revisionReason; 
+        transaction.updated_at = DateTime.UtcNow;
+
+        _context.Transactions.Update(transaction);
+        await _context.SaveChangesAsync();
+        return null;
+    }
+
+    public async Task<string?> ApproveReturnAsync(int id, int currentUserId, string? userRole)
+    {
+        var transaction = await _context.Transactions.Include(t => t.Product).FirstOrDefaultAsync(t => t.id == id);
+        if (transaction == null) return "Transaction not found.";
+        if (transaction.status != "APPROVED" || transaction.pending_return_quantity <= 0 || transaction.is_return_draft != 0)
+            return "Transaction is not pending return approval.";
+
+        using var dbTransaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            var stockBefore = transaction.Product!.current_stock;
+            transaction.Product!.current_stock += transaction.pending_return_quantity ?? 0;
+            _context.Products.Update(transaction.Product!);
+
+            var stockLog = new StockLog
+            {
+                transaction_id = transaction.id,
+                product_id = transaction.Product!.id,
+                stock_before = stockBefore,
+                stock_after = transaction.Product!.current_stock,
+                created_at = DateTime.UtcNow,
+                updated_at = DateTime.UtcNow
+            };
+            _context.StockLogs.Add(stockLog);
+
+            transaction.returned_quantity = (transaction.returned_quantity ?? 0) + (transaction.pending_return_quantity ?? 0);
+            transaction.pending_return_quantity = 0;
+            transaction.updated_at = DateTime.UtcNow;
+            _context.Transactions.Update(transaction);
+
+            await _context.SaveChangesAsync();
+            await dbTransaction.CommitAsync();
+            return null;
+        }
+        catch (Exception ex)
+        {
+            await dbTransaction.RollbackAsync();
+            return "Approval failed: " + ex.Message;
+        }
+    }
+
+    public async Task<string?> RejectReturnAsync(int id, int currentUserId, string? userRole)
+    {
+        var transaction = await _context.Transactions.FirstOrDefaultAsync(t => t.id == id);
+        if (transaction == null) return "Transaction not found.";
+        if (transaction.status != "APPROVED" || transaction.pending_return_quantity <= 0 || transaction.is_return_draft != 0)
+            return "Transaction is not pending return approval.";
+
+        transaction.is_return_draft = 1; // Send back to draft
         transaction.updated_at = DateTime.UtcNow;
 
         _context.Transactions.Update(transaction);

@@ -14,6 +14,11 @@ public class UserService
         _context = context;
     }
 
+    public async Task<User?> GetUserByIdAsync(int id)
+    {
+        return await _context.Users.Include(u => u.Division).FirstOrDefaultAsync(u => u.id == id);
+    }
+
     public async Task<(List<User> Users, List<Division> Divisions, int TotalItems, int TotalPages)> GetUsersAsync(string? searchQuery, int page = 1, int pageSize = 10)
     {
         var query = _context.Users.Include(u => u.Division).AsQueryable();

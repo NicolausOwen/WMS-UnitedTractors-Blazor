@@ -24,7 +24,7 @@ builder.Services.AddScoped<WMS_UnitedTracors_Blazor.Services.UserService>();
 builder.Services.AddScoped<WMS_UnitedTracors_Blazor.Services.CartService>();
 builder.Services.AddScoped<WMS_UnitedTracors_Blazor.Services.ProfileService>();
 builder.Services.AddScoped<WMS_UnitedTracors_Blazor.Services.CategoryService>();
-builder.Services.AddScoped<ReportService>();
+builder.Services.AddScoped<WMS_UnitedTracors_Blazor.Services.ReportService>();
 
 // Database setup
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -103,6 +103,66 @@ app.UseStaticFiles(new StaticFileOptions
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+
+// Auth Endpoints
+app.MapPost("/api/auth/login", async (HttpContext context, [Microsoft.AspNetCore.Mvc.FromForm] string email, [Microsoft.AspNetCore.Mvc.FromForm] string password, [Microsoft.AspNetCore.Mvc.FromForm] string? remember_me, WMS_UnitedTracors_Blazor.Services.AuthService authService) =>
+{
+    var (principal, error) = await authService.LoginAsync(email, password);
+    if (principal != null)
+    {
+        var authProperties = new Microsoft.AspNetCore.Authentication.AuthenticationProperties
+        {
+            IsPersistent = remember_me == "true",
+            ExpiresUtc = remember_me == "true" ? DateTimeOffset.UtcNow.AddDays(30) : null
+        };
+        await Microsoft.AspNetCore.Authentication.AuthenticationHttpContextExtensions.SignInAsync(context, Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme, principal, authProperties);
+        return Results.Redirect("/");
+    }
+    return Results.Redirect("/login?error=1");
+}).AllowAnonymous();
+
+app.MapPost("/Logout", async (HttpContext context) =>
+{
+    await Microsoft.AspNetCore.Authentication.AuthenticationHttpContextExtensions.SignOutAsync(context, Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme);
+    return Results.Redirect("/login");
+}).AllowAnonymous();
+
+app.MapGet("/auth/microsoft", () =>
+{
+    var properties = new Microsoft.AspNetCore.Authentication.AuthenticationProperties { RedirectUri = "/auth/microsoft/callback" };
+    return Results.Challenge(properties, new[] { "Microsoft" });
+}).AllowAnonymous();
+
+app.MapGet("/auth/microsoft/callback", async (HttpContext context, WMS_UnitedTracors_Blazor.Services.AuthService authService) =>
+{
+    var result = await Microsoft.AspNetCore.Authentication.AuthenticationHttpContextExtensions.AuthenticateAsync(context, "ExternalCookie");
+    if (!result.Succeeded)
+    {
+        return Results.Redirect("/login?errorMessage=Failed+to+authenticate+with+Microsoft.");
+    }
+
+    var claims = result.Principal?.Claims;
+    var email = claims?.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Email)?.Value
+             ?? claims?.FirstOrDefault(c => c.Type == "preferred_username")?.Value;
+
+    if (string.IsNullOrEmpty(email))
+    {
+        return Results.Redirect("/login?errorMessage=Gagal+mendapatkan+alamat+email+dari+akun+Microsoft+Anda.");
+    }
+
+    var (principal, error) = await authService.MicrosoftLoginAsync(email, claims?.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Name)?.Value);
+    
+    if (principal == null)
+    {
+        await Microsoft.AspNetCore.Authentication.AuthenticationHttpContextExtensions.SignOutAsync(context, "ExternalCookie");
+        return Results.Redirect($"/login?errorMessage={Uri.EscapeDataString(error ?? "Akses ditolak.")}");
+    }
+
+    await Microsoft.AspNetCore.Authentication.AuthenticationHttpContextExtensions.SignInAsync(context, Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme, principal);
+    await Microsoft.AspNetCore.Authentication.AuthenticationHttpContextExtensions.SignOutAsync(context, "ExternalCookie");
+
+    return Results.Redirect("/");
+}).AllowAnonymous();
 
 // Seed database
 if (app.Environment.IsDevelopment() || builder.Configuration.GetValue<bool>("RunMigrations", false))
