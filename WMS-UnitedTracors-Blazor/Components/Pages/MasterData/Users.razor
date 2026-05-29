@@ -1,0 +1,299 @@
+@page "/MasterData/Users"
+@using UT_WMSDotnet.Models
+@using UT_WMSDotnet.ViewModels
+@using WMS_UnitedTracors_Blazor.Services
+@inject UserService UserService
+@inject DivisionService DivisionService
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@inject AuthenticationStateProvider AuthStateProvider
+@rendermode InteractiveServer
+
+<PageTitle>Master User</PageTitle>
+
+<div class="px-4 md:px-10 py-6 pb-24 font-sans bg-[#f5f4f0] min-h-screen">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">Master User</h2>
+        <button @onclick="OpenCreateModal" class="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-black font-bold rounded-lg shadow-sm transition">
+            + Tambah User
+        </button>
+    </div>
+
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <div class="mb-4 bg-red-50 text-red-700 px-4 py-3 rounded-lg text-sm border border-red-200">@ErrorMessage</div>
+    }
+
+    <div class="bg-white rounded-xl shadow-sm border border-[#e5e3dc] overflow-hidden">
+        <div class="px-6 py-4 border-b border-[#f0ede5] flex gap-4">
+            <input type="text" @bind="SearchQuery" placeholder="Cari nama atau NRP..." class="px-3 py-2 border rounded-lg text-sm flex-1 max-w-sm" />
+            <button @onclick="() => LoadData(1)" class="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-bold">Cari</button>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="bg-[#faf9f5] border-b border-[#e5e3dc]">
+                        <th class="py-3 px-6 text-xs font-bold text-[#8a8880] uppercase tracking-wider">User</th>
+                        <th class="py-3 px-6 text-xs font-bold text-[#8a8880] uppercase tracking-wider">Role</th>
+                        <th class="py-3 px-6 text-xs font-bold text-[#8a8880] uppercase tracking-wider">Divisi</th>
+                        <th class="py-3 px-6 text-xs font-bold text-[#8a8880] uppercase tracking-wider text-right">Poin</th>
+                        <th class="py-3 px-6 text-xs font-bold text-[#8a8880] uppercase tracking-wider text-right">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-[#f0ede5]">
+                    @if (UsersList == null)
+                    {
+                        <tr><td colspan="5" class="p-6 text-center text-gray-500">Loading...</td></tr>
+                    }
+                    else if (!UsersList.Any())
+                    {
+                        <tr><td colspan="5" class="p-6 text-center text-gray-500">Tidak ada data user.</td></tr>
+                    }
+                    else
+                    {
+                        @foreach (var user in UsersList)
+                        {
+                            <tr class="hover:bg-[#faf9f5]">
+                                <td class="py-3 px-6">
+                                    <div class="text-sm font-bold text-[#1a1a1a]">@user.name</div>
+                                    <div class="text-xs text-[#8a8880]">@user.email</div>
+                                    <div class="text-[10px] text-[#8a8880]">NRP: @(user.nrp ?? "-")</div>
+                                </td>
+                                <td class="py-3 px-6">
+                                    <span class="px-2 inline-flex text-[10px] leading-5 font-bold rounded-full bg-gray-100 text-gray-800 uppercase">
+                                        @user.role
+                                    </span>
+                                </td>
+                                <td class="py-3 px-6 text-sm text-[#1a1a1a]">@(user.Division?.name ?? "-")</td>
+                                <td class="py-3 px-6 text-sm text-right font-bold text-yellow-600">@user.poin</td>
+                                <td class="py-3 px-6 text-right">
+                                    <button @onclick="() => OpenEditModal(user)" class="text-blue-600 hover:text-blue-800 text-sm font-semibold mr-3">Edit</button>
+                                    <button @onclick="() => DeleteUser(user.id)" class="text-red-600 hover:text-red-800 text-sm font-semibold">Delete</button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+        @if (TotalPages > 1)
+        {
+            <div class="px-6 py-4 border-t border-[#f0ede5] flex justify-between items-center bg-[#faf9f5]">
+                <span class="text-xs text-[#8a8880]">Halaman @CurrentPage dari @TotalPages</span>
+                <div class="flex gap-2">
+                    <button disabled="@(CurrentPage == 1)" @onclick="() => LoadData(CurrentPage - 1)" class="px-3 py-1 bg-white border border-[#e5e3dc] rounded text-sm disabled:opacity-50 hover:bg-gray-50">Prev</button>
+                    <button disabled="@(CurrentPage == TotalPages)" @onclick="() => LoadData(CurrentPage + 1)" class="px-3 py-1 bg-white border border-[#e5e3dc] rounded text-sm disabled:opacity-50 hover:bg-gray-50">Next</button>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@if (ShowModal)
+{
+    <div class="fixed inset-0 z-[70] flex min-h-full items-center justify-center p-4 text-center">
+        <div class="fixed inset-0 backdrop-blur-sm bg-black/60 transition-opacity" @onclick="CloseModal"></div>
+        <div class="relative transform overflow-hidden rounded-xl bg-white text-left shadow-2xl transition-all w-full max-w-2xl border border-[#e5e3dc] z-10">
+            <div class="px-6 py-4 border-b border-[#f0ede5] flex items-center justify-between">
+                <h3 class="font-bold text-[#1a1a1a] text-lg">@(IsEdit ? "Edit User" : "Tambah User")</h3>
+                <button type="button" @onclick="CloseModal" class="text-[#a09e99] hover:text-[#1a1a1a] transition font-bold text-xl">&times;</button>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Nama Lengkap <span class="text-red-500">*</span></label>
+                        <input type="text" @bind="Model.name" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Email <span class="text-red-500">*</span></label>
+                        <input type="email" @bind="Model.email" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500" />
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">NRP</label>
+                        <input type="text" @bind="Model.nrp" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Poin Kredit</label>
+                        <input type="number" @bind="Model.poin" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500" />
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Role <span class="text-red-500">*</span></label>
+                        <select @bind="Model.role" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500">
+                            <option value="">Pilih Role...</option>
+                            <option value="staff">Staff</option>
+                            <option value="manager">Manager</option>
+                            <option value="admin">Admin</option>
+                            <option value="superadmin">Superadmin</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Divisi <span class="text-red-500">*</span></label>
+                        <select @bind="Model.division_id" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500">
+                            <option value="">Pilih Divisi...</option>
+                            @if (DivisionsList != null)
+                            {
+                                @foreach (var div in DivisionsList)
+                                {
+                                    <option value="@div.Id">@div.Name</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                @if (!IsEdit)
+                {
+                    <div class="mb-6 p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800">
+                        Password default untuk user baru adalah: <strong>123456</strong>
+                    </div>
+                }
+
+                <div class="flex justify-end gap-3">
+                    <button type="button" @onclick="CloseModal" class="px-5 py-2.5 bg-gray-100 text-gray-700 font-bold rounded-lg hover:bg-gray-200 transition">Batal</button>
+                    <button type="button" @onclick="SaveUser" disabled="@IsSaving" class="px-5 py-2.5 bg-yellow-500 text-black font-bold rounded-lg hover:bg-yellow-600 transition disabled:opacity-50">
+                        @(IsSaving ? "Menyimpan..." : "Simpan")
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<User>? UsersList;
+    private List<DivisionDto>? DivisionsList;
+    private int CurrentPage = 1;
+    private int TotalPages = 1;
+    private string SearchQuery = "";
+    
+    private bool ShowModal = false;
+    private bool IsEdit = false;
+    private bool IsSaving = false;
+    private string? ErrorMessage;
+    private int EditId = 0;
+    
+    private UserViewModel Model = new();
+
+    private int CurrentUserId = 0;
+    private string? UserRole;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (user.Identity != null && user.Identity.IsAuthenticated)
+        {
+            if (int.TryParse(user.FindFirst(ClaimTypes.NameIdentifier)?.Value, out int id))
+                CurrentUserId = id;
+            UserRole = user.FindFirst(ClaimTypes.Role)?.Value;
+        }
+
+        var divsResult = await DivisionService.GetDivisionsAsync(1, 100);
+        DivisionsList = divsResult.Divisions;
+        await LoadData(1);
+    }
+
+    private async Task LoadData(int page)
+    {
+        CurrentPage = page;
+        var result = await UserService.GetUsersAsync(SearchQuery, CurrentPage, 10);
+        UsersList = result.Users;
+        TotalPages = result.TotalPages;
+    }
+
+    private void OpenCreateModal()
+    {
+        IsEdit = false;
+        Model = new UserViewModel();
+        ErrorMessage = null;
+        ShowModal = true;
+    }
+
+    private void OpenEditModal(User user)
+    {
+        IsEdit = true;
+        EditId = user.id;
+        Model = new UserViewModel 
+        { 
+            name = user.name ?? "", 
+            email = user.email ?? "", 
+            nrp = user.nrp,
+            poin = user.poin,
+            role = user.role ?? "",
+            division_id = user.division_id
+        };
+        ErrorMessage = null;
+        ShowModal = true;
+    }
+
+    private void CloseModal()
+    {
+        ShowModal = false;
+    }
+
+    private async Task SaveUser()
+    {
+        if (string.IsNullOrWhiteSpace(Model.name) || string.IsNullOrWhiteSpace(Model.email) || string.IsNullOrWhiteSpace(Model.role) || Model.division_id == null)
+        {
+            ErrorMessage = "Harap isi semua field yang wajib (*).";
+            return;
+        }
+
+        IsSaving = true;
+        ErrorMessage = null;
+
+        string? error;
+        if (IsEdit)
+        {
+            var updateModel = new UserUpdateViewModel
+            {
+                name = Model.name,
+                email = Model.email,
+                nrp = Model.nrp,
+                role = Model.role,
+                division_id = Model.division_id,
+                poin = Model.poin
+            };
+            error = await UserService.UpdateUserAsync(EditId, updateModel, CurrentUserId, UserRole);
+        }
+        else
+        {
+            var createModel = new UserCreateViewModel
+            {
+                name = Model.name,
+                email = Model.email,
+                nrp = Model.nrp,
+                role = Model.role,
+                division_id = Model.division_id,
+                poin = Model.poin,
+                password = "123456" // Default password
+            };
+            error = await UserService.CreateUserAsync(createModel);
+        }
+
+        IsSaving = false;
+
+        if (error != null)
+        {
+            ErrorMessage = error;
+        }
+        else
+        {
+            CloseModal();
+            await LoadData(CurrentPage);
+        }
+    }
+
+    private async Task DeleteUser(int id)
+    {
+        await UserService.DeleteUserAsync(id, CurrentUserId);
+        await LoadData(CurrentPage);
+    }
+}

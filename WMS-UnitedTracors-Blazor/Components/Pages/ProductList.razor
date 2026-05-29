@@ -1,0 +1,275 @@
+@page "/Product"
+@using UT_WMSDotnet.Models
+@using WMS_UnitedTracors_Blazor.Services
+@inject ProductService ProductService
+@inject CategoryService CategoryService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Products</PageTitle>
+
+<div class="flex justify-between items-center mb-6">
+    <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+        Products
+    </h2>
+    <a href="/Product/Create" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+        Add Product
+    </a>
+</div>
+
+<div class="py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        @if (!string.IsNullOrEmpty(SuccessMessage))
+        {
+            <div class="mb-6 flex items-center gap-3 bg-[#eef9f0] border border-[#b8e8c0] text-[#1a7a30] px-4 py-3 rounded-lg text-sm" role="alert">
+                <svg class="w-4 h-4 shrink-0 text-[#1a7a30]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                @SuccessMessage
+            </div>
+        }
+
+        @if (Categories != null && Categories.Any())
+        {
+            <div class="flex items-center gap-2 mb-6 overflow-x-auto pb-1" style="scrollbar-width: none; -ms-overflow-style: none;">
+                <button @onclick="() => FilterByCategory(null)"
+                        class="px-3.5 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap border transition @(!SelectedCategoryId.HasValue ? "bg-gray-900 text-white border-gray-900" : "bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:text-gray-900")">
+                    All
+                </button>
+                @foreach (var cat in Categories)
+                {
+                    <button @onclick="() => FilterByCategory(cat.Id)"
+                            class="px-3.5 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap border transition @(SelectedCategoryId == cat.Id ? "bg-gray-900 text-white border-gray-900" : "bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:text-gray-900")">
+                        @cat.Name
+                    </button>
+                }
+            </div>
+        }
+
+        <div class="bg-white rounded-xl border border-gray-200">
+            <div class="px-6 py-5 border-b border-gray-100">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <h3 class="text-base font-semibold text-gray-900">Product List</h3>
+                        <p class="text-sm text-gray-500 mt-0.5">Manage your warehouse inventory</p>
+                    </div>
+                    <div class="relative w-full sm:w-64">
+                        <input type="text" @bind="SearchQuery" @bind:event="oninput" @onkeyup="HandleSearch" placeholder="Search products or SKU..." 
+                            class="w-full pl-9 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-gray-900 focus:border-gray-900 transition placeholder:text-gray-400">
+                        <svg class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="border-b border-gray-100">
+                            <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                            <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">SKU / Barcode</th>
+                            <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                            <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+                            <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
+                            <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Points</th>
+                            <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Updated</th>
+                            <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider w-32"></th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50">
+                        @if (Products == null)
+                        {
+                            <tr>
+                                <td colspan="9" class="px-6 py-16 text-center">
+                                    <div class="animate-pulse flex flex-col items-center">
+                                        <div class="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
+                                        <div class="h-3 bg-gray-200 rounded w-1/3"></div>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                        else if (!Products.Any())
+                        {
+                            <tr>
+                                <td colspan="9" class="px-6 py-16 text-center">
+                                    <p class="text-sm text-gray-500">No products found.</p>
+                                    <p class="text-xs text-gray-400 mt-1">Add a product to get started.</p>
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var product in Products)
+                            {
+                                <tr class="hover:bg-gray-50/50 transition">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center gap-3">
+                                            @if (!string.IsNullOrEmpty(product.image))
+                                            {
+                                                <div class="shrink-0">
+                                                    <img src="/storage/@product.image" alt="@product.name" class="w-12 h-12 rounded-lg object-cover border border-gray-100 hover:ring-2 ring-gray-900 transition">
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
+                                                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                                                </div>
+                                            }
+                                            <div>
+                                                <div class="text-sm font-medium text-gray-900">@product.name</div>
+                                                <div class="text-xs text-gray-400">@(product.Unit?.name ?? "--")</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <code class="text-xs font-medium text-gray-700 bg-gray-100 px-2 py-1 rounded">@product.sku</code>
+                                        <div class="mt-2 text-[10px] text-gray-400">
+                                            @product.barcode_type
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        @if (product.Category != null)
+                                        {
+                                            <span class="text-xs font-medium text-gray-700 bg-gray-100 px-2 py-1 rounded">@product.Category.name</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-xs text-gray-400">--</span>
+                                        }
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        @if (product.Location != null)
+                                        {
+                                            <div class="text-xs text-gray-900 font-medium">@product.Location.name</div>
+                                        }
+                                        else
+                                        {
+                                            <div class="text-xs text-gray-400">--</div>
+                                        }
+                                        @if (!string.IsNullOrEmpty(product.position_image))
+                                        {
+                                            <div class="mt-1.5 flex items-center gap-1.5">
+                                                <div class="block w-10 h-10 rounded border border-gray-200 overflow-hidden shrink-0 hover:ring-2 ring-gray-900 transition">
+                                                    <img src="/storage/@product.position_image" alt="Position" class="w-full h-full object-cover">
+                                                </div>
+                                                <span class="text-[10px] text-gray-400">Position View</span>
+                                            </div>
+                                        }
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-semibold @(product.current_stock > 0 ? "text-gray-900" : "text-[#d94040]")">@product.current_stock</div>
+                                        @if (product.initial_stock > 0)
+                                        {
+                                            <div class="text-[11px] text-gray-400 mt-0.5">Init: @product.initial_stock</div>
+                                        }
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="inline-flex items-center gap-1 text-[#e8a000] font-semibold text-xs bg-[rgba(232,160,0,0.1)] px-2 py-1 rounded">
+                                            @product.value Pts
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        @if (product.current_stock > 0)
+                                        {
+                                            <span class="inline-flex items-center gap-1.5 text-xs font-medium text-[#1a7a30]">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-[#1a7a30]"></span>
+                                                In Stock
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="inline-flex items-center gap-1.5 text-xs font-medium text-[#d94040]">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-[#d94040]"></span>
+                                                Out of Stock
+                                            </span>
+                                        }
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-xs text-gray-500">@product.updated_at.ToString("dd MMM yyyy")</div>
+                                        <div class="text-[11px] text-gray-400">@product.updated_at.ToString("HH:mm")</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center justify-end gap-2">
+                                            <a href="/Product/Edit/@product.id" class="text-xs font-medium text-gray-600 hover:text-gray-900 px-2.5 py-1.5 rounded-md hover:bg-gray-100 transition">
+                                                Edit
+                                            </a>
+                                            <button @onclick="() => DeleteProduct(product.id)" class="text-xs font-medium text-red-600 hover:text-red-700 px-2.5 py-1.5 rounded-md hover:bg-red-50 transition">
+                                                Delete
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+            
+            @if (TotalPages > 1)
+            {
+                <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
+                    <span class="text-sm text-gray-500">Showing page @CurrentPage of @TotalPages</span>
+                    <div class="flex gap-2">
+                        <button disabled="@(CurrentPage == 1)" @onclick="() => LoadProducts(CurrentPage - 1)" class="px-3 py-1 border rounded hover:bg-gray-50 disabled:opacity-50">Previous</button>
+                        <button disabled="@(CurrentPage == TotalPages)" @onclick="() => LoadProducts(CurrentPage + 1)" class="px-3 py-1 border rounded hover:bg-gray-50 disabled:opacity-50">Next</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<Product>? Products;
+    private List<CategoryDto>? Categories;
+    
+    private int CurrentPage = 1;
+    private int PageSize = 10;
+    private int TotalPages = 1;
+    private int TotalItems = 0;
+    
+    private int? SelectedCategoryId;
+    private string? SearchQuery;
+    private string? SuccessMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var catResult = await CategoryService.GetCategoriesAsync(1, 100);
+        Categories = catResult.Categories;
+        await LoadProducts(1);
+    }
+
+    private async Task LoadProducts(int page)
+    {
+        CurrentPage = page;
+        var result = await ProductService.GetProductsAsync(SelectedCategoryId, SearchQuery, CurrentPage, PageSize);
+        Products = result.Products;
+        TotalItems = result.TotalItems;
+        TotalPages = result.TotalPages;
+    }
+
+    private async Task FilterByCategory(int? categoryId)
+    {
+        SelectedCategoryId = categoryId;
+        await LoadProducts(1);
+    }
+
+    private async Task HandleSearch(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await LoadProducts(1);
+        }
+    }
+
+    private async Task DeleteProduct(int id)
+    {
+        // In a real app we'd use JSInterop for a confirm dialog
+        var success = await ProductService.DeleteProductAsync(id);
+        if (success)
+        {
+            SuccessMessage = "Product deleted successfully.";
+            await LoadProducts(CurrentPage);
+        }
+    }
+}

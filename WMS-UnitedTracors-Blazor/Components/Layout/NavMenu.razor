@@ -1,6 +1,10 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthStateProvider
+@using System.Security.Claims
+
+<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="">WMS-UnitedTracors-Blazor</a>
+        <a class="navbar-brand" href="">WMS Blazor</a>
     </div>
 </div>
 
@@ -10,21 +14,99 @@
     <nav class="nav flex-column">
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Dashboard
             </NavLink>
         </div>
 
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
+            <NavLink class="nav-link" href="Cart">
+                <span class="bi bi-cart-fill-nav-menu" aria-hidden="true"></span> Pinjam Barang
             </NavLink>
         </div>
 
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
+            <NavLink class="nav-link" href="Tracking">
+                <span class="bi bi-box-seam-nav-menu" aria-hidden="true"></span> Tracking & Returns
             </NavLink>
         </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="Reports">
+                <span class="bi bi-file-earmark-bar-graph-nav-menu" aria-hidden="true"></span> Laporan
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="Approval">
+                <span class="bi bi-check-circle-nav-menu" aria-hidden="true"></span> Approvals
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="TransactionHistory">
+                <span class="bi bi-clock-history-nav-menu" aria-hidden="true"></span> History
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="Profile">
+                <span class="bi bi-person-nav-menu" aria-hidden="true"></span> My Profile
+            </NavLink>
+        </div>
+
+        @if (IsAdminOrSuperadmin)
+        {
+            <div class="px-3 mt-3 mb-1 text-uppercase text-muted" style="font-size: 0.75rem; font-weight: bold;">Catalog</div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="Product">
+                    <span class="bi bi-box-seam-fill-nav-menu" aria-hidden="true"></span> Products
+                </NavLink>
+            </div>
+
+            <div class="px-3 mt-3 mb-1 text-uppercase text-muted" style="font-size: 0.75rem; font-weight: bold;">Master Data</div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="MasterData/Categories">
+                    <span class="bi bi-tags-nav-menu" aria-hidden="true"></span> Categories
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="MasterData/Locations">
+                    <span class="bi bi-geo-alt-nav-menu" aria-hidden="true"></span> Locations
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="MasterData/Units">
+                    <span class="bi bi-rulers-nav-menu" aria-hidden="true"></span> Units
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="MasterData/Divisions">
+                    <span class="bi bi-diagram-3-nav-menu" aria-hidden="true"></span> Divisions
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="MasterData/Users">
+                    <span class="bi bi-people-nav-menu" aria-hidden="true"></span> Users
+                </NavLink>
+            </div>
+        }
     </nav>
 </div>
 
+@code {
+    private bool IsAdminOrSuperadmin = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (user.Identity != null && user.Identity.IsAuthenticated)
+        {
+            var role = user.FindFirst(ClaimTypes.Role)?.Value;
+            if (role == "admin" || role == "superadmin")
+            {
+                IsAdminOrSuperadmin = true;
+            }
+        }
+    }
+}

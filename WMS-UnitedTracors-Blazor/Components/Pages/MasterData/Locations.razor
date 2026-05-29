@@ -1,0 +1,186 @@
+@page "/MasterData/Locations"
+@using UT_WMSDotnet.Models
+@using UT_WMSDotnet.ViewModels
+@using WMS_UnitedTracors_Blazor.Services
+@inject LocationService LocationService
+@rendermode InteractiveServer
+
+<PageTitle>Master Location</PageTitle>
+
+<div class="px-4 md:px-10 py-6 pb-24 font-sans bg-[#f5f4f0] min-h-screen">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">Master Location</h2>
+        <button @onclick="OpenCreateModal" class="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-black font-bold rounded-lg shadow-sm transition">
+            + Tambah Lokasi
+        </button>
+    </div>
+
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <div class="mb-4 bg-red-50 text-red-700 px-4 py-3 rounded-lg text-sm border border-red-200">@ErrorMessage</div>
+    }
+
+    <div class="bg-white rounded-xl shadow-sm border border-[#e5e3dc] overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="bg-[#faf9f5] border-b border-[#e5e3dc]">
+                        <th class="py-3 px-6 text-xs font-bold text-[#8a8880] uppercase tracking-wider">Nama Lokasi</th>
+                        <th class="py-3 px-6 text-xs font-bold text-[#8a8880] uppercase tracking-wider">Deskripsi</th>
+                        <th class="py-3 px-6 text-xs font-bold text-[#8a8880] uppercase tracking-wider text-center">Jumlah Produk</th>
+                        <th class="py-3 px-6 text-xs font-bold text-[#8a8880] uppercase tracking-wider text-right">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-[#f0ede5]">
+                    @if (LocationsList == null)
+                    {
+                        <tr><td colspan="4" class="p-6 text-center text-gray-500">Loading...</td></tr>
+                    }
+                    else if (!LocationsList.Any())
+                    {
+                        <tr><td colspan="4" class="p-6 text-center text-gray-500">Tidak ada data lokasi.</td></tr>
+                    }
+                    else
+                    {
+                        @foreach (var loc in LocationsList)
+                        {
+                            <tr class="hover:bg-[#faf9f5]">
+                                <td class="py-3 px-6 text-sm font-bold text-[#1a1a1a]">@loc.Name</td>
+                                <td class="py-3 px-6 text-sm text-[#8a8880]">@(loc.Description ?? "-")</td>
+                                <td class="py-3 px-6 text-sm text-center text-[#1a1a1a]">@loc.ProductsCount</td>
+                                <td class="py-3 px-6 text-right">
+                                    <button @onclick="() => OpenEditModal(loc)" class="text-blue-600 hover:text-blue-800 text-sm font-semibold mr-3">Edit</button>
+                                    <button @onclick="() => DeleteLocation(loc.Id)" class="text-red-600 hover:text-red-800 text-sm font-semibold" disabled="@(loc.ProductsCount > 0)">
+                                        Delete
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+        @if (TotalPages > 1)
+        {
+            <div class="px-6 py-4 border-t border-[#f0ede5] flex justify-between items-center bg-[#faf9f5]">
+                <span class="text-xs text-[#8a8880]">Halaman @CurrentPage dari @TotalPages</span>
+                <div class="flex gap-2">
+                    <button disabled="@(CurrentPage == 1)" @onclick="() => LoadData(CurrentPage - 1)" class="px-3 py-1 bg-white border border-[#e5e3dc] rounded text-sm disabled:opacity-50 hover:bg-gray-50">Prev</button>
+                    <button disabled="@(CurrentPage == TotalPages)" @onclick="() => LoadData(CurrentPage + 1)" class="px-3 py-1 bg-white border border-[#e5e3dc] rounded text-sm disabled:opacity-50 hover:bg-gray-50">Next</button>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@if (ShowModal)
+{
+    <div class="fixed inset-0 z-[70] flex min-h-full items-center justify-center p-4 text-center">
+        <div class="fixed inset-0 backdrop-blur-sm bg-black/60 transition-opacity" @onclick="CloseModal"></div>
+        <div class="relative transform overflow-hidden rounded-xl bg-white text-left shadow-2xl transition-all w-full max-w-lg border border-[#e5e3dc] z-10">
+            <div class="px-6 py-4 border-b border-[#f0ede5] flex items-center justify-between">
+                <h3 class="font-bold text-[#1a1a1a] text-lg">@(IsEdit ? "Edit Lokasi" : "Tambah Lokasi")</h3>
+                <button type="button" @onclick="CloseModal" class="text-[#a09e99] hover:text-[#1a1a1a] transition font-bold text-xl">&times;</button>
+            </div>
+            <div class="p-6">
+                <div class="mb-4">
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Nama Lokasi <span class="text-red-500">*</span></label>
+                    <input type="text" @bind="Model.name" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500" />
+                </div>
+                <div class="mb-6">
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Deskripsi</label>
+                    <textarea @bind="Model.description" rows="3" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 resize-none"></textarea>
+                </div>
+                <div class="flex justify-end gap-3">
+                    <button type="button" @onclick="CloseModal" class="px-5 py-2.5 bg-gray-100 text-gray-700 font-bold rounded-lg hover:bg-gray-200 transition">Batal</button>
+                    <button type="button" @onclick="SaveLocation" disabled="@IsSaving" class="px-5 py-2.5 bg-yellow-500 text-black font-bold rounded-lg hover:bg-yellow-600 transition disabled:opacity-50">
+                        @(IsSaving ? "Menyimpan..." : "Simpan")
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<LocationDto>? LocationsList;
+    private int CurrentPage = 1;
+    private int TotalPages = 1;
+    
+    private bool ShowModal = false;
+    private bool IsEdit = false;
+    private bool IsSaving = false;
+    private string? ErrorMessage;
+    private int EditId = 0;
+    
+    private LocationViewModel Model = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData(1);
+    }
+
+    private async Task LoadData(int page)
+    {
+        CurrentPage = page;
+        var result = await LocationService.GetLocationsAsync(CurrentPage, 10);
+        LocationsList = result.Locations;
+        TotalPages = result.TotalPages;
+    }
+
+    private void OpenCreateModal()
+    {
+        IsEdit = false;
+        Model = new LocationViewModel();
+        ErrorMessage = null;
+        ShowModal = true;
+    }
+
+    private void OpenEditModal(LocationDto loc)
+    {
+        IsEdit = true;
+        EditId = loc.Id;
+        Model = new LocationViewModel { name = loc.Name, description = loc.Description };
+        ErrorMessage = null;
+        ShowModal = true;
+    }
+
+    private void CloseModal()
+    {
+        ShowModal = false;
+    }
+
+    private async Task SaveLocation()
+    {
+        if (string.IsNullOrWhiteSpace(Model.name))
+        {
+            ErrorMessage = "Nama lokasi wajib diisi.";
+            return;
+        }
+
+        IsSaving = true;
+        ErrorMessage = null;
+
+        string? error;
+        if (IsEdit) error = await LocationService.UpdateLocationAsync(EditId, Model);
+        else error = await LocationService.CreateLocationAsync(Model);
+
+        IsSaving = false;
+
+        if (error != null)
+        {
+            ErrorMessage = error;
+        }
+        else
+        {
+            CloseModal();
+            await LoadData(CurrentPage);
+        }
+    }
+
+    private async Task DeleteLocation(int id)
+    {
+        await LocationService.DeleteLocationAsync(id);
+        await LoadData(CurrentPage);
+    }
+}

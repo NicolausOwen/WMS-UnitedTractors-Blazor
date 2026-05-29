@@ -1,0 +1,294 @@
+@page "/Approval"
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@using UT_WMSDotnet.Models
+@using WMS_UnitedTracors_Blazor.Services
+@inject ApprovalService ApprovalService
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthStateProvider
+@rendermode InteractiveServer
+
+<PageTitle>Approvals</PageTitle>
+
+<div class="py-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">Approvals</h2>
+    </div>
+
+    @if (!string.IsNullOrEmpty(SuccessMessage))
+    {
+        <div class="mb-4 flex items-center gap-3 bg-[#eef9f0] border border-[#b8e8c0] text-[#1a7a30] px-4 py-3 rounded-lg text-sm font-semibold">
+            @SuccessMessage
+        </div>
+    }
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <div class="mb-4 flex items-center gap-3 bg-[#fef0f0] border border-[#f8c0c0] text-[#d94040] px-4 py-3 rounded-lg text-sm font-semibold">
+            @ErrorMessage
+        </div>
+    }
+
+    <div class="mb-8">
+        <h3 class="text-lg font-bold text-[#1a1a1a] mb-4">Pending Requests</h3>
+        
+        @if (GroupedApprovals == null)
+        {
+            <div class="bg-white p-12 rounded-xl border border-[#e5e3dc] text-center shadow-sm text-gray-500">Loading...</div>
+        }
+        else if (GroupedApprovals.Count == 0)
+        {
+            <div class="bg-white p-12 rounded-xl border border-[#e5e3dc] text-center shadow-sm">
+                <p class="text-sm font-bold text-[#8a8880] tracking-wide">No pending requests at the moment.</p>
+            </div>
+        }
+        else
+        {
+            <div class="flex justify-end mb-4">
+                <button @onclick="ProcessBatch" disabled="@(Decisions.Count == 0 || IsProcessing)" class="inline-flex items-center gap-2 px-4 py-2 bg-[#1a1a1a] text-white text-xs font-bold rounded-lg shadow-sm hover:bg-[#333] transition disabled:opacity-50">
+                    Process Selected Items (@Decisions.Count)
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                @foreach (var group in GroupedApprovals)
+                {
+                    var firstItem = group.Value.First();
+                    bool isExpanded = ExpandedGroups.Contains(group.Key);
+
+                    <div class="bg-white rounded-xl shadow-sm border border-[#e5e3dc] overflow-hidden">
+                        <div class="flex items-center justify-between p-5 border-b border-[#f0ede5] bg-[#faf9f5]">
+                            <div class="cursor-pointer flex-1" @onclick="() => ToggleGroup(group.Key)">
+                                <div class="flex items-center gap-3 mb-1.5">
+                                    <span class="text-[0.65rem] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider @(firstItem.type == "IN" ? "bg-[#e0f2fe] text-[#1a6b8a] border border-[#bae6fd]" : "bg-purple-50 text-purple-700 border border-purple-200")">
+                                        @(firstItem.type == "IN" ? "STOCK IN" : "STOCK OUT")
+                                    </span>
+                                    <span class="text-sm font-bold text-[#1a1a1a]">
+                                        @firstItem.created_at.ToString("dd MMM yyyy, HH:mm")
+                                    </span>
+                                </div>
+                                <div class="text-xs text-[#8a8880] font-medium">
+                                    Submitted by: <span class="text-[#1a1a1a]">@(firstItem.Requester?.name ?? "Unknown")</span>
+                                    @if (firstItem.type == "OUT" && !string.IsNullOrEmpty(firstItem.event_name))
+                                    {
+                                        <span class="mx-1">•</span> <span>Event: <span class="text-[#1a1a1a]">@firstItem.event_name</span></span>
+                                    }
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center gap-3">
+                                @if (UserRole == "manager" || UserRole == "admin" || UserRole == "superadmin")
+                                {
+                                    <button @onclick="() => ApproveAllGroup(group.Value)" disabled="@IsProcessing" class="px-3 py-1.5 text-xs font-bold text-white bg-[#e8a000] rounded-md hover:bg-[#d49300] transition shadow-sm disabled:opacity-50">
+                                        Approve All
+                                    </button>
+                                }
+                            </div>
+                        </div>
+
+                        @if (isExpanded)
+                        {
+                            @if (firstItem.type == "OUT")
+                            {
+                                <div class="p-4 bg-white border-b border-[#f0ede5]">
+                                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                        <div>
+                                            <div class="text-[0.65rem] text-[#8a8880] font-bold uppercase tracking-wider mb-1">Applicant</div>
+                                            <div class="text-sm font-bold text-[#1a1a1a]">@(firstItem.applicant_name ?? "-")</div>
+                                        </div>
+                                        <div>
+                                            <div class="text-[0.65rem] text-[#8a8880] font-bold uppercase tracking-wider mb-1">Event</div>
+                                            <div class="text-sm font-bold text-[#1a1a1a]">@(firstItem.event_name ?? "-")</div>
+                                        </div>
+                                        <div>
+                                            <div class="text-[0.65rem] text-[#8a8880] font-bold uppercase tracking-wider mb-1">Documentation</div>
+                                            @if (!string.IsNullOrEmpty(firstItem.documentation_link))
+                                            {
+                                                <a href="@firstItem.documentation_link" target="_blank" class="text-sm font-bold text-[#e8a000] hover:underline">Link</a>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+
+                            <div class="bg-[#faf9f5] p-4">
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-left">
+                                        <thead>
+                                            <tr class="border-b border-[#e5e3dc]">
+                                                <th class="pb-2 text-[0.65rem] font-bold text-[#8a8880] uppercase tracking-wider">Product</th>
+                                                <th class="pb-2 text-[0.65rem] font-bold text-[#8a8880] uppercase tracking-wider text-center">Qty</th>
+                                                <th class="pb-2 text-[0.65rem] font-bold text-[#8a8880] uppercase tracking-wider">Type</th>
+                                                <th class="pb-2 text-[0.65rem] font-bold text-[#8a8880] uppercase tracking-wider text-right">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-[#f0ede5]">
+                                            @foreach (var item in group.Value)
+                                            {
+                                                <tr class="bg-white">
+                                                    <td class="py-3 px-3">
+                                                        <div class="text-sm font-bold text-[#1a1a1a]">@(item.Product?.name)</div>
+                                                        <div class="text-[10px] text-[#8a8880]">@(item.Product?.sku)</div>
+                                                    </td>
+                                                    <td class="py-3 px-3 text-center">
+                                                        <div class="text-sm font-bold text-[#1a1a1a]">@item.quantity</div>
+                                                    </td>
+                                                    <td class="py-3 px-3">
+                                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold @(item.request_type == "BORROW" ? "bg-[#eef9f0] text-[#1a7a30] border-[#b8e8c0]" : "bg-[#e0f2fe] text-[#1a6b8a] border-[#bae6fd]") border">
+                                                            @item.request_type
+                                                        </span>
+                                                    </td>
+                                                    <td class="py-3 px-3 text-right">
+                                                        @if (UserRole == "manager" || UserRole == "admin" || UserRole == "superadmin")
+                                                        {
+                                                            <div class="flex flex-col items-end gap-2">
+                                                                <div class="flex items-center gap-1 bg-[#f5f4f0] p-1 rounded-lg border border-[#e5e3dc]">
+                                                                    <button @onclick='() => SetDecision(item.id, "APPROVE")' class="px-3 py-1.5 text-xs font-bold rounded transition-all @(Decisions.GetValueOrDefault(item.id) == "APPROVE" ? "bg-[#1a7a30] text-white" : "text-[#8a8880] hover:text-[#1a1a1a]")">
+                                                                        Approve
+                                                                    </button>
+                                                                    <button @onclick='() => SetDecision(item.id, "REVISION")' class="px-3 py-1.5 text-xs font-bold rounded transition-all @(Decisions.GetValueOrDefault(item.id) == "REVISION" ? "bg-[#4338ca] text-white" : "text-[#8a8880] hover:text-[#1a1a1a]")">
+                                                                        Revision
+                                                                    </button>
+                                                                    <button @onclick='() => SetDecision(item.id, "REJECT")' class="px-3 py-1.5 text-xs font-bold rounded transition-all @(Decisions.GetValueOrDefault(item.id) == "REJECT" ? "bg-[#d94040] text-white" : "text-[#8a8880] hover:text-[#1a1a1a]")">
+                                                                        Reject
+                                                                    </button>
+                                                                </div>
+                                                                @if (Decisions.GetValueOrDefault(item.id) == "REJECT" || Decisions.GetValueOrDefault(item.id) == "REVISION")
+                                                                {
+                                                                    <input type="text" @bind="Reasons[item.id]" placeholder="Reason *" class="w-full px-2 py-1.5 text-xs border rounded focus:ring-0 text-[#1a1a1a] max-w-[250px]" />
+                                                                }
+                                                            </div>
+                                                        }
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private Dictionary<string, List<Transaction>>? GroupedApprovals;
+    private List<Transaction>? PendingReturns;
+    
+    private string? SuccessMessage;
+    private string? ErrorMessage;
+    private bool IsProcessing = false;
+
+    private int CurrentUserId = 0;
+    private string? UserRole;
+
+    private HashSet<string> ExpandedGroups = new();
+    
+    private Dictionary<int, string> Decisions = new();
+    private Dictionary<int, string> Reasons = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity != null && user.Identity.IsAuthenticated)
+        {
+            if (int.TryParse(user.FindFirst(ClaimTypes.NameIdentifier)?.Value, out int id))
+                CurrentUserId = id;
+            UserRole = user.FindFirst(ClaimTypes.Role)?.Value;
+        }
+
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        var data = await ApprovalService.GetApprovalsAsync(CurrentUserId, UserRole);
+        GroupedApprovals = data.GroupedApprovals;
+        PendingReturns = data.PendingReturns;
+        
+        ExpandedGroups.Clear();
+        if (GroupedApprovals.Any())
+        {
+            ExpandedGroups.Add(GroupedApprovals.First().Key);
+        }
+        
+        Decisions.Clear();
+        Reasons.Clear();
+    }
+
+    private void ToggleGroup(string groupId)
+    {
+        if (ExpandedGroups.Contains(groupId))
+            ExpandedGroups.Remove(groupId);
+        else
+            ExpandedGroups.Add(groupId);
+    }
+
+    private void SetDecision(int id, string decision)
+    {
+        Decisions[id] = decision;
+        if (decision == "APPROVE" && Reasons.ContainsKey(id))
+        {
+            Reasons.Remove(id);
+        }
+    }
+
+    private async Task ApproveAllGroup(List<Transaction> items)
+    {
+        IsProcessing = true;
+        ErrorMessage = null;
+        SuccessMessage = null;
+
+        int successCount = 0;
+        foreach (var item in items)
+        {
+            var err = await ApprovalService.ApproveAsync(item.id, CurrentUserId, UserRole);
+            if (err != null) ErrorMessage += $"Item {item.id}: {err} | ";
+            else successCount++;
+        }
+
+        if (successCount > 0) SuccessMessage = $"{successCount} items approved.";
+        
+        await LoadData();
+        IsProcessing = false;
+    }
+
+    private async Task ProcessBatch()
+    {
+        IsProcessing = true;
+        ErrorMessage = null;
+        SuccessMessage = null;
+
+        int successCount = 0;
+        foreach (var kvp in Decisions)
+        {
+            var id = kvp.Key;
+            var action = kvp.Value;
+            var reason = Reasons.GetValueOrDefault(id, "");
+
+            if ((action == "REJECT" || action == "REVISION") && string.IsNullOrWhiteSpace(reason))
+            {
+                ErrorMessage = "Please provide a reason for all rejected or revised items.";
+                IsProcessing = false;
+                return;
+            }
+
+            string? err = null;
+            if (action == "APPROVE") err = await ApprovalService.ApproveAsync(id, CurrentUserId, UserRole);
+            else if (action == "REJECT") err = await ApprovalService.RejectAsync(id, reason, CurrentUserId, UserRole);
+            else if (action == "REVISION") err = await ApprovalService.RequestRevisionAsync(id, reason, CurrentUserId, UserRole);
+
+            if (err != null) ErrorMessage += $"Item {id}: {err} | ";
+            else successCount++;
+        }
+
+        if (successCount > 0) SuccessMessage = $"{successCount} items processed.";
+        
+        await LoadData();
+        IsProcessing = false;
+    }
+}

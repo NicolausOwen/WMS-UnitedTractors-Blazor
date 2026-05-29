@@ -1,0 +1,110 @@
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace UT_WMSDotnet.Models;
+
+public class Transaction
+{
+    [Key]
+    public int id { get; set; }
+
+    public int product_id { get; set; }
+
+    public int? product_variant_id { get; set; }
+
+    [Required]
+    [StringLength(50)]
+    public string type { get; set; } = string.Empty;
+
+    [StringLength(50)]
+    public string? request_type { get; set; }
+
+    public int? quantity { get; set; }
+
+    public int? returned_quantity { get; set; }
+
+    public int? pending_return_quantity { get; set; }
+
+    public DateTime? returned_at { get; set; }
+
+    [StringLength(255)]
+    public string? return_photo { get; set; }
+
+    [StringLength(50)]
+    public string? return_status { get; set; }
+
+    [StringLength(500)]
+    public string? return_reason { get; set; }
+
+    public int? is_return_draft { get; set; }
+
+    [StringLength(255)]
+    public string? return_condition { get; set; }
+
+    [Required]
+    [StringLength(50)]
+    public string status { get; set; } = string.Empty;
+
+    [StringLength(500)]
+    public string? rejection_reason { get; set; }
+
+    [StringLength(500)]
+    public string? return_rejection_reason { get; set; }
+
+    public int requester_id { get; set; }
+
+    public int? approver_id { get; set; }
+
+    [StringLength(500)]
+    public string? notes { get; set; }
+
+    [StringLength(100)]
+    public string? used_by { get; set; }
+
+    public int? division_id { get; set; }
+
+    public DateTime created_at { get; set; } = DateTime.UtcNow;
+
+    public DateTime updated_at { get; set; } = DateTime.UtcNow;
+
+    [StringLength(255)]
+    public string? applicant_name { get; set; }
+
+    [StringLength(50)]
+    public string? applicant_nrp { get; set; }
+
+    public int? borrow_duration_days { get; set; }
+
+    [Column(TypeName = "date")]
+    public DateTime? borrow_start_date { get; set; }
+
+    [Column(TypeName = "date")]
+    public DateTime? expected_return_date { get; set; }
+
+    [StringLength(255)]
+    public string? event_name { get; set; }
+
+    [Column(TypeName = "date")]
+    public DateTime? event_date { get; set; }
+
+    [StringLength(500)]
+    public string? documentation_link { get; set; }
+
+    // Navigation Properties (Relasi)
+    [ForeignKey("product_id")]
+    public virtual Product? Product { get; set; }
+
+    [ForeignKey("product_variant_id")]
+    public virtual ProductVariant? ProductVariant { get; set; }
+
+    [ForeignKey("requester_id")]
+    public virtual User? Requester { get; set; }
+
+    [ForeignKey("approver_id")]
+    public virtual User? Approver { get; set; }
+
+    [ForeignKey("division_id")]
+    public virtual Division? Division { get; set; }
+
+    public virtual ICollection<StockLog> StockLogs { get; set; } = new List<StockLog>();
+}
