@@ -1,0 +1,273 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom variables below: */
+:root {
+  --color-ut-yellow: #ffcc00;
+  --color-ut-dark: #222222;
+  --color-ut-gray: #f4f4f4;
+  
+  --color-primary-50: #fffbeb;
+  --color-primary-100: #fef3c7;
+  --color-primary-200: #fde68a;
+  --color-primary-300: #fcd34d;
+  --color-primary-400: #fbbf24;
+  --color-primary-500: #ffcc00;
+  --color-primary-600: #e6b800;
+  --color-primary-700: #b38f00;
+  --color-primary-800: #806600;
+  --color-primary-900: #4d3d00;
+
+  --color-ut-gold: #e8a000;
+  --color-ut-bg: #1a1a1a;
+  --color-ut-muted: #8a8780;
+  
+  --color-ut-success: #1a7a30;
+  --color-ut-danger: #d94040;
+  --color-ut-warning: #92400e;
+  --color-ut-info: #1a6b8a;
+}
+
+:root {
+  --ut-bg: #1a1a1a;
+  --ut-bg2: #222222;
+  --ut-bg3: #2a2a2a;
+  --ut-gold: #e8a000;
+  --ut-gold-dark: #c98d00;
+  --ut-muted: #8a8780;
+  --ut-sidebar-w: 240px;
+  --ut-sidebar-collapsed-w: 56px;
+  --ut-transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: #f5f4f0;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.main-wrapper {
+  margin-left: var(--ut-sidebar-w) !important;
+  transition: margin-left var(--ut-transition);
+}
+
+body.ut-collapsed .main-wrapper {
+  margin-left: calc(var(--ut-sidebar-collapsed-w) + 20px) !important;
+}
+
+@media (max-width: 768px) {
+  .main-wrapper {
+    margin-left: 0 !important;
+  }
+}
+
+/* Layout Transitions */
+.ut-sidebar {
+  width: var(--ut-sidebar-w);
+  transition: width var(--ut-transition);
+}
+body.ut-collapsed .ut-sidebar {
+  width: var(--ut-sidebar-collapsed-w);
+}
+
+.ut-toggle-btn {
+  left: calc(var(--ut-sidebar-w) - 14px);
+  transition: left var(--ut-transition);
+}
+body.ut-collapsed .ut-toggle-btn {
+  left: calc(var(--ut-sidebar-collapsed-w) - 14px);
+}
+body.ut-collapsed .ut-toggle-btn svg {
+  transform: rotate(180deg);
+}
+
+.ut-sidebar-logo-text {
+  opacity: 1;
+  width: 140px;
+  transition: opacity 0.15s, width var(--ut-transition);
+}
+body.ut-collapsed .ut-sidebar-logo-text {
+  opacity: 0;
+  width: 0;
+  pointer-events: none;
+}
+body.ut-collapsed .ut-sidebar-header {
+  justify-content: center;
+  padding: 0;
+}
+
+/* Nav section labels */
+.ut-section-label {
+  opacity: 1;
+  height: auto;
+  transition: opacity 0.15s, height 0.2s, padding 0.2s;
+}
+body.ut-collapsed .ut-section-label {
+  opacity: 0;
+  height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  pointer-events: none;
+}
+
+/* Nav Links and Tooltips */
+.ut-nav-link {
+  border-left: 2.5px solid transparent;
+  transition: color 0.15s, background 0.15s, border-color 0.15s, padding var(--ut-transition);
+}
+body.ut-collapsed .ut-nav-link {
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+  border-left-color: transparent !important;
+}
+body.ut-collapsed .ut-nav-link.active {
+  background: rgba(232, 160, 0, 0.1);
+}
+
+.ut-link-text {
+  opacity: 1;
+  max-width: 160px;
+  transition: opacity 0.15s, max-width var(--ut-transition);
+}
+body.ut-collapsed .ut-link-text {
+  opacity: 0;
+  max-width: 0;
+  pointer-events: none;
+}
+
+body.ut-collapsed .ut-badge {
+  opacity: 0;
+  pointer-events: none;
+}
+
+body.ut-collapsed .ut-nav-link::after {
+  content: attr(data-label);
+  position: absolute;
+  left: calc(var(--ut-sidebar-collapsed-w) + 20px);
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--ut-bg2);
+  border: 1px solid var(--ut-bg3);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s 0.05s;
+  z-index: 200;
+}
+body.ut-collapsed .ut-nav-link:hover::after {
+  opacity: 1;
+}
+
+/* Sidebar Footer */
+.ut-sidebar-footer {
+  transition: padding var(--ut-transition);
+}
+body.ut-collapsed .ut-sidebar-footer {
+  padding-left: 0;
+  padding-right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+body.ut-collapsed .ut-sidebar-user {
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+}
+.ut-sidebar-user-info {
+  opacity: 1;
+  max-width: 140px;
+  transition: opacity 0.15s, max-width var(--ut-transition);
+}
+body.ut-collapsed .ut-sidebar-user-info {
+  opacity: 0;
+  max-width: 0;
+  pointer-events: none;
+}
+.ut-credit-info {
+  opacity: 1;
+  max-height: 40px;
+  overflow: hidden;
+  transition: opacity 0.15s, max-height 0.2s, margin-top 0.2s, padding 0.2s;
+}
+body.ut-collapsed .ut-credit-info {
+  opacity: 0;
+  max-height: 0;
+  margin-top: 0;
+  padding-bottom: 0;
+  pointer-events: none;
+}
+.ut-footer-links {
+  max-height: 40px;
+  opacity: 1;
+  transition: opacity 0.15s, max-height 0.2s, margin-top 0.2s;
+}
+body.ut-collapsed .ut-footer-links {
+  opacity: 0;
+  max-height: 0;
+  margin-top: 0;
+  pointer-events: none;
+}
+
+/* Drawer CSS */
+.ut-drawer {
+  display: none;
+}
+.ut-drawer.open {
+  display: block;
+}
+.ut-drawer-panel {
+  transform: translateX(-100%);
+  transition: transform var(--ut-transition);
+}
+.ut-drawer.open .ut-drawer-panel {
+  transform: translateX(0);
+}
+
+/* Active line for mobile bottom navbar link */
+.ut-bottom-link.active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 2.5px;
+  background: var(--ut-gold);
+  border-radius: 0 0 3px 3px;
+}
+
+/* Custom micro-interactions and transitions */
+.hover-card-trigger {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.hover-card-trigger:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 20px -10px rgba(0, 0, 0, 0.08);
+}
+
+/* Glassmorphism helpers */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.dark-glass-panel {
+  background: rgba(26, 26, 26, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+

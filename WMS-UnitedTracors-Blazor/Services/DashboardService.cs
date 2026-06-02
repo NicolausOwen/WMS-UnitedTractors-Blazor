@@ -22,7 +22,7 @@ public class DashboardService
         List<Product> CatalogProducts, 
         int TotalItems, 
         int TotalPages)> 
-        GetDashboardDataAsync(int? category, int page = 1, int pageSize = 12)
+        GetDashboardDataAsync(int? category, string? search = null, int page = 1, int pageSize = 15)
     {
         var widgetTotalItems = await _context.Products.CountAsync();
         var pendingApprovals = await _context.Transactions.CountAsync(t => t.status == "PENDING");
@@ -42,6 +42,11 @@ public class DashboardService
         if (category.HasValue)
         {
             catalogQuery = catalogQuery.Where(p => p.category_id == category.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            catalogQuery = catalogQuery.Where(p => p.name.Contains(search) || p.sku.Contains(search));
         }
 
         int catalogTotalItems = await catalogQuery.CountAsync();
