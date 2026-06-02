@@ -329,7 +329,7 @@
                             @if(ModalImages.Count > 1) {
                                 <div class="flex gap-2 overflow-x-auto pb-2" style="scrollbar-width: thin;">
                                     @foreach(var img in ModalImages) {
-                                        <button type="button" @onclick="() => SelectedMainImage = img" class="relative w-16 h-16 rounded-lg overflow-hidden shrink-0 border-2 transition-colors @(SelectedMainImage == img ? "border-[#e8a000]" : "border-transparent opacity-70 hover:opacity-100")">
+                                        <button type="button" @onclick="() => SelectImage(img)" class="relative w-16 h-16 rounded-lg overflow-hidden shrink-0 border-2 transition-colors @(SelectedMainImage == img ? "border-[#e8a000]" : "border-transparent opacity-70 hover:opacity-100")">
                                             <img src="@(img.StartsWith("images/") ? $"/{img}" : $"/storage/{img}")" class="w-full h-full object-cover" />
                                         </button>
                                     }
@@ -623,6 +623,37 @@
         UpdateSelectedVariant();
     }
 
+    private void SelectImage(string img)
+    {
+        SelectedMainImage = img;
+        
+        // Sync thumbnail click with variant color
+        if (SelectedProduct?.ProductVariants != null && ModalImages.Count > 1)
+        {
+            var variantWithImage = SelectedProduct.ProductVariants.FirstOrDefault(v => v.image == img || v.image == img.Replace("/storage/", ""));
+            if (variantWithImage != null && !string.IsNullOrEmpty(variantWithImage.color))
+            {
+                SelectedVariantColor = variantWithImage.color;
+                UpdateSelectedVariant();
+                return;
+            }
+            
+            // Fallback matching
+            var colorsList = SelectedProduct.ProductVariants.Select(v => v.color).Where(c => !string.IsNullOrEmpty(c)).Distinct().ToList();
+            int imgIndex = ModalImages.IndexOf(img);
+            if (imgIndex > 0 && imgIndex <= colorsList.Count)
+            {
+                SelectedVariantColor = colorsList[imgIndex - 1];
+                UpdateSelectedVariant();
+            }
+            else if (imgIndex == 0 && colorsList.Count > 0)
+            {
+                SelectedVariantColor = colorsList[0];
+                UpdateSelectedVariant();
+            }
+        }
+    }
+
     private void UpdateSelectedVariant()
     {
         if (SelectedProduct?.ProductVariants != null)
@@ -638,6 +669,20 @@
                 if (!string.IsNullOrEmpty(variant.image))
                 {
                     SelectedMainImage = variant.image;
+                }
+                else
+                {
+                    // Fallback to index mapping if variant has no image
+                    var colorsList = SelectedProduct.ProductVariants.Select(v => v.color).Where(c => !string.IsNullOrEmpty(c)).Distinct().ToList();
+                    int colorIndex = colorsList.IndexOf(variant.color ?? "");
+                    if (colorIndex >= 0 && colorIndex + 1 < ModalImages.Count)
+                    {
+                        SelectedMainImage = ModalImages[colorIndex + 1];
+                    }
+                    else if (colorIndex >= 0 && colorIndex < ModalImages.Count)
+                    {
+                        SelectedMainImage = ModalImages[colorIndex];
+                    }
                 }
             }
         }
