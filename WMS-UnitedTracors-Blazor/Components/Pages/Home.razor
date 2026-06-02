@@ -26,20 +26,20 @@
     
     @* Metric Cards *@
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-        <div class="bg-white border border-[#e5e3dc] rounded-[10px] p-5 sm:px-6">
+        <div class="bg-white border border-[#e5e3dc] hover:border-[#e8a000] border-l-4 border-l-[#e8a000] rounded-r-[10px] rounded-l-[4px] p-5 sm:px-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-[1px]">
             <p class="text-[0.65rem] font-bold tracking-[0.12em] uppercase text-[#8a8880] mb-1.5">Total Items</p>
             <p class="font-sans text-4xl font-bold text-[#1a1a1a] leading-none">@WidgetTotalItems</p>
         </div>
-        <div class="bg-white border border-[#e5e3dc] rounded-[10px] p-5 sm:px-6">
+        <div class="bg-white border border-[#e5e3dc] hover:border-[#1a7a30] border-l-4 border-l-[#1a7a30] rounded-r-[10px] rounded-l-[4px] p-5 sm:px-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-[1px]">
             <p class="text-[0.65rem] font-bold tracking-[0.12em] uppercase text-[#8a8880] mb-1.5">Total Stock</p>
             <p class="font-sans text-4xl font-bold text-[#1a1a1a] leading-none">@TotalStock</p>
         </div>
-        <div class="bg-white border border-[#e5e3dc] rounded-[10px] p-5 sm:px-6">
+        <div class="bg-white border border-[#e5e3dc] hover:border-[#d94040] border-l-4 border-l-[#d94040] rounded-r-[10px] rounded-l-[4px] p-5 sm:px-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-[1px]">
             <p class="text-[0.65rem] font-bold tracking-[0.12em] uppercase text-[#8a8880] mb-1.5">Pending Approval</p>
             <div class="flex items-center gap-2">
                 <p class="font-sans text-4xl font-bold text-[#1a1a1a] leading-none">@PendingApprovals</p>
                 @if (PendingApprovals > 0) {
-                    <span class="inline-flex items-center px-[0.55rem] py-[0.15rem] bg-[#fef3c7] border border-[#fde68a] text-[#92400e] text-[0.62rem] font-bold rounded-[5px] tracking-[0.04em]">Needs review</span>
+                    <span class="inline-flex items-center px-[0.55rem] py-[0.15rem] bg-[#fef0f0] border border-[#f8c0c0] text-[#d94040] text-[0.62rem] font-bold rounded-[5px] tracking-[0.04em]">Needs review</span>
                 }
             </div>
         </div>
@@ -217,16 +217,25 @@
                                 <div class="space-y-3 max-h-60 overflow-y-auto pr-2">
                                     @foreach(var item in CartService.Items)
                                     {
-                                        <div class="flex flex-wrap items-start gap-2 item-row">
-                                            <div class="flex-1" style="min-width: 150px;">
-                                                <input type="text" class="w-full px-3.5 py-2.5 text-xs bg-[#ecebe8] border border-[#e5e3dc] rounded-lg outline-none text-[#5a5855] cursor-not-allowed font-semibold truncate" readonly value="@item.Name">
+                                        <div class="bg-white border border-[#e5e3dc] rounded-xl p-3.5 flex items-center justify-between gap-3 shadow-sm hover:border-gray-300 transition-colors">
+                                            <div class="flex-1 min-w-0 text-left">
+                                                <h4 class="text-xs font-bold text-[#1a1a1a] truncate" title="@item.Name">@item.Name</h4>
+                                                <div class="flex items-center gap-1.5 mt-1 text-[10px] text-gray-500 font-semibold">
+                                                    <span>Sku: @item.Sku</span>
+                                                    <span>•</span>
+                                                    <span>Type: <span class="text-[#e8a000]">@item.RequestType</span></span>
+                                                </div>
                                             </div>
-                                            <div style="flex: 0 0 80px;" class="flex items-center">
-                                                <input type="number" class="w-full px-2 py-2.5 text-xs bg-white border border-[#e5e3dc] rounded-lg outline-none text-[#1a1a1a] text-center focus:border-[#e8a000]" min="1" max="@item.MaxStock" @bind="item.Quantity" @bind:event="oninput">
+                                            <div class="flex items-center gap-2 shrink-0">
+                                                <div class="flex items-center border border-[#e5e3dc] rounded-lg overflow-hidden bg-white h-8">
+                                                    <button type="button" @onclick="() => { if(item.Quantity > 1) item.Quantity--; }" class="w-7 h-full flex items-center justify-center text-xs text-[#5a5855] hover:bg-[#f5f4f0] transition font-bold select-none">-</button>
+                                                    <input type="number" @bind="item.Quantity" @bind:event="oninput" min="1" max="@item.MaxStock" class="w-10 text-center py-0.5 text-xs outline-none bg-transparent font-bold">
+                                                    <button type="button" @onclick="() => { if(item.Quantity < item.MaxStock) item.Quantity++; }" class="w-7 h-full flex items-center justify-center text-xs text-[#5a5855] hover:bg-[#f5f4f0] transition font-bold select-none">+</button>
+                                                </div>
+                                                <button type="button" class="p-1.5 text-[#d94040] hover:bg-[#fef0f0] rounded-lg bg-transparent border border-transparent hover:border-[#f8c0c0] cursor-pointer transition shrink-0" @onclick="() => CartService.RemoveItem(item)" title="Hapus">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                </button>
                                             </div>
-                                            <button type="button" class="flex-none p-2.5 text-[#d94040] hover:bg-[#fef0f0] rounded-lg bg-transparent border-0 cursor-pointer transition" @onclick="() => CartService.RemoveItem(item)">
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                            </button>
                                         </div>
                                     }
                                 </div>

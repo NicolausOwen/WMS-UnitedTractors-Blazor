@@ -135,7 +135,8 @@
 
                                 <div class="bg-[#faf9f5] p-4">
                                     <h4 class="text-[0.65rem] font-bold uppercase tracking-wider text-[#8a8880] mb-3">Items Requested</h4>
-                                    <div class="overflow-x-auto">
+                                    <!-- Desktop Items View -->
+                                    <div class="hidden md:block overflow-x-auto">
                                         <table class="w-full text-left">
                                             <thead>
                                                 <tr class="border-b border-[#e5e3dc]">
@@ -220,6 +221,82 @@
                                                 }
                                             </tbody>
                                         </table>
+                                    </div>
+
+                                    <!-- Mobile Items List -->
+                                    <div class="block md:hidden divide-y divide-[#e5e3dc]">
+                                        @foreach (var item in group.Value)
+                                        {
+                                            <div class="bg-white p-4 flex flex-col gap-3">
+                                                <div class="flex items-start gap-3">
+                                                    @if (!string.IsNullOrEmpty(item.Product?.image))
+                                                    {
+                                                        <img src="/storage/@item.Product.image" class="w-10 h-10 rounded object-cover border border-[#e5e3dc] shrink-0">
+                                                    }
+                                                    <div class="min-w-0 text-left">
+                                                        <div class="text-sm font-bold text-[#1a1a1a] truncate">@(item.Product?.name)</div>
+                                                        <div class="text-[10px] text-[#8a8880]">@(item.Product?.sku)</div>
+                                                        @if (item.type == "OUT" && item.Product?.current_stock < item.quantity)
+                                                        {
+                                                            <div class="text-[10px] text-[#d94040] font-bold mt-0.5">⚠️ Stok Kurang: Sisa @(item.Product?.current_stock)</div>
+                                                        }
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="flex justify-between items-center text-xs bg-gray-50 p-2 rounded-lg text-left">
+                                                    <div>
+                                                        <span class="text-gray-400 block text-[9px] uppercase font-semibold">Qty</span>
+                                                        <span class="font-bold text-gray-800">@item.quantity</span>
+                                                    </div>
+                                                    <div>
+                                                        <span class="text-gray-400 block text-[9px] uppercase font-semibold">Type</span>
+                                                        @if (item.request_type == "BORROW")
+                                                        {
+                                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#eef9f0] text-[#1a7a30] border border-[#b8e8c0]">BORROW</span>
+                                                            @if (item.borrow_duration_days > 0)
+                                                            {
+                                                                <span class="text-[9px] text-gray-500 ml-1">(@item.borrow_duration_days d)</span>
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#e0f2fe] text-[#1a6b8a] border border-[#bae6fd]">GIVEAWAY</span>
+                                                        }
+                                                    </div>
+                                                </div>
+
+                                                @if (UserRole == "manager" || UserRole == "admin" || UserRole == "superadmin")
+                                                {
+                                                    <div class="flex flex-col gap-2 mt-1">
+                                                        <div class="flex items-center gap-1 bg-[#f5f4f0] p-1 rounded-lg border border-[#e5e3dc]">
+                                                            <button type="button" 
+                                                                @onclick='() => SetDecision(item.id, "APPROVE")'
+                                                                class="flex-1 py-1.5 text-xs font-bold rounded transition-all @(Decisions.GetValueOrDefault(item.id) == "APPROVE" ? "bg-[#1a7a30] text-white shadow-sm" : "text-[#8a8880] hover:text-[#1a1a1a] hover:bg-white")">
+                                                                Approve
+                                                            </button>
+                                                            <button type="button" 
+                                                                @onclick='() => SetDecision(item.id, "REVISION")'
+                                                                class="flex-1 py-1.5 text-xs font-bold rounded transition-all @(Decisions.GetValueOrDefault(item.id) == "REVISION" ? "bg-[#4338ca] text-white shadow-sm" : "text-[#8a8880] hover:text-[#1a1a1a] hover:bg-white")">
+                                                                Revision
+                                                            </button>
+                                                            <button type="button" 
+                                                                @onclick='() => SetDecision(item.id, "REJECT")'
+                                                                class="flex-1 py-1.5 text-xs font-bold rounded transition-all @(Decisions.GetValueOrDefault(item.id) == "REJECT" ? "bg-[#d94040] text-white shadow-sm" : "text-[#8a8880] hover:text-[#1a1a1a] hover:bg-white")">
+                                                                Reject
+                                                            </button>
+                                                        </div>
+                                                        
+                                                        @if (Decisions.GetValueOrDefault(item.id) == "REJECT" || Decisions.GetValueOrDefault(item.id) == "REVISION")
+                                                        {
+                                                            <input type="text" 
+                                                                @bind="Reasons[item.id]" 
+                                                                placeholder="@(Decisions.GetValueOrDefault(item.id) == "REVISION" ? "Catatan revisi *" : "Reason for rejection *")" 
+                                                                class="w-full px-3 py-2 text-xs border rounded-lg focus:ring-0 text-[#1a1a1a] @(Decisions.GetValueOrDefault(item.id) == "REVISION" ? "border-[#c7d2fe] bg-[#e0e7ff] focus:border-[#4338ca] placeholder:text-[#4338ca]/60" : "border-[#f8c0c0] bg-[#fef0f0] focus:border-[#d94040] placeholder:text-[#d94040]/60")">
+                                                        }
+                                                    </div>
+                                                }
+                                            </div>
+                                        }
                                     </div>
                                 </div>
                             }
@@ -417,9 +494,19 @@
     private void SetDecision(int id, string decision)
     {
         Decisions[id] = decision;
-        if (decision == "APPROVE" && Reasons.ContainsKey(id))
+        if (decision == "APPROVE")
         {
-            Reasons.Remove(id);
+            if (Reasons.ContainsKey(id))
+            {
+                Reasons.Remove(id);
+            }
+        }
+        else if (decision == "REJECT" || decision == "REVISION")
+        {
+            if (!Reasons.ContainsKey(id))
+            {
+                Reasons[id] = "";
+            }
         }
     }
     
@@ -514,9 +601,8 @@
         IsProcessing = true;
         ErrorMessage = null;
         SuccessMessage = null;
-        // Assume ApprovalService handles this (not implemented completely here but adding stub call)
-        // string? err = await ApprovalService.ApproveProfileRequestAsync(id, CurrentUserId, UserRole);
-        // if (err != null) ErrorMessage = err; else SuccessMessage = "Profile request approved.";
+        string? err = await ApprovalService.ApproveProfileRequestAsync(id, CurrentUserId, UserRole);
+        if (err != null) ErrorMessage = err; else SuccessMessage = "Profile request approved.";
         await LoadData();
         IsProcessing = false;
     }
@@ -526,8 +612,8 @@
         IsProcessing = true;
         ErrorMessage = null;
         SuccessMessage = null;
-        // string? err = await ApprovalService.RejectProfileRequestAsync(id, CurrentUserId, UserRole);
-        // if (err != null) ErrorMessage = err; else SuccessMessage = "Profile request rejected.";
+        string? err = await ApprovalService.RejectProfileRequestAsync(id, CurrentUserId, UserRole);
+        if (err != null) ErrorMessage = err; else SuccessMessage = "Profile request rejected.";
         await LoadData();
         IsProcessing = false;
     }
