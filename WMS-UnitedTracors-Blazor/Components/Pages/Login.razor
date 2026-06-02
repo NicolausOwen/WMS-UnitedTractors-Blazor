@@ -1,97 +1,81 @@
 @page "/login"
 @layout Layout.AuthLayout
 @attribute [AllowAnonymous]
-@using Microsoft.AspNetCore.Components.Web
 
 <PageTitle>UT WMS - Login</PageTitle>
 
-<!-- Header -->
-<div class="text-center mb-8">
-    <h2 class="text-3xl font-extrabold text-[#1c1c1c] tracking-tight">
-        Welcome Back
-    </h2>
-    <p class="text-[0.95rem] text-[#8c8a82] mt-1.5 font-medium">
-        United Tractors Inventory System
-    </p>
+<div class="auth-header mb-6">
+    <h2 class="auth-title">Welcome Back</h2>
+    <p class="auth-subtitle">United Tractors Inventory System</p>
 </div>
 
 <!-- Error messages -->
 @if (IsError)
 {
-    <div class="mb-4 p-3.5 text-xs font-semibold text-[#d94040] bg-[#fef0f0] border border-[#f8c0c0] rounded-xl text-center">
+    <div class="mb-4 p-3 text-xs font-semibold text-[#d94040] bg-[#fef0f0] border border-[#f8c0c0] rounded-lg text-center">
         Email atau password salah.
     </div>
 }
 @if (!string.IsNullOrEmpty(errorMessage))
 {
-    <div class="mb-4 p-3.5 text-xs font-semibold text-[#d94040] bg-[#fef0f0] border border-[#f8c0c0] rounded-xl text-center">
+    <div class="mb-4 p-3 text-xs font-semibold text-[#d94040] bg-[#fef0f0] border border-[#f8c0c0] rounded-lg text-center">
         @errorMessage
     </div>
 }
 
-<form method="POST" action="/api/auth/login" class="space-y-5">
+<form method="POST" action="/api/auth/login">
     <AntiforgeryToken />
 
-    <!-- Email -->
-    <div class="space-y-1.5">
-        <label for="email" class="block text-[10px] font-bold tracking-wider text-[#8a8880] uppercase">Email</label>
-        <input id="email"
-               class="block w-full px-4 py-3.5 text-sm text-[#1a1a1a] bg-white border border-[#e8a000] focus:border-[#e8a000] focus:ring-2 focus:ring-[#e8a000]/10 rounded-xl outline-none transition-all font-medium"
-               type="email"
-               name="email"
-               required
-               autofocus
-               autocomplete="username"
-               placeholder="you@company.com" />
+    <!-- Email Address -->
+    <div class="mb-4">
+        <label for="email" class="ut-label">Email</label>
+        <input id="email" class="ut-input" type="email" name="email" required autofocus autocomplete="username" />
     </div>
 
     <!-- Password -->
-    <div class="space-y-1.5">
-        <div class="flex justify-between items-center">
-            <label for="password" class="block text-[10px] font-bold tracking-wider text-[#8a8880] uppercase">Password</label>
-            <a href="/forgot-password" class="text-xs font-medium text-[#8a8880] hover:text-[#1a1a1a] hover:underline transition">Forgot password?</a>
+    <div class="mb-4">
+        <div class="flex items-center justify-between">
+            <label for="password" class="ut-label">Password</label>
+            <a class="auth-link text-xs mb-2" href="/forgot-password">
+                Forgot password?
+            </a>
         </div>
-        <div class="relative w-full">
-            <input id="password-input"
-                   class="block w-full px-4 py-3.5 text-sm text-[#1a1a1a] bg-white border border-[#e8a000] focus:border-[#e8a000] focus:ring-2 focus:ring-[#e8a000]/10 rounded-xl outline-none transition-all font-medium"
-                   type="password"
-                   name="password"
-                   required
-                   autocomplete="current-password"
-                   placeholder="••••••••" />
-            <button type="button" onclick="togglePasswordVisibility(event)"
-                    class="w-10 h-10 rounded-full border border-[#cbd5e1] hover:border-gray-400 bg-white/90 flex items-center justify-center text-gray-500 hover:text-gray-800 transition cursor-pointer focus:outline-none"
-                    style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); z-index: 50; pointer-events: auto;">
-                <svg id="eye-icon" class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+        <div class="relative">
+            <input id="password" class="ut-input pr-10"
+                            type="password"
+                            name="password"
+                            required autocomplete="current-password" />
+            <button type="button" id="togglePassword" class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center cursor-pointer">
+                <svg id="eyeIcon" class="h-5 w-5 text-gray-500" fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                 </svg>
-                <svg id="eye-off-icon" class="hidden w-5 h-5 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+                <svg id="eyeSlashIcon" class="h-5 w-5 text-gray-500 hidden" fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
                 </svg>
             </button>
         </div>
     </div>
 
-    <!-- Remember me -->
-    <div class="flex items-center gap-2.5 pt-1">
-        <input id="remember_me" type="checkbox" name="remember_me" value="true"
-               class="w-[18px] h-[18px] text-[#e8a000] border-gray-300 rounded-[4px] focus:ring-[#e8a000]/30 accent-[#e8a000] cursor-pointer">
-        <label for="remember_me" class="text-sm font-medium text-[#8a8880] select-none cursor-pointer">Keep me signed in</label>
+    <!-- Remember Me -->
+    <div class="block mb-5">
+        <label for="remember_me" class="inline-flex items-center cursor-pointer">
+            <input id="remember_me" type="checkbox" class="rounded border-[#e5e3dc] text-[#e8a000] shadow-sm focus:ring-[#e8a000] w-4 h-4" name="remember_me" value="true">
+            <span class="ms-3 text-sm text-[#8a8880]">Keep me signed in</span>
+        </label>
     </div>
 
-    <!-- Actions -->
-    <div class="space-y-3.5 pt-3">
-        <button type="submit" class="w-full py-3.5 bg-[#e8a000] hover:bg-[#d49300] text-white font-bold text-[0.85rem] tracking-[0.06em] rounded-xl transition duration-150 active:scale-[0.98] shadow-sm cursor-pointer">
-            LOG IN
+    <div class="mt-6 flex flex-col gap-3">
+        <button type="submit" class="btn-ut-primary">
+            Log in
         </button>
 
-        <a href="/auth/microsoft" class="flex items-center justify-center gap-2.5 w-full py-3.5 bg-white border border-[#e5e3dc] hover:bg-[#f5f4f0] text-[#2f3542] font-bold text-[0.85rem] rounded-xl transition duration-150 active:scale-[0.98] cursor-pointer">
-            <svg class="w-4 h-4 shrink-0" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg">
-                <path d="M10 0H0v10h10V0z" fill="#f25022"/>
-                <path d="M21 0H11v10h10V0z" fill="#7fba00"/>
-                <path d="M10 11H0v10h10V11z" fill="#00a4ef"/>
-                <path d="M21 11H11v10h10V11z" fill="#ffb900"/>
+        <a href="/auth/microsoft" class="w-full flex items-center justify-center gap-3 px-4 py-2.5 bg-white border border-gray-300 rounded-[10px] text-sm font-bold text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 transition-all duration-200 no-underline">
+            <svg class="w-4 h-4" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg">
+                <path fill="#f25022" d="M10 0H0v10h10V0z"/>
+                <path fill="#7fba00" d="M21 0H11v10h10V0z"/>
+                <path fill="#00a4ef" d="M10 11H0v10h10V11z"/>
+                <path fill="#ffb900" d="M21 11H11v10h10V11z"/>
             </svg>
             Sign in with Microsoft
         </a>
@@ -99,26 +83,22 @@
 </form>
 
 <script>
-    window.togglePasswordVisibility = function(event) {
-        const button = event.currentTarget || event.target;
-        const input = document.getElementById('password-input');
-        const eyeIcon = document.getElementById('eye-icon');
-        const eyeOffIcon = document.getElementById('eye-off-icon');
+    (function() {
+        var togglePassword = document.getElementById('togglePassword');
+        var password = document.getElementById('password');
+        var eyeIcon = document.getElementById('eyeIcon');
+        var eyeSlashIcon = document.getElementById('eyeSlashIcon');
 
-        if (!input || !eyeIcon || !eyeOffIcon) {
-            return;
+        if (togglePassword) {
+            togglePassword.addEventListener('click', function (e) {
+                e.preventDefault();
+                var type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+                password.setAttribute('type', type);
+                eyeIcon.classList.toggle('hidden');
+                eyeSlashIcon.classList.toggle('hidden');
+            });
         }
-
-        if (input.type === 'password') {
-            input.type = 'text';
-            eyeIcon.classList.add('hidden');
-            eyeOffIcon.classList.remove('hidden');
-        } else {
-            input.type = 'password';
-            eyeIcon.classList.remove('hidden');
-            eyeOffIcon.classList.add('hidden');
-        }
-    };
+    })();
 </script>
 
 @code {
