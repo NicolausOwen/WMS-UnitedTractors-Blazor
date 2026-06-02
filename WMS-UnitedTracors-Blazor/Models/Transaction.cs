@@ -8,6 +8,18 @@ public class Transaction
     [Key]
     public int id { get; set; }
 
+    [NotMapped]
+    public string group_id
+    {
+        get
+        {
+            var raw = $"{created_at:yyyy-MM-dd HH:mm}_{requester_id}_{applicant_name ?? ""}";
+            using var md5 = System.Security.Cryptography.MD5.Create();
+            var hashBytes = md5.ComputeHash(System.Text.Encoding.UTF8.GetBytes(raw));
+            return BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
+        }
+    }
+
     public int product_id { get; set; }
 
     public int? product_variant_id { get; set; }

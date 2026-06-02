@@ -142,7 +142,13 @@
 
                                 <!-- Item List -->
                                 <div class="bg-gray-50 p-4">
-                                    <h4 class="text-[0.65rem] font-bold uppercase tracking-wider text-gray-400 mb-3">Items Requested</h4>
+                                    <div class="flex justify-between items-center mb-3">
+                                        <h4 class="text-[0.65rem] font-bold uppercase tracking-wider text-gray-400">Items Requested</h4>
+                                        <a href="/Receipt/@(firstItem.type == "IN" ? "Return" : "Transaction")/@firstItem.id" target="_blank" class="text-xs font-bold text-[#1a1a1a] bg-white border border-[#e5e3dc] rounded px-3 py-1 hover:bg-gray-100 flex items-center gap-1">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                                            Cetak Struk
+                                        </a>
+                                    </div>
                                     
                                     <!-- Desktop View Table -->
                                     <div class="hidden md:block overflow-x-auto">

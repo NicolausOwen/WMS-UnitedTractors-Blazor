@@ -12,9 +12,13 @@
 
   <ItemGroup>
     <Compile Remove="old_dotnet_mvc\**" />
+    <Compile Remove="old_laravel\**" />
     <Content Remove="old_dotnet_mvc\**" />
+    <Content Remove="old_laravel\**" />
     <EmbeddedResource Remove="old_dotnet_mvc\**" />
+    <EmbeddedResource Remove="old_laravel\**" />
     <None Remove="old_dotnet_mvc\**" />
+    <None Remove="old_laravel\**" />
   </ItemGroup>
 
   <ItemGroup>

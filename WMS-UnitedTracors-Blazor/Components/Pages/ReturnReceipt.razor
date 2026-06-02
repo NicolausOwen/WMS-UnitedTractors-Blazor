@@ -1,0 +1,180 @@
+@page "/Receipt/Return/{Id:int}"
+@using UT_WMSDotnet.Models
+@using UT_WMSDotnet.Data
+@using Microsoft.EntityFrameworkCore
+@inject ApplicationDbContext DbContext
+@inject IJSRuntime JSRuntime
+@rendermode InteractiveServer
+
+<PageTitle>Struk Pengembalian / Barang Masuk</PageTitle>
+
+@if (IsLoading)
+{
+    <div class="flex items-center justify-center min-h-screen bg-[#f5f4f0]">
+        <div class="w-8 h-8 border-4 border-[#e8a000] border-t-transparent rounded-full animate-spin"></div>
+    </div>
+}
+else if (Transactions == null || !Transactions.Any())
+{
+    <div class="flex items-center justify-center min-h-screen bg-[#f5f4f0]">
+        <div class="text-center">
+            <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <h2 class="text-xl font-bold text-gray-700">Transaksi tidak ditemukan</h2>
+        </div>
+    </div>
+}
+else
+{
+    var mainTx = Transactions.First();
+    var isReturn = mainTx.returned_at.HasValue || mainTx.return_status != null;
+    
+    <div class="min-h-screen bg-[#f5f4f0] py-8 print:bg-white print:py-0 font-mono">
+        <div class="max-w-[80mm] mx-auto bg-white p-6 shadow-sm border border-gray-200 print:shadow-none print:border-none print:p-0">
+            
+            <div class="text-center mb-6">
+                <img src="img/logo.svg" alt="Logo" class="w-12 h-12 mx-auto mb-2 grayscale print:grayscale-0">
+                <h1 class="text-lg font-bold uppercase tracking-widest text-black">United Tractors</h1>
+                <p class="text-[0.65rem] text-gray-600 uppercase tracking-widest mt-1 border-b border-dashed border-gray-400 pb-4">
+                    Warehouse Management System
+                </p>
+            </div>
+
+            <div class="mb-6">
+                <h2 class="text-center font-bold text-[0.85rem] uppercase mb-4 py-1 bg-gray-100 print:bg-transparent print:border-y print:border-dashed print:border-black">
+                    Struk @(isReturn ? "Pengembalian" : "Barang Masuk")
+                </h2>
+                
+                <table class="w-full text-[0.7rem] mb-4">
+                    <tbody>
+                        <tr>
+                            <td class="py-1 text-gray-500 w-[100px]">No. Ref</td>
+                            <td class="py-1 font-bold">: @mainTx.group_id</td>
+                        </tr>
+                        <tr>
+                            <td class="py-1 text-gray-500">Tanggal</td>
+                            <td class="py-1">: @(isReturn ? mainTx.returned_at?.ToString("dd MMM yyyy HH:mm") ?? mainTx.updated_at.ToString("dd MMM yyyy HH:mm") : mainTx.created_at.ToString("dd MMM yyyy HH:mm"))</td>
+                        </tr>
+                        @if (isReturn && !string.IsNullOrEmpty(mainTx.applicant_name))
+                        {
+                            <tr>
+                                <td class="py-1 text-gray-500">Pemohon</td>
+                                <td class="py-1 font-bold">: @mainTx.applicant_name</td>
+                            </tr>
+                        }
+                        <tr>
+                            <td class="py-1 text-gray-500">Admin</td>
+                            <td class="py-1 font-bold">: @mainTx.Approver?.name</td>
+                        </tr>
+                        <tr>
+                            <td class="py-1 text-gray-500">Status</td>
+                            <td class="py-1 font-bold">
+                                : @(mainTx.status == "APPROVED" ? "SELESAI" : mainTx.status)
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="border-t border-dashed border-gray-400 pt-4 mb-6">
+                <div class="text-[0.65rem] uppercase font-bold text-gray-500 tracking-wider mb-2">Item Details</div>
+                
+                <div class="flex flex-col gap-3">
+                    @foreach (var tx in Transactions)
+                    {
+                        var qty = isReturn ? (tx.returned_quantity ?? tx.quantity) : tx.quantity;
+                        <div class="flex justify-between items-start text-[0.7rem]">
+                            <div class="flex-1 pr-2">
+                                <div class="font-bold text-black leading-tight">@tx.Product?.name</div>
+                                <div class="text-[0.6rem] text-gray-500 mt-0.5">SKU: @tx.Product?.sku</div>
+                                @if (isReturn && tx.return_status != "normal" && !string.IsNullOrEmpty(tx.return_status))
+                                {
+                                    <div class="text-[0.6rem] text-red-600 mt-0.5 font-bold uppercase">Status: @tx.return_status</div>
+                                }
+                            </div>
+                            <div class="text-right font-bold whitespace-nowrap">
+                                @qty x
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="border-t border-dashed border-gray-400 pt-4 mb-8">
+                <table class="w-full text-[0.7rem]">
+                    <tbody>
+                        <tr>
+                            <td class="py-1 font-bold">TOTAL ITEM</td>
+                            <td class="py-1 font-bold text-right">@Transactions.Sum(t => isReturn ? (t.returned_quantity ?? t.quantity) : t.quantity) PCS</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 text-center text-[0.65rem] mt-10">
+                <div>
+                    <div class="mb-12">Diterima Oleh,</div>
+                    <div class="border-b border-black w-4/5 mx-auto"></div>
+                    <div class="mt-1 font-bold">@mainTx.Approver?.name</div>
+                    <div class="text-[0.55rem] text-gray-500">Admin/Manager</div>
+                </div>
+                <div>
+                    <div class="mb-12">Diserahkan Oleh,</div>
+                    <div class="border-b border-black w-4/5 mx-auto"></div>
+                    <div class="mt-1 font-bold">@(isReturn ? mainTx.applicant_name : mainTx.Requester?.name)</div>
+                    <div class="text-[0.55rem] text-gray-500">@(isReturn ? "Peminjam" : "Staff")</div>
+                </div>
+            </div>
+
+            <div class="mt-8 text-center text-[0.55rem] text-gray-500 border-t border-dashed border-gray-400 pt-4">
+                <p>Simpan struk ini sebagai bukti transaksi yang sah.</p>
+                <p class="mt-1">Dicetak pada: @DateTime.Now.ToString("dd MMM yyyy HH:mm")</p>
+            </div>
+
+            <div class="mt-8 text-center print:hidden">
+                <button @onclick="PrintReceipt" class="px-6 py-2 bg-[#1a1a1a] text-white text-xs font-bold uppercase tracking-wider rounded-md hover:bg-black transition shadow-sm">
+                    Cetak Struk
+                </button>
+            </div>
+            
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private bool IsLoading = true;
+    private List<Transaction>? Transactions;
+
+    protected override async Task OnInitializedAsync()
+    {
+        IsLoading = true;
+        
+        var tx = await DbContext.Transactions
+            .FirstOrDefaultAsync(t => t.id == Id);
+            
+        if (tx != null)
+        {
+            var start = tx.created_at.AddSeconds(-2);
+            var end = tx.created_at.AddSeconds(2);
+            
+            Transactions = await DbContext.Transactions
+                .Include(t => t.Product)
+                .Include(t => t.Requester)
+                .Include(t => t.Approver)
+                .Where(t => t.created_at >= start && t.created_at <= end && 
+                            t.requester_id == tx.requester_id && 
+                            t.applicant_name == tx.applicant_name &&
+                            t.type == tx.type)
+                .ToListAsync();
+        }
+        
+        IsLoading = false;
+    }
+
+    private async Task PrintReceipt()
+    {
+        await JSRuntime.InvokeVoidAsync("window.print");
+    }
+}
