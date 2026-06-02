@@ -184,6 +184,5 @@ if (app.Environment.IsDevelopment() || builder.Configuration.GetValue<bool>("Run
             logger.LogError(ex, "FAILED STARTUP: Migration or Seeding failed.");
         }
     }
+    app.Run();
 }
-
-app.Run();

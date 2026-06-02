@@ -24,6 +24,7 @@ public class DbSeeder
         await SeedDivisionsAsync();
         await SeedUnitsAsync();
         await SeedDefaultUsersAsync();
+       
     }
 
     private async Task ExecuteSqlDumpAsync()

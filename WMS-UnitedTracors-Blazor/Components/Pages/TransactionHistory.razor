@@ -160,7 +160,7 @@
                                                     <td class="py-3 px-3">
                                                         <div class="flex items-center gap-3">
                                                             @if (!string.IsNullOrEmpty(item.Product?.image)) {
-                                                                <img src="/storage/@item.Product.image" class="w-8 h-8 rounded object-cover border border-gray-200" />
+                                                                <img src="@(item.Product.image.StartsWith("images/") ? $"/{item.Product.image}" : $"/storage/{item.Product.image}")" class="w-8 h-8 rounded object-cover border border-gray-200" />
                                                             }
                                                             <div>
                                                                 <div class="text-sm font-semibold text-gray-900">@(item.Product?.name)</div>

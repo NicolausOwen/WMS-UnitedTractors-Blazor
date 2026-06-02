@@ -105,7 +105,7 @@
             <div @onclick="() => OpenProductModal(product)" class="bg-white border border-[#e5e3dc] rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 hover:border-[#e8a000] transition-all duration-300 flex flex-col group product-item cursor-pointer text-left focus:outline-none focus:ring-2 focus:ring-[#e8a000]" tabindex="0" role="button">
                 @* Image Container *@
                 <div class="aspect-square relative bg-[#f5f4f0] flex items-center justify-center overflow-hidden border-b border-[#f0ede5]">
-                    <img src="@(!string.IsNullOrEmpty(product.image) ? $"/storage/{product.image}" : "")" alt="@product.name" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                    <img src="@(!string.IsNullOrEmpty(product.image) ? (product.image.StartsWith("images/") ? $"/{product.image}" : $"/storage/{product.image}") : "")" alt="@product.name" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
                     
                     @* Stock Badges Overlay *@
                     <div class="absolute top-2 left-2 flex flex-col gap-1">
@@ -307,7 +307,7 @@
                             <div class="relative w-full aspect-square lg:aspect-[4/3] bg-[#f5f4f0] rounded-xl overflow-hidden border border-[#e5e3dc]">
                                 @if (!string.IsNullOrEmpty(SelectedProduct.image))
                                 {
-                                    <img src="/storage/@SelectedProduct.image" class="w-full h-full object-cover">
+                                    <img src="@(SelectedProduct.image.StartsWith("images/") ? $"/{SelectedProduct.image}" : $"/storage/{SelectedProduct.image}")" class="w-full h-full object-cover">
                                 }
                                 else
                                 {
