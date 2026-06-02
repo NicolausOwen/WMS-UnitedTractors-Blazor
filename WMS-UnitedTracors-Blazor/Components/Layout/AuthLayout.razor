@@ -1,57 +1,37 @@
 @inherits LayoutComponentBase
 
-<div class="min-h-screen flex flex-col items-center justify-center p-4 bg-[#faf9f5]" style="font-family: 'DM Sans', sans-serif;">
-    <div class="w-full sm:max-w-lg">
-        <div class="flex justify-center mb-6">
+<div id="auth-root" class="fixed inset-0 z-[9999] bg-[#faf9f5] overflow-y-auto px-4 py-8 flex items-center justify-center">
+    <!-- Google Fonts: Montserrat -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <div class="w-full max-w-[500px] flex flex-col items-center">
+        <!-- Logo -->
+        <div class="mb-8">
             <a href="/">
-                <img src="img/logo.svg" alt="United Tractors" style="height: 36px; margin-bottom: 0;">
+                <img src="img/logo.svg" alt="United Tractors Logo" class="w-16 h-16 object-contain" />
             </a>
         </div>
 
-        <div class="auth-card px-8 py-8 bg-white border border-[#e5e3dc] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
+        <!-- Card -->
+        <div class="w-full bg-white border border-[#e5e3dc]/70 rounded-[28px] shadow-[0_8px_30px_rgba(0,0,0,0.015)] p-10 md:p-12 mb-8">
             @Body
         </div>
 
-        <div class="mt-6 text-center">
-            <p style="font-size: 0.7rem; color: #a09e99; letter-spacing: 0.05em; text-transform: uppercase; font-weight: 600;">
-                © 2026 United Tractors Corporate University (corpu)
-            </p>
+        <!-- Footer -->
+        <div class="text-center">
+            <span class="text-[10px] tracking-[0.08em] font-bold text-[#a09e99] uppercase">
+                &copy; 2026 UNITED TRACTORS CORPORATE UNIVERSITY (CORPU)
+            </span>
         </div>
     </div>
 </div>
 
 <style>
-    .auth-card {
-        background: #ffffff;
-        border: 1px solid #e5e3dc;
-        border-radius: 16px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
-    }
-
-    .ut-input {
-        width: 100%;
-        padding: 0.6rem 1rem;
-        font-size: 0.875rem;
-        background: #f5f4f0;
-        border: 1.5px solid #e5e3dc;
-        border-radius: 10px;
-        outline: none;
-        transition: all 0.2s;
-        color: #1a1a1a;
-    }
-    .ut-input:focus {
-        background: #fff;
-        border-color: #e8a000;
-        box-shadow: 0 0 0 3px rgba(232, 160, 0, 0.1);
-    }
-
-    .ut-label {
-        display: block;
-        font-size: 0.7rem;
-        font-weight: 700;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
-        color: #8a8880;
-        margin-bottom: 0.5rem;
+    /* Force Montserrat font on all auth elements */
+    #auth-root, 
+    #auth-root * {
+        font-family: 'Montserrat', sans-serif !important;
     }
 </style>
