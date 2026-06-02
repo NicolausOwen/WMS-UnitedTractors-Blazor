@@ -7,19 +7,20 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
 @inject AuthenticationStateProvider AuthStateProvider
+@inject IJSRuntime JSRuntime
 @rendermode InteractiveServer
 
 <PageTitle>Users</PageTitle>
 
-<div class="flex justify-between items-center mb-6">
-    <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-        Manage Users
-    </h2>
-</div>
-
-<div class="py-8">
+<div class="py-8 bg-[#f5f4f0] min-h-screen">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="font-semibold text-xl text-gray-800 leading-tight font-syne">
+                Manage Users
+            </h2>
+        </div>
+
         @if (!string.IsNullOrEmpty(SuccessMessage))
         {
             <div class="mb-6 flex items-center gap-3 bg-[#eef9f0] border border-[#b8e8c0] text-[#1a7a30] px-4 py-3 rounded-lg text-sm" role="alert">
@@ -106,15 +107,16 @@
             </div>
         }
 
-        <div class="bg-white rounded-xl border border-[#e5e3dc] overflow-hidden shadow-sm">
-            <div class="px-6 py-4 border-b border-[#f0ede5] bg-[#faf9f5] flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+        <div class="bg-transparent md:bg-white md:rounded-xl md:border md:border-[#e5e3dc] md:overflow-hidden md:shadow-sm">
+            <div class="px-6 py-4 border-b border-[#f0ede5] bg-[#faf9f5] flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 rounded-t-xl">
                 <div>
                     <h3 class="text-sm font-bold text-[#1a1a1a] font-syne">User Management</h3>
                     <p class="text-[0.72rem] text-[#8a8880] mt-0.5">Manage existing users in the system.</p>
                 </div>
             </div>
 
-            <div class="overflow-x-auto">
+            <!-- Desktop Table View -->
+            <div class="hidden md:block overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="bg-[#1a1a1a]">
@@ -252,10 +254,140 @@
                     </tbody>
                 </table>
             </div>
+
+            <!-- Mobile Card View -->
+            <div class="block md:hidden space-y-3">
+                @if (UsersList == null || !UsersList.Any())
+                {
+                    <div class="px-6 py-16 text-center bg-white rounded-xl border border-[#e5e3dc] shadow-sm">
+                        <p class="text-sm text-gray-500">No users found.</p>
+                    </div>
+                }
+                else
+                {
+                    int index = (CurrentPage - 1) * 10;
+                    foreach (var user in UsersList)
+                    {
+                        index++;
+                        bool isEditing = EditingUserId == user.id;
+                        
+                        @if (!isEditing)
+                        {
+                            <div class="p-5 bg-white border border-[#e5e3dc] rounded-xl shadow-sm hover:shadow transition-shadow space-y-3">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <span class="text-xs text-gray-400 font-bold">#@index</span>
+                                        <h4 class="text-sm font-semibold text-[#1a1a1a] mt-0.5">@user.name</h4>
+                                        <p class="text-xs text-gray-500">@user.email</p>
+                                    </div>
+                                    @{
+                                        string bgClass = "bg-[#f5f4f0]";
+                                        string textClass = "text-[#8a8780]";
+                                        string borderClass = "border-[#e5e3dc]";
+                                        if (user.role == "superadmin") { bgClass = "bg-purple-50"; textClass = "text-purple-700"; borderClass = "border-purple-200"; }
+                                        else if (user.role == "manager") { bgClass = "bg-[#e0f2fe]"; textClass = "text-[#1a6b8a]"; borderClass = "border-[#bae6fd]"; }
+                                        else if (user.role == "admin") { bgClass = "bg-[#fef3c7]"; textClass = "text-[#92400e]"; borderClass = "border-[#fde68a]"; }
+                                    }
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border @bgClass @textClass @borderClass">
+                                        @((user.role ?? "").ToUpper())
+                                    </span>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2 pt-2 border-t border-[#f0ede5] text-xs">
+                                    <div>
+                                        <span class="text-gray-400 font-medium">Poin:</span>
+                                        <span class="font-bold text-[#e8a000] ml-1">@user.poin<span class="text-[10px] font-normal text-gray-400">/1000</span></span>
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-400 font-medium">Division:</span>
+                                        <span class="font-semibold text-gray-700 ml-1">@(user.Division?.name ?? "--")</span>
+                                    </div>
+                                </div>
+                                
+                                @if (IsAdmin)
+                                {
+                                    <div class="flex items-center gap-2 pt-3 border-t border-[#f0ede5] justify-end">
+                                        <button type="button" @onclick="() => StartEdit(user)"
+                                                class="flex-1 text-center text-xs font-bold text-[#3a3835] hover:text-[#1a1a1a] py-2 rounded bg-white border border-[#e5e3dc] hover:bg-[#f0ede5] transition cursor-pointer">
+                                            Edit
+                                        </button>
+                                        @if (CurrentUserId != user.id)
+                                        {
+                                            <button type="button" @onclick="() => DeleteUser(user.id)"
+                                                    class="flex-1 text-center text-xs font-bold text-[#d94040] hover:text-[#b83535] py-2 rounded bg-[#fef0f0] border border-[#f8c0c0] hover:bg-[#fee2e2] transition cursor-pointer">
+                                                Delete
+                                            </button>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="p-5 bg-[#faf9f5] border border-[#e5e3dc] rounded-xl shadow-sm">
+                                <form @onsubmit="() => UpdateUser(user.id)" class="space-y-4">
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div>
+                                            <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1">Name</label>
+                                            <input type="text" @bind="EditModel.name" required
+                                                   class="block w-full px-3 py-2 text-xs bg-white border border-[#e5e3dc] focus:border-[#e8a000] focus:ring-0 rounded-lg outline-none text-[#1a1a1a] transition-all duration-150">
+                                        </div>
+                                        <div>
+                                            <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1">NRP <span class="text-gray-400 font-normal font-sans">(Optional)</span></label>
+                                            <input type="text" @bind="EditModel.nrp"
+                                                   class="block w-full px-3 py-2 text-xs bg-white border border-[#e5e3dc] focus:border-[#e8a000] focus:ring-0 rounded-lg outline-none text-[#1a1a1a] transition-all duration-150">
+                                        </div>
+                                        <div>
+                                            <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1">Email</label>
+                                            <input type="email" @bind="EditModel.email" required
+                                                   class="block w-full px-3 py-2 text-xs bg-white border border-[#e5e3dc] focus:border-[#e8a000] focus:ring-0 rounded-lg outline-none text-[#1a1a1a] transition-all duration-150">
+                                        </div>
+                                        <div>
+                                            <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1">Poin</label>
+                                            <input type="number" @bind="EditModel.poin" placeholder="Poin"
+                                                   class="block w-full px-3 py-2 text-xs bg-white border border-[#e5e3dc] focus:border-[#e8a000] focus:ring-0 rounded-lg outline-none text-[#1a1a1a] transition-all duration-150">
+                                        </div>
+                                        <div>
+                                            <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1">New Password <span class="text-gray-400 font-normal font-sans">(Leave blank)</span></label>
+                                            <input type="password" @bind="EditPassword" placeholder="New Password"
+                                                   class="block w-full px-3 py-2 text-xs bg-white border border-[#e5e3dc] focus:border-[#e8a000] focus:ring-0 rounded-lg outline-none text-[#1a1a1a] transition-all duration-150">
+                                        </div>
+                                        <div>
+                                            <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1">Division</label>
+                                            <select @bind="EditModel.division_id" class="block w-full px-3 py-2 text-[0.82rem] bg-white border border-[#e5e3dc] focus:border-[#e8a000] focus:ring-0 rounded-lg outline-none text-[#1a1a1a] transition-all duration-150">
+                                                <option value="">-- No Division --</option>
+                                                @if (DivisionsList != null)
+                                                {
+                                                    foreach (var division in DivisionsList)
+                                                    {
+                                                        <option value="@(division.Id)">@(division.Name)</option>
+                                                    }
+                                                }
+                                            </select>
+                                        </div>
+                                        <div class="sm:col-span-2">
+                                            <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1">Role</label>
+                                            <select @bind="EditModel.role" required class="block w-full px-3 py-2 text-[0.82rem] bg-white border border-[#e5e3dc] focus:border-[#e8a000] focus:ring-0 rounded-lg outline-none text-[#1a1a1a] transition-all duration-150">
+                                                <option value="staff">Staff</option>
+                                                <option value="manager">Manager</option>
+                                                <option value="admin">Admin</option>
+                                                <option value="superadmin">Superadmin</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="flex gap-2 pt-2 justify-end">
+                                        <button type="submit" class="px-4 py-2 bg-[#e8a000] hover:bg-[#d49300] text-[#1a1a1a] text-xs font-bold rounded-lg transition cursor-pointer">Save Changes</button>
+                                        <button type="button" @onclick="CancelEdit" class="px-4 py-2 bg-white border border-[#e5e3dc] hover:bg-[#f0ede5] text-[#3a3835] text-xs font-bold rounded-lg transition cursor-pointer">Cancel</button>
+                                    </div>
+                                </form>
+                            </div>
+                        }
+                    }
+                }
+            </div>
             
             @if (TotalPages > 1)
             {
-                <div class="px-6 py-4 border-t border-[#f0ede5] flex justify-between items-center bg-[#faf9f5]">
+                <div class="mt-4 px-6 py-4 border border-[#e5e3dc] rounded-xl flex justify-between items-center bg-white shadow-sm">
                     <span class="text-xs text-[#8a8880]">Halaman @CurrentPage dari @TotalPages</span>
                     <div class="flex gap-2">
                         <button disabled="@(CurrentPage == 1)" @onclick="() => LoadData(CurrentPage - 1)" class="px-3 py-1 bg-white border border-[#e5e3dc] rounded text-sm disabled:opacity-50 hover:bg-gray-50">Prev</button>
@@ -375,6 +507,7 @@
         // I will just pass the EditModel and if I need to update the password I will just leave it up to the existing API.
         // Let's assume UserUpdateViewModel has a password field? If not, the old code didn't update it directly via this endpoint anyway, or maybe it did. Let's just leave EditPassword unhandled for now if it doesn't compile, or add it.
 
+        EditModel.password = EditPassword;
         string? error = await UserService.UpdateUserAsync(id, EditModel, CurrentUserId, UserRole);
 
         if (error != null)
@@ -391,8 +524,12 @@
 
     private async Task DeleteUser(int id)
     {
-        await UserService.DeleteUserAsync(id, CurrentUserId);
-        SuccessMessage = "User berhasil dihapus.";
-        await LoadData(CurrentPage);
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "Apakah Anda yakin ingin menghapus user ini?");
+        if (confirmed)
+        {
+            await UserService.DeleteUserAsync(id, CurrentUserId);
+            SuccessMessage = "User berhasil dihapus.";
+            await LoadData(CurrentPage);
+        }
     }
 }

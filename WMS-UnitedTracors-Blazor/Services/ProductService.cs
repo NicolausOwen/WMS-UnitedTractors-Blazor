@@ -72,6 +72,34 @@ public class ProductService
             await _context.SaveChangesAsync();
         }
 
+        string? imagePath = null;
+        if (model.image != null && model.image.Length > 0)
+        {
+            var fileName = Guid.NewGuid().ToString() + Path.GetExtension(model.image.FileName);
+            var path = Path.Combine(_env.ContentRootPath, "Storage", "products");
+            if (!Directory.Exists(path)) Directory.CreateDirectory(path);
+
+            using (var stream = new FileStream(Path.Combine(path, fileName), FileMode.Create))
+            {
+                await model.image.CopyToAsync(stream);
+            }
+            imagePath = "products/" + fileName;
+        }
+
+        string? positionImagePath = null;
+        if (model.position_image != null && model.position_image.Length > 0)
+        {
+            var fileName = Guid.NewGuid().ToString() + Path.GetExtension(model.position_image.FileName);
+            var path = Path.Combine(_env.ContentRootPath, "Storage", "products");
+            if (!Directory.Exists(path)) Directory.CreateDirectory(path);
+
+            using (var stream = new FileStream(Path.Combine(path, fileName), FileMode.Create))
+            {
+                await model.position_image.CopyToAsync(stream);
+            }
+            positionImagePath = "products/" + fileName;
+        }
+
         var product = new Product
         {
             barcode_type = model.barcode_type,
@@ -83,6 +111,8 @@ public class ProductService
             is_returnable = model.is_returnable ? 1 : 0,
             initial_stock = model.initial_stock ?? 0,
             current_stock = model.initial_stock ?? 0,
+            image = imagePath,
+            position_image = positionImagePath,
             created_at = DateTime.UtcNow,
             updated_at = DateTime.UtcNow
         };
@@ -125,6 +155,62 @@ public class ProductService
             unit = new Unit { name = model.unit.Trim(), created_at = DateTime.UtcNow, updated_at = DateTime.UtcNow };
             _context.Units.Add(unit);
             await _context.SaveChangesAsync();
+        }
+
+        if (model.remove_image)
+        {
+            if (!string.IsNullOrEmpty(product.image))
+            {
+                var path = Path.Combine(_env.ContentRootPath, "Storage", product.image);
+                if (System.IO.File.Exists(path)) System.IO.File.Delete(path);
+            }
+            product.image = null;
+        }
+        else if (model.image != null && model.image.Length > 0)
+        {
+            if (!string.IsNullOrEmpty(product.image))
+            {
+                var path = Path.Combine(_env.ContentRootPath, "Storage", product.image);
+                if (System.IO.File.Exists(path)) System.IO.File.Delete(path);
+            }
+
+            var fileName = Guid.NewGuid().ToString() + Path.GetExtension(model.image.FileName);
+            var dirPath = Path.Combine(_env.ContentRootPath, "Storage", "products");
+            if (!Directory.Exists(dirPath)) Directory.CreateDirectory(dirPath);
+
+            using (var stream = new FileStream(Path.Combine(dirPath, fileName), FileMode.Create))
+            {
+                await model.image.CopyToAsync(stream);
+            }
+            product.image = "products/" + fileName;
+        }
+
+        if (model.remove_position_image)
+        {
+            if (!string.IsNullOrEmpty(product.position_image))
+            {
+                var path = Path.Combine(_env.ContentRootPath, "Storage", product.position_image);
+                if (System.IO.File.Exists(path)) System.IO.File.Delete(path);
+            }
+            product.position_image = null;
+        }
+        else if (model.position_image != null && model.position_image.Length > 0)
+        {
+            if (!string.IsNullOrEmpty(product.position_image))
+            {
+                var path = Path.Combine(_env.ContentRootPath, "Storage", product.position_image);
+                if (System.IO.File.Exists(path)) System.IO.File.Delete(path);
+            }
+
+            var fileName = Guid.NewGuid().ToString() + Path.GetExtension(model.position_image.FileName);
+            var dirPath = Path.Combine(_env.ContentRootPath, "Storage", "products");
+            if (!Directory.Exists(dirPath)) Directory.CreateDirectory(dirPath);
+
+            using (var stream = new FileStream(Path.Combine(dirPath, fileName), FileMode.Create))
+            {
+                await model.position_image.CopyToAsync(stream);
+            }
+            product.position_image = "products/" + fileName;
         }
 
         product.sku = model.sku;

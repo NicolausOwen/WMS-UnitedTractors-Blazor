@@ -247,5 +247,43 @@ public class ApprovalService
         return null;
     }
 
-    // Other batch methods omitted for brevity, but they follow the same pattern of wrapping the DbContext calls.
+    public async Task<string?> ApproveProfileRequestAsync(int id, int currentUserId, string? userRole)
+    {
+        var request = await _context.ProfileRequests.FirstOrDefaultAsync(pr => pr.id == id);
+        if (request == null) return "Profile request not found.";
+        if (request.status != "PENDING") return "Profile request is not pending.";
+
+        var user = await _context.Users.FindAsync(request.user_id);
+        if (user == null) return "User not found.";
+
+        user.name = request.name;
+        user.email = request.email;
+        user.nrp = request.nrp;
+        user.division_id = request.division_id;
+        user.updated_at = DateTime.UtcNow;
+
+        request.status = "APPROVED";
+        request.updated_at = DateTime.UtcNow;
+
+        _context.Users.Update(user);
+        _context.ProfileRequests.Update(request);
+        await _context.SaveChangesAsync();
+
+        return null;
+    }
+
+    public async Task<string?> RejectProfileRequestAsync(int id, int currentUserId, string? userRole)
+    {
+        var request = await _context.ProfileRequests.FirstOrDefaultAsync(pr => pr.id == id);
+        if (request == null) return "Profile request not found.";
+        if (request.status != "PENDING") return "Profile request is not pending.";
+
+        request.status = "REJECTED";
+        request.updated_at = DateTime.UtcNow;
+
+        _context.ProfileRequests.Update(request);
+        await _context.SaveChangesAsync();
+
+        return null;
+    }
 }

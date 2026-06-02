@@ -36,12 +36,16 @@ public class DivisionService
                 .Distinct()
                 .CountAsync();
 
+            var usersCount = await _context.Users
+                .CountAsync(u => u.division_id == div.id);
+
             divisionList.Add(new DivisionDto
             {
                 Id = div.id,
                 Name = div.name ?? "",
                 Description = div.description,
-                ProductsCount = productsCount
+                ProductsCount = productsCount,
+                UsersCount = usersCount
             });
         }
 

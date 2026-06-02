@@ -38,8 +38,6 @@
 }
 
 body {
-  margin-left: var(--ut-sidebar-w) !important;
-  transition: margin-left var(--ut-transition);
   font-family: 'DM Sans', sans-serif;
   background: #f5f4f0;
   min-height: 100vh;
@@ -47,12 +45,17 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-body.ut-collapsed {
+.main-wrapper {
+  margin-left: var(--ut-sidebar-w) !important;
+  transition: margin-left var(--ut-transition);
+}
+
+body.ut-collapsed .main-wrapper {
   margin-left: calc(var(--ut-sidebar-collapsed-w) + 20px) !important;
 }
 
 @media (max-width: 768px) {
-  body {
+  .main-wrapper {
     margin-left: 0 !important;
   }
 }
@@ -238,4 +241,29 @@ body.ut-collapsed .ut-footer-links {
   background: var(--ut-gold);
   border-radius: 0 0 3px 3px;
 }
+
+/* Custom micro-interactions and transitions */
+.hover-card-trigger {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.hover-card-trigger:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 20px -10px rgba(0, 0, 0, 0.08);
+}
+
+/* Glassmorphism helpers */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.dark-glass-panel {
+  background: rgba(26, 26, 26, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
 
