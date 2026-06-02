@@ -376,7 +376,8 @@
                                                 <div class="flex flex-wrap gap-2">
                                                     @foreach(var c in colors)
                                                     {
-                                                        <button type="button" @onclick="() => { SelectedVariantColor = c; UpdateSelectedVariant(); }" class="px-3 py-1.5 border rounded-lg text-xs font-semibold transition-all @(SelectedVariantColor == c ? "bg-[#e8a000] border-[#e8a000] text-[#1a1a1a]" : "bg-white border-[#e5e3dc] text-[#5a5855] hover:border-[#1a1a1a]")">
+                                                        bool isAvailable = IsColorAvailable(c);
+                                                        <button type="button" @onclick="() => SelectColor(c)" class="px-3 py-1.5 border rounded-lg text-xs font-semibold transition-all @(SelectedVariantColor == c ? "bg-[#e8a000] border-[#e8a000] text-[#1a1a1a]" : (isAvailable ? "bg-white border-[#e5e3dc] text-[#5a5855] hover:border-[#1a1a1a]" : "bg-gray-100 border-[#e5e3dc] text-gray-400 opacity-50"))">
                                                             @c
                                                         </button>
                                                     }
@@ -390,7 +391,8 @@
                                                 <div class="flex flex-wrap gap-2">
                                                     @foreach(var s in sizes)
                                                     {
-                                                        <button type="button" @onclick="() => { SelectedVariantSize = s; UpdateSelectedVariant(); }" class="px-3 py-1.5 border rounded-lg text-xs font-semibold transition-all @(SelectedVariantSize == s ? "bg-[#e8a000] border-[#e8a000] text-[#1a1a1a]" : "bg-white border-[#e5e3dc] text-[#5a5855] hover:border-[#1a1a1a]")">
+                                                        bool isAvailable = IsSizeAvailable(s);
+                                                        <button type="button" @onclick="() => SelectSize(s)" class="px-3 py-1.5 border rounded-lg text-xs font-semibold transition-all @(SelectedVariantSize == s ? "bg-[#e8a000] border-[#e8a000] text-[#1a1a1a]" : (isAvailable ? "bg-white border-[#e5e3dc] text-[#5a5855] hover:border-[#1a1a1a]" : "bg-gray-100 border-[#e5e3dc] text-gray-400 opacity-50"))">
                                                             @s
                                                         </button>
                                                     }
@@ -587,6 +589,40 @@
         ShowProductModal = true;
     }
     
+    private bool IsColorAvailable(string color)
+    {
+        if (SelectedProduct?.ProductVariants == null) return false;
+        if (string.IsNullOrEmpty(SelectedVariantSize)) return true;
+        return SelectedProduct.ProductVariants.Any(v => v.color == color && v.size == SelectedVariantSize);
+    }
+
+    private bool IsSizeAvailable(string size)
+    {
+        if (SelectedProduct?.ProductVariants == null) return false;
+        if (string.IsNullOrEmpty(SelectedVariantColor)) return true;
+        return SelectedProduct.ProductVariants.Any(v => v.size == size && v.color == SelectedVariantColor);
+    }
+
+    private void SelectColor(string color)
+    {
+        if (!IsColorAvailable(color))
+        {
+            SelectedVariantSize = SelectedProduct?.ProductVariants?.FirstOrDefault(v => v.color == color)?.size;
+        }
+        SelectedVariantColor = color;
+        UpdateSelectedVariant();
+    }
+
+    private void SelectSize(string size)
+    {
+        if (!IsSizeAvailable(size))
+        {
+            SelectedVariantColor = SelectedProduct?.ProductVariants?.FirstOrDefault(v => v.size == size)?.color;
+        }
+        SelectedVariantSize = size;
+        UpdateSelectedVariant();
+    }
+
     private void UpdateSelectedVariant()
     {
         if (SelectedProduct?.ProductVariants != null)
@@ -598,6 +634,11 @@
             if (variant != null)
             {
                 SelectedVariantId = variant.id;
+                
+                if (!string.IsNullOrEmpty(variant.image))
+                {
+                    SelectedMainImage = variant.image;
+                }
             }
         }
         SelectedQuantity = 1;
