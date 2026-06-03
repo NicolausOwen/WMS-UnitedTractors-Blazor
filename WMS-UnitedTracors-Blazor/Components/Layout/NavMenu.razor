@@ -179,20 +179,29 @@
                     Dashboard
                 </NavLink>
 
-                <NavLink href="Tracking" class="flex items-center gap-2.5 px-5 py-2.5 text-[#8a8780] hover:text-white hover:bg-[#222222] no-underline text-[0.75rem] font-medium transition-colors" activeClass="text-[#e8a000] bg-[rgba(232,160,0,0.08)] font-semibold">
-                    <svg class="w-5 h-5 stroke-current fill-none stroke-[1.8]" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>
-                    Tracking
-                </NavLink>
+                @if (navRole == "superadmin" || navRole == "admin" || navRole == "staff")
+                {
+                    <NavLink href="Tracking" class="flex items-center gap-2.5 px-5 py-2.5 text-[#8a8780] hover:text-white hover:bg-[#222222] no-underline text-[0.75rem] font-medium transition-colors" activeClass="text-[#e8a000] bg-[rgba(232,160,0,0.08)] font-semibold">
+                        <svg class="w-5 h-5 stroke-current fill-none stroke-[1.8]" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>
+                        Tracking
+                    </NavLink>
+                }
 
-                <NavLink href="Approval" class="flex items-center gap-2.5 px-5 py-2.5 text-[#8a8780] hover:text-white hover:bg-[#222222] no-underline text-[0.75rem] font-medium transition-colors" activeClass="text-[#e8a000] bg-[rgba(232,160,0,0.08)] font-semibold">
-                    <svg class="w-5 h-5 stroke-current fill-none stroke-[1.8]" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
-                    Approvals
-                </NavLink>
+                @if (navRole == "superadmin" || navRole == "manager" || navRole == "admin")
+                {
+                    <NavLink href="Approval" class="flex items-center gap-2.5 px-5 py-2.5 text-[#8a8780] hover:text-white hover:bg-[#222222] no-underline text-[0.75rem] font-medium transition-colors" activeClass="text-[#e8a000] bg-[rgba(232,160,0,0.08)] font-semibold">
+                        <svg class="w-5 h-5 stroke-current fill-none stroke-[1.8]" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+                        Approvals
+                    </NavLink>
+                }
 
-                <NavLink href="TransactionHistory" class="flex items-center gap-2.5 px-5 py-2.5 text-[#8a8780] hover:text-white hover:bg-[#222222] no-underline text-[0.75rem] font-medium transition-colors" activeClass="text-[#e8a000] bg-[rgba(232,160,0,0.08)] font-semibold">
-                    <svg class="w-5 h-5 stroke-current fill-none stroke-[1.8]" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                    History
-                </NavLink>
+                @if (navRole == "superadmin" || navRole == "manager" || navRole == "admin" || navRole == "staff")
+                {
+                    <NavLink href="TransactionHistory" class="flex items-center gap-2.5 px-5 py-2.5 text-[#8a8780] hover:text-white hover:bg-[#222222] no-underline text-[0.75rem] font-medium transition-colors" activeClass="text-[#e8a000] bg-[rgba(232,160,0,0.08)] font-semibold">
+                        <svg class="w-5 h-5 stroke-current fill-none stroke-[1.8]" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        History
+                    </NavLink>
+                }
 
                 @if (IsAdminOrSuperadmin || navRole == "manager")
                 {
@@ -291,29 +300,38 @@
         Dashboard
     </NavLink>
 
-    <!-- Scanner -->
-    <NavLink href="Scanner" class="ut-bottom-link flex-1 flex flex-col items-center justify-center gap-0.5 text-[#8a8780] hover:text-white no-underline text-[0.58rem] font-semibold tracking-[0.02em] transition-colors py-1.5 relative border-none bg-none cursor-pointer font-sans" activeClass="active text-[#e8a000]">
-        <div class="relative inline-flex">
-            <svg class="w-6 h-6 stroke-current fill-none stroke-[1.8]" viewBox="0 0 24 24"><path d="M4 7V4h3M17 4h3v3M4 17v3h3M17 20h3v-3"/><rect x="7" y="7" width="10" height="10" rx="1"/></svg>
-        </div>
-        Scan
-    </NavLink>
+    <!-- Tracking -->
+    @if (navRole == "superadmin" || navRole == "admin" || navRole == "staff")
+    {
+        <NavLink href="Tracking" class="ut-bottom-link flex-1 flex flex-col items-center justify-center gap-0.5 text-[#8a8780] hover:text-white no-underline text-[0.58rem] font-semibold tracking-[0.02em] transition-colors py-1.5 relative border-none bg-none cursor-pointer font-sans" activeClass="active text-[#e8a000]">
+            <div class="relative inline-flex">
+                <svg class="w-6 h-6 stroke-current fill-none stroke-[1.8]" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>
+            </div>
+            Tracking
+        </NavLink>
+    }
 
     <!-- Approvals -->
-    <NavLink href="Approval" class="ut-bottom-link flex-1 flex flex-col items-center justify-center gap-0.5 text-[#8a8780] hover:text-white no-underline text-[0.58rem] font-semibold tracking-[0.02em] transition-colors py-1.5 relative border-none bg-none cursor-pointer font-sans" activeClass="active text-[#e8a000]">
-        <div class="relative inline-flex">
-            <svg class="w-6 h-6 stroke-current fill-none stroke-[1.8]" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
-        </div>
-        Approve
-    </NavLink>
+    @if (navRole == "superadmin" || navRole == "manager" || navRole == "admin")
+    {
+        <NavLink href="Approval" class="ut-bottom-link flex-1 flex flex-col items-center justify-center gap-0.5 text-[#8a8780] hover:text-white no-underline text-[0.58rem] font-semibold tracking-[0.02em] transition-colors py-1.5 relative border-none bg-none cursor-pointer font-sans" activeClass="active text-[#e8a000]">
+            <div class="relative inline-flex">
+                <svg class="w-6 h-6 stroke-current fill-none stroke-[1.8]" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+            </div>
+            Approve
+        </NavLink>
+    }
 
     <!-- History -->
-    <NavLink href="TransactionHistory" class="ut-bottom-link flex-1 flex flex-col items-center justify-center gap-0.5 text-[#8a8780] hover:text-white no-underline text-[0.58rem] font-semibold tracking-[0.02em] transition-colors py-1.5 relative border-none bg-none cursor-pointer font-sans" activeClass="active text-[#e8a000]">
-        <div class="relative inline-flex">
-            <svg class="w-6 h-6 stroke-current fill-none stroke-[1.8]" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        </div>
-        History
-    </NavLink>
+    @if (navRole == "superadmin" || navRole == "manager" || navRole == "admin" || navRole == "staff")
+    {
+        <NavLink href="TransactionHistory" class="ut-bottom-link flex-1 flex flex-col items-center justify-center gap-0.5 text-[#8a8780] hover:text-white no-underline text-[0.58rem] font-semibold tracking-[0.02em] transition-colors py-1.5 relative border-none bg-none cursor-pointer font-sans" activeClass="active text-[#e8a000]">
+            <div class="relative inline-flex">
+                <svg class="w-6 h-6 stroke-current fill-none stroke-[1.8]" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            History
+        </NavLink>
+    }
 </nav>
 
 @code {
