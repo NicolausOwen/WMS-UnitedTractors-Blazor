@@ -76,7 +76,11 @@
                     <p class="text-[1rem] text-[#8a8880] mt-0.5">Daftar barang yang tersedia di gudang</p>
                 </div>
                 <div class="w-full sm:w-64 shrink-0 relative">
-                    <input type="text" @bind="SearchQuery" @bind:event="oninput" @onkeyup="HandleSearch" placeholder="Cari nama barang atau SKU (tekan Enter)..." class="w-full pl-10 pr-4 py-2 bg-[#f9f8f6] border border-[#e5e3dc] rounded-full text-sm font-semibold text-[#5a5855] focus:outline-none focus:ring-2 focus:ring-[#e8a000] focus:bg-white transition-all" />
+                    <input type="text" 
+                            @bind="SearchQuery" 
+                            @bind:event="oninput" 
+                            placeholder="Cari nama barang atau SKU..." 
+                            class="w-full pl-10 pr-4 py-2 bg-[#f9f8f6] border border-[#e5e3dc] rounded-full text-sm font-semibold text-[#5a5855] focus:outline-none focus:ring-2 focus:ring-[#e8a000] focus:bg-white transition-all" />
                     <svg class="w-4 h-4 text-[#8a8880] absolute left-3.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                 </div>
             </div>
@@ -352,7 +356,7 @@
                             <div class="relative w-full aspect-square lg:aspect-[4/3] bg-[#f5f4f0] rounded-xl overflow-hidden border border-[#e5e3dc] mb-3">
                                 @if (!string.IsNullOrEmpty(SelectedMainImage))
                                 {
-                                    <img src="@(SelectedMainImage.StartsWith("images/") ? $"/{SelectedMainImage}" : $"/storage/{SelectedMainImage}")" class="w-full h-full object-cover">
+                                    <img src="@GetImageUrl(SelectedMainImage)" class="w-full h-full object-cover">
                                 }
                                 else
                                 {
@@ -366,7 +370,7 @@
                                 <div class="flex gap-2 overflow-x-auto pb-2" style="scrollbar-width: thin;">
                                     @foreach(var img in ModalImages) {
                                         <button type="button" @onclick="() => SelectImage(img)" class="relative w-16 h-16 rounded-lg overflow-hidden shrink-0 border-2 transition-colors @(SelectedMainImage == img ? "border-[#e8a000]" : "border-transparent opacity-70 hover:opacity-100")">
-                                            <img src="@(img.StartsWith("images/") ? $"/{img}" : $"/storage/{img}")" class="w-full h-full object-cover" />
+                                            <img src="@GetImageUrl(img)" class="w-full h-full object-cover" />
                                         </button>
                                     }
                                 </div>
@@ -509,8 +513,6 @@
     private int TotalItems = 0;
     private int TotalPages = 0;
     
-    private string? SearchQuery = "";
-    
     private int? SelectedCategoryId;
     private string? ErrorMessage;
     
@@ -610,7 +612,7 @@
         ModalImages.Clear();
         if (!string.IsNullOrEmpty(product.image))
         {
-            ModalImages.Add(product.image);
+            ModalImages.Add(NormalizeImagePath(product.image));
         }
         if (!string.IsNullOrEmpty(product.images))
         {
@@ -619,13 +621,13 @@
                 var extraImages = System.Text.Json.JsonSerializer.Deserialize<List<string>>(product.images);
                 if (extraImages != null)
                 {
-                    ModalImages.AddRange(extraImages);
+                    ModalImages.AddRange(extraImages.Select(NormalizeImagePath));
                 }
             }
             catch {}
         }
         
-        ModalImages = ModalImages.Distinct().ToList();
+        ModalImages = ModalImages.Where(i => !string.IsNullOrEmpty(i)).Distinct().ToList();
         SelectedMainImage = ModalImages.FirstOrDefault() ?? "";
         
         if (product.ProductVariants != null && product.ProductVariants.Any())
@@ -634,6 +636,10 @@
             SelectedVariantColor = firstVar.color;
             SelectedVariantSize = firstVar.size;
             SelectedVariantId = firstVar.id;
+            if (!string.IsNullOrEmpty(firstVar.image))
+            {
+                SelectedMainImage = NormalizeImagePath(firstVar.image);
+            }
         }
         else
         {
@@ -661,42 +667,60 @@
 
     private void SelectColor(string color)
     {
-        if (!IsColorAvailable(color))
+        if (SelectedProduct?.ProductVariants == null)
         {
-            SelectedVariantSize = SelectedProduct?.ProductVariants?.FirstOrDefault(v => v.color == color)?.size;
+            SelectedVariantColor = color;
+            return;
         }
+
         SelectedVariantColor = color;
+
+        if (!SelectedProduct.ProductVariants.Any(v => v.color == color && v.size == SelectedVariantSize))
+        {
+            SelectedVariantSize = SelectedProduct.ProductVariants.FirstOrDefault(v => v.color == color)?.size;
+        }
+
         UpdateSelectedVariant();
     }
 
     private void SelectSize(string size)
     {
-        if (!IsSizeAvailable(size))
+        if (SelectedProduct?.ProductVariants == null)
         {
-            SelectedVariantColor = SelectedProduct?.ProductVariants?.FirstOrDefault(v => v.size == size)?.color;
+            SelectedVariantSize = size;
+            return;
         }
+
         SelectedVariantSize = size;
+
+        if (!SelectedProduct.ProductVariants.Any(v => v.size == size && v.color == SelectedVariantColor))
+        {
+            SelectedVariantColor = SelectedProduct.ProductVariants.FirstOrDefault(v => v.size == size)?.color;
+        }
+
         UpdateSelectedVariant();
     }
 
     private void SelectImage(string img)
     {
-        SelectedMainImage = img;
+        var normalizedImage = NormalizeImagePath(img);
+        SelectedMainImage = normalizedImage;
         
-        // Sync thumbnail click with variant color
         if (SelectedProduct?.ProductVariants != null && ModalImages.Count > 1)
         {
-            var variantWithImage = SelectedProduct.ProductVariants.FirstOrDefault(v => v.image == img || v.image == img.Replace("/storage/", ""));
-            if (variantWithImage != null && !string.IsNullOrEmpty(variantWithImage.color))
+            var variantWithImage = SelectedProduct.ProductVariants.FirstOrDefault(v =>
+                string.Equals(NormalizeImagePath(v.image), normalizedImage, StringComparison.OrdinalIgnoreCase));
+
+            if (variantWithImage != null)
             {
                 SelectedVariantColor = variantWithImage.color;
+                SelectedVariantSize = variantWithImage.size;
                 UpdateSelectedVariant();
                 return;
             }
-            
-            // Fallback matching
+
             var colorsList = SelectedProduct.ProductVariants.Select(v => v.color).Where(c => !string.IsNullOrEmpty(c)).Distinct().ToList();
-            int imgIndex = ModalImages.IndexOf(img);
+            int imgIndex = ModalImages.IndexOf(normalizedImage);
             if (imgIndex > 0 && imgIndex <= colorsList.Count)
             {
                 SelectedVariantColor = colorsList[imgIndex - 1];
@@ -714,21 +738,27 @@
     {
         if (SelectedProduct?.ProductVariants != null)
         {
-            var variant = SelectedProduct.ProductVariants.FirstOrDefault(v => 
-                (string.IsNullOrEmpty(SelectedVariantColor) || v.color == SelectedVariantColor) &&
-                (string.IsNullOrEmpty(SelectedVariantSize) || v.size == SelectedVariantSize));
-            
+            var variant = SelectedProduct.ProductVariants.FirstOrDefault(v =>
+                !string.IsNullOrEmpty(SelectedVariantColor) && !string.IsNullOrEmpty(SelectedVariantSize) &&
+                v.color == SelectedVariantColor && v.size == SelectedVariantSize)
+                ?? SelectedProduct.ProductVariants.FirstOrDefault(v =>
+                    !string.IsNullOrEmpty(SelectedVariantColor) && v.color == SelectedVariantColor)
+                ?? SelectedProduct.ProductVariants.FirstOrDefault(v =>
+                    !string.IsNullOrEmpty(SelectedVariantSize) && v.size == SelectedVariantSize)
+                ?? SelectedProduct.ProductVariants.FirstOrDefault();
+
             if (variant != null)
             {
+                SelectedVariantColor = variant.color;
+                SelectedVariantSize = variant.size;
                 SelectedVariantId = variant.id;
-                
+
                 if (!string.IsNullOrEmpty(variant.image))
                 {
-                    SelectedMainImage = variant.image;
+                    SelectedMainImage = NormalizeImagePath(variant.image);
                 }
                 else
                 {
-                    // Fallback to index mapping if variant has no image
                     var colorsList = SelectedProduct.ProductVariants.Select(v => v.color).Where(c => !string.IsNullOrEmpty(c)).Distinct().ToList();
                     int colorIndex = colorsList.IndexOf(variant.color ?? "");
                     if (colorIndex >= 0 && colorIndex + 1 < ModalImages.Count)
@@ -742,6 +772,7 @@
                 }
             }
         }
+
         SelectedQuantity = 1;
     }
     
@@ -749,6 +780,43 @@
     {
         ShowProductModal = false;
         SelectedProduct = null;
+    }
+
+    private string NormalizeImagePath(string? image)
+    {
+        if (string.IsNullOrWhiteSpace(image))
+        {
+            return string.Empty;
+        }
+
+        var normalized = image.Trim();
+        if (normalized.StartsWith("/"))
+        {
+            normalized = normalized[1..];
+        }
+
+        return normalized;
+    }
+
+    private string GetImageUrl(string? image)
+    {
+        var normalized = NormalizeImagePath(image);
+        if (string.IsNullOrEmpty(normalized))
+        {
+            return string.Empty;
+        }
+
+        if (normalized.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || normalized.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+        {
+            return normalized;
+        }
+
+        if (normalized.StartsWith("images/", StringComparison.OrdinalIgnoreCase) || normalized.StartsWith("storage/", StringComparison.OrdinalIgnoreCase))
+        {
+            return "/" + normalized;
+        }
+
+        return $"/storage/{normalized}";
     }
     
     private int GetMaxStock()
@@ -842,15 +910,24 @@
         CartService.OnChange -= StateHasChanged;
     }
 
-    private void HandleSearch(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
+    private string _searchQuery = "";
+
+    private string SearchQuery
     {
-        if (e.Key == "Enter")
+        get => _searchQuery;
+        set
         {
-            InvokeAsync(() =>
+            if (_searchQuery != value)
             {
-                LoadData(1);
-                StateHasChanged();
-            });
+                _searchQuery = value;
+                
+                // Setiap kali user mengetik/menghapus huruf, jalankan fungsi ini otomatis
+                InvokeAsync(() =>
+                {
+                    LoadData(1);
+                    StateHasChanged();
+                });
+            }
         }
     }
 }
