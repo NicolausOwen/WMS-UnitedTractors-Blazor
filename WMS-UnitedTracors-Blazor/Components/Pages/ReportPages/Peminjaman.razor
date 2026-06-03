@@ -1,0 +1,160 @@
+@page "/Reports/Peminjaman"
+@using UT_WMSDotnet.Models
+@using WMS_UnitedTracors_Blazor.Services
+@using Microsoft.EntityFrameworkCore
+@inject UT_WMSDotnet.Data.ApplicationDbContext DbContext
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+@rendermode InteractiveServer
+
+<PageTitle>Laporan Peminjaman Barang</PageTitle>
+
+<div class="py-12 bg-[#f5f4f0] min-h-screen font-sans">
+    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        
+        <div class="mb-6 flex items-center justify-between">
+            <div>
+                <a href="/Reports" class="inline-flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-gray-700 transition mb-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                    Back to Dashboard
+                </a>
+                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                    Laporan <span class="text-[#e8a000]">Peminjaman Barang</span>
+                </h2>
+            </div>
+            <button @onclick="Print" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white text-sm font-semibold rounded-md shadow-sm transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                Print PDF
+            </button>
+        </div>
+
+        <div class="bg-white border border-[#e5e3dc] rounded-lg shadow-sm overflow-hidden mb-6">
+            <div class="p-6">
+                <div class="flex flex-wrap items-end gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Start Date</label>
+                        <input type="date" @bind="StartDate" class="rounded-md border-gray-300 shadow-sm focus:border-[#e8a000] focus:ring-[#e8a000] sm:text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">End Date</label>
+                        <input type="date" @bind="EndDate" class="rounded-md border-gray-300 shadow-sm focus:border-[#e8a000] focus:ring-[#e8a000] sm:text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Status</label>
+                        <select @bind="Status" class="rounded-md border-gray-300 shadow-sm focus:border-[#e8a000] focus:ring-[#e8a000] sm:text-sm min-w-[150px]">
+                            <option value="">All Status</option>
+                            <option value="PENDING">Pending</option>
+                            <option value="APPROVED">Approved</option>
+                            <option value="REJECTED">Rejected</option>
+                        </select>
+                    </div>
+                    <div>
+                        <button type="button" @onclick="LoadData" class="px-4 py-2.5 bg-[#e8a000] hover:bg-[#d49300] text-[#1a1a1a] text-sm font-bold rounded-md shadow-sm transition">Apply Filter</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white border border-[#e5e3dc] rounded-lg shadow-sm overflow-hidden" id="printableArea">
+            <div class="p-6 border-b border-gray-100 print:block hidden mb-4">
+                <h2 class="text-xl font-bold text-center">Laporan Peminjaman Barang</h2>
+                <p class="text-center text-sm text-gray-500">Periode: @StartDate?.ToString("dd MMM yyyy") - @EndDate?.ToString("dd MMM yyyy")</p>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left whitespace-nowrap">
+                    <thead class="text-gray-500 text-[0.65rem] uppercase tracking-wider border-b border-gray-100 bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 font-semibold">No</th>
+                            <th class="px-6 py-3 font-semibold">Tanggal</th>
+                            <th class="px-4 py-3 font-semibold">Nama Pemohon</th>
+                            <th class="px-4 py-3 font-semibold">Barang</th>
+                            <th class="px-4 py-3 font-semibold text-center">Qty</th>
+                            <th class="px-4 py-3 font-semibold text-center">Dikembalikan</th>
+                            <th class="px-4 py-3 font-semibold">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        @if (Transactions == null)
+                        {
+                            <tr><td colspan="7" class="px-6 py-8 text-center text-gray-500">Loading...</td></tr>
+                        }
+                        else if (!Transactions.Any())
+                        {
+                            <tr><td colspan="7" class="px-6 py-8 text-center text-gray-500">Tidak ada data ditemukan.</td></tr>
+                        }
+                        else
+                        {
+                            int i = 1;
+                            foreach (var item in Transactions)
+                            {
+                                <tr class="hover:bg-gray-50 transition">
+                                    <td class="px-6 py-3 text-sm text-gray-600">@(i++)</td>
+                                    <td class="px-6 py-3 text-sm text-gray-600">@item.created_at.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td class="px-4 py-3">
+                                        <div class="text-sm font-semibold text-gray-900">@(item.applicant_name ?? item.Requester?.name)</div>
+                                        <div class="text-xs text-gray-500">@(item.Division?.name)</div>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <div class="text-sm font-semibold text-gray-900">@(item.Product?.name)</div>
+                                        <code class="text-xs text-gray-500">@(item.Product?.sku)</code>
+                                    </td>
+                                    <td class="px-4 py-3 text-sm font-bold text-gray-900 text-center">@item.quantity</td>
+                                    <td class="px-4 py-3 text-sm font-bold text-center @(item.returned_quantity >= item.quantity ? "text-green-600" : (item.returned_quantity > 0 ? "text-amber-600" : "text-gray-400"))">
+                                        @item.returned_quantity / @item.quantity
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        @if (item.status == "PENDING") {
+                                            <span class="inline-flex items-center px-2 py-0.5 border border-[#fde68a] rounded-md text-[0.65rem] font-bold bg-[#fef3c7] text-[#92400e]">PENDING</span>
+                                        } else if (item.status == "APPROVED") {
+                                            <span class="inline-flex items-center px-2 py-0.5 border border-[#b8e8c0] rounded-md text-[0.65rem] font-bold bg-[#eef9f0] text-[#1a7a30]">APPROVED</span>
+                                        } else {
+                                            <span class="inline-flex items-center px-2 py-0.5 border border-[#f8c0c0] rounded-md text-[0.65rem] font-bold bg-[#fef0f0] text-[#d94040]">@item.status</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private DateTime? StartDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+    private DateTime? EndDate = DateTime.Now;
+    private string? Status = "";
+    
+    private List<Transaction>? Transactions;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        var query = DbContext.Transactions
+            .Include(t => t.Product)
+            .Include(t => t.Requester)
+            .Include(t => t.Division)
+            .Where(t => t.type == "OUT" && t.request_type == "BORROW")
+            .AsQueryable();
+
+        if (StartDate.HasValue) query = query.Where(t => t.created_at >= StartDate.Value.Date);
+        if (EndDate.HasValue)
+        {
+            var end = EndDate.Value.Date.AddDays(1);
+            query = query.Where(t => t.created_at < end);
+        }
+        if (!string.IsNullOrEmpty(Status)) query = query.Where(t => t.status == Status);
+
+        Transactions = await query.OrderByDescending(t => t.created_at).ToListAsync();
+    }
+
+    private async Task Print()
+    {
+        await JSRuntime.InvokeVoidAsync("window.print");
+    }
+}

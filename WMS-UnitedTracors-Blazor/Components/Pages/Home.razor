@@ -244,25 +244,34 @@
                                 <div class="space-y-3 max-h-60 overflow-y-auto pr-2">
                                     @foreach(var item in CartService.Items)
                                     {
-                                        <div class="bg-white border border-[#e5e3dc] rounded-xl p-3.5 flex items-center justify-between gap-3 shadow-sm hover:border-gray-300 transition-colors">
-                                            <div class="flex-1 min-w-0 text-left">
-                                                <h4 class="text-xs font-bold text-[#1a1a1a] truncate" title="@item.Name">@item.Name</h4>
-                                                <div class="flex items-center gap-1.5 mt-1 text-[10px] text-gray-500 font-semibold">
-                                                    <span>Sku: @item.Sku</span>
-                                                    <span>•</span>
-                                                    <span>Type: <span class="text-[#e8a000]">@item.RequestType</span></span>
+                                        <div class="bg-white border border-[#e5e3dc] rounded-xl p-3.5 flex flex-col gap-3 shadow-sm hover:border-gray-300 transition-colors">
+                                            <div class="flex items-center justify-between gap-3">
+                                                <div class="flex-1 min-w-0 text-left">
+                                                    <h4 class="text-xs font-bold text-[#1a1a1a] truncate" title="@item.Name">@item.Name</h4>
+                                                    <div class="flex items-center gap-1.5 mt-1 text-[10px] text-gray-500 font-semibold">
+                                                        <span>Sku: @item.Sku</span>
+                                                        <span>•</span>
+                                                        <span>Type: <span class="text-[#e8a000]">@item.RequestType</span></span>
+                                                    </div>
+                                                </div>
+                                                <div class="flex items-center gap-2 shrink-0">
+                                                    <div class="flex items-center border border-[#e5e3dc] rounded-lg overflow-hidden bg-white h-8">
+                                                        <button type="button" @onclick="() => { if(item.Quantity > 1) item.Quantity--; }" class="w-7 h-full flex items-center justify-center text-xs text-[#5a5855] hover:bg-[#f5f4f0] transition font-bold select-none">-</button>
+                                                        <input type="number" @bind="item.Quantity" @bind:event="oninput" min="1" max="@item.MaxStock" class="w-10 text-center py-0.5 text-xs outline-none bg-transparent font-bold">
+                                                        <button type="button" @onclick="() => { if(item.Quantity < item.MaxStock) item.Quantity++; }" class="w-7 h-full flex items-center justify-center text-xs text-[#5a5855] hover:bg-[#f5f4f0] transition font-bold select-none">+</button>
+                                                    </div>
+                                                    <button type="button" class="p-1.5 text-[#d94040] hover:bg-[#fef0f0] rounded-lg bg-transparent border border-transparent hover:border-[#f8c0c0] cursor-pointer transition shrink-0" @onclick="() => CartService.RemoveItem(item)" title="Hapus">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                    </button>
                                                 </div>
                                             </div>
-                                            <div class="flex items-center gap-2 shrink-0">
-                                                <div class="flex items-center border border-[#e5e3dc] rounded-lg overflow-hidden bg-white h-8">
-                                                    <button type="button" @onclick="() => { if(item.Quantity > 1) item.Quantity--; }" class="w-7 h-full flex items-center justify-center text-xs text-[#5a5855] hover:bg-[#f5f4f0] transition font-bold select-none">-</button>
-                                                    <input type="number" @bind="item.Quantity" @bind:event="oninput" min="1" max="@item.MaxStock" class="w-10 text-center py-0.5 text-xs outline-none bg-transparent font-bold">
-                                                    <button type="button" @onclick="() => { if(item.Quantity < item.MaxStock) item.Quantity++; }" class="w-7 h-full flex items-center justify-center text-xs text-[#5a5855] hover:bg-[#f5f4f0] transition font-bold select-none">+</button>
+                                            @if (item.RequestType == "BORROW")
+                                            {
+                                                <div class="flex gap-2">
+                                                    <input type="date" @bind="item.BorrowStartDate" class="w-full px-2 py-1.5 text-[10px] bg-white border border-[#e5e3dc] rounded outline-none focus:border-[#e8a000]" title="Tanggal Pinjam">
+                                                    <input type="date" @bind="item.ExpectedReturnDate" class="w-full px-2 py-1.5 text-[10px] bg-white border border-[#e5e3dc] rounded outline-none focus:border-[#e8a000]" title="Tanggal Kembali">
                                                 </div>
-                                                <button type="button" class="p-1.5 text-[#d94040] hover:bg-[#fef0f0] rounded-lg bg-transparent border border-transparent hover:border-[#f8c0c0] cursor-pointer transition shrink-0" @onclick="() => CartService.RemoveItem(item)" title="Hapus">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                                </button>
-                                            </div>
+                                            }
                                         </div>
                                     }
                                 </div>
@@ -450,6 +459,19 @@
                                         <p class="text-[0.65rem] text-[#8a8880] mt-1">Sisa @GetMaxStock() @(SelectedProduct.Unit?.name ?? "unit")</p>
                                     </div>
                                 </div>
+                                @if (SelectedRequestType == "BORROW")
+                                {
+                                    <div class="gap-4 bg-[#f9f8f6] p-3 rounded-lg border border-[#e5e3dc] mt-4 grid grid-cols-2">
+                                        <div>
+                                            <label class="block text-[0.65rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1">Tgl Pinjam</label>
+                                            <input type="date" @bind="SelectedStartDate" class="w-full bg-white border border-[#e5e3dc] rounded-md px-2 py-1.5 text-xs focus:border-[#e8a000] outline-none">
+                                        </div>
+                                        <div>
+                                            <label class="block text-[0.65rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1">Tgl Kembali</label>
+                                            <input type="date" @bind="SelectedEndDate" class="w-full bg-white border border-[#e5e3dc] rounded-md px-2 py-1.5 text-xs focus:border-[#e8a000] outline-none">
+                                        </div>
+                                    </div>
+                                }
 
                             </div>
 
@@ -498,6 +520,9 @@
     private int SelectedQuantity = 1;
     private string SelectedRequestType = "BORROW";
     
+    private DateTime? SelectedStartDate;
+    private DateTime? SelectedEndDate;
+
     private string SelectedMainImage = "";
     private List<string> ModalImages = new();
     private int? SelectedVariantId;
@@ -579,6 +604,8 @@
         SelectedProduct = product;
         SelectedQuantity = 1;
         SelectedRequestType = product.is_returnable == 1 ? "BORROW" : "GIVEAWAY";
+        SelectedStartDate = null;
+        SelectedEndDate = null;
         
         ModalImages.Clear();
         if (!string.IsNullOrEmpty(product.image))
@@ -754,7 +781,9 @@
                 BaseCredit = SelectedProduct.value,
                 MaxStock = maxStock,
                 UnitName = SelectedProduct.Unit?.name ?? "unit",
-                ProductVariantId = SelectedVariantId
+                ProductVariantId = SelectedVariantId,
+                BorrowStartDate = SelectedRequestType == "BORROW" ? SelectedStartDate : null,
+                ExpectedReturnDate = SelectedRequestType == "BORROW" ? SelectedEndDate : null
             });
             CloseProductModal();
             ShowCartModal = true;
@@ -786,8 +815,8 @@
                 quantity = i.Quantity,
                 request_type = i.RequestType,
                 product_variant_id = i.ProductVariantId,
-                borrow_start_date = i.RequestType == "BORROW" ? DateTime.Today : null,
-                expected_return_date = i.RequestType == "BORROW" ? DateTime.Today.AddDays(7) : null
+                borrow_start_date = i.BorrowStartDate,
+                expected_return_date = i.ExpectedReturnDate
             }).ToList()
         };
 

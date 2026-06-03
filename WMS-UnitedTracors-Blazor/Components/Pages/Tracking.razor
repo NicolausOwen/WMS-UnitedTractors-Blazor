@@ -1,0 +1,415 @@
+@page "/Tracking"
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@using UT_WMSDotnet.Models
+@using WMS_UnitedTracors_Blazor.Services
+@inject TrackingService TrackingService
+@inject DivisionService DivisionService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>Tracking Penggunaan</PageTitle>
+
+<div class="py-8 bg-[#f5f4f0] min-h-screen font-sans">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div class="mb-6">
+            <h1 class="text-[1.6rem] font-bold text-[#1a1a1a] leading-none tracking-tight">Tracking <span class="text-[#e8a000]">Penggunaan</span></h1>
+            <div class="text-[0.72rem] font-medium text-[#a09e99] mt-1">@DateTime.Now.ToString("dddd, dd MMMM yyyy")</div>
+        </div>
+
+        @if (!string.IsNullOrEmpty(ErrorMessage))
+        {
+            <div class="mb-6 bg-[#fef0f0] border border-[#f8c0c0] text-[#d94040] px-5 py-4 rounded-xl flex items-center gap-3">
+                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <p class="text-sm font-semibold">@ErrorMessage</p>
+            </div>
+        }
+
+        @if (!string.IsNullOrEmpty(SuccessMessage))
+        {
+            <div class="mb-6 bg-[#eef9f0] border border-[#b8e8c0] text-[#1a7a30] px-5 py-4 rounded-xl flex items-center gap-3">
+                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <p class="text-sm font-semibold">@SuccessMessage</p>
+            </div>
+        }
+
+        @* Filters *@
+        <div class="bg-white rounded-xl border border-[#e5e3dc] mb-6 overflow-hidden shadow-sm">
+            <div class="px-5 py-4">
+                <div class="flex flex-col lg:flex-row flex-wrap gap-3 items-end">
+                    <div class="flex-1 min-w-[180px] w-full">
+                        <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Search Product</label>
+                        <div class="relative">
+                            <input type="text" @bind="ProductSearch" placeholder="Name or SKU..."
+                                class="block w-full pl-9 pr-3 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
+                            <svg class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                        </div>
+                    </div>
+                    <div class="min-w-[150px] w-full lg:w-auto">
+                        <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Division</label>
+                        <select @bind="DivisionId" class="block w-full px-3 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
+                            <option value="">All Divisions</option>
+                            @foreach(var div in Divisions)
+                            {
+                                <option value="@div.id">@div.name</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="min-w-[150px] w-full lg:w-auto">
+                        <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Return Status</label>
+                        <select @bind="ReturnStatus" class="block w-full px-3 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
+                            <option value="">All Types</option>
+                            <option value="pending">Borrowed (Pending Return)</option>
+                            <option value="returned">Borrowed (Returned)</option>
+                        </select>
+                    </div>
+                    <div class="min-w-[140px] w-full lg:w-auto">
+                        <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">From</label>
+                        <input type="date" @bind="DateFrom" class="block w-full px-3 py-1.5 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
+                    </div>
+                    <div class="min-w-[140px] w-full lg:w-auto">
+                        <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">To</label>
+                        <input type="date" @bind="DateTo" class="block w-full px-3 py-1.5 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
+                    </div>
+                    <div class="flex gap-2 w-full lg:w-auto justify-end">
+                        <button type="button" @onclick="LoadData" class="px-5 py-2 bg-[#e8a000] hover:bg-[#d49300] text-[#1a1a1a] text-xs font-bold rounded-lg transition active:scale-95 cursor-pointer whitespace-nowrap">
+                            Apply
+                        </button>
+                        <button type="button" @onclick="ResetFilters" class="px-5 py-2 bg-white border border-[#e5e3dc] hover:bg-[#f0ede5] text-[#3a3835] text-xs font-bold rounded-lg transition cursor-pointer">
+                            Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @if(GroupedUsages == null)
+        {
+            <div class="text-center py-8 text-[#8a8880]">Loading...</div>
+        }
+        else if(!GroupedUsages.Any())
+        {
+            <div class="text-center py-8 text-[#8a8880]">Tidak ada data tracking yang ditemukan.</div>
+        }
+        else
+        {
+            <div class="space-y-4">
+                @foreach(var group in GroupedUsages)
+                {
+                    var groupId = group.Key;
+                    var groupItems = group.Value;
+                    var firstItem = groupItems.First();
+                    var borrowItemsOnly = groupItems.Where(i => i.request_type == "BORROW").ToList();
+                    var hasBorrow = borrowItemsOnly.Any();
+                    var totalItems = hasBorrow ? borrowItemsOnly.Sum(i => i.quantity) : groupItems.Sum(i => i.quantity);
+                    var totalReturned = hasBorrow ? borrowItemsOnly.Sum(i => i.returned_quantity) : groupItems.Sum(i => i.returned_quantity);
+                    var allReturned = totalItems > 0 && totalReturned >= totalItems;
+                    var isGiveaway = !hasBorrow;
+                    var status = firstItem.status;
+
+                    var isExpanded = ExpandedGroupIds.Contains(groupId);
+
+                    <div class="bg-white rounded-xl border border-[#e5e3dc] overflow-hidden shadow-sm transition-all duration-200">
+                        @* Header Accordion *@
+                        <div @onclick="() => ToggleGroup(groupId)" class="px-5 py-4 cursor-pointer hover:bg-[#faf9f5] transition flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                            <div class="flex items-center gap-4 flex-1 min-w-0">
+                                <div class="w-10 h-10 rounded-full bg-[#f5f4f0] border border-[#e5e3dc] flex items-center justify-center shrink-0">
+                                    @if(isGiveaway) {
+                                        <svg class="w-5 h-5 text-[#e8a000]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                                    } else {
+                                        <svg class="w-5 h-5 text-[#e8a000]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                    }
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <h3 class="font-syne font-bold text-[#1a1a1a] truncate">@(string.IsNullOrEmpty(firstItem.event_name) ? (isGiveaway ? "Request Barang" : "Peminjaman Barang") : firstItem.event_name)</h3>
+                                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#f5f4f0] text-[#8a8780] border border-[#e5e3dc]">@groupItems.Count Items</span>
+                                        @if(isGiveaway) {
+                                            @if(status == "APPROVED") {
+                                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#eef9f0] text-[#1a7a30] border border-[#b8e8c0]">Selesai</span>
+                                            } else if(status == "REJECTED") {
+                                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#fef0f0] text-[#d94040] border border-[#f8c0c0]">Ditolak</span>
+                                            } else if(status == "REVISION") {
+                                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#fffbeb] text-[#d97706] border border-[#fde68a]">Butuh Revisi</span>
+                                            } else {
+                                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#fff8e6] text-[#b37a00] border border-[#ffe099]">Sedang Diproses</span>
+                                            }
+                                        } else {
+                                            @if(status == "REJECTED") {
+                                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#fef0f0] text-[#d94040] border border-[#f8c0c0]">Ditolak</span>
+                                            } else if(status == "REVISION") {
+                                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#fffbeb] text-[#d97706] border border-[#fde68a]">Butuh Revisi</span>
+                                            } else if(allReturned) {
+                                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#eef9f0] text-[#1a7a30] border border-[#b8e8c0]">Selesai</span>
+                                            } else {
+                                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#fff8e6] text-[#b37a00] border border-[#ffe099]">Sedang Dipinjam</span>
+                                            }
+                                        }
+                                    </div>
+                                    <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500">
+                                        <div class="flex items-center gap-1.5">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                            @(firstItem.applicant_name ?? firstItem.Requester?.name)
+                                        </div>
+                                        <div class="flex items-center gap-1.5">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                            @(isGiveaway ? "Request" : "Pinjam"): @firstItem.created_at.ToString("dd MMM yyyy")
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3 shrink-0">
+                                @if (groupItems.Any(i => i.returned_quantity > 0 || (i.pending_return_quantity > 0 && i.is_return_draft == 0)))
+                                {
+                                    <a href="/Receipt/Return/@firstItem.id" target="_blank" @onclick:stopPropagation="true" class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-white border border-[#b8e8c0] text-[#1a7a30] hover:bg-[#eef9f0] rounded text-xs font-semibold transition">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                        PDF Bukti Pengembalian
+                                    </a>
+                                }
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-[#f0ede5] transition">
+                                    <svg class="w-5 h-5 transition-transform duration-200 @(isExpanded ? "rotate-180" : "")" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        @* Body Accordion *@
+                        @if(isExpanded)
+                        {
+                            <div class="border-t border-[#e5e3dc] bg-[#faf9f5]">
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-left border-collapse">
+                                        <thead>
+                                            <tr class="bg-[#f5f4f0] border-b border-[#e5e3dc]">
+                                                <th class="px-5 py-3 text-[0.65rem] font-bold tracking-wider uppercase text-[#8a8780]">Product</th>
+                                                <th class="px-5 py-3 text-[0.65rem] font-bold tracking-wider uppercase text-[#8a8780]">Kuantitas (Qty)</th>
+                                                <th class="px-5 py-3 text-[0.65rem] font-bold tracking-wider uppercase text-[#8a8780]">Status Detail</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-[#e5e3dc]">
+                                            @foreach(var usage in groupItems)
+                                            {
+                                                <tr class="bg-white hover:bg-[#faf9f5] transition-colors">
+                                                    <td class="px-5 py-3.5 align-middle">
+                                                        <div class="text-sm font-semibold text-[#1a1a1a]">@(usage.Product?.name ?? "-")</div>
+                                                        <div class="flex items-center gap-2 mt-0.5">
+                                                            <code class="text-[10px] text-gray-500 font-mono">@(usage.Product?.sku ?? "-")</code>
+                                                        </div>
+                                                    </td>
+                                                    <td class="px-5 py-3.5 align-middle">
+                                                        <span class="text-sm font-bold text-[#1a1a1a]">@usage.quantity</span>
+                                                        <span class="text-xs text-gray-500">@(usage.Product?.Unit?.name ?? "unit")</span>
+                                                    </td>
+                                                    <td class="px-5 py-3.5 align-middle">
+                                                        @if(usage.status == "PENDING") {
+                                                            <span class="inline-flex items-center px-2 py-0.5 border border-[#fde68a] rounded text-[10px] font-bold bg-[#fef3c7] text-[#92400e]">
+                                                                Menunggu Admin
+                                                            </span>
+                                                        } else if (usage.status == "PENDING_MANAGER") {
+                                                            <span class="inline-flex items-center px-2 py-0.5 border border-[#c4b5fd] rounded text-[10px] font-bold bg-[#ede9fe] text-[#6d28d9]">
+                                                                Menunggu Manager
+                                                            </span>
+                                                        } else if (usage.status == "APPROVED") {
+                                                            @if (usage.request_type == "BORROW") {
+                                                                @if (usage.returned_quantity >= usage.quantity) {
+                                                                    <span class="inline-flex items-center px-2 py-0.5 border border-[#b8e8c0] rounded text-[10px] font-bold bg-[#eef9f0] text-[#1a7a30]">
+                                                                        Sudah Kembali (@usage.returned_quantity/@usage.quantity)
+                                                                    </span>
+                                                                } else if (usage.pending_return_quantity > 0 && usage.is_return_draft == 1) {
+                                                                    <span class="inline-flex items-center px-2 py-0.5 border border-[#c4b5fd] rounded text-[10px] font-bold bg-[#ede9fe] text-[#6d28d9]">
+                                                                        DRAFT (@usage.pending_return_quantity @(usage.Product?.Unit?.name ?? "unit"))
+                                                                    </span>
+                                                                } else if (usage.pending_return_quantity > 0 && usage.is_return_draft == 0) {
+                                                                    <span class="inline-flex items-center px-2 py-0.5 border border-[#bae6fd] rounded text-[10px] font-bold bg-[#e0f2fe] text-[#1a6b8a]">
+                                                                        Menunggu ACC (@usage.pending_return_quantity)
+                                                                    </span>
+                                                                } else {
+                                                                    <span class="inline-flex items-center px-2 py-0.5 border border-[#fde68a] rounded text-[10px] font-bold bg-[#fef3c7] text-[#92400e]">
+                                                                        Belum Kembali (@usage.returned_quantity/@usage.quantity)
+                                                                    </span>
+                                                                }
+                                                                
+                                                                @if(usage.returned_quantity > 0 && usage.returned_quantity < usage.quantity) {
+                                                                    <span class="inline-flex items-center px-2 py-0.5 border border-[#b8e8c0] rounded text-[10px] font-bold bg-[#eef9f0] text-[#1a7a30] mt-1">
+                                                                        Kembali Sebagian (@usage.returned_quantity)
+                                                                    </span>
+                                                                }
+                                                            } else {
+                                                                <span class="inline-flex items-center px-2 py-0.5 border border-[#b8e8c0] rounded text-[10px] font-bold bg-[#eef9f0] text-[#1a7a30]">
+                                                                    Selesai / Diterima
+                                                                </span>
+                                                            }
+                                                        } else if (usage.status == "REJECTED") {
+                                                            <span class="inline-flex items-center px-2 py-0.5 border border-[#f8c0c0] rounded text-[10px] font-bold bg-[#fef0f0] text-[#d94040]">
+                                                                Ditolak
+                                                            </span>
+                                                            @if(!string.IsNullOrEmpty(usage.rejection_reason)) {
+                                                                <div class="text-[10px] text-red-600 mt-1.5 italic font-semibold">"@usage.rejection_reason"</div>
+                                                            }
+                                                        } else if (usage.status == "REVISION") {
+                                                            <span class="inline-flex items-center px-2 py-0.5 border border-[#fde68a] rounded text-[10px] font-bold bg-[#fffbeb] text-[#d97706]">
+                                                                Butuh Revisi
+                                                            </span>
+                                                            @if(!string.IsNullOrEmpty(usage.rejection_reason)) {
+                                                                <div class="text-[10px] text-amber-700 mt-1.5 italic font-semibold">"@usage.rejection_reason"</div>
+                                                            }
+                                                        }
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private List<Division> Divisions = new();
+    private Dictionary<string, List<Transaction>> GroupedUsages = new();
+    private HashSet<string> ExpandedGroupIds = new();
+
+    private string? ProductSearch;
+    private int? DivisionId;
+    private string? ReturnStatus;
+    private DateTime? DateFrom;
+    private DateTime? DateTo;
+    
+    private string? ErrorMessage;
+    private string? SuccessMessage;
+    
+    private int CurrentUserId;
+    private string? UserRole;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (user.Identity != null && user.Identity.IsAuthenticated)
+        {
+            var idClaim = user.FindFirst(ClaimTypes.NameIdentifier);
+            if (idClaim != null && int.TryParse(idClaim.Value, out int id))
+            {
+                CurrentUserId = id;
+            }
+            UserRole = user.FindFirst(ClaimTypes.Role)?.Value;
+        }
+
+        Divisions = await DivisionService.GetAllDivisionsAsync();
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        var allUsages = await TrackingService.GetTrackingDataAsync(
+            DivisionId, ProductSearch, ReturnStatus, DateFrom, DateTo, CurrentUserId, UserRole);
+
+        // Client side grouping logic similar to laravel
+        var tempGrouped = new Dictionary<string, List<Transaction>>();
+        foreach (var item in allUsages)
+        {
+            var key = TrackingService.CreateTrackingGroupId(item);
+            if (!tempGrouped.ContainsKey(key))
+            {
+                tempGrouped[key] = new List<Transaction>();
+            }
+            tempGrouped[key].Add(item);
+        }
+
+        var finalGrouped = new Dictionary<string, List<Transaction>>();
+        
+        foreach (var kvp in tempGrouped)
+        {
+            var groupItems = kvp.Value;
+            var firstItem = groupItems.First();
+            
+            // Skip fully returned borrow events
+            if (firstItem.request_type == "BORROW" && firstItem.status == "APPROVED")
+            {
+                var totalQty = groupItems.Sum(x => x.quantity);
+                var totalRet = groupItems.Sum(x => x.returned_quantity);
+                if (totalRet >= totalQty) continue;
+            }
+
+            bool matchesCriteria = true;
+
+            if (!string.IsNullOrEmpty(ProductSearch))
+            {
+                var s = ProductSearch.ToLower();
+                matchesCriteria = groupItems.Any(i => 
+                    (i.Product?.name?.ToLower().Contains(s) ?? false) || 
+                    (i.Product?.sku?.ToLower().Contains(s) ?? false));
+            }
+
+            if (matchesCriteria && !string.IsNullOrEmpty(ReturnStatus))
+            {
+                if (ReturnStatus == "pending")
+                {
+                    matchesCriteria = groupItems.Any(i => i.request_type == "BORROW" && i.returned_quantity < i.quantity);
+                }
+                else if (ReturnStatus == "returned")
+                {
+                    matchesCriteria = groupItems.Any(i => i.request_type == "BORROW" && i.returned_quantity >= i.quantity);
+                }
+            }
+
+            if (matchesCriteria)
+            {
+                finalGrouped[kvp.Key] = groupItems;
+            }
+        }
+
+        GroupedUsages = finalGrouped;
+
+        // Auto expand logic
+        ExpandedGroupIds.Clear();
+        foreach (var kvp in GroupedUsages)
+        {
+            var firstItem = kvp.Value.First();
+            if (firstItem.request_type == "GIVEAWAY")
+            {
+                if (firstItem.status == "PENDING" || firstItem.status == "PENDING_MANAGER" || firstItem.status == "REVISION")
+                {
+                    ExpandedGroupIds.Add(kvp.Key);
+                }
+            }
+            else
+            {
+                var totalItems = kvp.Value.Sum(i => i.quantity);
+                var totalReturned = kvp.Value.Sum(i => i.returned_quantity);
+                if (firstItem.status == "PENDING" || firstItem.status == "REVISION" || totalReturned < totalItems)
+                {
+                    ExpandedGroupIds.Add(kvp.Key);
+                }
+            }
+        }
+    }
+
+    private void ToggleGroup(string groupId)
+    {
+        if (ExpandedGroupIds.Contains(groupId))
+        {
+            ExpandedGroupIds.Remove(groupId);
+        }
+        else
+        {
+            ExpandedGroupIds.Add(groupId);
+        }
+    }
+
+    private async Task ResetFilters()
+    {
+        ProductSearch = null;
+        DivisionId = null;
+        ReturnStatus = null;
+        DateFrom = null;
+        DateTo = null;
+        await LoadData();
+    }
+}

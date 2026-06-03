@@ -1,0 +1,180 @@
+@page "/Receipt/{Type}/{Id:int}"
+@using UT_WMSDotnet.Models
+@using WMS_UnitedTracors_Blazor.Services
+@using Microsoft.EntityFrameworkCore
+@inject UT_WMSDotnet.Data.ApplicationDbContext DbContext
+@inject IJSRuntime JSRuntime
+@layout WMS_UnitedTracors_Blazor.Components.Layout.MainLayout
+
+@if (FirstItem == null)
+{
+    <div class="p-8 text-center">Loading...</div>
+}
+else
+{
+    <div class="bg-white p-8 max-w-4xl mx-auto my-8 border border-gray-200 shadow-sm print:shadow-none print:border-none print:m-0 print:p-0">
+        <div class="text-center mb-8 border-b-2 border-gray-800 pb-4">
+            <h1 class="text-2xl font-bold uppercase m-0 mb-1">
+                @(Type == "Return" ? "Bukti Pengembalian Barang" : "Bukti Transaksi Barang")
+            </h1>
+            <p class="text-sm text-gray-600 m-0">Warehouse Management System - United Tractors</p>
+        </div>
+
+        <table class="w-full mb-6 border-collapse">
+            <tr>
+                <td class="font-bold w-40 py-1 align-top">Tanggal Request</td>
+                <td class="py-1 align-top">: @FirstItem.created_at.ToString("dd MMM yyyy HH:mm:ss")</td>
+            </tr>
+            <tr>
+                <td class="font-bold w-40 py-1 align-top">Nama Pemohon</td>
+                <td class="py-1 align-top">: @(FirstItem.applicant_name ?? FirstItem.Requester?.name)</td>
+            </tr>
+            <tr>
+                <td class="font-bold w-40 py-1 align-top">NRP</td>
+                <td class="py-1 align-top">: @(FirstItem.applicant_nrp ?? "-")</td>
+            </tr>
+            <tr>
+                <td class="font-bold w-40 py-1 align-top">Divisi</td>
+                <td class="py-1 align-top">: @(FirstItem.Division?.name ?? "-")</td>
+            </tr>
+            @if (!string.IsNullOrEmpty(FirstItem.event_name))
+            {
+                <tr>
+                    <td class="font-bold w-40 py-1 align-top">Keperluan / Event</td>
+                    <td class="py-1 align-top">: @FirstItem.event_name (@(FirstItem.event_date?.ToString("dd MMM yyyy") ?? "-"))</td>
+                </tr>
+            }
+            @if (Type == "Return" && FirstItem.updated_at != DateTime.MinValue)
+            {
+                <tr>
+                    <td class="font-bold w-40 py-1 align-top">Tanggal Dikembalikan</td>
+                    <td class="py-1 align-top">: @FirstItem.updated_at.ToString("dd MMM yyyy HH:mm:ss")</td>
+                </tr>
+            }
+            @if (!string.IsNullOrEmpty(FirstItem.notes))
+            {
+                <tr>
+                    <td class="font-bold w-40 py-1 align-top">Catatan</td>
+                    <td class="py-1 align-top">: @FirstItem.notes</td>
+                </tr>
+            }
+        </table>
+
+        <table class="w-full border-collapse mb-8 border border-gray-300">
+            <thead>
+                <tr class="bg-gray-100">
+                    <th class="border border-gray-300 p-2.5 text-left font-bold">No</th>
+                    <th class="border border-gray-300 p-2.5 text-left font-bold">SKU</th>
+                    <th class="border border-gray-300 p-2.5 text-left font-bold">Nama Barang</th>
+                    <th class="border border-gray-300 p-2.5 text-center font-bold">Qty</th>
+                    <th class="border border-gray-300 p-2.5 text-center font-bold">Tipe Barang</th>
+                    <th class="border border-gray-300 p-2.5 text-center font-bold">Info Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Items.Select((v, i) => new { Index = i, Value = v }))
+                {
+                    <tr>
+                        <td class="border border-gray-300 p-2.5 text-center">@(item.Index + 1)</td>
+                        <td class="border border-gray-300 p-2.5">@item.Value.Product?.sku</td>
+                        <td class="border border-gray-300 p-2.5">@item.Value.Product?.name</td>
+                        <td class="border border-gray-300 p-2.5 text-center">@item.Value.quantity @(item.Value.Product?.Unit?.name ?? "--")</td>
+                        <td class="border border-gray-300 p-2.5 text-center">
+                            @if (item.Value.request_type == "GIVEAWAY")
+                            {
+                                <span class="inline-block px-1.5 py-0.5 rounded text-[11px] font-bold bg-[#f3e8ff] text-[#7e22ce] border border-[#e9d5ff]">Request (Giveaway)</span>
+                            }
+                            else
+                            {
+                                <span class="inline-block px-1.5 py-0.5 rounded text-[11px] font-bold bg-[#e0f2fe] text-[#0369a1] border border-[#bae6fd]">Peminjaman (Bisa Return)</span>
+                            }
+                        </td>
+                        <td class="border border-gray-300 p-2.5 text-center text-[11px]">
+                            @if (item.Value.request_type == "GIVEAWAY")
+                            {
+                                <span>-</span>
+                            }
+                            else
+                            {
+                                @if (item.Value.returned_quantity > 0)
+                                {
+                                    <span class="text-green-600 font-bold block">
+                                        @item.Value.returned_quantity / @item.Value.quantity Kembali
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="text-red-600 font-bold">Belum Kembali</span>
+                                }
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <p class="text-xs text-gray-500 italic mb-12">
+            * Barang peminjaman (Wajib Kembali) harus dikembalikan dalam kondisi baik sesuai dengan jumlah yang dipinjam.<br>
+            * Bukti ini sah dan dicetak secara otomatis oleh sistem.
+        </p>
+
+        <table class="w-full border-collapse mt-8">
+            <tr>
+                <td class="text-center pt-12 border-b border-gray-800 w-[45%] font-bold">
+                    @(FirstItem.applicant_name ?? FirstItem.Requester?.name)
+                </td>
+                <td class="w-[10%]"></td>
+                <td class="text-center pt-12 border-b border-gray-800 w-[45%] font-bold">
+                    @(FirstItem.Approver?.name ?? "Admin / Manager")
+                </td>
+            </tr>
+            <tr>
+                <td class="text-center text-xs text-gray-600 pt-1">Pemohon (Penerima Barang)</td>
+                <td></td>
+                <td class="text-center text-xs text-gray-600 pt-1">Menyetujui (Pemberi Barang)</td>
+            </tr>
+        </table>
+    </div>
+
+    <script>
+        window.onload = function() {
+            setTimeout(function() {
+                window.print();
+            }, 500);
+        };
+    </script>
+}
+
+@code {
+    [Parameter] public string Type { get; set; } = "";
+    [Parameter] public int Id { get; set; }
+
+    private List<Transaction> Items = new();
+    private Transaction? FirstItem;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var targetTx = await DbContext.Transactions
+            .Include(t => t.Product).ThenInclude(p => p.Unit)
+            .Include(t => t.Requester)
+            .Include(t => t.Approver)
+            .Include(t => t.Division)
+            .FirstOrDefaultAsync(t => t.id == Id);
+
+        if (targetTx != null)
+        {
+            // Find all transactions in the same group (same created_at minute, requester, applicant)
+            var startRange = new DateTime(targetTx.created_at.Year, targetTx.created_at.Month, targetTx.created_at.Day, targetTx.created_at.Hour, targetTx.created_at.Minute, 0);
+            var endRange = startRange.AddMinutes(1);
+
+            Items = await DbContext.Transactions
+                .Include(t => t.Product).ThenInclude(p => p.Unit)
+                .Where(t => t.requester_id == targetTx.requester_id &&
+                            t.applicant_name == targetTx.applicant_name &&
+                            t.created_at >= startRange && t.created_at < endRange)
+                .ToListAsync();
+
+            FirstItem = targetTx;
+        }
+    }
+}

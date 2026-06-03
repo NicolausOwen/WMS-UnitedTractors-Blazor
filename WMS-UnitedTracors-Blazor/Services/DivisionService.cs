@@ -14,6 +14,11 @@ public class DivisionService
         _context = context;
     }
 
+    public async Task<List<Division>> GetAllDivisionsAsync()
+    {
+        return await _context.Divisions.OrderBy(d => d.name).ToListAsync();
+    }
+
     public async Task<(List<DivisionDto> Divisions, int TotalItems, int TotalPages)> GetDivisionsAsync(int page = 1, int pageSize = 10)
     {
         var query = _context.Divisions.AsQueryable();

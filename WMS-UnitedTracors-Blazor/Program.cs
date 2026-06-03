@@ -25,6 +25,7 @@ builder.Services.AddScoped<WMS_UnitedTracors_Blazor.Services.CartService>();
 builder.Services.AddScoped<WMS_UnitedTracors_Blazor.Services.ProfileService>();
 builder.Services.AddScoped<WMS_UnitedTracors_Blazor.Services.CategoryService>();
 builder.Services.AddScoped<WMS_UnitedTracors_Blazor.Services.ReportService>();
+builder.Services.AddScoped<WMS_UnitedTracors_Blazor.Services.TrackingService>();
 
 // Database setup
 builder.Services.AddDbContext<ApplicationDbContext>(options =>

@@ -5,6 +5,7 @@
 @using UT_WMSDotnet.Models
 @using WMS_UnitedTracors_Blazor.Services
 @inject TransactionService TransactionService
+@inject DivisionService DivisionService
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthStateProvider
 @rendermode InteractiveServer
@@ -190,6 +191,15 @@
                                                             @if (!string.IsNullOrEmpty(item.rejection_reason)) {
                                                                 <div class="text-[10px] text-[#4338ca] mt-1 italic">"@item.rejection_reason"</div>
                                                             }
+                                                            <div class="mt-2 flex flex-col items-start sm:flex-row gap-1.5 sm:items-end">
+                                                                <button type="button" @onclick="() => OpenRevisionModal(item)" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-amber-500 active:scale-95 rounded-md shadow-sm cursor-pointer">
+                                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                                                    Revise
+                                                                </button>
+                                                                <button type="button" @onclick="() => CancelRevision(item.id)" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-red-600 bg-red-50 rounded-md border border-red-200 shadow-sm cursor-pointer">
+                                                                    Cancel
+                                                                </button>
+                                                            </div>
                                                         } else {
                                                             <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-[#fef0f0] text-[#d94040] border border-[#f8c0c0]">REJECTED</span>
                                                             @if (!string.IsNullOrEmpty(item.rejection_reason)) {
@@ -257,6 +267,14 @@
                                                                 <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-[#eef9f0] text-[#1a7a30] border border-[#b8e8c0]">APPROVED</span>
                                                             } else if (item.status == "REVISION") {
                                                                 <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-[#e0e7ff] text-[#4338ca] border border-[#c7d2fe]">REVISION</span>
+                                                                <div class="mt-2 flex gap-1.5 items-end">
+                                                                    <button type="button" @onclick="() => OpenRevisionModal(item)" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-amber-500 active:scale-95 rounded-md shadow-sm cursor-pointer">
+                                                                        Revise
+                                                                    </button>
+                                                                    <button type="button" @onclick="() => CancelRevision(item.id)" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-red-600 bg-red-50 rounded-md border border-red-200 shadow-sm cursor-pointer">
+                                                                        Cancel
+                                                                    </button>
+                                                                </div>
                                                             } else {
                                                                 <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-[#fef0f0] text-[#d94040] border border-[#f8c0c0]">REJECTED</span>
                                                             }
@@ -313,10 +331,133 @@
     </div>
 </div>
 
+@if (ShowRevisionModal && RevisionItem != null)
+{
+    <!-- Revision Edit Modal -->
+    <div id="revisionModal" class="fixed inset-0 z-[80] flex" role="dialog" aria-modal="true">
+        <!-- Backdrop -->
+        <div class="fixed inset-0 bg-black/65 backdrop-blur-sm transition-opacity" @onclick="CloseRevisionModal"></div>
+
+        <!-- Modal Wrapper -->
+        <div class="fixed inset-0 z-10 overflow-y-auto">
+            <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+                <div class="relative transform overflow-hidden rounded-xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg border border-[#e5e3dc] w-full" @onclick:stopPropagation="true">
+                    
+                        <div class="bg-white px-6 pt-6 pb-4">
+                            <div class="flex items-center justify-between mb-5">
+                                <h3 class="font-syne text-[1.05rem] font-bold text-[#1a1a1a]">Revise Request</h3>
+                                <button type="button" @onclick="CloseRevisionModal" class="text-[#a09e99] bg-transparent border-0 cursor-pointer p-1">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                </button>
+                            </div>
+
+                            <div class="mb-4 p-4 rounded-xl bg-[#faf9f5] border border-[#e5e3dc]">
+                                <div class="text-[0.85rem] font-bold text-[#1a1a1a]">@(RevisionItem.Product?.name)</div>
+                                <div class="text-[0.72rem] text-[#8a8880] mt-1">Stock: @(RevisionItem.Product?.current_stock) @(RevisionItem.Product?.Unit?.name ?? "unit")</div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Nama Pemohon</label>
+                                    <input type="text" @bind="RevisionModel.applicant_name" required class="w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none text-[#1a1a1a] transition-colors duration-150 shadow-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">NRP Pemohon</label>
+                                    <input type="text" @bind="RevisionModel.applicant_nrp" required class="w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none text-[#1a1a1a] transition-colors duration-150 shadow-sm">
+                                </div>
+                            </div>
+
+                            <div class="mt-4">
+                                <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Event / Program</label>
+                                <input type="text" @bind="RevisionModel.event_name" required class="w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none text-[#1a1a1a] transition-colors duration-150 shadow-sm">
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                                <div>
+                                    <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Tanggal Event</label>
+                                    <input type="date" @bind="RevisionModel.event_date" required class="w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none text-[#1a1a1a] transition-colors duration-150 shadow-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Quantity</label>
+                                    <div class="flex items-center">
+                                        <input type="number" @bind="RevisionModel.quantity" min="1" max="@RevisionItem.Product?.current_stock" required class="w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-l-lg outline-none text-[#1a1a1a] transition-colors duration-150 shadow-sm">
+                                        <span class="inline-flex items-center px-3.5 py-2 bg-[#f0ede5] border border-[#e5e3dc] border-l-0 rounded-r-lg text-[0.72rem] font-semibold text-[#5a5855] whitespace-nowrap">@(RevisionItem.Product?.Unit?.name ?? "unit")</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-4">
+                                <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Request Type</label>
+                                <div class="flex items-center gap-4">
+                                    @if (RevisionItem.Product?.is_returnable == 1) {
+                                        <label class="flex items-center gap-2 cursor-pointer">
+                                            <input type="radio" checked="@(RevisionModel.request_type == "BORROW")" @onchange='() => RevisionModel.request_type = "BORROW"' class="text-[#e8a000] focus:ring-[#e8a000]">
+                                            <span class="text-[0.82rem] text-[#1a1a1a] font-semibold">Borrow (Bisa Return)</span>
+                                        </label>
+                                    }
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="radio" checked="@(RevisionModel.request_type == "GIVEAWAY")" @onchange='() => RevisionModel.request_type = "GIVEAWAY"' class="text-[#e8a000] focus:ring-[#e8a000]">
+                                        <span class="text-[0.82rem] text-[#1a1a1a] font-semibold">Request (Giveaway)</span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            @if (RevisionModel.request_type == "BORROW")
+                            {
+                                <div class="gap-4 mt-4 grid grid-cols-2">
+                                    <div>
+                                        <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Tgl Pinjam</label>
+                                        <input type="date" @bind="RevisionStartDate" class="w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none text-[#1a1a1a] transition-colors duration-150 shadow-sm">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Tgl Kembali</label>
+                                        <input type="date" @bind="RevisionEndDate" class="w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none text-[#1a1a1a] transition-colors duration-150 shadow-sm">
+                                    </div>
+                                </div>
+                            }
+
+                            <div class="mt-4">
+                                <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Division</label>
+                                <select @bind="RevisionModel.division_id" required class="w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none text-[#1a1a1a] transition-colors duration-150 shadow-sm">
+                                    <option value="">Select Division</option>
+                                    @foreach(var div in Divisions)
+                                    {
+                                        <option value="@div.id">@div.name</option>
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="mt-4">
+                                <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Dokumentasi (Link GDrive)</label>
+                                <input type="url" @bind="RevisionModel.documentation_link" required class="w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none text-[#1a1a1a] transition-colors duration-150 shadow-sm">
+                            </div>
+
+                            <div class="mt-4">
+                                <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Catatan Tambahan</label>
+                                <textarea @bind="RevisionModel.notes" rows="2" class="w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none text-[#1a1a1a] transition-colors duration-150 resize-none shadow-sm"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="px-6 py-4 flex flex-row-reverse gap-3 bg-[#faf9f5] border-t border-[#f0ede5]">
+                            <button type="button" @onclick="SubmitRevision" class="px-5 py-2.5 text-[0.82rem] font-bold tracking-wide text-white bg-[#e8a000] active:scale-95 rounded-md duration-100 cursor-pointer shadow-sm">
+                                Submit Revision
+                            </button>
+                            <button type="button" @onclick="CloseRevisionModal" class="inline-flex justify-center px-5 py-2.5 text-[0.82rem] font-bold text-[#3a3835] bg-white border border-[#e5e3dc] rounded-lg duration-150 cursor-pointer">
+                                Cancel
+                            </button>
+                        </div>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     private List<Transaction>? Transactions;
     private Dictionary<string, List<Transaction>> GroupedTransactions = new();
     private HashSet<string> ExpandedGroups = new();
+    private List<Division> Divisions = new();
     
     private int CurrentPage = 1;
     private int PageSize = 10;
@@ -333,6 +474,12 @@
     private string? ErrorMessage { get; set; }
     private string? SuccessMessage { get; set; }
 
+    private bool ShowRevisionModal = false;
+    private Transaction? RevisionItem;
+    private UT_WMSDotnet.ViewModels.TransactionRequestViewModel RevisionModel = new();
+    private DateTime? RevisionStartDate;
+    private DateTime? RevisionEndDate;
+
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
@@ -348,6 +495,7 @@
             UserRole = user.FindFirst(ClaimTypes.Role)?.Value;
         }
 
+        Divisions = await DivisionService.GetAllDivisionsAsync();
         await LoadData(1);
     }
 
@@ -386,5 +534,74 @@
         StartDate = null;
         EndDate = null;
         await LoadData(1);
+    }
+
+    private void OpenRevisionModal(Transaction item)
+    {
+        RevisionItem = item;
+        RevisionModel = new UT_WMSDotnet.ViewModels.TransactionRequestViewModel
+        {
+            applicant_name = item.applicant_name,
+            applicant_nrp = item.applicant_nrp,
+            event_name = item.event_name,
+            event_date = item.event_date,
+            quantity = item.quantity,
+            request_type = item.request_type,
+            division_id = item.division_id,
+            documentation_link = item.documentation_link,
+            notes = item.notes
+        };
+        RevisionStartDate = item.borrow_start_date;
+        RevisionEndDate = item.expected_return_date;
+        ShowRevisionModal = true;
+    }
+
+    private void CloseRevisionModal()
+    {
+        ShowRevisionModal = false;
+        RevisionItem = null;
+    }
+
+    private async Task SubmitRevision()
+    {
+        if (RevisionItem == null) return;
+        
+        if (RevisionModel.request_type == "BORROW")
+        {
+            RevisionModel.items = new List<UT_WMSDotnet.ViewModels.TransactionItemViewModel>
+            {
+                new UT_WMSDotnet.ViewModels.TransactionItemViewModel
+                {
+                    borrow_start_date = RevisionStartDate,
+                    expected_return_date = RevisionEndDate
+                }
+            };
+        }
+
+        var error = await TransactionService.UpdateRevisionAsync(RevisionItem.id, RevisionModel);
+        if (error != null)
+        {
+            ErrorMessage = error;
+        }
+        else
+        {
+            SuccessMessage = "Revision submitted successfully.";
+            await LoadData(CurrentPage);
+        }
+        CloseRevisionModal();
+    }
+
+    private async Task CancelRevision(int id)
+    {
+        var error = await TransactionService.CancelRevisionAsync(id);
+        if (error != null)
+        {
+            ErrorMessage = error;
+        }
+        else
+        {
+            SuccessMessage = "Request cancelled.";
+            await LoadData(CurrentPage);
+        }
     }
 }
