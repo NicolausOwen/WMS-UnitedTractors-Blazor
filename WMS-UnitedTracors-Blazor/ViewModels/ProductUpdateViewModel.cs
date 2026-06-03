@@ -50,4 +50,6 @@ public class ProductUpdateViewModel
     public int initial_stock { get; set; }
 
     public bool is_returnable { get; set; }
+
+    public List<ProductVariantViewModel> variants { get; set; } = new();
 }

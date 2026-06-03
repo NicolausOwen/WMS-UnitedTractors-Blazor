@@ -8,6 +8,7 @@
 @inject CategoryService CategoryService
 @inject LocationService LocationService
 @inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
 @inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthStateProvider
 @rendermode InteractiveServer
 
@@ -172,6 +173,58 @@
                         </div>
                     </div>
                 </div>
+
+                @* Product Variants *@
+                <div class="pt-4 border-t border-gray-100">
+                    <div class="flex justify-between items-center mb-4">
+                        <div>
+                            <h4 class="text-sm font-semibold text-gray-900">Product Variants</h4>
+                            <p class="text-xs text-gray-500 mt-0.5">Add sizes, colors, and specific stock/images for this product.</p>
+                        </div>
+                        <button type="button" @onclick="AddVariant" class="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-200 transition">
+                            + Add Variant
+                        </button>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        @for (int i = 0; i < Model.variants.Count; i++)
+                        {
+                            var index = i;
+                            var variant = Model.variants[index];
+                            <div class="flex items-end gap-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                                <div class="flex-1">
+                                    <label class="block text-xs font-medium text-gray-700 mb-1">Color</label>
+                                    <InputText @bind-Value="variant.color" placeholder="e.g. Red" class="block w-full py-1.5 px-2 text-sm bg-white border border-gray-200 rounded-md focus:ring-[#e8a000] focus:border-[#e8a000] outline-none" />
+                                </div>
+                                <div class="flex-1">
+                                    <label class="block text-xs font-medium text-gray-700 mb-1">Size</label>
+                                    <InputText @bind-Value="variant.size" placeholder="e.g. L" class="block w-full py-1.5 px-2 text-sm bg-white border border-gray-200 rounded-md focus:ring-[#e8a000] focus:border-[#e8a000] outline-none" />
+                                </div>
+                                <div class="w-24">
+                                    <label class="block text-xs font-medium text-gray-700 mb-1">Stock</label>
+                                    <InputNumber @bind-Value="variant.stock" min="0" class="block w-full py-1.5 px-2 text-sm bg-white border border-gray-200 rounded-md focus:ring-[#e8a000] focus:border-[#e8a000] outline-none" />
+                                </div>
+                                <div class="flex-1">
+                                    <label class="block text-xs font-medium text-gray-700 mb-1">Variant Image</label>
+                                    <div class="flex items-center gap-2 mb-1.5">
+                                        @if (!string.IsNullOrEmpty(variant.image_preview_url))
+                                        {
+                                            <div class="w-10 h-10 rounded border border-gray-200 overflow-hidden shrink-0 bg-white shadow-sm">
+                                                <img src="@variant.image_preview_url" class="w-full h-full object-cover">
+                                            </div>
+                                        }
+                                    </div>
+                                    <InputFile OnChange="@(e => HandleVariantImageSelected(e, variant))" accept="image/*" class="block w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-gray-200" />
+                                </div>
+                                <div>
+                                    <button type="button" @onclick="() => RemoveVariant(variant)" class="px-2 py-1.5 text-red-600 hover:bg-red-50 rounded-md transition" title="Remove">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
             </div>
 
             <div class="flex justify-end items-center gap-3 border-t border-gray-100 pt-5 mt-6">
@@ -242,6 +295,26 @@
         selectedPositionImage = e.File;
     }
 
+    private void AddVariant()
+    {
+        Model.variants.Add(new ProductVariantViewModel());
+    }
+
+    private void RemoveVariant(ProductVariantViewModel variant)
+    {
+        Model.variants.Remove(variant);
+    }
+
+    private async Task HandleVariantImageSelected(Microsoft.AspNetCore.Components.Forms.InputFileChangeEventArgs e, ProductVariantViewModel variant)
+    {
+        variant.image = e.File;
+        var format = "image/png";
+        var resizedImageFile = await e.File.RequestImageFileAsync(format, 100, 100);
+        var buffer = new byte[resizedImageFile.Size];
+        await resizedImageFile.OpenReadStream().ReadAsync(buffer);
+        variant.image_preview_url = $"data:{format};base64,{Convert.ToBase64String(buffer)}";
+    }
+
     private async Task HandleSubmit()
     {
         if (Model.category_id == 0)
@@ -284,7 +357,8 @@
 
         if (result == null)
         {
-            NavigationManager.NavigateTo("/Product");
+            await JSRuntime.InvokeVoidAsync("alert", "Produk berhasil ditambahkan!");
+            NavigationManager.NavigateTo("/Product?success=created");
         }
         else
         {

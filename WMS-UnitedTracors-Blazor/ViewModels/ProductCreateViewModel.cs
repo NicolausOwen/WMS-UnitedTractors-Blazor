@@ -40,4 +40,6 @@ public class ProductCreateViewModel
     public string? description { get; set; }
     
     public string? transaction_type { get; set; }
+
+    public List<ProductVariantViewModel> variants { get; set; } = new();
 }

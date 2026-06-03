@@ -48,7 +48,7 @@ public class ProductService
 
     public async Task<Product?> GetProductByIdAsync(int id)
     {
-        return await _context.Products.Include(p => p.Unit).FirstOrDefaultAsync(p => p.id == id);
+        return await _context.Products.Include(p => p.Unit).Include(p => p.ProductVariants).FirstOrDefaultAsync(p => p.id == id);
     }
 
     public async Task<string?> CreateProductAsync(ProductCreateViewModel model)
@@ -132,12 +132,47 @@ public class ProductService
         _context.Products.Add(product);
         await _context.SaveChangesAsync();
 
+        if (model.variants != null && model.variants.Count > 0)
+        {
+            var variantsToAdd = new List<ProductVariant>();
+            for (int i = 0; i < model.variants.Count; i++)
+            {
+                var v = model.variants[i];
+                string? vImagePath = null;
+                if (v.image != null && v.image.Size > 0)
+                {
+                    var vFileName = Guid.NewGuid().ToString() + Path.GetExtension(v.image.Name);
+                    var vPath = Path.Combine(_env.WebRootPath, "images", "variants");
+                    if (!Directory.Exists(vPath)) Directory.CreateDirectory(vPath);
+                    using (var stream = new FileStream(Path.Combine(vPath, vFileName), FileMode.Create))
+                    {
+                        await v.image.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024).CopyToAsync(stream);
+                    }
+                    vImagePath = "images/variants/" + vFileName;
+                }
+
+                variantsToAdd.Add(new ProductVariant
+                {
+                    product_id = product.id,
+                    sku = string.IsNullOrEmpty(v.sku) ? $"{product.sku}-V{(i + 1):D2}" : v.sku,
+                    color = v.color,
+                    size = v.size,
+                    stock = v.stock,
+                    image = vImagePath,
+                    created_at = DateTime.UtcNow,
+                    updated_at = DateTime.UtcNow
+                });
+            }
+            _context.ProductVariants.AddRange(variantsToAdd);
+            await _context.SaveChangesAsync();
+        }
+
         return null;
     }
 
     public async Task<string?> UpdateProductAsync(int id, ProductUpdateViewModel model)
     {
-        var product = await _context.Products.FindAsync(id);
+        var product = await _context.Products.Include(p => p.ProductVariants).FirstOrDefaultAsync(p => p.id == id);
         if (product == null) return "Produk tidak ditemukan.";
 
         if (await _context.Products.AnyAsync(p => p.name == model.name && p.id != id))
@@ -230,6 +265,81 @@ public class ProductService
         product.updated_at = DateTime.UtcNow;
 
         _context.Update(product);
+
+        // Update Variants
+        var existingVariants = product.ProductVariants.ToList();
+        var incomingVariantIds = model.variants.Where(v => v.id.HasValue).Select(v => v.id.Value).ToList();
+
+        // 1. Delete variants not in the incoming list
+        var variantsToDelete = existingVariants.Where(v => !incomingVariantIds.Contains(v.id)).ToList();
+        foreach (var v in variantsToDelete)
+        {
+            if (!string.IsNullOrEmpty(v.image))
+            {
+                var vPath = Path.Combine(_env.WebRootPath, v.image);
+                if (System.IO.File.Exists(vPath)) System.IO.File.Delete(vPath);
+            }
+            _context.ProductVariants.Remove(v);
+        }
+
+        // 2. Update existing and Add new
+        int newVariantCount = existingVariants.Count - variantsToDelete.Count;
+        foreach (var vm in model.variants)
+        {
+            string? vImagePath = null;
+            if (vm.image != null && vm.image.Size > 0)
+            {
+                var vFileName = Guid.NewGuid().ToString() + Path.GetExtension(vm.image.Name);
+                var vDirPath = Path.Combine(_env.WebRootPath, "images", "variants");
+                if (!Directory.Exists(vDirPath)) Directory.CreateDirectory(vDirPath);
+                using (var stream = new FileStream(Path.Combine(vDirPath, vFileName), FileMode.Create))
+                {
+                    await vm.image.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024).CopyToAsync(stream);
+                }
+                vImagePath = "images/variants/" + vFileName;
+            }
+
+            if (vm.id.HasValue && vm.id.Value > 0)
+            {
+                // Update
+                var existing = existingVariants.FirstOrDefault(v => v.id == vm.id.Value);
+                if (existing != null)
+                {
+                    existing.color = vm.color;
+                    existing.size = vm.size;
+                    existing.stock = vm.stock;
+                    existing.updated_at = DateTime.UtcNow;
+                    if (vImagePath != null)
+                    {
+                        if (!string.IsNullOrEmpty(existing.image))
+                        {
+                            var oldVPath = Path.Combine(_env.WebRootPath, existing.image);
+                            if (System.IO.File.Exists(oldVPath)) System.IO.File.Delete(oldVPath);
+                        }
+                        existing.image = vImagePath;
+                    }
+                    _context.ProductVariants.Update(existing);
+                }
+            }
+            else
+            {
+                // Add
+                newVariantCount++;
+                var newVariant = new ProductVariant
+                {
+                    product_id = product.id,
+                    sku = string.IsNullOrEmpty(vm.sku) ? $"{product.sku}-V{newVariantCount:D2}" : vm.sku,
+                    color = vm.color,
+                    size = vm.size,
+                    stock = vm.stock,
+                    image = vImagePath,
+                    created_at = DateTime.UtcNow,
+                    updated_at = DateTime.UtcNow
+                };
+                _context.ProductVariants.Add(newVariant);
+            }
+        }
+
         await _context.SaveChangesAsync();
 
         return null;
@@ -237,7 +347,7 @@ public class ProductService
 
     public async Task<bool> DeleteProductAsync(int id)
     {
-        var product = await _context.Products.FindAsync(id);
+        var product = await _context.Products.Include(p => p.ProductVariants).FirstOrDefaultAsync(p => p.id == id);
         if (product != null)
         {
             if (!string.IsNullOrEmpty(product.image))
@@ -249,6 +359,18 @@ public class ProductService
             {
                 var path = Path.Combine(_env.WebRootPath, product.position_image);
                 if (System.IO.File.Exists(path)) System.IO.File.Delete(path);
+            }
+
+            if (product.ProductVariants != null)
+            {
+                foreach (var variant in product.ProductVariants)
+                {
+                    if (!string.IsNullOrEmpty(variant.image))
+                    {
+                        var variantPath = Path.Combine(_env.WebRootPath, variant.image);
+                        if (System.IO.File.Exists(variantPath)) System.IO.File.Delete(variantPath);
+                    }
+                }
             }
 
             _context.Products.Remove(product);

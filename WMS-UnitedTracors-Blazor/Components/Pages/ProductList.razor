@@ -360,8 +360,23 @@
     private string? ErrorMessage;
     private bool IsAdmin = false;
 
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "success")]
+    public string? SuccessParam { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
+        if (SuccessParam == "created")
+        {
+            SuccessMessage = "Product added successfully.";
+            ClearSuccessMessageAfterDelay();
+        }
+        else if (SuccessParam == "updated")
+        {
+            SuccessMessage = "Product updated successfully.";
+            ClearSuccessMessageAfterDelay();
+        }
+
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var userRole = authState.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
         IsAdmin = userRole == "admin" || userRole == "superadmin";
@@ -384,6 +399,15 @@
     {
         SelectedCategoryId = categoryId;
         await LoadProducts(1);
+    }
+
+    private void ClearSuccessMessageAfterDelay()
+    {
+        _ = Task.Delay(4000).ContinueWith(_ =>
+        {
+            SuccessMessage = null;
+            InvokeAsync(StateHasChanged);
+        });
     }
 
     private async Task HandleSearch(KeyboardEventArgs e)
