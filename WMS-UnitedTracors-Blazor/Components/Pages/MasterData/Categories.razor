@@ -299,7 +299,7 @@
                                 <div class="flex items-center gap-3">
                                     @if (!string.IsNullOrEmpty(p.image))
                                     {
-                                        <img src="@(p.image.StartsWith("images/") ? $"/{p.image}" : $"/storage/{p.image}")" alt="@p.name" class="w-12 h-12 rounded-lg object-cover border border-[#e5e3dc] shrink-0" />
+                                        <img src="@($"/{p.image}")" alt="@p.name" class="w-12 h-12 rounded-lg object-cover border border-[#e5e3dc] shrink-0" />
                                     }
                                     else
                                     {

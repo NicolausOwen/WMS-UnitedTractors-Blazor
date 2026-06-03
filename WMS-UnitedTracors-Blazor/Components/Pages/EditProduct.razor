@@ -7,193 +7,274 @@
 @inject ProductService ProductService
 @inject CategoryService CategoryService
 @inject LocationService LocationService
+@inject UnitService UnitService
 @inject NavigationManager NavigationManager
 @inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthStateProvider
 @rendermode InteractiveServer
 
 <PageTitle>Edit Product</PageTitle>
 
-<div class="flex items-center gap-4 mb-6">
-    <button @onclick="NavigateBack" class="p-2 bg-white border border-gray-200 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-    </button>
-    <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-        Edit Product
-    </h2>
-</div>
-
-<div class="max-w-4xl bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-    @if (IsLoading)
-    {
-        <div class="p-6 text-center text-gray-500 flex flex-col items-center">
-            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-4"></div>
-            Loading product details...
+<header class="bg-transparent">
+    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        <div class="mb-1">
+            <h1 class="text-[1.6rem] font-bold text-[#1a1a1a] leading-none tracking-tight">Edit <span class="text-[#e8a000]">Produk</span></h1>
+            <div class="text-[0.72rem] font-medium text-[#a09e99] mt-1">@DateTime.Now.ToString("dddd, dd MMMM yyyy")</div>
         </div>
-    }
-    else if (ProductNotFound)
-    {
-        <div class="p-10 text-center flex flex-col items-center">
-            <svg class="w-12 h-12 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            <h3 class="text-lg font-medium text-gray-900">Product Not Found</h3>
-            <p class="text-sm text-gray-500 mt-1 mb-6">The product you are trying to edit does not exist or has been removed.</p>
-            <button @onclick="NavigateBack" class="px-5 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800">Return to List</button>
-        </div>
-    }
-    else
-    {
-        <EditForm Model="Model" OnValidSubmit="HandleSubmit" class="p-6">
-            <DataAnnotationsValidator />
-            
-            @if (!string.IsNullOrEmpty(ErrorMessage))
-            {
-                <div class="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm" role="alert">
-                    @ErrorMessage
-                </div>
-            }
+    </div>
+</header>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Name -->
-                <div class="col-span-1 md:col-span-2">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Product Name <span class="text-red-500">*</span></label>
-                    <InputText @bind-Value="Model.name" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-gray-900" placeholder="Enter product name" />
-                    <ValidationMessage For="@(() => Model.name)" class="text-xs text-red-500 mt-1" />
+<div class="py-8">
+    <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+        @if (IsLoading)
+        {
+            <div class="p-6 text-center text-gray-500 flex flex-col items-center">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[#e8a000] mb-4"></div>
+                Loading product details...
+            </div>
+        }
+        else if (ProductNotFound)
+        {
+            <div class="p-10 text-center flex flex-col items-center bg-white rounded-xl border border-gray-200 shadow-sm">
+                <svg class="w-12 h-12 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <h3 class="text-lg font-medium text-gray-900">Product Not Found</h3>
+                <p class="text-sm text-gray-500 mt-1 mb-6">The product you are trying to edit does not exist or has been removed.</p>
+                <button @onclick="NavigateBack" class="btn-ut btn-ut-primary">Return to List</button>
+            </div>
+        }
+        else
+        {
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm">
+                <div class="px-6 py-5 border-b border-gray-100 flex items-center gap-4">
+                    <button @onclick="NavigateBack" class="p-2 bg-white border border-gray-200 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition shrink-0">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                    </button>
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-900">Edit Product</h3>
+                        <p class="text-xs text-gray-500 mt-0.5">Update the product information below.</p>
+                    </div>
                 </div>
-
-                <!-- SKU -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">SKU / Barcode <span class="text-red-500">*</span></label>
-                    <InputText @bind-Value="Model.sku" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-gray-900" />
-                    <ValidationMessage For="@(() => Model.sku)" class="text-xs text-red-500 mt-1" />
-                </div>
-
-                <!-- Barcode Type -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Barcode Type <span class="text-red-500">*</span></label>
-                    <InputSelect @bind-Value="Model.barcode_type" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-gray-900 bg-white">
-                        <option value="TYPE_CODE_128">CODE_128</option>
-                        <option value="TYPE_CODE_39">CODE_39</option>
-                        <option value="TYPE_EAN_13">EAN_13</option>
-                        <option value="TYPE_UPC_A">UPC_A</option>
-                    </InputSelect>
-                    <ValidationMessage For="@(() => Model.barcode_type)" class="text-xs text-red-500 mt-1" />
-                </div>
-
-                <!-- Category -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Category <span class="text-red-500">*</span></label>
-                    <InputSelect @bind-Value="Model.category_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-gray-900 bg-white">
-                        <option value="0">-- Select Category --</option>
-                        @if (Categories != null)
+                <div class="px-6 py-6">
+                    <EditForm Model="Model" OnValidSubmit="HandleSubmit">
+                        <DataAnnotationsValidator />
+                        
+                        @if (!string.IsNullOrEmpty(ErrorMessage))
                         {
-                            @foreach (var cat in Categories)
-                            {
-                                <option value="@cat.Id">@cat.Name</option>
-                            }
+                            <div class="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm" role="alert">
+                                @ErrorMessage
+                            </div>
                         }
-                    </InputSelect>
-                    <ValidationMessage For="@(() => Model.category_id)" class="text-xs text-red-500 mt-1" />
-                </div>
 
-                <!-- Location -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Location</label>
-                    <InputSelect @bind-Value="Model.location_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-gray-900 bg-white">
-                        <option value="">-- Select Location --</option>
-                        @if (Locations != null)
-                        {
-                            @foreach (var loc in Locations)
-                            {
-                                <option value="@loc.Id">@loc.Name</option>
-                            }
-                        }
-                    </InputSelect>
-                </div>
+                        <div class="space-y-5">
+                            @* SKU *@
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">SKU / Barcode ID</label>
+                                <InputText @bind-Value="Model.sku" required class="block w-full py-2 px-3 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#e8a000] focus:border-[#e8a000] outline-none transition" />
+                                <ValidationMessage For="@(() => Model.sku)" class="text-red-600 text-xs mt-1 block" />
+                            </div>
 
-                <!-- Unit -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Unit <span class="text-red-500">*</span></label>
-                    <InputText @bind-Value="Model.unit" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-gray-900" placeholder="e.g. PCS, BOX, LTR" />
-                    <ValidationMessage For="@(() => Model.unit)" class="text-xs text-red-500 mt-1" />
-                </div>
+                            @* Barcode Type *@
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">Barcode Type</label>
+                                <InputSelect @bind-Value="Model.barcode_type" required class="block w-full py-2 px-3 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#e8a000] focus:border-[#e8a000] outline-none transition">
+                                    <option value="TYPE_CODE_128">Code 128 (Recommended)</option>
+                                    <option value="TYPE_CODE_39">Code 39</option>
+                                    <option value="TYPE_EAN_13">EAN-13</option>
+                                    <option value="TYPE_UPC_A">UPC-A</option>
+                                </InputSelect>
+                                <ValidationMessage For="@(() => Model.barcode_type)" class="text-red-600 text-xs mt-1 block" />
+                            </div>
 
-                <!-- Value (Points) -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Value (Points)</label>
-                    <InputNumber @bind-Value="Model.value" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-gray-900" />
-                    <ValidationMessage For="@(() => Model.value)" class="text-xs text-red-500 mt-1" />
-                </div>
+                            @* Product Name & Point Value *@
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Product Name</label>
+                                    <InputText @bind-Value="Model.name" required class="block w-full py-2 px-3 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#e8a000] focus:border-[#e8a000] outline-none transition" />
+                                    <ValidationMessage For="@(() => Model.name)" class="text-red-600 text-xs mt-1 block" />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Point Value</label>
+                                    <InputNumber @bind-Value="Model.value" min="0" placeholder="0" class="block w-full py-2 px-3 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#e8a000] focus:border-[#e8a000] outline-none transition" />
+                                    <ValidationMessage For="@(() => Model.value)" class="text-red-600 text-xs mt-1 block" />
+                                </div>
+                            </div>
 
-                <!-- Current Stock -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Current Stock</label>
-                    <InputNumber @bind-Value="Model.current_stock" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-gray-900" />
-                    <ValidationMessage For="@(() => Model.current_stock)" class="text-xs text-red-500 mt-1" />
-                </div>
-                
-                <!-- Initial Stock -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Initial Stock</label>
-                    <InputNumber @bind-Value="Model.initial_stock" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-gray-900" />
-                    <ValidationMessage For="@(() => Model.initial_stock)" class="text-xs text-red-500 mt-1" />
-                </div>
+                            @* Unit *@
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">Unit</label>
+                                @if (ShowNewUnitInput)
+                                {
+                                    <div class="relative mt-1">
+                                        <InputText @bind-Value="Model.unit" placeholder="Type new unit..." class="block w-full py-2 px-3 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#e8a000] focus:border-[#e8a000] outline-none transition pr-10" />
+                                        <button type="button" @onclick="CancelNewUnit" class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600 transition" title="Cancel and select existing">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                        </button>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <InputSelect Value="SelectedUnitOption" ValueExpression="() => SelectedUnitOption" ValueChanged="(string val) => HandleUnitSelect(val)" required class="block w-full py-2 px-3 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#e8a000] focus:border-[#e8a000] outline-none transition">
+                                        <option value="">Select unit</option>
+                                        @if (Units != null)
+                                        {
+                                            @foreach(var u in Units)
+                                            {
+                                                <option value="@u.Name">@u.Name</option>
+                                            }
+                                        }
+                                        <option value="NEW_UNIT_OPTION" class="font-bold text-gray-900 bg-gray-100">+ Type New Unit...</option>
+                                    </InputSelect>
+                                }
+                                <ValidationMessage For="@(() => Model.unit)" class="text-red-600 text-xs mt-1 block" />
+                            </div>
 
-                <!-- Image -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Product Image</label>
-                    @if (product != null && !string.IsNullOrEmpty(product.image))
-                    {
-                        <div class="mb-2 flex items-center gap-2">
-                            <img src="/storage/@product.image" class="w-16 h-16 object-cover rounded border" />
-                            <div class="flex items-center">
-                                <InputCheckbox @bind-Value="Model.remove_image" id="remove_image" class="w-4 h-4 text-gray-900 bg-gray-100 border-gray-300 rounded focus:ring-2" />
-                                <label for="remove_image" class="ml-2 text-xs font-medium text-red-600">Remove current image</label>
+                            @* Category & Transaction Type *@
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Category</label>
+                                    <InputSelect @bind-Value="Model.category_id" required class="block w-full py-2 px-3 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#e8a000] focus:border-[#e8a000] outline-none transition">
+                                        <option value="0">Select category (required)</option>
+                                        @if (Categories != null)
+                                        {
+                                            @foreach(var cat in Categories)
+                                            {
+                                                <option value="@cat.Id">@cat.Name</option>
+                                            }
+                                        }
+                                    </InputSelect>
+                                    <ValidationMessage For="@(() => Model.category_id)" class="text-red-600 text-xs mt-1 block" />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Transaction Type</label>
+                                    <InputSelect @bind-Value="Model.transaction_type" class="block w-full py-2 px-3 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#e8a000] focus:border-[#e8a000] outline-none transition">
+                                        <option value="">Default (Borrow & Request)</option>
+                                        <option value="BORROW">Peminjaman (Borrow Only)</option>
+                                        <option value="REQUEST">Permintaan (Request Only)</option>
+                                    </InputSelect>
+                                    <ValidationMessage For="@(() => Model.transaction_type)" class="text-red-600 text-xs mt-1 block" />
+                                </div>
+                            </div>
+
+                            @* Description *@
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">Product Description</label>
+                                <InputTextArea @bind-Value="Model.description" rows="4" placeholder="Tuliskan kondisi, spesifikasi, atau catatan penting barang..." class="block w-full rounded-3xl border border-[#e5e3dc] bg-[#faf9f5] px-4 py-3 text-sm text-[#1a1a1a] focus:border-[#e8a000] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#fef3c7] transition duration-200"></InputTextArea>
+                                <ValidationMessage For="@(() => Model.description)" class="text-red-600 text-xs mt-1 block" />
+                                <p class="text-xs text-gray-400 mt-2">Deskripsi ini membantu tim approval dan gudang memahami kondisi / catatan barang.</p>
+                            </div>
+
+                            @* Is Returnable *@
+                            <div>
+                                <label class="flex items-center gap-2 cursor-pointer w-max">
+                                    <InputCheckbox @bind-Value="Model.is_returnable" class="rounded border-gray-300 text-gray-900 focus:ring-gray-900 w-4 h-4 transition outline-none" />
+                                    <span class="text-sm font-medium text-gray-700">Item is Returnable <span class="text-xs text-gray-500 font-normal">(Uncheck this for Merchandise/Giveaways)</span></span>
+                                </label>
+                            </div>
+
+                            @* Location & Position Image *@
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Location</label>
+                                    <InputSelect @bind-Value="Model.location_id" class="block w-full py-2 px-3 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#e8a000] focus:border-[#e8a000] outline-none transition">
+                                        <option value="">Select location (optional)</option>
+                                        @if (Locations != null)
+                                        {
+                                            @foreach(var loc in Locations)
+                                            {
+                                                <option value="@loc.Id">@loc.Name</option>
+                                            }
+                                        }
+                                    </InputSelect>
+                                    <ValidationMessage For="@(() => Model.location_id)" class="text-red-600 text-xs mt-1 block" />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Position Image</label>
+                                    <div class="flex items-center gap-3">
+                                    @if (product != null && !string.IsNullOrEmpty(product.position_image) && !Model.remove_position_image)
+                                    {
+                                        <div class="relative w-10 h-10 rounded border border-gray-200 overflow-hidden bg-gray-50 shrink-0">
+                                            <img src="@($"/{product.position_image}")" class="w-full h-full object-cover" alt="Position" />
+                                            <button type="button" @onclick="() => Model.remove_position_image = true" class="absolute top-0.5 right-0.5 w-4 h-4 bg-gray-900/70 text-white rounded-full flex items-center justify-center hover:bg-gray-900 transition">
+                                                <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                            </button>
+                                        </div>
+                                    }
+                                        @if (positionPreviewUrl != null)
+                                        {
+                                            <div class="w-10 h-10 rounded border border-gray-200 overflow-hidden bg-gray-50 shrink-0">
+                                                <img src="@positionPreviewUrl" class="w-full h-full object-cover" alt="Preview">
+                                            </div>
+                                        }
+                                        <div class="flex-1">
+                                            <InputFile OnChange="HandlePositionImageSelected" accept="image/jpg,image/jpeg,image/png,image/webp" class="block w-full text-sm text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 transition cursor-pointer" />
+                                        </div>
+                                    </div>
+                                    <ValidationMessage For="@(() => Model.position_image)" class="text-red-600 text-xs mt-1 block" />
+                                </div>
+                            </div>
+
+                            @* Product Image *@
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">Product Image</label>
+                                <div class="flex items-center gap-3">
+                                @if (product != null && !string.IsNullOrEmpty(product.image) && !Model.remove_image)
+                                {
+                                    <div class="relative w-20 h-20 rounded-lg border border-gray-200 overflow-hidden bg-gray-50 shrink-0">
+                                        <img src="@($"/{product.image}")" class="w-full h-full object-cover" alt="@product.name">
+                                        <button type="button" @onclick="() => Model.remove_image = true" class="absolute top-0.5 right-0.5 w-5 h-5 bg-gray-900/70 text-white rounded-full flex items-center justify-center text-xs hover:bg-gray-900 transition">
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                        </button>
+                                    </div>
+                                }
+                                    @if (imagePreviewUrl != null)
+                                    {
+                                        <div class="w-20 h-20 rounded-lg border border-gray-200 overflow-hidden bg-gray-50 shrink-0">
+                                            <img src="@imagePreviewUrl" class="w-full h-full object-cover" alt="Preview">
+                                        </div>
+                                    }
+                                    <div class="flex-1">
+                                        <InputFile OnChange="HandleImageSelected" accept="image/jpg,image/jpeg,image/png,image/webp" class="block w-full text-sm text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 transition cursor-pointer" />
+                                        <p class="text-xs text-gray-400 mt-1">Upload main product image here. JPG, PNG or WebP. Max 2MB.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            @* Stock Info *@
+                            <div class="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                                <p class="text-xs font-medium text-gray-500 mb-2">Stock Information</p>
+                                <div class="grid grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Initial Stock:</label>
+                                        <InputNumber @bind-Value="Model.initial_stock" required min="0" class="block w-full py-2 px-3 text-sm bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#e8a000] focus:border-[#e8a000] outline-none transition" />
+                                        <ValidationMessage For="@(() => Model.initial_stock)" class="text-red-600 text-xs mt-1 block" />
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Current Stock:</label>
+                                        <InputNumber @bind-Value="Model.current_stock" required min="0" class="block w-full py-2 px-3 text-sm bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#e8a000] focus:border-[#e8a000] outline-none transition" />
+                                        <ValidationMessage For="@(() => Model.current_stock)" class="text-red-600 text-xs mt-1 block" />
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex justify-end items-center gap-3 border-t border-gray-100 pt-5 mt-6">
+                                <button type="button" @onclick="NavigateBack" class="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg font-medium text-sm hover:bg-gray-50 transition">Cancel</button>
+                                <button type="submit" disabled="@IsSubmitting" class="px-4 py-2 bg-gray-900 text-white rounded-lg font-medium text-sm hover:bg-gray-800 transition disabled:opacity-70 flex items-center gap-2 justify-center min-w-[130px]">
+                                    @if (IsSubmitting)
+                                    {
+                                        <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                        <span>Processing...</span>
+                                    }
+                                    else
+                                    {
+                                        <span>Update Product</span>
+                                    }
+                                </button>
                             </div>
                         </div>
-                    }
-                    <InputFile OnChange="HandleImageSelected" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 transition" accept="image/*" />
-                </div>
-
-                <!-- Position Image -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Position Layout Image</label>
-                    @if (product != null && !string.IsNullOrEmpty(product.position_image))
-                    {
-                        <div class="mb-2 flex items-center gap-2">
-                            <img src="/storage/@product.position_image" class="w-16 h-16 object-cover rounded border" />
-                            <div class="flex items-center">
-                                <InputCheckbox @bind-Value="Model.remove_position_image" id="remove_position_image" class="w-4 h-4 text-gray-900 bg-gray-100 border-gray-300 rounded focus:ring-2" />
-                                <label for="remove_position_image" class="ml-2 text-xs font-medium text-red-600">Remove current layout position image</label>
-                            </div>
-                        </div>
-                    }
-                    <InputFile OnChange="HandlePositionImageSelected" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 transition" accept="image/*" />
-                </div>
-
-                <!-- Is Returnable -->
-                <div class="flex items-center pt-8">
-                    <InputCheckbox @bind-Value="Model.is_returnable" id="is_returnable" class="w-4 h-4 text-gray-900 bg-gray-100 border-gray-300 rounded focus:ring-gray-900 focus:ring-2" />
-                    <label for="is_returnable" class="ml-2 text-sm font-medium text-gray-900">Is Returnable Product?</label>
+                    </EditForm>
                 </div>
             </div>
-
-            <div class="mt-8 pt-6 border-t border-gray-100 flex justify-end gap-3">
-                <button type="button" @onclick="NavigateBack" class="px-5 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition">
-                    Cancel
-                </button>
-                <button type="submit" disabled="@IsSubmitting" class="px-5 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition disabled:opacity-70 flex items-center gap-2">
-                    @if (IsSubmitting)
-                    {
-                        <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        <span>Saving...</span>
-                    }
-                    else
-                    {
-                        <span>Update Product</span>
-                    }
-                </button>
-            </div>
-        </EditForm>
-    }
+        }
+    </div>
 </div>
 
 @code {
@@ -203,6 +284,7 @@
     private ProductUpdateViewModel Model = new();
     private List<WMS_UnitedTracors_Blazor.Services.CategoryDto>? Categories;
     private List<WMS_UnitedTracors_Blazor.Services.LocationDto>? Locations;
+    private List<WMS_UnitedTracors_Blazor.Services.UnitDto>? Units;
     private Product? product;
     
     private string? ErrorMessage;
@@ -211,7 +293,12 @@
     private bool ProductNotFound = false;
 
     private Microsoft.AspNetCore.Components.Forms.IBrowserFile? selectedImage;
+    private string? imagePreviewUrl;
     private Microsoft.AspNetCore.Components.Forms.IBrowserFile? selectedPositionImage;
+    private string? positionPreviewUrl;
+
+    private bool ShowNewUnitInput = false;
+    private string SelectedUnitOption = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -230,14 +317,15 @@
             return;
         }
 
-        // Do not start multiple EF operations in parallel with the same scoped DbContext.
-        // Await service calls sequentially to avoid "A second operation was started on this context instance" errors.
         var catResult = await CategoryService.GetCategoriesAsync(1, 100);
         var locResult = await LocationService.GetLocationsAsync(1, 100);
+        var unitResult = await UnitService.GetUnitsAsync(1, 100);
+        
         product = await ProductService.GetProductByIdAsync(Id);
 
         Categories = catResult.Categories;
         Locations = locResult.Locations;
+        Units = unitResult.Units;
 
         if (product == null)
         {
@@ -246,18 +334,43 @@
         else
         {
             Model.sku = product.sku;
-            Model.barcode_type = product.barcode_type ?? "";
+            Model.barcode_type = product.barcode_type ?? "TYPE_CODE_128";
             Model.name = product.name;
             Model.unit = product.Unit?.name ?? "";
+            SelectedUnitOption = Model.unit;
             Model.value = product.value;
             Model.category_id = product.category_id ?? 0;
             Model.location_id = product.location_id;
             Model.current_stock = product.current_stock;
             Model.initial_stock = product.initial_stock;
             Model.is_returnable = product.is_returnable == 1;
+            Model.description = product.description ?? "";
+            Model.transaction_type = product.transaction_type ?? "";
         }
         
         IsLoading = false;
+    }
+
+    private void HandleUnitSelect(string val)
+    {
+        if (val == "NEW_UNIT_OPTION")
+        {
+            ShowNewUnitInput = true;
+            Model.unit = "";
+        }
+        else
+        {
+            SelectedUnitOption = val;
+            Model.unit = val;
+            ShowNewUnitInput = false;
+        }
+    }
+
+    private void CancelNewUnit()
+    {
+        ShowNewUnitInput = false;
+        Model.unit = product?.Unit?.name ?? "";
+        SelectedUnitOption = Model.unit;
     }
 
     private async Task HandleSubmit()
@@ -265,6 +378,11 @@
         if (Model.category_id == 0)
         {
             ErrorMessage = "Please select a category.";
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(Model.unit))
+        {
+            ErrorMessage = "Please specify a unit.";
             return;
         }
 
@@ -310,14 +428,24 @@
         }
     }
 
-    private void HandleImageSelected(Microsoft.AspNetCore.Components.Forms.InputFileChangeEventArgs e)
+    private async Task HandleImageSelected(Microsoft.AspNetCore.Components.Forms.InputFileChangeEventArgs e)
     {
         selectedImage = e.File;
+        var format = "image/png";
+        var resizedImageFile = await e.File.RequestImageFileAsync(format, 400, 400);
+        var buffer = new byte[resizedImageFile.Size];
+        await resizedImageFile.OpenReadStream().ReadAsync(buffer);
+        imagePreviewUrl = $"data:{format};base64,{Convert.ToBase64String(buffer)}";
     }
 
-    private void HandlePositionImageSelected(Microsoft.AspNetCore.Components.Forms.InputFileChangeEventArgs e)
+    private async Task HandlePositionImageSelected(Microsoft.AspNetCore.Components.Forms.InputFileChangeEventArgs e)
     {
         selectedPositionImage = e.File;
+        var format = "image/png";
+        var resizedImageFile = await e.File.RequestImageFileAsync(format, 400, 400);
+        var buffer = new byte[resizedImageFile.Size];
+        await resizedImageFile.OpenReadStream().ReadAsync(buffer);
+        positionPreviewUrl = $"data:{format};base64,{Convert.ToBase64String(buffer)}";
     }
 
     private void NavigateBack()

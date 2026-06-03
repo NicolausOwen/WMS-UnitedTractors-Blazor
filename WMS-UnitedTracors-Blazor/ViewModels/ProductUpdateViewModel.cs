@@ -31,6 +31,10 @@ public class ProductUpdateViewModel
 
     public int? location_id { get; set; }
 
+    public string? description { get; set; }
+    
+    public string? transaction_type { get; set; }
+
     public IFormFile? image { get; set; }
     public bool remove_image { get; set; }
 

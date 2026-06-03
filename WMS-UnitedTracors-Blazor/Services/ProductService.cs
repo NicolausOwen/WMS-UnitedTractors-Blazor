@@ -76,28 +76,28 @@ public class ProductService
         if (model.image != null && model.image.Length > 0)
         {
             var fileName = Guid.NewGuid().ToString() + Path.GetExtension(model.image.FileName);
-            var path = Path.Combine(_env.ContentRootPath, "Storage", "products");
+            var path = Path.Combine(_env.WebRootPath, "images", "products");
             if (!Directory.Exists(path)) Directory.CreateDirectory(path);
 
             using (var stream = new FileStream(Path.Combine(path, fileName), FileMode.Create))
             {
                 await model.image.CopyToAsync(stream);
             }
-            imagePath = "products/" + fileName;
+            imagePath = "images/products/" + fileName;
         }
 
         string? positionImagePath = null;
         if (model.position_image != null && model.position_image.Length > 0)
         {
             var fileName = Guid.NewGuid().ToString() + Path.GetExtension(model.position_image.FileName);
-            var path = Path.Combine(_env.ContentRootPath, "Storage", "products");
+            var path = Path.Combine(_env.WebRootPath, "images", "products");
             if (!Directory.Exists(path)) Directory.CreateDirectory(path);
 
             using (var stream = new FileStream(Path.Combine(path, fileName), FileMode.Create))
             {
                 await model.position_image.CopyToAsync(stream);
             }
-            positionImagePath = "products/" + fileName;
+            positionImagePath = "images/products/" + fileName;
         }
 
         var product = new Product
@@ -111,6 +111,8 @@ public class ProductService
             is_returnable = model.is_returnable ? 1 : 0,
             initial_stock = model.initial_stock ?? 0,
             current_stock = model.initial_stock ?? 0,
+            description = model.description,
+            transaction_type = string.IsNullOrWhiteSpace(model.transaction_type) ? null : model.transaction_type,
             image = imagePath,
             position_image = positionImagePath,
             created_at = DateTime.UtcNow,
@@ -161,7 +163,7 @@ public class ProductService
         {
             if (!string.IsNullOrEmpty(product.image))
             {
-                var path = Path.Combine(_env.ContentRootPath, "Storage", product.image);
+                var path = Path.Combine(_env.WebRootPath, product.image);
                 if (System.IO.File.Exists(path)) System.IO.File.Delete(path);
             }
             product.image = null;
@@ -170,26 +172,26 @@ public class ProductService
         {
             if (!string.IsNullOrEmpty(product.image))
             {
-                var path = Path.Combine(_env.ContentRootPath, "Storage", product.image);
+                var path = Path.Combine(_env.WebRootPath, product.image);
                 if (System.IO.File.Exists(path)) System.IO.File.Delete(path);
             }
 
             var fileName = Guid.NewGuid().ToString() + Path.GetExtension(model.image.FileName);
-            var dirPath = Path.Combine(_env.ContentRootPath, "Storage", "products");
+            var dirPath = Path.Combine(_env.WebRootPath, "images", "products");
             if (!Directory.Exists(dirPath)) Directory.CreateDirectory(dirPath);
 
             using (var stream = new FileStream(Path.Combine(dirPath, fileName), FileMode.Create))
             {
                 await model.image.CopyToAsync(stream);
             }
-            product.image = "products/" + fileName;
+            product.image = "images/products/" + fileName;
         }
 
         if (model.remove_position_image)
         {
             if (!string.IsNullOrEmpty(product.position_image))
             {
-                var path = Path.Combine(_env.ContentRootPath, "Storage", product.position_image);
+                var path = Path.Combine(_env.WebRootPath, product.position_image);
                 if (System.IO.File.Exists(path)) System.IO.File.Delete(path);
             }
             product.position_image = null;
@@ -198,19 +200,19 @@ public class ProductService
         {
             if (!string.IsNullOrEmpty(product.position_image))
             {
-                var path = Path.Combine(_env.ContentRootPath, "Storage", product.position_image);
+                var path = Path.Combine(_env.WebRootPath, product.position_image);
                 if (System.IO.File.Exists(path)) System.IO.File.Delete(path);
             }
 
             var fileName = Guid.NewGuid().ToString() + Path.GetExtension(model.position_image.FileName);
-            var dirPath = Path.Combine(_env.ContentRootPath, "Storage", "products");
+            var dirPath = Path.Combine(_env.WebRootPath, "images", "products");
             if (!Directory.Exists(dirPath)) Directory.CreateDirectory(dirPath);
 
             using (var stream = new FileStream(Path.Combine(dirPath, fileName), FileMode.Create))
             {
                 await model.position_image.CopyToAsync(stream);
             }
-            product.position_image = "products/" + fileName;
+            product.position_image = "images/products/" + fileName;
         }
 
         product.sku = model.sku;
@@ -223,6 +225,8 @@ public class ProductService
         product.current_stock = model.current_stock;
         product.initial_stock = model.initial_stock;
         product.is_returnable = model.is_returnable ? 1 : 0;
+        product.description = model.description;
+        product.transaction_type = string.IsNullOrWhiteSpace(model.transaction_type) ? null : model.transaction_type;
         product.updated_at = DateTime.UtcNow;
 
         _context.Update(product);
@@ -238,12 +242,12 @@ public class ProductService
         {
             if (!string.IsNullOrEmpty(product.image))
             {
-                var path = Path.Combine(_env.ContentRootPath, "Storage", product.image);
+                var path = Path.Combine(_env.WebRootPath, product.image);
                 if (System.IO.File.Exists(path)) System.IO.File.Delete(path);
             }
             if (!string.IsNullOrEmpty(product.position_image))
             {
-                var path = Path.Combine(_env.ContentRootPath, "Storage", product.position_image);
+                var path = Path.Combine(_env.WebRootPath, product.position_image);
                 if (System.IO.File.Exists(path)) System.IO.File.Delete(path);
             }
 
