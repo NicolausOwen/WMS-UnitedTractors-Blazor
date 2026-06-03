@@ -1,9 +1,10 @@
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using UT_WMSDotnet.Data;
 using WMS_UnitedTracors_Blazor.Components;
-using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -134,56 +135,82 @@ app.MapGet("/auth/microsoft", () =>
     return Results.Challenge(properties, new[] { "Microsoft" });
 }).AllowAnonymous();
 
-app.MapGet("/auth/microsoft/callback", async (HttpContext context, WMS_UnitedTracors_Blazor.Services.AuthService authService) =>
+app.MapGet("/auth/microsoft/callback", async (
+    HttpContext context,
+    WMS_UnitedTracors_Blazor.Services.AuthService authService) =>
 {
-    var result = await Microsoft.AspNetCore.Authentication.AuthenticationHttpContextExtensions.AuthenticateAsync(context, "ExternalCookie");
+    var result = await context.AuthenticateAsync("ExternalCookie");
+
     if (!result.Succeeded)
     {
         return Results.Redirect("/login?errorMessage=Failed+to+authenticate+with+Microsoft.");
     }
 
     var claims = result.Principal?.Claims;
-    var email = claims?.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Email)?.Value
-             ?? claims?.FirstOrDefault(c => c.Type == "preferred_username")?.Value;
+
+    var email = claims?.FirstOrDefault(c =>
+        c.Type == System.Security.Claims.ClaimTypes.Email)?.Value
+        ?? claims?.FirstOrDefault(c =>
+        c.Type == "preferred_username")?.Value;
 
     if (string.IsNullOrEmpty(email))
     {
         return Results.Redirect("/login?errorMessage=Gagal+mendapatkan+alamat+email+dari+akun+Microsoft+Anda.");
     }
 
-    var (principal, error) = await authService.MicrosoftLoginAsync(email, claims?.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Name)?.Value);
-    
+    var (principal, error) =
+        await authService.MicrosoftLoginAsync(
+            email,
+            claims?.FirstOrDefault(c =>
+                c.Type == System.Security.Claims.ClaimTypes.Name)?.Value);
+
     if (principal == null)
     {
-        await Microsoft.AspNetCore.Authentication.AuthenticationHttpContextExtensions.SignOutAsync(context, "ExternalCookie");
-        return Results.Redirect($"/login?errorMessage={Uri.EscapeDataString(error ?? "Akses ditolak.")}");
+        await context.SignOutAsync("ExternalCookie");
+
+        return Results.Redirect(
+            $"/login?errorMessage={Uri.EscapeDataString(error ?? "Akses ditolak.")}");
     }
 
-    await Microsoft.AspNetCore.Authentication.AuthenticationHttpContextExtensions.SignInAsync(context, Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme, principal);
-    await Microsoft.AspNetCore.Authentication.AuthenticationHttpContextExtensions.SignOutAsync(context, "ExternalCookie");
+    await context.SignInAsync(
+        CookieAuthenticationDefaults.AuthenticationScheme,
+        principal);
+
+    await context.SignOutAsync("ExternalCookie");
 
     return Results.Redirect("/");
 }).AllowAnonymous();
 
-// Seed database
-if (app.Environment.IsDevelopment() || builder.Configuration.GetValue<bool>("RunMigrations", false))
-{
-    using (var scope = app.Services.CreateScope())
-    {
-        var services = scope.ServiceProvider;
-        try
-        {
-            var context = services.GetRequiredService<ApplicationDbContext>();
-            await context.Database.MigrateAsync();
 
-            var seeder = new UT_WMSDotnet.Data.DbSeeder(context, services.GetRequiredService<ILogger<UT_WMSDotnet.Data.DbSeeder>>());
-            await seeder.SeedAsync();
-        }
-        catch (Exception ex)
-        {
-            var logger = services.GetRequiredService<ILogger<Program>>();
-            logger.LogError(ex, "FAILED STARTUP: Migration or Seeding failed.");
-        }
+// =======================
+// Migration & Seeder
+// =======================
+if (app.Environment.IsDevelopment() ||
+    builder.Configuration.GetValue<bool>("RunMigrations", false))
+{
+    using var scope = app.Services.CreateScope();
+    var services = scope.ServiceProvider;
+
+    try
+    {
+        var context = services.GetRequiredService<ApplicationDbContext>();
+
+        await context.Database.MigrateAsync();
+
+        var seeder = new UT_WMSDotnet.Data.DbSeeder(
+            context,
+            services.GetRequiredService<ILogger<UT_WMSDotnet.Data.DbSeeder>>());
+
+        await seeder.SeedAsync();
     }
-    app.Run();
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "FAILED STARTUP: Migration or Seeding failed.");
+    }
 }
+
+// =======================
+// Start Application
+// =======================
+app.Run();
