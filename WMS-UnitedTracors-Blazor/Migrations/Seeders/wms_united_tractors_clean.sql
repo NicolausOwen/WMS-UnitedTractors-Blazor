@@ -4,6 +4,8 @@
 -- Target    : Azure MySQL 8.0 / HeidiSQL
 -- ============================================================
 
+use ut_wms_db;
+
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+00:00";
 
@@ -660,3 +662,6 @@ ALTER TABLE `transactions`
   ADD CONSTRAINT `transactions_product_id_foreign` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `transactions_product_variant_id_foreign` FOREIGN KEY (`product_variant_id`) REFERENCES `product_variants` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `transactions_requester_id_foreign` FOREIGN KEY (`requester_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+ALTER TABLE `transactions` 
+  ADD COLUMN `pickup_date` DATE DEFAULT NULL AFTER `borrow_start_date`;
