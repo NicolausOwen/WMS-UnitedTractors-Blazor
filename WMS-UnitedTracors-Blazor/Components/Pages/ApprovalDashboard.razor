@@ -205,13 +205,13 @@
                                                                         </button>
                                                                     </div>
                                                                     
-                                                                    @if (Decisions.GetValueOrDefault(item.id) == "REJECT" || Decisions.GetValueOrDefault(item.id) == "REVISION")
+                                                                    @if (Decisions.ContainsKey(item.id))
                                                                     {
                                                                         <div class="w-full max-w-[250px]">
                                                                             <input type="text" 
                                                                                 @bind="Reasons[item.id]" 
-                                                                                placeholder="@(Decisions.GetValueOrDefault(item.id) == "REVISION" ? "Catatan revisi *" : "Reason for rejection *")" 
-                                                                                class="w-full px-2 py-1.5 text-xs border rounded focus:ring-0 text-[#1a1a1a] @(Decisions.GetValueOrDefault(item.id) == "REVISION" ? "border-[#c7d2fe] bg-[#e0e7ff] focus:border-[#4338ca] placeholder:text-[#4338ca]/60" : "border-[#f8c0c0] bg-[#fef0f0] focus:border-[#d94040] placeholder:text-[#d94040]/60")">
+                                                                                placeholder="@(Decisions.GetValueOrDefault(item.id) == "REVISION" ? "Catatan revisi *" : (Decisions.GetValueOrDefault(item.id) == "REJECT" ? "Reason for rejection *" : "Optional note..."))" 
+                                                                                class="w-full px-2 py-1.5 text-xs border rounded focus:ring-0 text-[#1a1a1a] @(Decisions.GetValueOrDefault(item.id) == "REVISION" ? "border-[#c7d2fe] bg-[#e0e7ff] focus:border-[#4338ca] placeholder:text-[#4338ca]/60" : (Decisions.GetValueOrDefault(item.id) == "REJECT" ? "border-[#f8c0c0] bg-[#fef0f0] focus:border-[#d94040] placeholder:text-[#d94040]/60" : "border-[#b8e8c0] bg-[#eef9f0] focus:border-[#1a7a30] placeholder:text-[#1a7a30]/60"))">
                                                                         </div>
                                                                     }
                                                                 </div>
@@ -286,12 +286,12 @@
                                                             </button>
                                                         </div>
                                                         
-                                                        @if (Decisions.GetValueOrDefault(item.id) == "REJECT" || Decisions.GetValueOrDefault(item.id) == "REVISION")
+                                                        @if (Decisions.ContainsKey(item.id))
                                                         {
                                                             <input type="text" 
                                                                 @bind="Reasons[item.id]" 
-                                                                placeholder="@(Decisions.GetValueOrDefault(item.id) == "REVISION" ? "Catatan revisi *" : "Reason for rejection *")" 
-                                                                class="w-full px-3 py-2 text-xs border rounded-lg focus:ring-0 text-[#1a1a1a] @(Decisions.GetValueOrDefault(item.id) == "REVISION" ? "border-[#c7d2fe] bg-[#e0e7ff] focus:border-[#4338ca] placeholder:text-[#4338ca]/60" : "border-[#f8c0c0] bg-[#fef0f0] focus:border-[#d94040] placeholder:text-[#d94040]/60")">
+                                                                placeholder="@(Decisions.GetValueOrDefault(item.id) == "REVISION" ? "Catatan revisi *" : (Decisions.GetValueOrDefault(item.id) == "REJECT" ? "Reason for rejection *" : "Optional note..."))" 
+                                                                class="w-full px-3 py-2 text-xs border rounded-lg focus:ring-0 text-[#1a1a1a] @(Decisions.GetValueOrDefault(item.id) == "REVISION" ? "border-[#c7d2fe] bg-[#e0e7ff] focus:border-[#4338ca] placeholder:text-[#4338ca]/60" : (Decisions.GetValueOrDefault(item.id) == "REJECT" ? "border-[#f8c0c0] bg-[#fef0f0] focus:border-[#d94040] placeholder:text-[#d94040]/60" : "border-[#b8e8c0] bg-[#eef9f0] focus:border-[#1a7a30] placeholder:text-[#1a7a30]/60"))">
                                                         }
                                                     </div>
                                                 }
@@ -423,19 +423,9 @@
     private void SetDecision(int id, string decision)
     {
         Decisions[id] = decision;
-        if (decision == "APPROVE")
+        if (!Reasons.ContainsKey(id))
         {
-            if (Reasons.ContainsKey(id))
-            {
-                Reasons.Remove(id);
-            }
-        }
-        else if (decision == "REJECT" || decision == "REVISION")
-        {
-            if (!Reasons.ContainsKey(id))
-            {
-                Reasons[id] = "";
-            }
+            Reasons[id] = "";
         }
     }
     
@@ -453,7 +443,7 @@
         int successCount = 0;
         foreach (var item in items)
         {
-            var err = await ApprovalService.ApproveAsync(item.id, CurrentUserId, UserRole);
+            var err = await ApprovalService.ApproveAsync(item.id, null, CurrentUserId, UserRole);
             if (err != null) ErrorMessage += $"Item {item.id}: {err} | ";
             else successCount++;
         }
@@ -485,7 +475,7 @@
             }
 
             string? err = null;
-            if (action == "APPROVE") err = await ApprovalService.ApproveAsync(id, CurrentUserId, UserRole);
+            if (action == "APPROVE") err = await ApprovalService.ApproveAsync(id, reason, CurrentUserId, UserRole);
             else if (action == "REJECT") err = await ApprovalService.RejectAsync(id, reason, CurrentUserId, UserRole);
             else if (action == "REVISION") err = await ApprovalService.RequestRevisionAsync(id, reason, CurrentUserId, UserRole);
 

@@ -42,10 +42,9 @@ public class TransactionService
         if (model.type == "OUT")
         {
             if (string.IsNullOrEmpty(model.event_name) || !model.event_date.HasValue || 
-                string.IsNullOrEmpty(model.applicant_name) || !model.division_id.HasValue ||
-                string.IsNullOrEmpty(model.documentation_link))
+                string.IsNullOrEmpty(model.applicant_name) || !model.division_id.HasValue)
             {
-                return "Detail event, pemohon, dokumentasi, dan divisi wajib diisi untuk transaksi OUT.";
+                return "Detail event, pemohon, dan divisi wajib diisi untuk transaksi OUT.";
             }
         }
 

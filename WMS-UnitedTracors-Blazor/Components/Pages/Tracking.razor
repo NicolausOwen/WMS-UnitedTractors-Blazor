@@ -186,6 +186,7 @@
                                                 <th class="px-5 py-3 text-[0.65rem] font-bold tracking-wider uppercase text-[#8a8780]">Product</th>
                                                 <th class="px-5 py-3 text-[0.65rem] font-bold tracking-wider uppercase text-[#8a8780]">Kuantitas (Qty)</th>
                                                 <th class="px-5 py-3 text-[0.65rem] font-bold tracking-wider uppercase text-[#8a8780]">Status Detail</th>
+                                                <th class="px-5 py-3 text-[0.65rem] font-bold tracking-wider uppercase text-[#8a8780] text-right">Catatan</th>
                                             </tr>
                                         </thead>
                                         <tbody class="divide-y divide-[#e5e3dc]">
@@ -271,6 +272,12 @@
                                                                 <div class="text-[10px] text-amber-700 mt-1.5 italic font-semibold">"@usage.rejection_reason"</div>
                                                             }
                                                         }
+                                                    </td>
+                                                    <td class="px-5 py-3.5 align-middle text-right text-xs text-gray-500 space-y-1">
+                                                        @if (!string.IsNullOrEmpty(usage.notes)) { <div><span class="font-bold text-gray-400">User:</span> @usage.notes</div> }
+                                                        @if (!string.IsNullOrEmpty(usage.admin_notes)) { <div><span class="font-bold text-[#e8a000]">Admin:</span> @usage.admin_notes</div> }
+                                                        @if (!string.IsNullOrEmpty(usage.manager_notes)) { <div><span class="font-bold text-[#e8a000]">Manager:</span> @usage.manager_notes</div> }
+                                                        @if (string.IsNullOrEmpty(usage.notes) && string.IsNullOrEmpty(usage.admin_notes) && string.IsNullOrEmpty(usage.manager_notes)) { <span>-</span> }
                                                     </td>
                                                 </tr>
                                             }

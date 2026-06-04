@@ -66,7 +66,7 @@ public class ApprovalService
         return (groupedApprovals, pendingReturns, pendingProfileRequests);
     }
 
-    public async Task<string?> ApproveAsync(int id, int currentUserId, string? userRole)
+    public async Task<string?> ApproveAsync(int id, string? notes, int currentUserId, string? userRole)
     {
         var transaction = await _context.Transactions.Include(t => t.Product).FirstOrDefaultAsync(t => t.id == id);
         if (transaction == null) return "Transaction not found.";
@@ -138,6 +138,16 @@ public class ApprovalService
                 
                 transaction.approver_id = currentUserId;
                 transaction.updated_at = DateTime.UtcNow;
+                
+                if (userRole == "admin" || userRole == "superadmin")
+                {
+                    transaction.admin_notes = notes;
+                }
+                else if (userRole == "manager")
+                {
+                    transaction.manager_notes = notes;
+                }
+
                 _context.Transactions.Update(transaction);
 
                 await _context.SaveChangesAsync();
@@ -167,6 +177,15 @@ public class ApprovalService
         transaction.approver_id = currentUserId;
         transaction.rejection_reason = rejectionReason;
         transaction.updated_at = DateTime.UtcNow;
+
+        if (userRole == "admin" || userRole == "superadmin")
+        {
+            transaction.admin_notes = rejectionReason;
+        }
+        else if (userRole == "manager")
+        {
+            transaction.manager_notes = rejectionReason;
+        }
 
         if (transaction.type == "OUT" && transaction.Product != null && transaction.Requester != null)
         {
@@ -201,6 +220,15 @@ public class ApprovalService
         transaction.approver_id = currentUserId;
         transaction.rejection_reason = revisionReason; 
         transaction.updated_at = DateTime.UtcNow;
+
+        if (userRole == "admin" || userRole == "superadmin")
+        {
+            transaction.admin_notes = revisionReason;
+        }
+        else if (userRole == "manager")
+        {
+            transaction.manager_notes = revisionReason;
+        }
 
         _context.Transactions.Update(transaction);
         await _context.SaveChangesAsync();

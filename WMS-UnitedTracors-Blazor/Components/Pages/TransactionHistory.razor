@@ -147,7 +147,7 @@
                                         <h4 class="text-[0.65rem] font-bold uppercase tracking-wider text-gray-400">Items Requested</h4>
                                         <a href="/Receipt/@(firstItem.type == "IN" ? "Return" : "Transaction")/@firstItem.id" target="_blank" class="text-xs font-bold text-[#1a1a1a] bg-white border border-[#e5e3dc] rounded px-3 py-1 hover:bg-gray-100 flex items-center gap-1">
                                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
-                                            Cetak Struk
+                                            Cetak Struk / PDF
                                         </a>
                                     </div>
                                     
@@ -239,8 +239,11 @@
                                                             <span class="text-gray-300 text-xs">-</span>
                                                         }
                                                     </td>
-                                                    <td class="py-3 px-3 text-right text-xs text-gray-500">
-                                                        @(item.notes ?? "-")
+                                                    <td class="py-3 px-3 text-right text-xs text-gray-500 space-y-1">
+                                                        @if (!string.IsNullOrEmpty(item.notes)) { <div><span class="font-bold text-gray-400">User:</span> @item.notes</div> }
+                                                        @if (!string.IsNullOrEmpty(item.admin_notes)) { <div><span class="font-bold text-[#e8a000]">Admin:</span> @item.admin_notes</div> }
+                                                        @if (!string.IsNullOrEmpty(item.manager_notes)) { <div><span class="font-bold text-[#e8a000]">Manager:</span> @item.manager_notes</div> }
+                                                        @if (string.IsNullOrEmpty(item.notes) && string.IsNullOrEmpty(item.admin_notes) && string.IsNullOrEmpty(item.manager_notes)) { <span>-</span> }
                                                     </td>
                                                 </tr>
                                                 }
@@ -314,10 +317,11 @@
                                                         }
                                                     </span>
                                                 </div>
-                                                @if (!string.IsNullOrEmpty(item.notes)) {
-                                                    <div class="text-xs pt-1 bg-gray-50 p-2 rounded border border-gray-100 italic text-gray-600">
-                                                        <span class="font-medium text-gray-400 not-italic block mb-0.5">Notes:</span>
-                                                        @item.notes
+                                                @if (!string.IsNullOrEmpty(item.notes) || !string.IsNullOrEmpty(item.admin_notes) || !string.IsNullOrEmpty(item.manager_notes)) {
+                                                    <div class="text-xs pt-1 bg-gray-50 p-2 rounded border border-gray-100 italic text-gray-600 space-y-1">
+                                                        @if (!string.IsNullOrEmpty(item.notes)) { <div><span class="font-medium text-gray-400 not-italic">User:</span> @item.notes</div> }
+                                                        @if (!string.IsNullOrEmpty(item.admin_notes)) { <div><span class="font-medium text-[#e8a000] not-italic">Admin:</span> @item.admin_notes</div> }
+                                                        @if (!string.IsNullOrEmpty(item.manager_notes)) { <div><span class="font-medium text-[#e8a000] not-italic">Manager:</span> @item.manager_notes</div> }
                                                     </div>
                                                 }
                                             </div>

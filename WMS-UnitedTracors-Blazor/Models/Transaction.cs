@@ -63,6 +63,12 @@ public class Transaction
     [StringLength(500)]
     public string? return_rejection_reason { get; set; }
 
+    [StringLength(500)]
+    public string? admin_notes { get; set; }
+
+    [StringLength(500)]
+    public string? manager_notes { get; set; }
+
     public int requester_id { get; set; }
 
     public int? approver_id { get; set; }
