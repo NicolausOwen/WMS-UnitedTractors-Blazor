@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using UT_WMSDotnet.Data;
 
@@ -11,9 +12,11 @@ using UT_WMSDotnet.Data;
 namespace ut_wms_asp.net.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260604021546_AddTransactionsTable")]
+    partial class AddTransactionsTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -311,7 +314,7 @@ namespace ut_wms_asp.net.Migrations
 
                     b.HasIndex("transaction_id");
 
-                    b.ToTable("stock_logs", (string)null);
+                    b.ToTable("stock_logs");
                 });
 
             modelBuilder.Entity("UT_WMSDotnet.Models.Transaction", b =>

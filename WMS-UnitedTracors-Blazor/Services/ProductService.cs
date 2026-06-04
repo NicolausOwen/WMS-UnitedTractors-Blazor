@@ -142,13 +142,13 @@ public class ProductService
                 if (v.image != null && v.image.Size > 0)
                 {
                     var vFileName = Guid.NewGuid().ToString() + Path.GetExtension(v.image.Name);
-                    var vPath = Path.Combine(_env.WebRootPath, "images", "variants");
+                    var vPath = Path.Combine(_env.WebRootPath, "images", "products", "variants");
                     if (!Directory.Exists(vPath)) Directory.CreateDirectory(vPath);
                     using (var stream = new FileStream(Path.Combine(vPath, vFileName), FileMode.Create))
                     {
                         await v.image.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024).CopyToAsync(stream);
                     }
-                    vImagePath = "images/variants/" + vFileName;
+                    vImagePath = "images/products/variants/" + vFileName;
                 }
 
                 variantsToAdd.Add(new ProductVariant
@@ -290,13 +290,13 @@ public class ProductService
             if (vm.image != null && vm.image.Size > 0)
             {
                 var vFileName = Guid.NewGuid().ToString() + Path.GetExtension(vm.image.Name);
-                var vDirPath = Path.Combine(_env.WebRootPath, "images", "variants");
+                var vDirPath = Path.Combine(_env.WebRootPath, "images", "products", "variants");
                 if (!Directory.Exists(vDirPath)) Directory.CreateDirectory(vDirPath);
                 using (var stream = new FileStream(Path.Combine(vDirPath, vFileName), FileMode.Create))
                 {
                     await vm.image.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024).CopyToAsync(stream);
                 }
-                vImagePath = "images/variants/" + vFileName;
+                vImagePath = "images/products/variants/" + vFileName;
             }
 
             if (vm.id.HasValue && vm.id.Value > 0)
