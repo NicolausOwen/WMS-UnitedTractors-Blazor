@@ -168,10 +168,11 @@ public class TransactionService
             .Include(t => t.Requester)
             .Include(t => t.Approver)
             .Include(t => t.Division)
-            .Where(t => t.status == "APPROVED" && 
+            .Where(t => t.status == "REJECTED" || 
+                        (t.status == "APPROVED" && 
                         (t.type == "IN" || 
                          t.request_type == "GIVEAWAY" || 
-                         (t.request_type == "BORROW" && t.returned_quantity >= t.quantity)))
+                         (t.request_type == "BORROW" && t.returned_quantity >= t.quantity))))
             .AsQueryable();
 
         if (userRole == "staff")
@@ -482,5 +483,28 @@ public class TransactionService
         using var md5 = MD5.Create();
         var hashBytes = md5.ComputeHash(Encoding.UTF8.GetBytes(raw));
         return BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
+    }
+
+    public async Task<string?> DeleteTransactionAsync(int id)
+    {
+        var transaction = await _context.Transactions.Include(t => t.Product).Include(t => t.Requester).FirstOrDefaultAsync(t => t.id == id);
+        if (transaction == null) return "Transaction not found.";
+
+        var product = transaction.Product;
+        var requester = transaction.Requester;
+
+        if (transaction.request_type == "GIVEAWAY" && requester != null)
+        {
+            int pointsToRefund = (product?.value ?? 0) * (transaction.quantity ?? 0);
+            if (pointsToRefund > 0)
+            {
+                requester.poin += pointsToRefund;
+                _context.Users.Update(requester);
+            }
+        }
+
+        _context.Transactions.Remove(transaction);
+        await _context.SaveChangesAsync();
+        return null;
     }
 }

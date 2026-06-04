@@ -5,6 +5,7 @@
 @using WMS_UnitedTracors_Blazor.Services
 @inject TrackingService TrackingService
 @inject TransactionService TransactionService
+@inject CartService CartService
 @inject DivisionService DivisionService
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Navigation
@@ -271,6 +272,11 @@
                                                             @if(!string.IsNullOrEmpty(usage.rejection_reason)) {
                                                                 <div class="text-[10px] text-amber-700 mt-1.5 italic font-semibold">"@usage.rejection_reason"</div>
                                                             }
+                                                            <div class="mt-2">
+                                                                <button type="button" @onclick="() => ReviseToCart(usage)" class="px-3 py-1 bg-[#e8a000] hover:bg-[#d49300] text-[#1a1a1a] text-[10px] font-bold rounded shadow-sm transition">
+                                                                    Revisi
+                                                                </button>
+                                                            </div>
                                                         }
                                                     </td>
                                                     <td class="px-5 py-3.5 align-middle text-right text-xs text-gray-500 space-y-1">
@@ -575,5 +581,29 @@
         {
             IsSubmitting = false;
         }
+    }
+
+    private async Task ReviseToCart(Transaction usage)
+    {
+        if (usage.Product != null)
+        {
+            CartService.AddToCart(new CartItem
+            {
+                Sku = usage.Product.sku ?? "",
+                Name = usage.Product.name ?? "",
+                Quantity = usage.quantity ?? 1,
+                RequestType = usage.request_type ?? "BORROW",
+                BaseCredit = usage.Product.value,
+                MaxStock = usage.Product.current_stock,
+                UnitName = usage.Product.Unit?.name ?? "unit",
+                ProductVariantId = usage.product_variant_id,
+                BorrowStartDate = usage.borrow_start_date,
+                ExpectedReturnDate = usage.expected_return_date,
+                PickupDate = usage.pickup_date
+            });
+        }
+        
+        await TransactionService.DeleteTransactionAsync(usage.id);
+        Navigation.NavigateTo("/");
     }
 }
