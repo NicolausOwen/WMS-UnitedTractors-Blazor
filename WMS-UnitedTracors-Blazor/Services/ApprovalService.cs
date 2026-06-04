@@ -123,17 +123,10 @@ public class ApprovalService
                 };
                 _context.StockLogs.Add(stockLog);
 
-                if (transaction.request_type == "GIVEAWAY" && (userRole == "admin" || userRole == "superadmin"))
+                transaction.status = "APPROVED";
+                if (transaction.request_type == "GIVEAWAY")
                 {
-                    transaction.status = "PENDING_MANAGER";
-                }
-                else
-                {
-                    transaction.status = "APPROVED";
-                    if (transaction.request_type == "GIVEAWAY")
-                    {
-                        transaction.returned_at = DateTime.UtcNow; // Mark finished
-                    }
+                    transaction.returned_at = DateTime.UtcNow; // Mark finished
                 }
                 
                 transaction.approver_id = currentUserId;

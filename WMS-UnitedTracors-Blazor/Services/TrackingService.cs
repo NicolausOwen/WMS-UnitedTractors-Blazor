@@ -42,6 +42,10 @@ public class TrackingService
         {
             query = query.Where(t => t.requester_id == currentUserId);
         }
+        else if (userRole == "manager")
+        {
+            query = query.Where(t => t.request_type == "GIVEAWAY");
+        }
 
         if (divisionId.HasValue)
         {

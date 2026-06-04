@@ -174,6 +174,7 @@ public class TransactionService
     {
         var query = _context.Transactions
             .Include(t => t.Product)
+            .Include(t => t.ProductVariant)
             .Include(t => t.Requester)
             .Include(t => t.Approver)
             .Include(t => t.Division)

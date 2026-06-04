@@ -162,7 +162,45 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="flex items-center gap-3 shrink-0">
+
+                            @* Breadcrumbs / Stepper UI (Group Level) *@
+                            <div class="w-full lg:w-auto mt-4 lg:mt-0 flex items-center lg:justify-end flex-1 lg:pr-8 overflow-x-auto" style="scrollbar-width: none;">
+                                <nav class="flex" aria-label="Breadcrumb">
+                                    <ol role="list" class="flex items-center space-x-2">
+                                        @{ var steps = GetGroupSteps(groupItems); }
+                                        @for (int i = 0; i < steps.Count; i++)
+                                        {
+                                            var step = steps[i];
+                                            <li>
+                                                <div class="flex items-center">
+                                                    @if (i > 0) {
+                                                        <svg class="h-3.5 w-3.5 text-[#d1cec7] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                                                    }
+                                                    <div class="flex items-center gap-1.5 @(i > 0 ? "ml-2" : "")">
+                                                        @if (step.Status == "DONE") {
+                                                            <div class="w-3.5 h-3.5 rounded-full bg-[#1a7a30] flex items-center justify-center shrink-0">
+                                                                <svg class="w-2 h-2 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                                                            </div>
+                                                            <span class="text-[10px] font-bold text-[#1a7a30] whitespace-nowrap">@step.Name</span>
+                                                        } else if (step.Status == "ACTIVE") {
+                                                            <div class="w-2 h-2 rounded-full bg-[#3b82f6] shadow-sm shrink-0 ring-[2px] ring-blue-100"></div>
+                                                            <span class="text-[10px] font-bold text-[#3b82f6] whitespace-nowrap">@step.Name</span>
+                                                        } else if (step.Status == "WARNING") {
+                                                            <div class="w-2 h-2 rounded-full bg-[#d94040] shadow-sm shrink-0 ring-[2px] ring-red-100"></div>
+                                                            <span class="text-[10px] font-bold text-[#d94040] whitespace-nowrap">@step.Name</span>
+                                                        } else {
+                                                            <div class="w-1.5 h-1.5 rounded-full bg-[#e5e3dc] shrink-0"></div>
+                                                            <span class="text-[10px] font-medium text-[#a09e99] whitespace-nowrap">@step.Name</span>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </li>
+                                        }
+                                    </ol>
+                                </nav>
+                            </div>
+
+                            <div class="flex items-center justify-end gap-3 shrink-0">
                                 @if (groupItems.Any(i => i.returned_quantity > 0 || (i.pending_return_quantity > 0 && i.is_return_draft == 0)))
                                 {
                                     <a href="/Receipt/Return/@firstItem.id" target="_blank" @onclick:stopPropagation="true" class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-white border border-[#b8e8c0] text-[#1a7a30] hover:bg-[#eef9f0] rounded text-xs font-semibold transition">
@@ -195,7 +233,17 @@
                                             {
                                                 <tr class="bg-white hover:bg-[#faf9f5] transition-colors">
                                                     <td class="px-5 py-3.5 align-middle">
-                                                        <div class="text-sm font-semibold text-[#1a1a1a]">@(usage.Product?.name ?? "-")</div>
+                                                        <div class="text-sm font-semibold text-[#1a1a1a]">
+                                                            @(usage.Product?.name ?? "-")
+                                                            @if(usage.ProductVariant != null) {
+                                                                var variantTexts = new List<string>();
+                                                                if (!string.IsNullOrEmpty(usage.ProductVariant.color)) variantTexts.Add(usage.ProductVariant.color);
+                                                                if (!string.IsNullOrEmpty(usage.ProductVariant.size)) variantTexts.Add(usage.ProductVariant.size);
+                                                                if (variantTexts.Any()) {
+                                                                    <span class="text-xs text-gray-500 font-normal ml-1">(@string.Join(", ", variantTexts))</span>
+                                                                }
+                                                            }
+                                                        </div>
                                                         <div class="flex items-center gap-2 mt-0.5">
                                                             <code class="text-[10px] text-gray-500 font-mono">@(usage.Product?.sku ?? "-")</code>
                                                         </div>
@@ -605,5 +653,58 @@
         
         await TransactionService.DeleteTransactionAsync(usage.id);
         Navigation.NavigateTo("/");
+    }
+
+    public class TrackingStep
+    {
+        public string Name { get; set; } = "";
+        public string Status { get; set; } = "";
+    }
+
+    private List<TrackingStep> GetGroupSteps(List<Transaction> groupItems)
+    {
+        var firstItem = groupItems.First();
+        var steps = new List<TrackingStep>();
+        steps.Add(new TrackingStep { Name = "Request", Status = "DONE" });
+
+        if (firstItem.request_type == "GIVEAWAY")
+        {
+            if (firstItem.status == "PENDING") {
+                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "ACTIVE" });
+                steps.Add(new TrackingStep { Name = "Selesai", Status = "PENDING" });
+            } else if (firstItem.status == "REVISION") {
+                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "WARNING" });
+                steps.Add(new TrackingStep { Name = "Selesai", Status = "PENDING" });
+            } else if (firstItem.status == "PENDING_MANAGER") { // Fallback for old data
+                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE" });
+                steps.Add(new TrackingStep { Name = "Selesai", Status = "PENDING" });
+            } else if (firstItem.status == "APPROVED") {
+                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE" });
+                steps.Add(new TrackingStep { Name = "Selesai", Status = "DONE" });
+            }
+        }
+        else // BORROW
+        {
+            int totalQty = groupItems.Sum(i => i.quantity ?? 0);
+            int totalReturned = groupItems.Sum(i => i.returned_quantity ?? 0);
+            int totalPendingReturn = groupItems.Sum(i => i.pending_return_quantity ?? 0);
+
+            if (firstItem.status == "PENDING") {
+                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "ACTIVE" });
+                steps.Add(new TrackingStep { Name = "Pengembalian", Status = "PENDING" });
+            } else if (firstItem.status == "REVISION") {
+                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "WARNING" });
+                steps.Add(new TrackingStep { Name = "Pengembalian", Status = "PENDING" });
+            } else if (firstItem.status == "APPROVED") {
+                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE" });
+                
+                if (totalReturned >= totalQty && totalQty > 0) {
+                    steps.Add(new TrackingStep { Name = "Pengembalian", Status = "DONE" });
+                } else {
+                    steps.Add(new TrackingStep { Name = "Pengembalian", Status = "ACTIVE" });
+                }
+            }
+        }
+        return steps;
     }
 }

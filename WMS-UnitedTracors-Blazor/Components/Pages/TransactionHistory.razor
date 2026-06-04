@@ -194,7 +194,17 @@
                                                                 <img src="@($"/{item.Product.image}")" class="w-8 h-8 rounded object-cover border border-gray-200" />
                                                             }
                                                             <div>
-                                                                <div class="text-sm font-semibold text-gray-900">@(item.Product?.name)</div>
+                                                                <div class="text-sm font-semibold text-gray-900">
+                                                                    @(item.Product?.name)
+                                                                    @if(item.ProductVariant != null) {
+                                                                        var variantTexts = new List<string>();
+                                                                        if (!string.IsNullOrEmpty(item.ProductVariant.color)) variantTexts.Add(item.ProductVariant.color);
+                                                                        if (!string.IsNullOrEmpty(item.ProductVariant.size)) variantTexts.Add(item.ProductVariant.size);
+                                                                        if (variantTexts.Any()) {
+                                                                            <span class="text-xs text-gray-500 font-normal ml-1">(@string.Join(", ", variantTexts))</span>
+                                                                        }
+                                                                    }
+                                                                </div>
                                                                 <div class="text-[10px] text-gray-500">@(item.Product?.sku)</div>
                                                             </div>
                                                         </div>
@@ -282,7 +292,17 @@
                                                         <img src="@($"/{item.Product.image}")" class="w-10 h-10 rounded object-cover border border-gray-200" />
                                                     }
                                                     <div>
-                                                        <div class="text-sm font-semibold text-gray-900">@(item.Product?.name)</div>
+                                                        <div class="text-sm font-semibold text-gray-900">
+                                                            @(item.Product?.name)
+                                                            @if(item.ProductVariant != null) {
+                                                                var variantTexts = new List<string>();
+                                                                if (!string.IsNullOrEmpty(item.ProductVariant.color)) variantTexts.Add(item.ProductVariant.color);
+                                                                if (!string.IsNullOrEmpty(item.ProductVariant.size)) variantTexts.Add(item.ProductVariant.size);
+                                                                if (variantTexts.Any()) {
+                                                                    <span class="text-xs text-gray-500 font-normal ml-1">(@string.Join(", ", variantTexts))</span>
+                                                                }
+                                                            }
+                                                        </div>
                                                         <div class="text-[10px] text-gray-500">@(item.Product?.sku)</div>
                                                     </div>
                                                 </div>
