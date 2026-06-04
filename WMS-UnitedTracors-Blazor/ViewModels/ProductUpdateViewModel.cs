@@ -31,6 +31,10 @@ public class ProductUpdateViewModel
 
     public int? location_id { get; set; }
 
+    public string? description { get; set; }
+    
+    public string? transaction_type { get; set; }
+
     public IFormFile? image { get; set; }
     public bool remove_image { get; set; }
 
@@ -46,4 +50,6 @@ public class ProductUpdateViewModel
     public int initial_stock { get; set; }
 
     public bool is_returnable { get; set; }
+
+    public List<ProductVariantViewModel> variants { get; set; } = new();
 }

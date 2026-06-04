@@ -169,7 +169,7 @@
                                                     <td class="py-3 px-3">
                                                         <div class="flex items-center gap-3">
                                                             @if (!string.IsNullOrEmpty(item.Product?.image)) {
-                                                                <img src="@(item.Product.image.StartsWith("images/") ? $"/{item.Product.image}" : $"/storage/{item.Product.image}")" class="w-8 h-8 rounded object-cover border border-gray-200" />
+                                                                <img src="@($"/{item.Product.image}")" class="w-8 h-8 rounded object-cover border border-gray-200" />
                                                             }
                                                             <div>
                                                                 <div class="text-sm font-semibold text-gray-900">@(item.Product?.name)</div>
@@ -246,7 +246,7 @@
                                             <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm space-y-3">
                                                 <div class="flex items-center gap-3">
                                                     @if (!string.IsNullOrEmpty(item.Product?.image)) {
-                                                        <img src="/storage/@item.Product.image" class="w-10 h-10 rounded object-cover border border-gray-200" />
+                                                        <img src="@($"/{item.Product.image}")" class="w-10 h-10 rounded object-cover border border-gray-200" />
                                                     }
                                                     <div>
                                                         <div class="text-sm font-semibold text-gray-900">@(item.Product?.name)</div>

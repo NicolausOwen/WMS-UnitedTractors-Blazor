@@ -36,4 +36,10 @@ public class ProductCreateViewModel
     public int? initial_stock { get; set; }
 
     public bool is_returnable { get; set; }
+
+    public string? description { get; set; }
+    
+    public string? transaction_type { get; set; }
+
+    public List<ProductVariantViewModel> variants { get; set; } = new();
 }

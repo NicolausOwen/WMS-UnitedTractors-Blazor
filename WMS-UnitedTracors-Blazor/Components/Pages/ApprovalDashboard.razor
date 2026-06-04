@@ -154,7 +154,7 @@
                                                             <div class="flex items-center gap-3">
                                                                 @if (!string.IsNullOrEmpty(item.Product?.image))
                                                                 {
-                                                                    <img src="@(item.Product.image.StartsWith("images/") ? $"/{item.Product.image}" : $"/storage/{item.Product.image}")" class="w-8 h-8 rounded object-cover border border-[#e5e3dc]">
+                                                                    <img src="@($"/{item.Product.image}")" class="w-8 h-8 rounded object-cover border border-[#e5e3dc]">
                                                                 }
                                                                 <div>
                                                                     <div class="text-sm font-bold text-[#1a1a1a]">@(item.Product?.name)</div>
@@ -231,7 +231,7 @@
                                                 <div class="flex items-start gap-3">
                                                     @if (!string.IsNullOrEmpty(item.Product?.image))
                                                     {
-                                                        <img src="/storage/@item.Product.image" class="w-10 h-10 rounded object-cover border border-[#e5e3dc] shrink-0">
+                                                        <img src="@($"/{item.Product.image}")" class="w-10 h-10 rounded object-cover border border-[#e5e3dc] shrink-0">
                                                     }
                                                     <div class="min-w-0 text-left">
                                                         <div class="text-sm font-bold text-[#1a1a1a] truncate">@(item.Product?.name)</div>
@@ -327,7 +327,7 @@
                                 <div class="flex items-center gap-3">
                                     @if (!string.IsNullOrEmpty(ret.Product?.image))
                                     {
-                                        <img src="@(ret.Product.image.StartsWith("images/") ? $"/{ret.Product.image}" : $"/storage/{ret.Product.image}")" class="w-10 h-10 rounded-lg object-cover border border-[#e5e3dc]">
+                                        <img src="@($"/{ret.Product.image}")" class="w-10 h-10 rounded-lg object-cover border border-[#e5e3dc]">
                                     }
                                     <div>
                                         <h4 class="text-sm font-bold text-[#1a1a1a]">@(ret.Product?.name)</h4>
@@ -346,8 +346,8 @@
                             {
                                 <div class="mb-4">
                                     <p class="text-[0.65rem] font-bold uppercase tracking-wider text-[#8a8880] mb-1.5">Photo Proof</p>
-                                    <a href="@(ret.return_photo.StartsWith("images/") ? $"/{ret.return_photo}" : $"/storage/{ret.return_photo}")" target="_blank" class="block w-20 h-20 rounded-lg border border-[#e5e3dc] overflow-hidden hover:ring-2 ring-[#e8a000] transition">
-                                        <img src="@(ret.return_photo.StartsWith("images/") ? $"/{ret.return_photo}" : $"/storage/{ret.return_photo}")" class="w-full h-full object-cover">
+                                    <a href="@($"/{ret.return_photo}")" target="_blank" class="block w-20 h-20 rounded-lg border border-[#e5e3dc] overflow-hidden hover:ring-2 ring-[#e8a000] transition">
+                                        <img src="@($"/{ret.return_photo}")" class="w-full h-full object-cover">
                                     </a>
                                 </div>
                             }
