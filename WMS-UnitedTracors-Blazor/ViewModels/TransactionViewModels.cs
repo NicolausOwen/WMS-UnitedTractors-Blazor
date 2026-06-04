@@ -70,6 +70,7 @@ public class ReturnItemViewModel
     public int return_quantity { get; set; }
 
     public IFormFile? return_photo { get; set; }
+    public Microsoft.AspNetCore.Components.Forms.IBrowserFile? return_photo_browser { get; set; }
 
     [Required]
     [RegularExpression("^(baik|rusak|hilang)$", ErrorMessage = "Status pengembalian tidak valid.")]

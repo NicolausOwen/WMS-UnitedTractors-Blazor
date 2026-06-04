@@ -169,6 +169,10 @@ public class TransactionService
             .Include(t => t.Requester)
             .Include(t => t.Approver)
             .Include(t => t.Division)
+            .Where(t => t.status == "APPROVED" && 
+                        (t.type == "IN" || 
+                         t.request_type == "GIVEAWAY" || 
+                         (t.request_type == "BORROW" && t.returned_quantity >= t.quantity)))
             .AsQueryable();
 
         if (userRole == "staff")
@@ -232,36 +236,116 @@ public class TransactionService
         if (model.return_quantity > remainingToReturn)
             return $"You can only return up to {remainingToReturn} items.";
 
-        string? photoPath = transaction.return_photo;
-        if (model.return_photo != null && model.return_photo.Length > 0)
+        string photoPath = transaction.return_photo ?? "";
+        if (model.return_photo != null)
         {
+            var uploads = Path.Combine(_env.WebRootPath, "images", "return");
+            if (!Directory.Exists(uploads)) Directory.CreateDirectory(uploads);
             var fileName = Guid.NewGuid().ToString() + Path.GetExtension(model.return_photo.FileName);
-            var path = Path.Combine(_env.WebRootPath, "images", "return");
-            if (!Directory.Exists(path)) Directory.CreateDirectory(path);
-
-            using (var stream = new FileStream(Path.Combine(path, fileName), FileMode.Create))
+            var filePath = Path.Combine(uploads, fileName);
+            using (var fileStream = new FileStream(filePath, FileMode.Create))
             {
-                await model.return_photo.CopyToAsync(stream);
+                await model.return_photo.CopyToAsync(fileStream);
+            }
+            photoPath = "images/return/" + fileName;
+        }
+        else if (model.return_photo_browser != null)
+        {
+            var uploads = Path.Combine(_env.WebRootPath, "images", "return");
+            if (!Directory.Exists(uploads)) Directory.CreateDirectory(uploads);
+            var fileName = Guid.NewGuid().ToString() + Path.GetExtension(model.return_photo_browser.Name);
+            var filePath = Path.Combine(uploads, fileName);
+            using (var fileStream = new FileStream(filePath, FileMode.Create))
+            {
+                await model.return_photo_browser.OpenReadStream(10 * 1024 * 1024).CopyToAsync(fileStream);
             }
             photoPath = "images/return/" + fileName;
         }
         else if (string.IsNullOrEmpty(photoPath))
         {
-            if (transaction.is_return_draft == 0 || string.IsNullOrEmpty(transaction.return_photo))
+            // If dummy photo is set by force return, allow it
+            if (photoPath != "forced-by-admin")
+            {
                 return "Foto pengembalian wajib diunggah.";
+            }
         }
 
-        transaction.pending_return_quantity = model.return_quantity;
         transaction.return_photo = photoPath;
         transaction.return_status = model.return_status;
         transaction.return_reason = model.return_reason;
-        transaction.is_return_draft = 1;
-        transaction.updated_at = DateTime.UtcNow;
+        
+        // Process the return immediately
+        var strategy = _context.Database.CreateExecutionStrategy();
+        return await strategy.ExecuteAsync(async () =>
+        {
+            using var dbTransaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                var stockBefore = transaction.Product.current_stock;
+                transaction.Product.current_stock += model.return_quantity;
+                _context.Products.Update(transaction.Product);
 
-        _context.Update(transaction);
-        await _context.SaveChangesAsync();
+                if (transaction.product_variant_id.HasValue)
+                {
+                    var variant = await _context.ProductVariants.FindAsync(transaction.product_variant_id.Value);
+                    if (variant != null)
+                    {
+                        variant.stock += model.return_quantity;
+                        _context.ProductVariants.Update(variant);
+                    }
+                }
 
-        return null;
+                var stockLog = new StockLog
+                {
+                    transaction_id = transaction.id,
+                    product_id = transaction.Product.id,
+                    stock_before = stockBefore,
+                    stock_after = transaction.Product.current_stock,
+                    created_at = DateTime.UtcNow,
+                    updated_at = DateTime.UtcNow
+                };
+                _context.StockLogs.Add(stockLog);
+
+                transaction.returned_quantity = (transaction.returned_quantity ?? 0) + model.return_quantity;
+                transaction.pending_return_quantity = 0;
+                transaction.is_return_draft = 0;
+                
+                if (transaction.returned_quantity >= transaction.quantity)
+                {
+                    transaction.returned_at = DateTime.UtcNow; // Mark fully returned
+                }
+
+                transaction.updated_at = DateTime.UtcNow;
+                _context.Transactions.Update(transaction);
+
+                await _context.SaveChangesAsync();
+                await dbTransaction.CommitAsync();
+                return null;
+            }
+            catch (Exception ex)
+            {
+                await dbTransaction.RollbackAsync();
+                return "Return failed: " + ex.Message;
+            }
+        });
+    }
+
+    public async Task<string?> ForceReturnTransactionAsync(int transactionId, int returnQty, string status, string? reason, int adminId)
+    {
+        var model = new ReturnItemViewModel
+        {
+            transaction_id = transactionId,
+            return_quantity = returnQty,
+            return_status = status,
+            return_reason = reason
+        };
+        // We can reuse ReturnItemAsync logic but bypass photo requirements by setting a dummy photo or bypassing it
+        var transaction = await _context.Transactions.Include(t => t.Product).FirstOrDefaultAsync(t => t.id == transactionId);
+        if (transaction == null) return "Transaction not found.";
+        
+        transaction.return_photo = "forced-by-admin"; // dummy
+        
+        return await ReturnItemAsync(model);
     }
 
     public async Task<string?> CancelReturnDraftAsync(int id)

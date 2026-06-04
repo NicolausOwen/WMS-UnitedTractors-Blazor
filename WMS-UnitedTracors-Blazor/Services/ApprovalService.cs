@@ -27,13 +27,13 @@ public class ApprovalService
         {
             query = query.Where(t => t.requester_id == currentUserId);
         }
-        else
+        else if (userRole == "manager")
+        {
+            query = query.Where(t => t.status == "PENDING_MANAGER" && t.request_type == "GIVEAWAY");
+        }
+        else if (userRole == "admin" || userRole == "superadmin")
         {
             query = query.Where(t => t.status == "PENDING");
-            if (userRole == "manager")
-            {
-                query = query.Where(t => t.Product != null && t.Product.is_returnable == 0);
-            }
         }
 
         var transactions = await query.ToListAsync();
@@ -70,7 +70,7 @@ public class ApprovalService
     {
         var transaction = await _context.Transactions.Include(t => t.Product).FirstOrDefaultAsync(t => t.id == id);
         if (transaction == null) return "Transaction not found.";
-        if (transaction.status != "PENDING") return "Transaction is no longer pending.";
+        if (transaction.status != "PENDING" && transaction.status != "PENDING_MANAGER") return "Transaction is no longer pending.";
 
         if (userRole == "manager" && transaction.Product != null && transaction.Product.is_returnable == 1)
         {
@@ -123,7 +123,19 @@ public class ApprovalService
                 };
                 _context.StockLogs.Add(stockLog);
 
-                transaction.status = "APPROVED";
+                if (transaction.request_type == "GIVEAWAY" && (userRole == "admin" || userRole == "superadmin"))
+                {
+                    transaction.status = "PENDING_MANAGER";
+                }
+                else
+                {
+                    transaction.status = "APPROVED";
+                    if (transaction.request_type == "GIVEAWAY")
+                    {
+                        transaction.returned_at = DateTime.UtcNow; // Mark finished
+                    }
+                }
+                
                 transaction.approver_id = currentUserId;
                 transaction.updated_at = DateTime.UtcNow;
                 _context.Transactions.Update(transaction);
@@ -144,7 +156,7 @@ public class ApprovalService
     {
         var transaction = await _context.Transactions.Include(t => t.Product).Include(t => t.Requester).FirstOrDefaultAsync(t => t.id == id);
         if (transaction == null) return "Transaction not found.";
-        if (transaction.status != "PENDING") return "Transaction is no longer pending.";
+        if (transaction.status != "PENDING" && transaction.status != "PENDING_MANAGER") return "Transaction is no longer pending.";
 
         if (userRole == "manager" && transaction.Product != null && transaction.Product.is_returnable == 1)
         {
@@ -178,7 +190,7 @@ public class ApprovalService
     {
         var transaction = await _context.Transactions.Include(t => t.Product).FirstOrDefaultAsync(t => t.id == id);
         if (transaction == null) return "Transaction not found.";
-        if (transaction.status != "PENDING") return "Transaction is no longer pending.";
+        if (transaction.status != "PENDING" && transaction.status != "PENDING_MANAGER") return "Transaction is no longer pending.";
 
         if (userRole == "manager" && transaction.Product != null && transaction.Product.is_returnable == 1)
             return "Managers cannot request revision for borrowing transactions. Only admins can.";

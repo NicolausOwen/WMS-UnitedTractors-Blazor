@@ -113,7 +113,7 @@
             <div @onclick="() => OpenProductModal(product)" class="bg-white border border-[#e5e3dc] rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 hover:border-[#e8a000] transition-all duration-300 flex flex-col group product-item cursor-pointer text-left focus:outline-none focus:ring-2 focus:ring-[#e8a000]" tabindex="0" role="button">
                 @* Image Container *@
                 <div class="aspect-square relative bg-[#f5f4f0] flex items-center justify-center overflow-hidden border-b border-[#f0ede5]">
-                    <img src="@(!string.IsNullOrEmpty(product.image) ? $"/{product.image}" : "")" alt="@product.name" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                    <img src="@GetProductDisplayImage(product)" alt="@product.name" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.onerror=null;this.src='https://placehold.co/600x400?text=No+Picture';">
                     
                     @* Stock Badges Overlay *@
                     <div class="absolute top-2 left-2 flex flex-col gap-1">
@@ -240,6 +240,7 @@
                                 @ErrorMessage
                             </div>
                         }
+                        @if(!CartService.Items.Any())
                         {
                             <div class="text-center py-8">
                                 <p class="text-sm text-[#8a8880]">Keranjang kosong. Silakan tambahkan barang dari katalog.</p>
@@ -318,10 +319,7 @@
                                 <input type="date" @bind="EventDate" class="w-full px-3.5 py-2.5 text-xs bg-[#f5f4f0] border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none text-[#1a1a1a]">
                             </div>
 
-                            <div class="mt-4">
-                                <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Dokumentasi (Link GDrive)</label>
-                                <input type="url" @bind="DocumentationLink" placeholder="https://drive.google.com/..." class="w-full px-3.5 py-2.5 text-xs bg-[#f5f4f0] border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none text-[#1a1a1a]">
-                            </div>
+
 
                             <div class="mt-4">
                                 <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Catatan Tambahan</label>
@@ -366,16 +364,7 @@
                         <div class="space-y-5">
                             @* Image Carousel *@
                             <div class="relative w-full aspect-square lg:aspect-[4/3] bg-[#f5f4f0] rounded-xl overflow-hidden border border-[#e5e3dc] mb-3">
-                                @if (!string.IsNullOrEmpty(SelectedMainImage))
-                                {
-                                    <img src="@GetImageUrl(SelectedMainImage)" class="w-full h-full object-cover">
-                                }
-                                else
-                                {
-                                    <div class="w-full h-full flex items-center justify-center">
-                                        <svg class="w-12 h-12 text-[#d1d0cb]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-                                    </div>
-                                }
+                                <img src="@GetImageUrl(SelectedMainImage)" class="w-full h-full object-cover" onerror="this.onerror=null;this.src='https://placehold.co/600x400?text=No+Picture';">
                             </div>
                             
                             @if(ModalImages.Count > 1) {
@@ -650,7 +639,7 @@
         }
         
         ModalImages = ModalImages.Where(i => !string.IsNullOrEmpty(i)).Distinct().ToList();
-        SelectedMainImage = ModalImages.FirstOrDefault() ?? "";
+        SelectedMainImage = ModalImages.FirstOrDefault() ?? "https://placehold.co/600x400?text=No+Picture";
         
         if (product.ProductVariants != null && product.ProductVariants.Any())
         {
@@ -818,6 +807,32 @@
         }
 
         return normalized;
+    }
+
+    private string GetProductDisplayImage(Product product)
+    {
+        if (!string.IsNullOrEmpty(product.image))
+        {
+            return GetImageUrl(product.image);
+        }
+        
+        if (!string.IsNullOrEmpty(product.images))
+        {
+            try
+            {
+                var imgList = System.Text.Json.JsonSerializer.Deserialize<List<string>>(product.images);
+                if (imgList != null && imgList.Any())
+                {
+                    return GetImageUrl(imgList.First());
+                }
+            }
+            catch
+            {
+                // Ignore parse errors
+            }
+        }
+        
+        return "https://placehold.co/600x400?text=No+Picture";
     }
 
     private string GetImageUrl(string? image)

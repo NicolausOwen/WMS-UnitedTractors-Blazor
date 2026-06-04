@@ -4,6 +4,7 @@
 @using UT_WMSDotnet.Models
 @using WMS_UnitedTracors_Blazor.Services
 @inject TrackingService TrackingService
+@inject TransactionService TransactionService
 @inject DivisionService DivisionService
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Navigation
@@ -235,6 +236,21 @@
                                                                         Kembali Sebagian (@usage.returned_quantity)
                                                                     </span>
                                                                 }
+                                                                
+                                                                @if (usage.returned_quantity < usage.quantity)
+                                                                {
+                                                                    <div class="mt-2 flex items-center gap-2">
+                                                                        <button type="button" @onclick="() => OpenReturnModal(usage, false)" class="text-[10px] px-2 py-1 bg-white border border-[#e5e3dc] rounded hover:border-[#1a1a1a] transition font-bold">
+                                                                            Return Item
+                                                                        </button>
+                                                                        @if (UserRole == "admin" || UserRole == "superadmin")
+                                                                        {
+                                                                            <button type="button" @onclick="() => OpenReturnModal(usage, true)" class="text-[10px] px-2 py-1 bg-[#1a1a1a] text-white rounded hover:bg-[#333] transition font-bold">
+                                                                                Force Return
+                                                                            </button>
+                                                                        }
+                                                                    </div>
+                                                                }
                                                             } else {
                                                                 <span class="inline-flex items-center px-2 py-0.5 border border-[#b8e8c0] rounded text-[10px] font-bold bg-[#eef9f0] text-[#1a7a30]">
                                                                     Selesai / Diterima
@@ -270,6 +286,67 @@
     </div>
 </div>
 
+@if (IsReturnModalOpen && ReturnTransaction != null)
+{
+    <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" @onclick="CloseReturnModal">
+        <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden" @onclick:stopPropagation="true">
+            <div class="p-6 border-b border-[#e5e3dc] flex justify-between items-center">
+                <h3 class="text-lg font-bold text-[#1a1a1a]">@(IsForceReturn ? "Force Return Item" : "Pengembalian Barang")</h3>
+                <button type="button" @onclick="CloseReturnModal" class="text-gray-400 hover:text-gray-600 transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            
+            <div class="p-6 space-y-4">
+                <div class="flex items-center gap-4 p-4 bg-[#faf9f5] rounded-xl border border-[#e5e3dc]">
+                    <img src="@(!string.IsNullOrEmpty(ReturnTransaction.Product?.image) ? $"/{ReturnTransaction.Product.image}" : "https://placehold.co/100?text=Item")" class="w-12 h-12 rounded-lg object-cover">
+                    <div>
+                        <div class="font-bold text-[#1a1a1a]">@ReturnTransaction.Product?.name</div>
+                        <div class="text-xs text-[#8a8880]">Max Return: @((ReturnTransaction.quantity ?? 0) - (ReturnTransaction.returned_quantity ?? 0))</div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-[#8a8880] uppercase tracking-wider mb-2">Jumlah Dikembalikan</label>
+                    <input type="number" min="1" max="@((ReturnTransaction.quantity ?? 0) - (ReturnTransaction.returned_quantity ?? 0))" @bind="ReturnModel.return_quantity" class="w-full p-2 border border-[#e5e3dc] rounded-lg focus:border-[#e8a000] focus:ring-1 focus:ring-[#e8a000] outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-[#8a8880] uppercase tracking-wider mb-2">Kondisi</label>
+                    <select @bind="ReturnModel.return_status" class="w-full p-2 border border-[#e5e3dc] rounded-lg focus:border-[#e8a000] outline-none">
+                        <option value="baik">Baik</option>
+                        <option value="rusak">Rusak</option>
+                        <option value="hilang">Hilang</option>
+                    </select>
+                </div>
+
+                @if (ReturnModel.return_status == "rusak" || ReturnModel.return_status == "hilang")
+                {
+                    <div>
+                        <label class="block text-xs font-bold text-[#8a8880] uppercase tracking-wider mb-2">Alasan</label>
+                        <textarea @bind="ReturnModel.return_reason" class="w-full p-2 border border-[#e5e3dc] rounded-lg focus:border-[#e8a000] outline-none h-20" placeholder="Jelaskan detail..."></textarea>
+                    </div>
+                }
+
+                @if (!IsForceReturn)
+                {
+                    <div>
+                        <label class="block text-xs font-bold text-[#8a8880] uppercase tracking-wider mb-2">Foto Bukti</label>
+                        <InputFile OnChange="HandleFileSelected" accept="image/*" class="w-full p-2 border border-[#e5e3dc] rounded-lg text-sm" />
+                    </div>
+                }
+            </div>
+
+            <div class="p-6 border-t border-[#e5e3dc] bg-[#faf9f5] flex justify-end gap-3">
+                <button type="button" @onclick="CloseReturnModal" class="px-4 py-2 font-bold text-[#8a8880] hover:text-[#1a1a1a] transition">Batal</button>
+                <button type="button" @onclick="SubmitReturn" disabled="@IsSubmitting" class="px-6 py-2 bg-[#1a1a1a] text-white font-bold rounded-lg hover:bg-[#333] transition disabled:opacity-50">
+                    @(IsSubmitting ? "Memproses..." : "Simpan")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     private List<Division> Divisions = new();
     private Dictionary<string, List<Transaction>> GroupedUsages = new();
@@ -286,6 +363,13 @@
     
     private int CurrentUserId;
     private string? UserRole;
+
+    private bool IsReturnModalOpen = false;
+    private bool IsForceReturn = false;
+    private bool IsSubmitting = false;
+    private Transaction? ReturnTransaction;
+    private UT_WMSDotnet.ViewModels.ReturnItemViewModel ReturnModel = new();
+    private Microsoft.AspNetCore.Components.Forms.IBrowserFile? SelectedFile;
 
     protected override async Task OnInitializedAsync()
     {
@@ -411,5 +495,78 @@
         DateFrom = null;
         DateTo = null;
         await LoadData();
+    }
+
+    private void OpenReturnModal(Transaction transaction, bool force)
+    {
+        ReturnTransaction = transaction;
+        IsForceReturn = force;
+        IsReturnModalOpen = true;
+        SelectedFile = null;
+        ReturnModel = new UT_WMSDotnet.ViewModels.ReturnItemViewModel
+        {
+            transaction_id = transaction.id,
+            return_quantity = (transaction.quantity ?? 0) - (transaction.returned_quantity ?? 0),
+            return_status = "baik"
+        };
+    }
+
+    private void CloseReturnModal()
+    {
+        IsReturnModalOpen = false;
+        ReturnTransaction = null;
+        SelectedFile = null;
+    }
+
+    private void HandleFileSelected(Microsoft.AspNetCore.Components.Forms.InputFileChangeEventArgs e)
+    {
+        SelectedFile = e.File;
+    }
+
+    private async Task SubmitReturn()
+    {
+        if (ReturnModel.return_quantity <= 0)
+        {
+            ErrorMessage = "Jumlah pengembalian tidak valid.";
+            return;
+        }
+
+        IsSubmitting = true;
+        ErrorMessage = null;
+        SuccessMessage = null;
+
+        try
+        {
+            string? err;
+            if (IsForceReturn)
+            {
+                err = await TransactionService.ForceReturnTransactionAsync(
+                    ReturnModel.transaction_id, 
+                    ReturnModel.return_quantity, 
+                    ReturnModel.return_status ?? "baik", 
+                    ReturnModel.return_reason, 
+                    CurrentUserId);
+            }
+            else
+            {
+                ReturnModel.return_photo_browser = SelectedFile;
+                err = await TransactionService.ReturnItemAsync(ReturnModel);
+            }
+
+            if (err == null)
+            {
+                SuccessMessage = "Item berhasil dikembalikan.";
+                CloseReturnModal();
+                await LoadData();
+            }
+            else
+            {
+                ErrorMessage = err;
+            }
+        }
+        finally
+        {
+            IsSubmitting = false;
+        }
     }
 }
