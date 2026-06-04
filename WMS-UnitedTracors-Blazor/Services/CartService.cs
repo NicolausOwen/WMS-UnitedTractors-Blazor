@@ -12,6 +12,7 @@ public class CartItem
     public string RequestType { get; set; } = "BORROW";
     public DateTime? BorrowStartDate { get; set; }
     public DateTime? ExpectedReturnDate { get; set; }
+    public DateTime? PickupDate { get; set; }
     public int BaseCredit { get; set; }
     public int MaxStock { get; set; }
     public string UnitName { get; set; } = "unit";

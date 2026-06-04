@@ -77,63 +77,67 @@ public class ApprovalService
             return "Managers cannot approve borrowing transactions. Only admins can.";
         }
 
-        using var dbTransaction = await _context.Database.BeginTransactionAsync();
-        try
+        var strategy = _context.Database.CreateExecutionStrategy();
+        return await strategy.ExecuteAsync(async () =>
         {
-            var stockBefore = transaction.Product!.current_stock;
-
-            if (transaction.type == "IN")
+            using var dbTransaction = await _context.Database.BeginTransactionAsync();
+            try
             {
-                transaction.Product!.current_stock += transaction.quantity ?? 0;
-            }
-            else
-            {
-                if (transaction.Product!.current_stock < transaction.quantity) throw new Exception("Insufficient stock");
-                transaction.Product!.current_stock -= transaction.quantity ?? 0;
-            }
+                var stockBefore = transaction.Product!.current_stock;
 
-            _context.Products.Update(transaction.Product!);
-
-            if (transaction.product_variant_id.HasValue)
-            {
-                var variant = await _context.ProductVariants.FindAsync(transaction.product_variant_id.Value);
-                if (variant != null)
+                if (transaction.type == "IN")
                 {
-                    if (transaction.type == "IN") variant.stock += transaction.quantity ?? 0;
-                    else
-                    {
-                        if (variant.stock < transaction.quantity) throw new Exception("Insufficient variant stock");
-                        variant.stock -= transaction.quantity ?? 0;
-                    }
-                    _context.ProductVariants.Update(variant);
+                    transaction.Product!.current_stock += transaction.quantity ?? 0;
                 }
+                else
+                {
+                    if (transaction.Product!.current_stock < (transaction.quantity ?? 0)) throw new Exception("Insufficient stock");
+                    transaction.Product!.current_stock -= transaction.quantity ?? 0;
+                }
+
+                _context.Products.Update(transaction.Product!);
+
+                if (transaction.product_variant_id.HasValue)
+                {
+                    var variant = await _context.ProductVariants.FindAsync(transaction.product_variant_id.Value);
+                    if (variant != null)
+                    {
+                        if (transaction.type == "IN") variant.stock += transaction.quantity ?? 0;
+                        else
+                        {
+                            if (variant.stock < (transaction.quantity ?? 0)) throw new Exception("Insufficient variant stock");
+                            variant.stock -= transaction.quantity ?? 0;
+                        }
+                        _context.ProductVariants.Update(variant);
+                    }
+                }
+
+                var stockLog = new StockLog
+                {
+                    transaction_id = transaction.id,
+                    product_id = transaction.Product!.id,
+                    stock_before = stockBefore,
+                    stock_after = transaction.Product!.current_stock,
+                    created_at = DateTime.UtcNow,
+                    updated_at = DateTime.UtcNow
+                };
+                _context.StockLogs.Add(stockLog);
+
+                transaction.status = "APPROVED";
+                transaction.approver_id = currentUserId;
+                transaction.updated_at = DateTime.UtcNow;
+                _context.Transactions.Update(transaction);
+
+                await _context.SaveChangesAsync();
+                await dbTransaction.CommitAsync();
+                return null;
             }
-
-            var stockLog = new StockLog
+            catch (Exception ex)
             {
-                transaction_id = transaction.id,
-                product_id = transaction.Product!.id,
-                stock_before = stockBefore,
-                stock_after = transaction.Product!.current_stock,
-                created_at = DateTime.UtcNow,
-                updated_at = DateTime.UtcNow
-            };
-            _context.StockLogs.Add(stockLog);
-
-            transaction.status = "APPROVED";
-            transaction.approver_id = currentUserId;
-            transaction.updated_at = DateTime.UtcNow;
-            _context.Transactions.Update(transaction);
-
-            await _context.SaveChangesAsync();
-            await dbTransaction.CommitAsync();
-            return null;
-        }
-        catch (Exception ex)
-        {
-            await dbTransaction.RollbackAsync();
-            return "Approval failed: " + ex.Message;
-        }
+                await dbTransaction.RollbackAsync();
+                return "Approval failed: " + ex.Message;
+            }
+        });
     }
 
     public async Task<string?> RejectAsync(int id, string rejectionReason, int currentUserId, string? userRole)
@@ -156,7 +160,7 @@ public class ApprovalService
         {
             if (transaction.request_type == "GIVEAWAY" && transaction.Product != null)
             {
-                int pointsToRefund = transaction.Product.value * (transaction.quantity ?? 0);
+                int pointsToRefund = (transaction.Product.value) * (transaction.quantity ?? 0);
                 if (pointsToRefund > 0 && transaction.Requester != null)
                 {
                     transaction.Requester.poin += pointsToRefund;
@@ -198,38 +202,54 @@ public class ApprovalService
         if (transaction.status != "APPROVED" || transaction.pending_return_quantity <= 0 || transaction.is_return_draft != 0)
             return "Transaction is not pending return approval.";
 
-        using var dbTransaction = await _context.Database.BeginTransactionAsync();
-        try
-        {
-            var stockBefore = transaction.Product!.current_stock;
-            transaction.Product!.current_stock += transaction.pending_return_quantity ?? 0;
-            _context.Products.Update(transaction.Product!);
+        if (transaction.Product == null) return "Associated product not found.";
 
-            var stockLog = new StockLog
+        var strategy = _context.Database.CreateExecutionStrategy();
+        return await strategy.ExecuteAsync(async () =>
+        {
+            using var dbTransaction = await _context.Database.BeginTransactionAsync();
+            try
             {
-                transaction_id = transaction.id,
-                product_id = transaction.Product!.id,
-                stock_before = stockBefore,
-                stock_after = transaction.Product!.current_stock,
-                created_at = DateTime.UtcNow,
-                updated_at = DateTime.UtcNow
-            };
-            _context.StockLogs.Add(stockLog);
+                var stockBefore = transaction.Product.current_stock;
+                transaction.Product.current_stock += transaction.pending_return_quantity ?? 0;
+                _context.Products.Update(transaction.Product);
 
-            transaction.returned_quantity = (transaction.returned_quantity ?? 0) + (transaction.pending_return_quantity ?? 0);
-            transaction.pending_return_quantity = 0;
-            transaction.updated_at = DateTime.UtcNow;
-            _context.Transactions.Update(transaction);
+                if (transaction.product_variant_id.HasValue)
+                {
+                    var variant = await _context.ProductVariants.FindAsync(transaction.product_variant_id.Value);
+                    if (variant != null)
+                    {
+                        variant.stock += transaction.pending_return_quantity ?? 0;
+                        _context.ProductVariants.Update(variant);
+                    }
+                }
 
-            await _context.SaveChangesAsync();
-            await dbTransaction.CommitAsync();
-            return null;
-        }
-        catch (Exception ex)
-        {
-            await dbTransaction.RollbackAsync();
-            return "Approval failed: " + ex.Message;
-        }
+                var stockLog = new StockLog
+                {
+                    transaction_id = transaction.id,
+                    product_id = transaction.Product.id,
+                    stock_before = stockBefore,
+                    stock_after = transaction.Product.current_stock,
+                    created_at = DateTime.UtcNow,
+                    updated_at = DateTime.UtcNow
+                };
+                _context.StockLogs.Add(stockLog);
+
+                transaction.returned_quantity = (transaction.returned_quantity ?? 0) + (transaction.pending_return_quantity ?? 0);
+                transaction.pending_return_quantity = 0;
+                transaction.updated_at = DateTime.UtcNow;
+                _context.Transactions.Update(transaction);
+
+                await _context.SaveChangesAsync();
+                await dbTransaction.CommitAsync();
+                return null;
+            }
+            catch (Exception ex)
+            {
+                await dbTransaction.RollbackAsync();
+                return "Approval failed: " + ex.Message;
+            }
+        });
     }
 
     public async Task<string?> RejectReturnAsync(int id, int currentUserId, string? userRole)

@@ -178,7 +178,7 @@
                                                         </div>
                                                     </td>
                                                     <td class="py-3 px-3 text-center">
-                                                        <div class="text-sm font-bold text-gray-900">@(item.quantity)</div>
+                                                                 <div class="text-sm font-bold text-gray-900">@(item.quantity ?? 0)</div>
                                                     </td>
                                                     <td class="py-3 px-3">
                                                         @if (item.status == "PENDING") {
@@ -212,7 +212,7 @@
                                                             if (item.request_type == "GIVEAWAY") {
                                                                 <span class="text-xs font-semibold text-[#8a8880] italic">Given Away (No return)</span>
                                                             } else {
-                                                                int remaining = (item.quantity ?? 0) - (item.returned_quantity ?? 0);
+                                                                 int remaining = (item.quantity ?? 0) - (item.returned_quantity ?? 0);
                                                                 if (remaining <= 0) {
                                                                     <span class="inline-flex items-center gap-1 text-xs font-bold text-[#1a7a30]">
                                                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
@@ -256,7 +256,7 @@
                                                 <div class="grid grid-cols-2 gap-2 pt-2 border-t border-gray-100 text-xs">
                                                     <div>
                                                         <span class="text-gray-400 font-medium">Qty:</span>
-                                                        <span class="font-bold text-gray-900 ml-1">@(item.quantity)</span>
+                                                                 <span class="font-bold text-gray-900 ml-1">@(item.quantity ?? 0)</span>
                                                     </div>
                                                     <div>
                                                         <span class="text-gray-400 font-medium">Status:</span>
@@ -288,7 +288,7 @@
                                                             if (item.request_type == "GIVEAWAY") {
                                                                 <span class="font-semibold text-[#8a8880] italic">Given Away (No return)</span>
                                                             } else {
-                                                                int remaining = (item.quantity ?? 0) - (item.returned_quantity ?? 0);
+                                                                 int remaining = (item.quantity ?? 0) - (item.returned_quantity ?? 0);
                                                                 if (remaining <= 0) {
                                                                     <span class="font-bold text-[#1a7a30]">Returned Fully</span>
                                                                 } else {

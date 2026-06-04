@@ -17,7 +17,7 @@ namespace ut_wms_asp.net.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.2")
+                .HasAnnotation("ProductVersion", "9.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
@@ -311,7 +311,7 @@ namespace ut_wms_asp.net.Migrations
 
                     b.HasIndex("transaction_id");
 
-                    b.ToTable("stock_logs");
+                    b.ToTable("stock_logs", (string)null);
                 });
 
             modelBuilder.Entity("UT_WMSDotnet.Models.Transaction", b =>

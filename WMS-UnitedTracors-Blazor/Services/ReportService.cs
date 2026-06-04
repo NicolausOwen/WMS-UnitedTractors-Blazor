@@ -86,9 +86,9 @@ public class ReportService
 
         return new Dictionary<string, ReportSummaryDto>
         {
-            { "peminjaman", new ReportSummaryDto { Count = peminjaman.Count, TotalQty = peminjaman.Sum(x => x.quantity ?? 0), Approved = peminjaman.Count(x => x.status == "APPROVED"), Pending = peminjaman.Count(x => x.status == "PENDING") } },
-            { "request_barang", new ReportSummaryDto { Count = requestBarang.Count, TotalQty = requestBarang.Sum(x => x.quantity ?? 0), Approved = requestBarang.Count(x => x.status == "APPROVED"), Pending = requestBarang.Count(x => x.status == "PENDING") } },
-            { "adjust_barang", new ReportSummaryDto { Count = adjustBarang.Count, TotalQty = adjustBarang.Sum(x => x.quantity ?? 0), Approved = adjustBarang.Count(x => x.status == "APPROVED"), Pending = adjustBarang.Count(x => x.status == "PENDING") } }
+            { "peminjaman", new ReportSummaryDto { Count = peminjaman.Count, TotalQty = peminjaman.Select(x => x.quantity ?? 0).Sum(), Approved = peminjaman.Count(x => x.status == "APPROVED"), Pending = peminjaman.Count(x => x.status == "PENDING") } },
+            { "request_barang", new ReportSummaryDto { Count = requestBarang.Count, TotalQty = requestBarang.Select(x => x.quantity ?? 0).Sum(), Approved = requestBarang.Count(x => x.status == "APPROVED"), Pending = requestBarang.Count(x => x.status == "PENDING") } },
+            { "adjust_barang", new ReportSummaryDto { Count = adjustBarang.Count, TotalQty = adjustBarang.Select(x => x.quantity ?? 0).Sum(), Approved = adjustBarang.Count(x => x.status == "APPROVED"), Pending = adjustBarang.Count(x => x.status == "PENDING") } }
         };
     }
 
@@ -117,9 +117,9 @@ public class ReportService
         
         var summary = new ExecutiveSummaryDto();
         
-        summary.TotalBorrowed = await _context.Transactions.Where(t => t.type == "OUT" && t.request_type == "BORROW" && t.status == "APPROVED").SumAsync(t => t.quantity ?? 0);
-        summary.TotalReturned = await _context.Transactions.Where(t => t.type == "OUT" && t.request_type == "BORROW" && t.status == "APPROVED").SumAsync(t => t.returned_quantity ?? 0);
-        summary.TotalItemsOut = await _context.Transactions.Where(t => t.type == "OUT" && t.status == "APPROVED").SumAsync(t => t.quantity ?? 0);
+        summary.TotalBorrowed = await _context.Transactions.Where(t => t.type == "OUT" && t.request_type == "BORROW" && t.status == "APPROVED").SumAsync(t => (int?)t.quantity) ?? 0;
+        summary.TotalReturned = await _context.Transactions.Where(t => t.type == "OUT" && t.request_type == "BORROW" && t.status == "APPROVED").SumAsync(t => (int?)t.returned_quantity) ?? 0;
+        summary.TotalItemsOut = await _context.Transactions.Where(t => t.type == "OUT" && t.status == "APPROVED").SumAsync(t => (int?)t.quantity) ?? 0;
         summary.PendingReturns = await _context.Transactions.Where(t => t.status == "APPROVED" && t.pending_return_quantity > 0).CountAsync();
         summary.MasihDipinjam = summary.TotalBorrowed - summary.TotalReturned;
         
@@ -139,13 +139,13 @@ public class ReportService
         var peminjamanDataRaw = await _context.Transactions
             .Where(t => t.type == "OUT" && t.request_type == "BORROW" && t.status == "APPROVED" && t.created_at >= startOfElevenMonthsAgo)
             .GroupBy(t => new { t.created_at.Year, t.created_at.Month })
-            .Select(g => new { g.Key.Year, g.Key.Month, Total = g.Sum(x => x.quantity ?? 0) })
+            .Select(g => new { g.Key.Year, g.Key.Month, Total = g.Sum(x => x.quantity) })
             .ToListAsync();
 
         var barangKeluarDataRaw = await _context.Transactions
             .Where(t => t.type == "OUT" && t.status == "APPROVED" && t.created_at >= startOfElevenMonthsAgo)
             .GroupBy(t => new { t.created_at.Year, t.created_at.Month })
-            .Select(g => new { g.Key.Year, g.Key.Month, Total = g.Sum(x => x.quantity ?? 0) })
+            .Select(g => new { g.Key.Year, g.Key.Month, Total = g.Sum(x => x.quantity) })
             .ToListAsync();
 
         for (int i = 11; i >= 0; i--)

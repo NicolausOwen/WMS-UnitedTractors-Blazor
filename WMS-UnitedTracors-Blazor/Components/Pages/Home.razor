@@ -228,12 +228,18 @@
                     <div class="bg-white px-6 pt-6 pb-4">
                         <div class="flex items-center justify-between mb-5">
                             <h3 class="font-syne text-[1.05rem] font-bold text-[#1a1a1a]">Request Items</h3>
-                            <button type="button" @onclick="() => ShowCartModal = false" class="text-[#a09e99] bg-transparent border-0 cursor-pointer p-1 hover:text-gray-700 transition">
+                            <button type="button" @onclick="CloseCartModal" class="text-[#a09e99] bg-transparent border-0 cursor-pointer p-1 hover:text-gray-700 transition">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                             </button>
                         </div>
 
-                        @if(CartService.Items.Count == 0)
+                        @if(!string.IsNullOrEmpty(ErrorMessage))
+                        {
+                            <div class="mb-4 flex items-center gap-3 bg-[#fef0f0] border border-[#f8c0c0] text-[#d94040] px-4 py-3 rounded-lg text-sm font-semibold">
+                                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                @ErrorMessage
+                            </div>
+                        }
                         {
                             <div class="text-center py-8">
                                 <p class="text-sm text-[#8a8880]">Keranjang kosong. Silakan tambahkan barang dari katalog.</p>
@@ -274,6 +280,12 @@
                                                 <div class="flex gap-2">
                                                     <input type="date" @bind="item.BorrowStartDate" class="w-full px-2 py-1.5 text-[10px] bg-white border border-[#e5e3dc] rounded outline-none focus:border-[#e8a000]" title="Tanggal Pinjam">
                                                     <input type="date" @bind="item.ExpectedReturnDate" class="w-full px-2 py-1.5 text-[10px] bg-white border border-[#e5e3dc] rounded outline-none focus:border-[#e8a000]" title="Tanggal Kembali">
+                                                </div>
+                                            }
+                                            @if (item.RequestType == "GIVEAWAY")
+                                            {
+                                                <div>
+                                                    <input type="date" @bind="item.PickupDate" class="w-full px-2 py-1.5 text-[10px] bg-white border border-[#e5e3dc] rounded outline-none focus:border-[#e8a000]" title="Tanggal Pengambilan">
                                                 </div>
                                             }
                                         </div>
@@ -325,9 +337,9 @@
                                 Submit Request
                             </button>
                         }
-                        <button type="button" @onclick="() => ShowCartModal = false" class="inline-flex justify-center px-5 py-2.5 bg-white border border-[#e5e3dc] hover:bg-[#f0ede5] text-[#3a3835] text-xs font-bold rounded-lg transition cursor-pointer">
-                            Cancel
-                        </button>
+                                 <button type="button" @onclick="CloseCartModal" class="inline-flex justify-center px-5 py-2.5 bg-white border border-[#e5e3dc] hover:bg-[#f0ede5] text-[#3a3835] text-xs font-bold rounded-lg transition cursor-pointer">
+                                     Cancel
+                                 </button>
                     </div>
                 </div>
             </div>
@@ -476,6 +488,15 @@
                                         </div>
                                     </div>
                                 }
+                                @if (SelectedRequestType == "GIVEAWAY")
+                                {
+                                    <div class="bg-[#f9f8f6] p-3 rounded-lg border border-[#e5e3dc] mt-4">
+                                        <div>
+                                            <label class="block text-[0.65rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1">Tanggal Pengambilan</label>
+                                            <input type="date" @bind="SelectedPickupDate" class="w-full bg-white border border-[#e5e3dc] rounded-md px-2 py-1.5 text-xs focus:border-[#e8a000] outline-none">
+                                        </div>
+                                    </div>
+                                }
 
                             </div>
 
@@ -541,6 +562,7 @@
     private DateTime? EventDate;
     private string? DocumentationLink;
     private string? Notes;
+    private DateTime? SelectedPickupDate;
 
     protected override async Task OnInitializedAsync()
     {
@@ -851,58 +873,148 @@
                 UnitName = SelectedProduct.Unit?.name ?? "unit",
                 ProductVariantId = SelectedVariantId,
                 BorrowStartDate = SelectedRequestType == "BORROW" ? SelectedStartDate : null,
-                ExpectedReturnDate = SelectedRequestType == "BORROW" ? SelectedEndDate : null
+                ExpectedReturnDate = SelectedRequestType == "BORROW" ? SelectedEndDate : null,
+                PickupDate = SelectedRequestType == "GIVEAWAY" ? SelectedPickupDate : null
             });
             CloseProductModal();
             ShowCartModal = true;
         }
     }
     
+    private void CloseCartModal()
+    {
+        ShowCartModal = false;
+        ErrorMessage = null;
+    }
+
     private async Task SubmitBorrowRequest()
     {
-        if (string.IsNullOrEmpty(EventName) || !EventDate.HasValue || string.IsNullOrEmpty(DocumentationLink))
+        try
         {
-            ErrorMessage = "Harap isi Nama Event, Tanggal Event, dan Link Dokumentasi.";
-            ShowCartModal = false;
-            return;
-        }
+            ErrorMessage = null;
 
-        var req = new UT_WMSDotnet.ViewModels.TransactionRequestViewModel
-        {
-            type = "OUT",
-            applicant_name = ApplicantName,
-            applicant_nrp = ApplicantNrp,
-            division_id = UserDivisionId,
-            event_name = EventName,
-            event_date = EventDate,
-            documentation_link = DocumentationLink,
-            notes = Notes,
-            items = CartService.Items.Select(i => new UT_WMSDotnet.ViewModels.TransactionItemViewModel
+            // Validasi form
+            if (CartService.Items.Count == 0)
             {
-                sku = i.Sku,
-                quantity = i.Quantity,
-                request_type = i.RequestType,
-                product_variant_id = i.ProductVariantId,
-                borrow_start_date = i.BorrowStartDate,
-                expected_return_date = i.ExpectedReturnDate
-            }).ToList()
-        };
+                ErrorMessage = "Keranjang kosong. Silakan tambahkan barang terlebih dahulu.";
+                return;
+            }
 
-        var error = await TransactionService.StoreTransactionAsync(req, CurrentUserId);
-        if (error == null)
-        {
-            CartService.ClearCart();
-            ShowCartModal = false;
-            EventName = null;
-            EventDate = null;
-            DocumentationLink = null;
-            Notes = null;
-            Navigation.NavigateTo("/Tracking");
+            if (string.IsNullOrWhiteSpace(ApplicantName))
+            {
+                ErrorMessage = "Nama Pemohon tidak boleh kosong.";
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(ApplicantNrp))
+            {
+                ErrorMessage = "NRP Pemohon tidak boleh kosong.";
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(EventName))
+            {
+                ErrorMessage = "Nama Event/Program wajib diisi.";
+                return;
+            }
+
+            if (!EventDate.HasValue)
+            {
+                ErrorMessage = "Tanggal Event wajib diisi.";
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(DocumentationLink))
+            {
+                ErrorMessage = "Link Dokumentasi (GDrive) wajib diisi.";
+                return;
+            }
+
+            // Validasi URL dokumentasi
+            if (!DocumentationLink.StartsWith("http://", StringComparison.OrdinalIgnoreCase) && 
+                !DocumentationLink.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            {
+                ErrorMessage = "Link Dokumentasi harus dimulai dengan http:// atau https://.";
+                return;
+            }
+
+            // Validasi tanggal peminjaman untuk item BORROW
+            foreach (var item in CartService.Items.Where(i => i.RequestType == "BORROW"))
+            {
+                if (!item.BorrowStartDate.HasValue || !item.ExpectedReturnDate.HasValue)
+                {
+                    ErrorMessage = $"Tanggal pinjam dan tanggal kembali harus diisi untuk item: {item.Name}.";
+                    return;
+                }
+
+                if (item.ExpectedReturnDate <= item.BorrowStartDate)
+                {
+                    ErrorMessage = $"Tanggal kembali harus lebih besar dari tanggal pinjam untuk item: {item.Name}.";
+                    return;
+                }
+            }
+
+            // Validasi tanggal pengambilan untuk item GIVEAWAY
+            foreach (var item in CartService.Items.Where(i => i.RequestType == "GIVEAWAY"))
+            {
+                if (!item.PickupDate.HasValue)
+                {
+                    ErrorMessage = $"Tanggal pengambilan harus diisi untuk item: {item.Name}.";
+                    return;
+                }
+
+                if (item.PickupDate < DateTime.Today)
+                {
+                    ErrorMessage = $"Tanggal pengambilan tidak boleh di masa lalu untuk item: {item.Name}.";
+                    return;
+                }
+            }
+
+            // Siapkan request
+            var req = new UT_WMSDotnet.ViewModels.TransactionRequestViewModel
+            {
+                type = "OUT",
+                applicant_name = ApplicantName,
+                applicant_nrp = ApplicantNrp,
+                division_id = UserDivisionId,
+                event_name = EventName,
+                event_date = EventDate,
+                documentation_link = DocumentationLink,
+                notes = Notes,
+                items = CartService.Items.Select(i => new UT_WMSDotnet.ViewModels.TransactionItemViewModel
+                {
+                    sku = i.Sku,
+                    quantity = i.Quantity,
+                    request_type = i.RequestType,
+                    product_variant_id = i.ProductVariantId,
+                    borrow_start_date = i.BorrowStartDate,
+                    expected_return_date = i.ExpectedReturnDate,
+                    pickup_date = i.PickupDate
+                }).ToList()
+            };
+
+            var error = await TransactionService.StoreTransactionAsync(req, CurrentUserId);
+            if (error == null)
+            {
+                CartService.ClearCart();
+                ShowCartModal = false;
+                EventName = null;
+                EventDate = null;
+                DocumentationLink = null;
+                Notes = null;
+                ErrorMessage = null;
+                
+                await Task.Delay(500);
+                Navigation.NavigateTo("/Tracking");
+            }
+            else
+            {
+                ErrorMessage = error;
+            }
         }
-        else
+        catch (Exception ex)
         {
-            ErrorMessage = error;
-            ShowCartModal = false;
+            ErrorMessage = "Terjadi kesalahan: " + ex.Message;
         }
     }
     public void Dispose()

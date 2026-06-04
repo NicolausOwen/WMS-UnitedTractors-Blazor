@@ -80,8 +80,8 @@
                     var groupId = group.Key;
                     var groupItems = group.Value;
                     var firstItem = groupItems.First();
-                    int totalItems = groupItems.Sum(i => i.quantity ?? 0);
-                    int totalReturned = groupItems.Sum(i => i.returned_quantity ?? 0);
+                     int totalItems = groupItems.Select(i => i.quantity ?? 0).Sum();
+                     int totalReturned = groupItems.Select(i => i.returned_quantity ?? 0).Sum();
                     bool allReturned = totalReturned >= totalItems;
                     bool isExpanded = ExpandedGroups.Contains(groupId);
 
@@ -157,7 +157,7 @@
                                                     </div>
                                                 </td>
                                                 <td class="px-5 py-3.5 align-middle">
-                                                    <span class="text-sm font-bold text-[#1a1a1a]">@(usage.quantity)</span>
+                                                     <span class="text-sm font-bold text-[#1a1a1a]">@(usage.quantity ?? 0)</span>
                                                     <span class="text-xs text-gray-500">@(usage.Product?.Unit?.name ?? "unit")</span>
                                                 </td>
                                                 <td class="px-5 py-3.5 align-middle">
@@ -180,9 +180,9 @@
                                                     }
                                                 </td>
                                                 <td class="px-5 py-3.5 text-right align-middle">
-                                                    @{
-                                                        int remainingReturn = (usage.quantity ?? 0) - (usage.returned_quantity ?? 0) - (usage.pending_return_quantity ?? 0);
-                                                    }
+                                                     @{
+                                                         int remainingReturn = (usage.quantity ?? 0) - (usage.returned_quantity ?? 0) - (usage.pending_return_quantity ?? 0);
+                                                     }
 
                                                     @if (usage.is_return_draft != 0 && usage.pending_return_quantity > 0) {
                                                         <div class="flex items-center justify-end gap-2">
@@ -214,7 +214,7 @@
                                                     <code class="text-[10px] text-gray-500 font-mono">@(usage.Product?.sku ?? "-")</code>
                                                 </div>
                                                 <div class="text-right">
-                                                    <span class="text-sm font-bold text-[#1a1a1a]">Qty: @(usage.quantity)</span>
+                                                     <span class="text-sm font-bold text-[#1a1a1a]">Qty: @(usage.quantity ?? 0)</span>
                                                     <span class="text-xs text-gray-500">@(usage.Product?.Unit?.name ?? "unit")</span>
                                                 </div>
                                             </div>
@@ -240,9 +240,9 @@
                                                     }
                                                 </div>
                                                 <div class="text-right">
-                                                    @{
-                                                        int remainingReturn = (usage.quantity ?? 0) - (usage.returned_quantity ?? 0) - (usage.pending_return_quantity ?? 0);
-                                                    }
+                                                     @{
+                                                         int remainingReturn = (usage.quantity ?? 0) - (usage.returned_quantity ?? 0) - (usage.pending_return_quantity ?? 0);
+                                                     }
 
                                                     @if (usage.is_return_draft != 0 && usage.pending_return_quantity > 0) {
                                                         <button type="button" @onclick="() => CancelDraft(usage.id)" class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-[#fef0f0] border border-[#f8c0c0] hover:bg-[#fee2e2] text-[#d94040] rounded-lg text-xs font-bold transition cursor-pointer">
@@ -261,11 +261,11 @@
                                     }
                                 </div>
 
-                                @{
-                                    int totalDraft = groupItems.Where(i => i.is_return_draft != 0).Sum(i => i.pending_return_quantity ?? 0);
-                                    int totalPendingAcc = groupItems.Where(i => i.is_return_draft == 0).Sum(i => i.pending_return_quantity ?? 0);
-                                    bool allProcessed = (totalReturned + totalDraft + totalPendingAcc) >= totalItems;
-                                }
+                                 @{
+                                     int totalDraft = groupItems.Where(i => i.is_return_draft != 0).Select(i => i.pending_return_quantity ?? 0).Sum();
+                                     int totalPendingAcc = groupItems.Where(i => i.is_return_draft == 0).Select(i => i.pending_return_quantity ?? 0).Sum();
+                                     bool allProcessed = (totalReturned + totalDraft + totalPendingAcc) >= totalItems;
+                                 }
 
                                 @if (totalDraft > 0) {
                                     @if (allProcessed) {
@@ -321,7 +321,7 @@
                 <p class="text-sm text-gray-600 mb-4">Mengembalikan <strong class="text-gray-900">@(SelectedTransaction.Product?.name)</strong>.</p>
                 <div class="mb-4">
                     <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Jumlah Kembali</label>
-                    <input type="number" @bind="ReturnModel.return_quantity" min="1" max="@((SelectedTransaction.quantity ?? 0) - (SelectedTransaction.returned_quantity ?? 0))" class="w-full px-3.5 py-2.5 text-xs bg-[#f5f4f0] border border-[#e5e3dc] rounded-lg outline-none text-[#1a1a1a] focus:border-[#e8a000] transition" />
+                    <input type="number" @bind="ReturnModel.return_quantity" min="1" max="@(SelectedTransaction.quantity - SelectedTransaction.returned_quantity)" class="w-full px-3.5 py-2.5 text-xs bg-[#f5f4f0] border border-[#e5e3dc] rounded-lg outline-none text-[#1a1a1a] focus:border-[#e8a000] transition" />
                 </div>
                 <div class="mb-4">
                     <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Status Barang</label>
@@ -414,11 +414,11 @@
         
         if (StatusFilter == "pending")
         {
-            filtered = filtered.Where(t => (t.quantity ?? 0) > (t.returned_quantity ?? 0)).ToList();
+            filtered = filtered.Where(t => t.quantity > t.returned_quantity).ToList();
         }
         else if (StatusFilter == "returned")
         {
-            filtered = filtered.Where(t => (t.returned_quantity ?? 0) >= (t.quantity ?? 0)).ToList();
+            filtered = filtered.Where(t => t.returned_quantity >= t.quantity).ToList();
         }
         
         int pageSize = 20;

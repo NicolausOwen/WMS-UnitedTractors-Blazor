@@ -20,6 +20,7 @@ public class TransactionItemViewModel
 
     public DateTime? borrow_start_date { get; set; }
     public DateTime? expected_return_date { get; set; }
+    public DateTime? pickup_date { get; set; }
 
     public int? product_variant_id { get; set; }
 }
@@ -40,22 +41,23 @@ public class TransactionRequestViewModel
     public string? request_type { get; set; }
     public int? product_variant_id { get; set; }
 
+    // Applicant info
+    [StringLength(255)]
+    public string? applicant_name { get; set; }
+
+    [StringLength(50)]
+    public string? applicant_nrp { get; set; }
+
+    public int? division_id { get; set; }
+
     // Required for OUT type
     [StringLength(255)]
     public string? event_name { get; set; }
 
     public DateTime? event_date { get; set; }
 
-    [Url(ErrorMessage = "Link dokumentasi tidak valid.")]
+    [StringLength(500)]
     public string? documentation_link { get; set; }
-
-    [StringLength(255)]
-    public string? applicant_name { get; set; }
-
-    [StringLength(255)]
-    public string? applicant_nrp { get; set; }
-
-    public int? division_id { get; set; }
 }
 
 public class ReturnItemViewModel

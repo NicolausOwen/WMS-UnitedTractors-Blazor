@@ -31,11 +31,11 @@ public class Transaction
     [StringLength(50)]
     public string? request_type { get; set; }
 
-    public int? quantity { get; set; }
-
-    public int? returned_quantity { get; set; }
-
-    public int? pending_return_quantity { get; set; }
+    public int? quantity { get; set; } = 0;
+ 
+    public int? returned_quantity { get; set; } = 0;
+ 
+    public int? pending_return_quantity { get; set; } = 0;
 
     public DateTime? returned_at { get; set; }
 
@@ -48,7 +48,7 @@ public class Transaction
     [StringLength(500)]
     public string? return_reason { get; set; }
 
-    public int? is_return_draft { get; set; }
+    public int? is_return_draft { get; set; } = 0;
 
     [StringLength(255)]
     public string? return_condition { get; set; }
@@ -85,13 +85,16 @@ public class Transaction
     [StringLength(50)]
     public string? applicant_nrp { get; set; }
 
-    public int? borrow_duration_days { get; set; }
+    public int? borrow_duration_days { get; set; } = 0;
 
     [Column(TypeName = "date")]
     public DateTime? borrow_start_date { get; set; }
 
     [Column(TypeName = "date")]
     public DateTime? expected_return_date { get; set; }
+
+    [Column(TypeName = "date")]
+    public DateTime? pickup_date { get; set; }
 
     [StringLength(255)]
     public string? event_name { get; set; }

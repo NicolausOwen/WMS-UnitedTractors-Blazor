@@ -42,26 +42,45 @@ public class TransactionService
         if (model.type == "OUT")
         {
             if (string.IsNullOrEmpty(model.event_name) || !model.event_date.HasValue || 
-                string.IsNullOrEmpty(model.applicant_name) || !model.division_id.HasValue)
+                string.IsNullOrEmpty(model.applicant_name) || !model.division_id.HasValue ||
+                string.IsNullOrEmpty(model.documentation_link))
             {
-                return "Detail event dan pemohon wajib diisi untuk transaksi OUT.";
+                return "Detail event, pemohon, dokumentasi, dan divisi wajib diisi untuk transaksi OUT.";
             }
         }
 
         foreach (var item in items)
         {
+            if (string.IsNullOrEmpty(item.sku))
+            {
+                return "SKU item tidak boleh kosong.";
+            }
+
+            if (item.quantity <= 0)
+            {
+                return $"Kuantitas untuk SKU {item.sku} harus lebih besar dari 0.";
+            }
+
             var reqType = item.request_type ?? "BORROW";
             if (reqType == "BORROW")
             {
-                if (item.borrow_start_date.HasValue && item.expected_return_date.HasValue)
+                if (!item.borrow_start_date.HasValue || !item.expected_return_date.HasValue)
                 {
-                    item.borrow_duration_days = (int)(item.expected_return_date.Value.Date - item.borrow_start_date.Value.Date).TotalDays;
-                    if (item.borrow_duration_days <= 0) item.borrow_duration_days = 1;
+                    return $"Tanggal pinjam dan tanggal kembali wajib diisi untuk SKU: {item.sku}.";
                 }
 
-                if (!item.borrow_duration_days.HasValue || item.borrow_duration_days <= 0)
+                if (item.expected_return_date <= item.borrow_start_date)
                 {
-                    return $"Durasi peminjaman atau tanggal harus diisi dengan benar untuk SKU: {item.sku}.";
+                    return $"Tanggal kembali harus lebih besar dari tanggal pinjam untuk SKU: {item.sku}.";
+                }
+
+                var duration = (int)(item.expected_return_date.Value.Date - item.borrow_start_date.Value.Date).TotalDays;
+                if (duration <= 0) duration = 1;
+                item.borrow_duration_days = duration;
+
+                if (item.borrow_duration_days <= 0)
+                {
+                    return $"Durasi peminjaman untuk SKU {item.sku} tidak valid.";
                 }
             }
         }
@@ -128,8 +147,9 @@ public class TransactionService
                     borrow_duration_days = (reqType == "BORROW") ? (item.borrow_duration_days ?? 0) : 0,
                     borrow_start_date = item.borrow_start_date,
                     expected_return_date = item.expected_return_date,
+                    pickup_date = item.pickup_date,
                     used_by = model.applicant_name,
-                    division_id = model.division_id ?? 0,
+                    division_id = model.division_id,
                     created_at = DateTime.UtcNow,
                     updated_at = DateTime.UtcNow
                 };
