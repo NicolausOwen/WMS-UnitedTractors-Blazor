@@ -216,14 +216,14 @@ public class TransactionService
         if (model.return_photo != null && model.return_photo.Length > 0)
         {
             var fileName = Guid.NewGuid().ToString() + Path.GetExtension(model.return_photo.FileName);
-            var path = Path.Combine(_env.ContentRootPath, "Storage", "returns");
+            var path = Path.Combine(_env.WebRootPath, "images", "return");
             if (!Directory.Exists(path)) Directory.CreateDirectory(path);
 
             using (var stream = new FileStream(Path.Combine(path, fileName), FileMode.Create))
             {
                 await model.return_photo.CopyToAsync(stream);
             }
-            photoPath = "returns/" + fileName;
+            photoPath = "images/return/" + fileName;
         }
         else if (string.IsNullOrEmpty(photoPath))
         {
