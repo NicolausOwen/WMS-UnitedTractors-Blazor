@@ -35,7 +35,7 @@ public class TrackingService
 
         query = query.Where(t => 
             (t.request_type == "GIVEAWAY" && (t.status == "PENDING" || t.status == "PENDING_MANAGER" || t.status == "REVISION")) ||
-            (t.request_type == "BORROW" && (t.status == "PENDING" || t.status == "REVISION" || t.status == "APPROVED"))
+            (t.request_type == "BORROW" && (t.status == "PENDING" || t.status == "REVISION" || (t.status == "APPROVED" && (t.returned_quantity == null || t.returned_quantity < t.quantity))))
         );
 
         if (userRole == "staff")

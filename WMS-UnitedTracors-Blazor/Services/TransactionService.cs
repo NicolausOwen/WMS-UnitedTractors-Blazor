@@ -161,18 +161,23 @@ public class TransactionService
         return null;
     }
 
-    public async Task<(List<Transaction> Transactions, int TotalItems, int TotalPages)> GetHistoryAsync(int currentUserId, string? userRole, string? type, DateTime? start_date, DateTime? end_date, int page = 1, int pageSize = 10)
+    public async Task<(List<Transaction> Transactions, int TotalItems, int TotalPages)> GetHistoryAsync(
+        int currentUserId, 
+        string? userRole, 
+        string? type, 
+        DateTime? start_date, 
+        DateTime? end_date, 
+        int page, 
+        int pageSize = 15,
+        string? requestType = null,
+        bool? isReturned = null)
     {
         var query = _context.Transactions
             .Include(t => t.Product)
             .Include(t => t.Requester)
             .Include(t => t.Approver)
             .Include(t => t.Division)
-            .Where(t => t.status == "REJECTED" || 
-                        (t.status == "APPROVED" && 
-                        (t.type == "IN" || 
-                         t.request_type == "GIVEAWAY" || 
-                         (t.request_type == "BORROW" && t.returned_quantity >= t.quantity))))
+            .Where(t => t.status == "REJECTED" || t.status == "APPROVED")
             .AsQueryable();
 
         if (userRole == "staff")
@@ -194,6 +199,19 @@ public class TransactionService
         {
             var endDateInclusive = end_date.Value.AddDays(1);
             query = query.Where(t => t.created_at < endDateInclusive);
+        }
+
+        if (!string.IsNullOrEmpty(requestType))
+        {
+            query = query.Where(t => t.request_type == requestType);
+        }
+
+        if (isReturned.HasValue)
+        {
+            if (isReturned.Value)
+                query = query.Where(t => t.request_type == "BORROW" && t.returned_quantity >= t.quantity);
+            else
+                query = query.Where(t => t.request_type == "BORROW" && (t.returned_quantity == null || t.returned_quantity < t.quantity));
         }
 
         int totalItems = await query.CountAsync();
