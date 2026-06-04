@@ -9,6 +9,21 @@ use ut_wms_db;
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+00:00";
 
+SET FOREIGN_KEY_CHECKS = 0;
+
+DROP TABLE IF EXISTS `stock_logs`;
+DROP TABLE IF EXISTS `profile_requests`;
+DROP TABLE IF EXISTS `transactions`;
+DROP TABLE IF EXISTS `product_variants`;
+DROP TABLE IF EXISTS `products`;
+DROP TABLE IF EXISTS `users`;
+DROP TABLE IF EXISTS `locations`;
+DROP TABLE IF EXISTS `divisions`;
+DROP TABLE IF EXISTS `categories`;
+DROP TABLE IF EXISTS `units`;
+
+SET FOREIGN_KEY_CHECKS = 1;
+
 -- ------------------------------------------------------------
 -- Table: units
 -- ------------------------------------------------------------
@@ -234,8 +249,8 @@ INSERT INTO `products` (`id`, `sku`, `barcode_type`, `name`, `description`, `tra
 (29,  'GME-260511-0015', 'TYPE_CODE_128', 'Puzzle taplak',                                     NULL, NULL, 50.00, NULL, NULL, 3,    1,    NULL, 32,  32,  3,  1, 0, '2026-05-11 13:46:23', '2026-05-26 09:46:52'),
 (30,  'GME-260511-0016', 'TYPE_CODE_128', 'Cash drawer',                                       NULL, NULL, 50.00, NULL, NULL, 3,    1,    NULL, 1,   1,   12, 1, 0, '2026-05-11 13:46:23', '2026-05-26 09:46:52'),
 (31,  'GME-260511-0017', 'TYPE_CODE_128', 'Labble Scrabble (Board Only)',                      NULL, NULL, 50.00, '/images/products/KqoOmKGaMsQEVdKoFb2jyPi8NtUU3YJp8PyHZNfd.jpg', '["/images/products/KqoOmKGaMsQEVdKoFb2jyPi8NtUU3YJp8PyHZNfd.jpg", "/images/products/P7FcFBkJEehWvJP6DrtvXDw7bH7xxqz2Y0Ss2Cn6.jpg"]', 3,    1,    NULL, 1,   1,   3,  1, 0, '2026-05-11 13:46:23', '2026-05-26 09:46:52'),
-(32,  'GME-260511-0018', 'TYPE_CODE_128', 'Lego besar Hijau',                                  NULL, NULL, 50.00, '/images/products/Ph9VYHzVGJQGy0lQe5vXGTYm5Bc2IY5Su9nmXi8i.jpg', '["/images/products/Ph9VYHzVGJQGy0lQe5vXGTYm5Bc2IY5Su9nmXi8i.jpg"]', 3,    1,    NULL, 13,  13,  3,  1, 0, '2026-05-11 13:46:23', '2026-05-26 09:46:52'),
-(33,  'GME-260511-0019', 'TYPE_CODE_128', 'Lego kecil',                                        NULL, NULL, 50.00, '/images/products/9NRUks55CKuWbu7bM9VcirvmlM5RHNq0hJYg3lYd.jpg', '["/images/products/9NRUks55CKuWbu7bM9VcirvmlM5RHNq0hJYg3lYd.jpg"]', 3,    1,    NULL, 1,   1,   10, 1, 0, '2026-05-11 13:46:23', '2026-05-26 09:46:52'),
+(32,  'GME-260511-0019', 'TYPE_CODE_128', 'Lego kecil',                                        NULL, NULL, 50.00, '/images/products/9NRUks55CKuWbu7bM9VcirvmlM5RHNq0hJYg3lYd.jpg', '["/images/products/9NRUks55CKuWbu7bM9VcirvmlM5RHNq0hJYg3lYd.jpg"]', 3,    1,    NULL, 1,   1,   10, 1, 0, '2026-05-11 13:46:23', '2026-05-26 09:46:52'),
+(33,  'GME-260511-0018', 'TYPE_CODE_128', 'Lego besar Hijau',                                  NULL, NULL, 50.00, '/images/products/Ph9VYHzVGJQGy0lQe5vXGTYm5Bc2IY5Su9nmXi8i.jpg', '["/images/products/Ph9VYHzVGJQGy0lQe5vXGTYm5Bc2IY5Su9nmXi8i.jpg"]', 3,    1,    NULL, 13,  13,  3,  1, 0, '2026-05-11 13:46:23', '2026-05-26 09:46:52'),
 (34,  'MKN-260511-0012', 'TYPE_CODE_128', 'Minyak exp des 27',                                 NULL, NULL, 50.00, NULL, NULL, 1,    2,    NULL, 6,   6,   3,  0, 0, '2026-05-11 13:46:23', '2026-05-26 09:46:52'),
 (35,  'MKN-260511-0013', 'TYPE_CODE_128', 'Tepung Terigu exp mei 27',                          NULL, NULL, 50.00, NULL, NULL, 1,    2,    NULL, 2,   2,   6,  0, 0, '2026-05-11 13:46:23', '2026-05-26 09:46:52'),
 (36,  'MKN-260511-0014', 'TYPE_CODE_128', 'Tepung terigu',                                     NULL, NULL, 50.00, NULL, NULL, 1,    2,    NULL, 3,   3,   13, 0, 0, '2026-05-11 13:46:23', '2026-05-26 09:46:52'),
@@ -596,7 +611,7 @@ INSERT INTO `product_variants` (`id`, `product_id`, `sku`, `color`, `size`, `ima
 -- ------------------------------------------------------------
 
 CREATE TABLE `transactions` (
-  `id` bigint UNSIGNED NOT NULL,
+  `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
   `product_id` bigint UNSIGNED NOT NULL,
   `product_variant_id` bigint UNSIGNED DEFAULT NULL,
   `type` enum('IN','OUT') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -626,11 +641,23 @@ CREATE TABLE `transactions` (
   `applicant_nrp` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `borrow_duration_days` int DEFAULT NULL,
   `borrow_start_date` date DEFAULT NULL,
+  `pickup_date` date DEFAULT NULL,
   `expected_return_date` date DEFAULT NULL,
   `event_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `event_date` date DEFAULT NULL,
-  `documentation_link` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `documentation_link` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `transactions_product_id_foreign` (`product_id`),
+  KEY `transactions_requester_id_foreign` (`requester_id`),
+  KEY `transactions_approver_id_foreign` (`approver_id`),
+  KEY `transactions_division_id_foreign` (`division_id`),
+  KEY `transactions_product_variant_id_foreign` (`product_variant_id`),
+  CONSTRAINT `transactions_approver_id_foreign` FOREIGN KEY (`approver_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `transactions_division_id_foreign` FOREIGN KEY (`division_id`) REFERENCES `divisions` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `transactions_product_id_foreign` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `transactions_product_variant_id_foreign` FOREIGN KEY (`product_variant_id`) REFERENCES `product_variants` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `transactions_requester_id_foreign` FOREIGN KEY (`requester_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci AUTO_INCREMENT=12;
 
 INSERT INTO `transactions` (`id`, `product_id`, `product_variant_id`, `type`, `request_type`, `quantity`, `returned_quantity`, `pending_return_quantity`, `returned_at`, `return_photo`, `return_status`, `return_reason`, `is_return_draft`, `return_condition`, `status`, `rejection_reason`, `admin_notes`, `manager_notes`, `return_rejection_reason`, `requester_id`, `approver_id`, `notes`, `used_by`, `division_id`, `created_at`, `updated_at`, `applicant_name`, `applicant_nrp`, `borrow_duration_days`, `borrow_start_date`, `expected_return_date`, `event_name`, `event_date`, `documentation_link`) VALUES
 (1, 1, NULL, 'IN', 'BORROW', 5, 0, 0, NULL, NULL, NULL, NULL, 0, NULL, 'APPROVED', NULL, NULL, NULL, NULL, 1, 1, NULL, NULL, NULL, '2026-05-11 12:16:11', '2026-05-11 12:16:20', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
@@ -645,26 +672,7 @@ INSERT INTO `transactions` (`id`, `product_id`, `product_variant_id`, `type`, `r
 (10, 400, NULL, 'OUT', 'GIVEAWAY', 1, 0, 0, NULL, NULL, NULL, NULL, 0, NULL, 'APPROVED', NULL, NULL, NULL, NULL, 3, 2, NULL, 'Staff User', 3, '2026-06-03 07:32:02', '2026-06-03 07:49:02', 'Staff User', '44939834', NULL, NULL, NULL, 'testing', '2026-06-04', NULL),
 (11, 294, NULL, 'OUT', 'BORROW', 1, 1, 0, '2026-06-03 07:58:04', 'returns/jKCEN7viU0YJiSSP0h7KTcxRm9d4uJX7fUaH4ylR.jpg', 'baik', NULL, 0, NULL, 'APPROVED', NULL, NULL, NULL, NULL, 3, 4, NULL, 'Staff User', 3, '2026-06-03 07:32:02', '2026-06-03 07:58:04', 'Staff User', '44939834', NULL, '2026-06-03', '2026-06-05', 'testing', '2026-06-04', NULL);
 
-ALTER TABLE `transactions`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `transactions_product_id_foreign` (`product_id`),
-  ADD KEY `transactions_requester_id_foreign` (`requester_id`),
-  ADD KEY `transactions_approver_id_foreign` (`approver_id`),
-  ADD KEY `transactions_division_id_foreign` (`division_id`),
-  ADD KEY `transactions_product_variant_id_foreign` (`product_variant_id`);
 
-ALTER TABLE `transactions`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
-
-ALTER TABLE `transactions`
-  ADD CONSTRAINT `transactions_approver_id_foreign` FOREIGN KEY (`approver_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `transactions_division_id_foreign` FOREIGN KEY (`division_id`) REFERENCES `divisions` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `transactions_product_id_foreign` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `transactions_product_variant_id_foreign` FOREIGN KEY (`product_variant_id`) REFERENCES `product_variants` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `transactions_requester_id_foreign` FOREIGN KEY (`requester_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
-
-ALTER TABLE `transactions` 
-  ADD COLUMN `pickup_date` DATE DEFAULT NULL AFTER `borrow_start_date`;
 -- ------------------------------------------------------------
 -- Table: profile_requests
 -- ------------------------------------------------------------
