@@ -102,68 +102,18 @@
                     </div>
                 }
 
-                                    <div class="overflow-x-auto">
-                                        <table class="w-full text-left">
-                                            <thead>
-                                                <tr class="border-b border-[#e5e3dc]">
-                                                    <th class="pb-2 text-[0.6rem] font-bold text-[#8a8880] uppercase">Product</th>
-                                                    <th class="pb-2 text-[0.6rem] font-bold text-[#8a8880] uppercase text-center">Qty</th>
-                                                    <th class="pb-2 text-[0.6rem] font-bold text-[#8a8880] uppercase">Type</th>
-                                                    <th class="pb-2 text-[0.6rem] font-bold text-[#8a8880] uppercase text-right">Actions</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody class="divide-y divide-[#f0ede5]">
-                                                @foreach (var item in group.Value)
-                                                {
-                                                    <tr class="bg-white">
-                                                        <td class="py-3 px-3">
-                                                            <div class="flex items-center gap-3">
-                                                                <div class="w-8 h-8 rounded border border-[#e5e3dc] overflow-hidden shrink-0">
-                                                                    <img src="/@(item.Product?.image ?? "img/logo.svg")" class="w-full h-full object-cover">
-                                                                </div>
-                                                                <div>
-                                                                    <div class="text-xs font-bold text-[#1a1a1a]">@(item.Product?.name)</div>
-                                                                    <div class="text-[10px] text-[#8a8880]">SKU: @(item.Product?.sku)</div>
-                                                                    @if (item.type == "OUT" && item.Product?.current_stock < item.quantity)
-                                                                    {
-                                                                        <div class="text-[9px] text-[#d94040] font-bold mt-0.5">⚠️ Limited Stock: @(item.Product?.current_stock)</div>
-                                                                    }
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                        <td class="py-3 px-3 text-center">
-                                                            <div class="text-xs font-bold text-[#1a1a1a]">@item.quantity</div>
-                                                        </td>
-                                                        <td class="py-3 px-3">
-                                                            @if (item.request_type == "BORROW") {
-                                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#eef9f0] text-[#1a7a30] border border-[#b8e8c0]">BORROW</span>
-                                                            } else {
-                                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#e0f2fe] text-[#1a6b8a] border border-[#bae6fd]">GIVEAWAY</span>
-                                                            }
-                                                        </td>
-                                                        <td class="py-3 px-3 text-right">
-                                                            <div class="flex flex-col items-end gap-1.5">
-                                                                <div class="flex items-center gap-1 bg-[#f5f4f0] p-1 rounded-lg border border-[#e5e3dc]">
-                                                                    <button type="button" @onclick='() => SetDecision(item.id, "APPROVE")' class="px-2 py-1 text-[10px] font-bold rounded @(Decisions.GetValueOrDefault(item.id) == "APPROVE" ? "bg-[#1a7a30] text-white" : "text-[#8a8880] hover:text-[#1a1a1a]")">Approve</button>
-                                                                    <button type="button" @onclick='() => SetDecision(item.id, "REVISION")' class="px-2 py-1 text-[10px] font-bold rounded @(Decisions.GetValueOrDefault(item.id) == "REVISION" ? "bg-[#4338ca] text-white" : "text-[#8a8880] hover:text-[#1a1a1a]")">Revise</button>
-                                                                    <button type="button" @onclick='() => SetDecision(item.id, "REJECT")' class="px-2 py-1 text-[10px] font-bold rounded @(Decisions.GetValueOrDefault(item.id) == "REJECT" ? "bg-[#d94040] text-white" : "text-[#8a8880] hover:text-[#1a1a1a]")">Reject</button>
-                                                                </div>
-                                                                @if (Decisions.ContainsKey(item.id))
-                                                                {
-                                                                    <input type="text" @bind="Reasons[item.id]" placeholder="Notes..." class="w-full max-w-[200px] px-2 py-1 text-[10px] border border-[#e5e3dc] rounded-md outline-none focus:border-[#e8a000]" />
-                                                                }
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                }
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
+                @if (borrowGroups.Count > 0)
+                {
+                    <div class="mb-8">
+                        <h3 class="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wider">Borrow Requests</h3>
+                        <div class="space-y-4">
+                            @foreach (var group in borrowGroups)
+                            {
+                                @RenderGroup(group)
                             }
                         </div>
-                    }
-                </div>
+                    </div>
+                }
             }
         }
         else if (ActiveTab == "handovers")
@@ -245,7 +195,7 @@
                         <div class="bg-white rounded-xl border border-[#e5e3dc] p-4 shadow-sm">
                             <div class="flex items-start gap-4">
                                 <div class="w-16 h-16 rounded-lg border border-[#e5e3dc] overflow-hidden bg-white shrink-0">
-                                    <img src="/@(item.Product?.image ?? "img/logo.svg")" class="w-full h-full object-cover">
+                                    <img src="@ImageHelper.ResolveProduct(item.Product, "/img/logo.svg")" class="w-full h-full object-cover">
                                 </div>
                                 <div class="flex-1 min-w-0">
                                     <h4 class="text-sm font-bold text-[#1a1a1a] truncate">@item.Product?.name</h4>
@@ -542,7 +492,7 @@
                                         <td class="p-4 pl-6">
                                             <div class="flex items-center gap-3">
                                                 <div class="w-9 h-9 rounded border border-gray-200 overflow-hidden flex-shrink-0 bg-white flex items-center justify-center">
-                                                    <img src="@($"/{((item.Product?.image ?? "img/logo.svg").TrimStart('/'))}")" class="w-full h-full object-cover">
+                                                    <img src="@ImageHelper.ResolveProduct(item.Product, "/img/logo.svg")" class="w-full h-full object-cover">
                                                 </div>
                                                 <div>
                                                     <div class="font-bold text-gray-900 text-sm">@(item.Product?.name)</div>
@@ -674,6 +624,7 @@
         Decisions.Clear();
         Reasons.Clear();
         ReturnDecisions.Clear();
+        ReturnReasons.Clear();
     }
 
     private void ToggleGroup(string groupId)
@@ -760,6 +711,9 @@
         else
         {
             ReturnDecisions[id] = decision;
+            // Wajib: input "Notes" mengikat ke ReturnReasons[id] saat dirender,
+            // jadi key harus ada agar tidak melempar KeyNotFoundException.
+            if (!ReturnReasons.ContainsKey(id)) ReturnReasons[id] = "";
         }
     }
 
@@ -798,106 +752,162 @@
             return;
         }
 
+        if (IsProcessing) return;
         IsProcessing = true;
-        var err = await ApprovalService.RejectHandoverBatchAsync(HandoverRejectGroupId, HandoverRejectReason, CurrentUserId, UserRole);
-        if (err == null)
+        try
         {
-            SuccessMessage = "Handover rejected successfully.";
-            CloseHandoverRejectModal();
-            await LoadData();
+            var err = await ApprovalService.RejectHandoverBatchAsync(HandoverRejectGroupId, HandoverRejectReason, CurrentUserId, UserRole);
+            if (err == null)
+            {
+                SuccessMessage = "Handover rejected successfully.";
+                CloseHandoverRejectModal();
+                await LoadData();
+            }
+            else ErrorMessage = err;
         }
-        else ErrorMessage = err;
-        IsProcessing = false;
+        catch (Exception ex)
+        {
+            ErrorMessage = "Terjadi kesalahan saat menolak serah terima: " + ex.Message;
+        }
+        finally
+        {
+            IsProcessing = false;
+        }
     }
 
     private async Task ApproveAllGroup(List<Transaction> items)
     {
+        if (IsProcessing) return;
         IsProcessing = true;
         ErrorMessage = null;
         SuccessMessage = null;
 
-        int successCount = 0;
-        foreach (var item in items)
+        try
         {
-            var err = await ApprovalService.ApproveAsync(item.id, null, CurrentUserId, UserRole);
-            if (err != null) ErrorMessage += $"Item {item.id}: {err} | ";
-            else successCount++;
-        }
+            int successCount = 0;
+            foreach (var item in items)
+            {
+                var err = await ApprovalService.ApproveAsync(item.id, null, CurrentUserId, UserRole);
+                if (err != null) ErrorMessage += $"Item {item.id}: {err} | ";
+                else successCount++;
+            }
 
-        if (successCount > 0) SuccessMessage = $"{successCount} items approved.";
-        await LoadData();
-        IsProcessing = false;
+            if (successCount > 0) SuccessMessage = $"{successCount} items approved.";
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Terjadi kesalahan saat menyetujui: " + ex.Message;
+        }
+        finally
+        {
+            IsProcessing = false;
+        }
     }
 
     private async Task ProcessBatch()
     {
+        if (IsProcessing) return;
         IsProcessing = true;
         ErrorMessage = null;
         SuccessMessage = null;
 
-        int successCount = 0;
-        foreach (var kvp in Decisions)
+        try
         {
-            var id = kvp.Key;
-            var action = kvp.Value;
-            var reason = Reasons.GetValueOrDefault(id, "");
-
-            if ((action == "REJECT" || action == "REVISE") && string.IsNullOrWhiteSpace(reason))
+            int successCount = 0;
+            foreach (var kvp in Decisions.ToList())
             {
-                ErrorMessage = "Please provide a reason for all rejected or revised items.";
-                IsProcessing = false;
-                return;
+                var id = kvp.Key;
+                var action = kvp.Value;
+                var reason = Reasons.GetValueOrDefault(id, "");
+
+                if ((action == "REJECT" || action == "REVISE") && string.IsNullOrWhiteSpace(reason))
+                {
+                    ErrorMessage = "Please provide a reason for all rejected or revised items.";
+                    return;
+                }
+
+                string? err = null;
+                if (action == "APPROVE") err = await ApprovalService.ApproveAsync(id, reason, CurrentUserId, UserRole);
+                else if (action == "REJECT") err = await ApprovalService.RejectAsync(id, reason, CurrentUserId, UserRole);
+                else if (action == "REVISE") err = await ApprovalService.RequestRevisionAsync(id, reason, CurrentUserId, UserRole);
+
+                if (err != null) ErrorMessage += $"Item {id}: {err} | ";
+                else successCount++;
             }
 
-            string? err = null;
-            if (action == "APPROVE") err = await ApprovalService.ApproveAsync(id, reason, CurrentUserId, UserRole);
-            else if (action == "REJECT") err = await ApprovalService.RejectAsync(id, reason, CurrentUserId, UserRole);
-            else if (action == "REVISE") err = await ApprovalService.RequestRevisionAsync(id, reason, CurrentUserId, UserRole);
-
-            if (err != null) ErrorMessage += $"Item {id}: {err} | ";
-            else successCount++;
+            if (successCount > 0) SuccessMessage = $"{successCount} items processed.";
+            await LoadData();
+            ShowBatchConfirmModal = false;
         }
-
-        if (successCount > 0) SuccessMessage = $"{successCount} items processed.";
-        await LoadData();
-        ShowBatchConfirmModal = false;
-        IsProcessing = false;
+        catch (Exception ex)
+        {
+            ErrorMessage = "Terjadi kesalahan saat memproses permintaan: " + ex.Message;
+        }
+        finally
+        {
+            IsProcessing = false;
+        }
     }
-    
+
     private async Task ProcessBatchReturns()
     {
+        if (IsProcessing) return; // cegah klik ganda (mencegah operasi paralel di DbContext yang sama)
         IsProcessing = true;
         ErrorMessage = null;
         SuccessMessage = null;
 
-        int successCount = 0;
-        foreach (var kvp in ReturnDecisions)
+        try
         {
-            var id = kvp.Key;
-            var action = kvp.Value;
-            var reason = ReturnReasons.GetValueOrDefault(id, "");
-            
-            string? err = null;
-            if (action == "APPROVE") err = await ApprovalService.ApproveReturnAsync(id, CurrentUserId, UserRole);
-            else if (action == "REJECT") err = await ApprovalService.RejectReturnAsync(id, reason, CurrentUserId, UserRole);
-            
-            if (err != null) ErrorMessage += $"Return {id}: {err} | ";
-            else successCount++;
-        }
+            int successCount = 0;
+            foreach (var kvp in ReturnDecisions.ToList())
+            {
+                var id = kvp.Key;
+                var action = kvp.Value;
+                var reason = ReturnReasons.GetValueOrDefault(id, "");
 
-        if (successCount > 0) SuccessMessage = $"{successCount} return requests processed.";
-        await LoadData();
-        IsProcessing = false;
+                string? err = null;
+                if (action == "APPROVE") err = await ApprovalService.ApproveReturnAsync(id, CurrentUserId, UserRole);
+                else if (action == "REJECT") err = await ApprovalService.RejectReturnAsync(id, reason, CurrentUserId, UserRole);
+
+                if (err != null) ErrorMessage += $"Return {id}: {err} | ";
+                else successCount++;
+            }
+
+            if (successCount > 0) SuccessMessage = $"{successCount} return requests processed.";
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Terjadi kesalahan saat memproses pengembalian: " + ex.Message;
+        }
+        finally
+        {
+            IsProcessing = false;
+        }
     }
 
     private async Task ApproveHandoverBatch(string groupId)
     {
+        if (IsProcessing) return;
         IsProcessing = true;
-        var err = await ApprovalService.ApproveHandoverBatchAsync(groupId, CurrentUserId, UserRole);
-        if (err == null) SuccessMessage = "Handover approved successfully.";
-        else ErrorMessage = err;
-        await LoadData();
-        IsProcessing = false;
+        ErrorMessage = null;
+        SuccessMessage = null;
+        try
+        {
+            var err = await ApprovalService.ApproveHandoverBatchAsync(groupId, CurrentUserId, UserRole);
+            if (err == null) SuccessMessage = "Handover approved successfully.";
+            else ErrorMessage = err;
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Terjadi kesalahan saat memproses serah terima: " + ex.Message;
+        }
+        finally
+        {
+            IsProcessing = false;
+        }
     }
 
     private async Task RejectHandoverBatch(string groupId)
@@ -907,39 +917,71 @@
             ErrorMessage = "Alasan penolakan wajib diisi.";
             return;
         }
-
+        if (IsProcessing) return;
         IsProcessing = true;
-        var err = await ApprovalService.RejectHandoverBatchAsync(groupId, HandoverRejectReason, CurrentUserId, UserRole);
-        if (err == null) 
+        try
         {
-            SuccessMessage = "Handover rejected successfully.";
-            HandoverRejectGroupId = "";
+            var err = await ApprovalService.RejectHandoverBatchAsync(groupId, HandoverRejectReason, CurrentUserId, UserRole);
+            if (err == null)
+            {
+                SuccessMessage = "Handover rejected successfully.";
+                HandoverRejectGroupId = "";
+            }
+            else ErrorMessage = err;
+
+            await LoadData();
         }
-        else ErrorMessage = err;
-        
-        await LoadData();
-        IsProcessing = false;
+        catch (Exception ex)
+        {
+            ErrorMessage = "Terjadi kesalahan saat menolak serah terima: " + ex.Message;
+        }
+        finally
+        {
+            IsProcessing = false;
+        }
     }
 
     private async Task ApproveProfileRequest(int id)
     {
+        if (IsProcessing) return;
         IsProcessing = true;
         ErrorMessage = null;
         SuccessMessage = null;
-        string? err = await ApprovalService.ApproveProfileRequestAsync(id, CurrentUserId, UserRole);
-        if (err != null) ErrorMessage = err; else SuccessMessage = "Profile request approved.";
-        await LoadData();
-        IsProcessing = false;
+        try
+        {
+            string? err = await ApprovalService.ApproveProfileRequestAsync(id, CurrentUserId, UserRole);
+            if (err != null) ErrorMessage = err; else SuccessMessage = "Profile request approved.";
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Terjadi kesalahan: " + ex.Message;
+        }
+        finally
+        {
+            IsProcessing = false;
+        }
     }
 
     private async Task RejectProfileRequest(int id)
     {
+        if (IsProcessing) return;
         IsProcessing = true;
         ErrorMessage = null;
         SuccessMessage = null;
-        string? err = await ApprovalService.RejectProfileRequestAsync(id, CurrentUserId, UserRole);
-        if (err != null) ErrorMessage = err; else SuccessMessage = "Profile request rejected.";
-        await LoadData();
-        IsProcessing = false;
+        try
+        {
+            string? err = await ApprovalService.RejectProfileRequestAsync(id, CurrentUserId, UserRole);
+            if (err != null) ErrorMessage = err; else SuccessMessage = "Profile request rejected.";
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Terjadi kesalahan: " + ex.Message;
+        }
+        finally
+        {
+            IsProcessing = false;
+        }
     }
 }

@@ -259,56 +259,49 @@ public class ApprovalService
 
         if (transaction.Product == null) return "Associated product not found.";
 
-        var strategy = _context.Database.CreateExecutionStrategy();
-        return await strategy.ExecuteAsync(async () =>
+        try
         {
-            using var dbTransaction = await _context.Database.BeginTransactionAsync();
-            try
+            // Semua perubahan disimpan dalam satu SaveChangesAsync (sudah atomik secara implisit),
+            // sehingga tidak perlu transaksi manual + execution strategy yang rentan error.
+            var qty = transaction.pending_return_quantity ?? 0;
+            var stockBefore = transaction.Product.current_stock;
+            transaction.Product.current_stock += qty;
+
+            if (transaction.product_variant_id.HasValue)
             {
-                var stockBefore = transaction.Product.current_stock;
-                transaction.Product.current_stock += transaction.pending_return_quantity ?? 0;
-                _context.Products.Update(transaction.Product);
-
-                if (transaction.product_variant_id.HasValue)
+                var variant = await _context.ProductVariants.FindAsync(transaction.product_variant_id.Value);
+                if (variant != null)
                 {
-                    var variant = await _context.ProductVariants.FindAsync(transaction.product_variant_id.Value);
-                    if (variant != null)
-                    {
-                        variant.stock += transaction.pending_return_quantity ?? 0;
-                        _context.ProductVariants.Update(variant);
-                    }
+                    variant.stock += qty;
                 }
-
-                var stockLog = new StockLog
-                {
-                    transaction_id = transaction.id,
-                    product_id = transaction.Product.id,
-                    stock_before = stockBefore,
-                    stock_after = transaction.Product.current_stock,
-                    created_at = DateTime.UtcNow,
-                    updated_at = DateTime.UtcNow
-                };
-                _context.StockLogs.Add(stockLog);
-
-                transaction.returned_quantity = (transaction.returned_quantity ?? 0) + (transaction.pending_return_quantity ?? 0);
-                transaction.pending_return_quantity = 0;
-                if (transaction.returned_quantity >= transaction.quantity)
-                {
-                    transaction.returned_at = DateTime.UtcNow; // Tandai selesai dikembalikan
-                }
-                transaction.updated_at = DateTime.UtcNow;
-                _context.Transactions.Update(transaction);
-
-                await _context.SaveChangesAsync();
-                await dbTransaction.CommitAsync();
-                return null;
             }
-            catch (Exception ex)
+
+            _context.StockLogs.Add(new StockLog
             {
-                await dbTransaction.RollbackAsync();
-                return "Approval failed: " + ex.Message;
+                transaction_id = transaction.id,
+                product_id = transaction.Product.id,
+                stock_before = stockBefore,
+                stock_after = transaction.Product.current_stock,
+                created_at = DateTime.UtcNow,
+                updated_at = DateTime.UtcNow
+            });
+
+            transaction.returned_quantity = (transaction.returned_quantity ?? 0) + qty;
+            transaction.pending_return_quantity = 0;
+            if (transaction.returned_quantity >= transaction.quantity)
+            {
+                transaction.returned_at = DateTime.UtcNow; // Tandai selesai dikembalikan
             }
-        });
+            transaction.approver_id = currentUserId;
+            transaction.updated_at = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+            return null;
+        }
+        catch (Exception ex)
+        {
+            return "Approval failed: " + ex.Message;
+        }
     }
 
     public async Task<string?> ApproveHandoverBatchAsync(string groupId, int currentUserId, string? userRole)

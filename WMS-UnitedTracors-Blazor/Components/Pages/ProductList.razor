@@ -127,7 +127,7 @@
                                             @if (!string.IsNullOrEmpty(product.image))
                                             {
                                                 <div class="shrink-0">
-                                                    <img src="@($"/{product.image}")" alt="@product.name" class="w-12 h-12 rounded-lg object-cover border border-gray-100 hover:ring-2 ring-gray-900 transition">
+                                                    <img src="@ImageHelper.Resolve(product.image)" alt="@product.name" class="w-12 h-12 rounded-lg object-cover border border-gray-100 hover:ring-2 ring-gray-900 transition">
                                                 </div>
                                             }
                                             else
@@ -171,7 +171,7 @@
                                         {
                                             <div class="mt-1.5 flex items-center gap-1.5">
                                                 <div class="block w-10 h-10 rounded border border-gray-200 overflow-hidden shrink-0 hover:ring-2 ring-gray-900 transition">
-                                                    <img src="@($"/{product.position_image}")" alt="Position" class="w-full h-full object-cover">
+                                                    <img src="@ImageHelper.Resolve(product.position_image)" alt="Position" class="w-full h-full object-cover">
                                                 </div>
                                                 <span class="text-[10px] text-gray-400">Position View</span>
                                             </div>
@@ -254,7 +254,7 @@
                                 <div class="flex items-center gap-3 min-w-0">
                                     @if (!string.IsNullOrEmpty(product.image))
                                     {
-                                        <img src="@($"/{product.image}")" alt="@product.name" class="w-12 h-12 rounded-lg object-cover border border-gray-100 shrink-0">
+                                        <img src="@ImageHelper.Resolve(product.image)" alt="@product.name" class="w-12 h-12 rounded-lg object-cover border border-gray-100 shrink-0">
                                     }
                                     else
                                     {

@@ -181,7 +181,7 @@
                                                     <td class="p-4 pl-8">
                                                         <div class="flex items-center gap-3">
                                                             <div class="w-10 h-10 rounded border border-[#e5e3dc] overflow-hidden shrink-0 bg-white">
-                                                                <img src="/@(item.Product?.image ?? "img/logo.svg")" class="w-full h-full object-cover">
+                                                                <img src="@ImageHelper.ResolveProduct(item.Product, "/img/logo.svg")" class="w-full h-full object-cover">
                                                             </div>
                                                             <div>
                                                                 <div class="text-xs font-bold text-[#1a1a1a]">@(item.Product?.name)</div>
