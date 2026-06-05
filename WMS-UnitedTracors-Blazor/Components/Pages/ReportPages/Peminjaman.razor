@@ -80,7 +80,7 @@
                                             <div class="w-9 h-9 rounded border border-gray-200 overflow-hidden shrink-0 bg-white flex items-center justify-center">
                                                 @if(!string.IsNullOrEmpty(item.Product?.image))
                                                 {
-                                                    <img src="/@item.Product.image" class="w-full h-full object-cover">
+                                                    <img src="@ImageHelper.Resolve(item.Product.image)" class="w-full h-full object-cover">
                                                 }
                                                 else
                                                 {
