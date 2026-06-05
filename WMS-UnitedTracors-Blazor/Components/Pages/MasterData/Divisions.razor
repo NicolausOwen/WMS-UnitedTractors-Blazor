@@ -2,7 +2,9 @@
 @using UT_WMSDotnet.Models
 @using UT_WMSDotnet.ViewModels
 @using WMS_UnitedTracors_Blazor.Services
+@using WMS_UnitedTracors_Blazor.Components.Shared
 @inject DivisionService DivisionService
+@inject ProductService ProductService
 @inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthStateProvider
 @inject IJSRuntime JSRuntime
 @rendermode InteractiveServer
@@ -69,7 +71,7 @@
                             <th class="px-6 py-3.5 text-[0.68rem] font-bold tracking-wider uppercase text-[#c8c5bc] w-12">#</th>
                             <th class="px-6 py-3.5 text-[0.68rem] font-bold tracking-wider uppercase text-[#c8c5bc]">Name</th>
                             <th class="px-6 py-3.5 text-[0.68rem] font-bold tracking-wider uppercase text-[#c8c5bc]">Description</th>
-                            <th class="px-6 py-3.5 text-[0.68rem] font-bold tracking-wider uppercase text-[#c8c5bc]">Users</th>
+                            <th class="px-6 py-3.5 text-[0.68rem] font-bold tracking-wider uppercase text-[#c8c5bc]">Usage</th>
                             @if (IsSuperAdmin)
                             {
                                 <th class="px-6 py-3.5 text-[0.68rem] font-bold tracking-wider uppercase text-[#c8c5bc] w-32"></th>
@@ -98,10 +100,9 @@
                                     <td class="px-6 py-4 text-sm font-semibold text-[#1a1a1a] whitespace-nowrap align-middle">@division.Name</td>
                                     <td class="px-6 py-4 text-sm text-gray-600 align-middle">@(division.Description ?? "--")</td>
                                     <td class="px-6 py-4 whitespace-nowrap align-middle">
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded bg-[#eef9f0] border border-[#b8e8c0] text-[#1a7a30] hover:bg-[#1a7a30] hover:text-white transition cursor-pointer text-xs font-bold shadow-sm">
-                                            @division.UsersCount
+                                        <span @onclick="() => OpenProductsModal(division.Id, division.Name)" class="inline-flex items-center px-2 py-0.5 rounded bg-[#eef9f0] border border-[#b8e8c0] text-[#1a7a30] hover:bg-[#1a7a30] hover:text-white transition cursor-pointer text-xs font-bold shadow-sm">
+                                            View Products
                                         </span>
-                                        <span class="text-xs text-gray-400 ml-1">users</span>
                                     </td>
                                     @if (IsSuperAdmin)
                                     {
@@ -173,8 +174,8 @@
                                         <span class="text-xs text-gray-400 font-bold">#@index</span>
                                         <h4 class="text-sm font-semibold text-[#1a1a1a] mt-0.5">@division.Name</h4>
                                     </div>
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded bg-[#eef9f0] border border-[#b8e8c0] text-[#1a7a30] text-[10px] font-bold">
-                                        @division.UsersCount users
+                                    <span @onclick="() => OpenProductsModal(division.Id, division.Name)" class="inline-flex items-center px-2 py-0.5 rounded bg-[#eef9f0] border border-[#b8e8c0] text-[#1a7a30] text-[10px] font-bold cursor-pointer">
+                                        Products
                                     </span>
                                 </div>
                                 <p class="text-xs text-gray-600 mb-4">@(division.Description ?? "No description provided.")</p>
@@ -203,11 +204,6 @@
                                         <input type="text" @bind="EditModel.name" required
                                                class="block w-full px-3 py-2 text-xs bg-white border border-[#e5e3dc] focus:border-[#e8a000] focus:ring-0 rounded-lg outline-none text-[#1a1a1a] transition-all duration-150">
                                     </div>
-                                    <div>
-                                        <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1">Description</label>
-                                        <input type="text" @bind="EditModel.description"
-                                               class="block w-full px-3 py-2 text-xs bg-white border border-[#e5e3dc] focus:border-[#e8a000] focus:ring-0 rounded-lg outline-none text-[#1a1a1a] transition-all duration-150">
-                                    </div>
                                     <div class="flex gap-2 pt-2">
                                         <button type="submit" class="flex-1 px-4 py-2 bg-[#e8a000] hover:bg-[#d49300] text-[#1a1a1a] text-xs font-bold rounded-lg transition cursor-pointer">Save</button>
                                         <button type="button" @onclick="CancelEdit" class="flex-1 px-4 py-2 bg-white border border-[#e5e3dc] hover:bg-[#f0ede5] text-[#3a3835] text-xs font-bold rounded-lg transition cursor-pointer">Cancel</button>
@@ -233,6 +229,15 @@
     </div>
 </div>
 
+<ProductsModal 
+    Show="ShowProductsModal" 
+    OnClose="CloseProductsModal" 
+    Title="@ModalTitle" 
+    Type="division" 
+    TargetId="ModalTargetId" 
+    IsSuperAdmin="IsSuperAdmin" 
+    OnProductDeleted="() => LoadData(CurrentPage)" />
+
 @code {
     private List<DivisionDto>? DivisionsList;
     private int CurrentPage = 1;
@@ -245,6 +250,22 @@
     private string? ErrorMessage;
     private string? SuccessMessage;
     private bool IsSuperAdmin = false;
+
+    private bool ShowProductsModal = false;
+    private string ModalTitle = "";
+    private int ModalTargetId;
+
+    private async Task OpenProductsModal(int id, string name)
+    {
+        ModalTargetId = id;
+        ModalTitle = $"Used Products in: {name}";
+        ShowProductsModal = true;
+    }
+
+    private void CloseProductsModal()
+    {
+        ShowProductsModal = false;
+    }
 
     protected override async Task OnInitializedAsync()
     {

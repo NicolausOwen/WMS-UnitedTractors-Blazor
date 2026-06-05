@@ -10,6 +10,7 @@
 @inject UserService UserService
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthStateProvider
+@inject IJSRuntime JSRuntime
 @rendermode InteractiveServer
 
 <PageTitle>Dashboard</PageTitle>
@@ -25,23 +26,32 @@
 <div class="w-full min-h-screen bg-[#f5f4f0] px-4 md:px-10 py-6 pb-24 md:pb-12 font-sans">
     
     @* Metric Cards *@
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-        <div class="bg-white border border-[#e5e3dc] hover:border-[#e8a000] border-l-4 border-l-[#e8a000] rounded-r-[10px] rounded-l-[4px] p-5 sm:px-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-[1px]">
-            <p class="text-[0.65rem] font-bold tracking-[0.12em] uppercase text-[#8a8880] mb-1.5">Total Items</p>
-            <p class="font-sans text-4xl font-bold text-[#1a1a1a] leading-none">@WidgetTotalItems</p>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+        <div class="bg-white border border-[#e5e3dc] hover:border-[#e8a000] border-l-4 border-l-[#e8a000] rounded-r-[10px] rounded-l-[4px] p-4 sm:p-5 sm:px-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-[1px]">
+            <p class="text-[0.6rem] sm:text-[0.65rem] font-bold tracking-[0.12em] uppercase text-[#8a8880] mb-1.5">Total Items</p>
+            <p class="font-sans text-2xl sm:text-4xl font-bold text-[#1a1a1a] leading-none">@WidgetTotalItems</p>
         </div>
-        <div class="bg-white border border-[#e5e3dc] hover:border-[#1a7a30] border-l-4 border-l-[#1a7a30] rounded-r-[10px] rounded-l-[4px] p-5 sm:px-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-[1px]">
-            <p class="text-[0.65rem] font-bold tracking-[0.12em] uppercase text-[#8a8880] mb-1.5">Total Stock</p>
-            <p class="font-sans text-4xl font-bold text-[#1a1a1a] leading-none">@TotalStock</p>
+        <div class="bg-white border border-[#e5e3dc] hover:border-[#1a7a30] border-l-4 border-l-[#1a7a30] rounded-r-[10px] rounded-l-[4px] p-4 sm:p-5 sm:px-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-[1px]">
+            <p class="text-[0.6rem] sm:text-[0.65rem] font-bold tracking-[0.12em] uppercase text-[#8a8880] mb-1.5">Total Stock</p>
+            <p class="font-sans text-2xl sm:text-4xl font-bold text-[#1a1a1a] leading-none">@TotalStock</p>
         </div>
-        <div class="bg-white border border-[#e5e3dc] hover:border-[#d94040] border-l-4 border-l-[#d94040] rounded-r-[10px] rounded-l-[4px] p-5 sm:px-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-[1px]">
-            <p class="text-[0.65rem] font-bold tracking-[0.12em] uppercase text-[#8a8880] mb-1.5">Pending Approval</p>
-            <div class="flex items-center gap-2">
-                <p class="font-sans text-4xl font-bold text-[#1a1a1a] leading-none">@PendingApprovals</p>
+        <div class="bg-white border border-[#e5e3dc] hover:border-[#e8a000] border-l-4 border-l-[#e8a000] rounded-r-[10px] rounded-l-[4px] p-4 sm:p-5 sm:px-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-[1px]">
+            <p class="text-[0.6rem] sm:text-[0.65rem] font-bold tracking-[0.12em] uppercase text-[#8a8880] mb-1.5">Pending Approval</p>
+            <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                <p class="font-sans text-2xl sm:text-4xl font-bold text-[#1a1a1a] leading-none">@PendingApprovals</p>
                 @if (PendingApprovals > 0) {
-                    <span class="inline-flex items-center px-[0.55rem] py-[0.15rem] bg-[#fef0f0] border border-[#f8c0c0] text-[#d94040] text-[0.62rem] font-bold rounded-[5px] tracking-[0.04em]">Needs review</span>
+                    <span class="inline-flex items-center w-max px-[0.45rem] py-[0.1rem] bg-[#fef3c7] border border-[#fde68a] text-[#92400e] text-[0.55rem] sm:text-[0.62rem] font-bold rounded-[4px] tracking-[0.04em] mt-1 sm:mt-0">Needs review</span>
                 }
             </div>
+        </div>
+        <div class="bg-white border border-[#e5e3dc] hover:border-[#d94040] border-l-4 border-l-[#d94040] rounded-r-[10px] rounded-l-[4px] p-4 sm:p-5 sm:px-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-[1px] flex items-start justify-between">
+            <div>
+                <p class="text-[0.6rem] sm:text-[0.65rem] font-bold tracking-[0.12em] uppercase text-[#8a8880] mb-1.5">Overdue Return</p>
+                <p class="font-sans text-2xl sm:text-4xl font-bold text-[#d94040] leading-none">@OverdueReturnCount</p>
+            </div>
+            @if(OverdueReturnCount > 0) {
+                <span class="inline-flex h-6.5 w-6.5 sm:h-9 sm:w-9 items-center justify-center rounded-lg bg-[#fef0f0] text-[#d94040] font-extrabold text-xs sm:text-base border border-[#f8c0c0] shrink-0 leading-none">!</span>
+            }
         </div>
     </div>
 
@@ -59,13 +69,95 @@
             Review Approvals
         </a>
         }
-        @if (UserRole != "manager") {
-        <a href="Tracking" class="inline-flex items-center gap-2 px-[1.1rem] py-[0.6rem] bg-transparent border border-[#e5e3dc] hover:bg-[#f5f4f0] active:scale-[0.98] text-[#5a5855] text-[0.75rem] font-bold tracking-[0.06em] uppercase rounded-lg transition">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-            Usage Tracking
-        </a>
-        }
     </div>
+
+    @if (UserRole == "superadmin" || UserRole == "admin" || UserRole == "manager")
+    {
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
+            @* 1. Transaction Status Donut *@
+            <section class="rounded-[18px] border border-[#e5e3dc] bg-white p-5 shadow-sm flex flex-col min-h-[260px] widget-card">
+                <p class="text-[0.7rem] font-bold uppercase tracking-[0.18em] text-[#8a8880] mb-3">Transaction Status</p>
+                <div class="relative w-full flex-1 flex items-center justify-center min-h-[150px]">
+                    <canvas id="donutChartStatus"></canvas>
+                </div>
+                <div class="flex flex-wrap gap-x-4 gap-y-1.5 mt-3 pt-3 border-t border-[#f0ede5] text-[0.68rem]">
+                    <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-[#1a7a30] shrink-0"></span><span class="text-[#5a5855] font-semibold">Approved: <span id="valApproved">@DonutApproved</span></span></div>
+                    <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-[#d94040] shrink-0"></span><span class="text-[#5a5855] font-semibold">Rejected: <span id="valRejected">@DonutRejected</span></span></div>
+                    <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-[#e8a000] shrink-0"></span><span class="text-[#5a5855] font-semibold">Pending: <span id="valPending">@DonutPending</span></span></div>
+                </div>
+            </section>
+
+            @* 2. Item Status Donut (Merch / Borrow Slide Toggle) *@
+            <section class="rounded-[18px] border border-[#e5e3dc] bg-white p-5 shadow-sm flex flex-col min-h-[260px] widget-card">
+                <div class="flex items-center justify-between mb-3">
+                    <p class="text-[0.7rem] font-bold uppercase tracking-[0.18em] text-[#8a8880]">Item Status</p>
+                    <div class="relative flex bg-[#f0ede5] rounded-full p-0.5" id="itemStatusToggle">
+                        <button type="button" onclick="switchItemStatus('merch')" id="btnMerch" class="item-status-tab relative z-10 px-3.5 py-1 text-[0.62rem] font-bold rounded-full transition-all duration-300 text-[#1a1a1a] bg-white shadow-sm" data-tab="merch">Merch</button>
+                        <button type="button" onclick="switchItemStatus('borrow')" id="btnBorrow" class="item-status-tab relative z-10 px-3.5 py-1 text-[0.62rem] font-bold rounded-full transition-all duration-300 text-[#8a8880] bg-transparent" data-tab="borrow">Borrow</button>
+                    </div>
+                </div>
+
+                @* Merch View *@
+                <div id="itemStatusMerch" class="flex-1 flex flex-col">
+                    <div class="relative w-full flex-1 flex items-center justify-center min-h-[150px]">
+                        <canvas id="donutChartMerch"></canvas>
+                    </div>
+                    <div class="flex flex-wrap gap-x-4 gap-y-1.5 mt-3 pt-3 border-t border-[#f0ede5] text-[0.68rem]">
+                        <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-[#1a7a30] shrink-0"></span><span class="text-[#5a5855] font-semibold">Available: <span id="valMerchAvailable">@MerchAvailable</span></span></div>
+                        <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-[#e8a000] shrink-0"></span><span class="text-[#5a5855] font-semibold">Low Stock: <span id="valMerchLowStock">@MerchLowStock</span></span></div>
+                        <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-[#d94040] shrink-0"></span><span class="text-[#5a5855] font-semibold">Out of Stock: <span id="valMerchOutOfStock">@MerchOutOfStock</span></span></div>
+                    </div>
+                </div>
+
+                @* Borrow View (hidden by default) *@
+                <div id="itemStatusBorrow" class="flex-1 flex-col hidden">
+                    <div class="relative w-full flex-1 flex items-center justify-center min-h-[150px]">
+                        <canvas id="donutChartBorrow"></canvas>
+                    </div>
+                    <div class="flex flex-wrap gap-x-4 gap-y-1.5 mt-3 pt-3 border-t border-[#f0ede5] text-[0.68rem]">
+                        <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-[#d94040] shrink-0"></span><span class="text-[#5a5855] font-semibold">Overdue: <span id="valBorrowOverdue">@BorrowOverdue</span></span></div>
+                        <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-[#1a7a30] shrink-0"></span><span class="text-[#5a5855] font-semibold">Available: <span id="valBorrowAvailable">@BorrowAvailable</span></span></div>
+                        <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-[#3b82f6] shrink-0"></span><span class="text-[#5a5855] font-semibold">Borrowed: <span id="valBorrowBorrowed">@BorrowBorrowed</span></span></div>
+                    </div>
+                </div>
+            </section>
+
+            @* 3. Low Stock Products List *@
+            <section class="rounded-[18px] border border-[#e5e3dc] bg-white p-5 shadow-sm flex flex-col min-h-[260px] widget-card">
+                <p class="text-[0.7rem] font-bold uppercase tracking-[0.18em] text-[#8a8880] mb-3">Low Stock</p>
+                @if(LowStockProducts != null && LowStockProducts.Any())
+                {
+                    <div class="relative flex-1">
+                        <div class="overflow-y-auto space-y-0 custom-scrollbar pr-1" style="max-height: 225px;" onscroll="checkLowStockScroll(this)">
+                            @foreach(var lsp in LowStockProducts)
+                            {
+                            <div class="flex items-center justify-between py-2.5 border-b border-[#f5f3ee] last:border-b-0 group">
+                                <span class="text-[0.78rem] font-semibold text-[#1a1a1a] truncate pr-3 leading-snug group-hover:text-[#e8a000] transition-colors" title="@lsp.name">@lsp.name</span>
+                                <div class="flex items-center gap-1.5 shrink-0">
+                                    <span class="text-sm font-extrabold @(lsp.current_stock <= 2 ? "text-[#d94040]" : "text-[#e8a000]")">@lsp.current_stock</span>
+                                    <span class="text-[0.6rem] text-[#8a8880] font-medium">@(lsp.Unit?.name ?? "unit")</span>
+                                </div>
+                            </div>
+                            }
+                        </div>
+                        <div id="scrollIndicator" class="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-white via-white/95 to-transparent pointer-events-none transition-opacity duration-300 flex items-end justify-center pb-0.5">
+                            <span class="text-[0.55rem] text-[#8a8880] font-bold tracking-wider uppercase flex items-center gap-0.5 animate-bounce">
+                                Scroll for more
+                                <svg class="w-2 h-2 text-[#8a8880]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+                            </span>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="flex-1 flex flex-col items-center justify-center text-center py-6">
+                        <svg class="w-10 h-10 text-[#d1d0cb] mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <p class="text-xs text-[#8a8880] font-semibold">All items are well stocked</p>
+                    </div>
+                }
+            </section>
+        </div>
+    }
 
     <div class="bg-white border border-[#e5e3dc] rounded-xl overflow-hidden shadow-sm">
         @* Header *@
@@ -519,11 +611,24 @@
     private int WidgetTotalItems = 0;
     private int PendingApprovals = 0;
     private int TotalStock = 0;
+    private int OverdueReturnCount = 0;
     
     private List<Category>? Categories;
     private List<Division>? Divisions;
     private List<Product>? CatalogProducts;
     private List<Transaction>? ActiveBorrows;
+    private List<Product>? LowStockProducts;
+    private int DonutApproved;
+    private int DonutRejected;
+    private int DonutPending;
+    
+    private int MerchAvailable;
+    private int MerchLowStock;
+    private int MerchOutOfStock;
+    
+    private int BorrowOverdue;
+    private int BorrowAvailable;
+    private int BorrowBorrowed;
     
     private int CurrentPage = 1;
     private int PageSize = 15;
@@ -592,6 +697,18 @@
         await LoadData(1);
     }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && (UserRole == "superadmin" || UserRole == "admin" || UserRole == "manager"))
+        {
+            await JSRuntime.InvokeVoidAsync("renderDashboardCharts", new {
+                donutData = new { approved = DonutApproved, rejected = DonutRejected, pending = DonutPending },
+                merchStatus = new { available = MerchAvailable, low_stock = MerchLowStock, out_of_stock = MerchOutOfStock },
+                borrowStatus = new { overdue = BorrowOverdue, available = BorrowAvailable, borrowed = BorrowBorrowed }
+            });
+        }
+    }
+
     private async Task LoadData(int page)
     {
         CurrentPage = page;
@@ -601,11 +718,23 @@
         WidgetTotalItems = data.WidgetTotalItems;
         PendingApprovals = data.PendingApprovals;
         TotalStock = data.TotalStock;
+        OverdueReturnCount = data.BorrowOverdue;
         Categories = data.Categories;
         Divisions = data.Divisions;
         CatalogProducts = data.CatalogProducts;
         TotalItems = data.TotalItems;
         TotalPages = data.TotalPages;
+
+        LowStockProducts = data.LowStockProducts;
+        DonutApproved = data.DonutApproved;
+        DonutRejected = data.DonutRejected;
+        DonutPending = data.DonutPending;
+        MerchAvailable = data.MerchAvailable;
+        MerchLowStock = data.MerchLowStock;
+        MerchOutOfStock = data.MerchOutOfStock;
+        BorrowOverdue = data.BorrowOverdue;
+        BorrowAvailable = data.BorrowAvailable;
+        BorrowBorrowed = data.BorrowBorrowed;
 
         if (CurrentUserId > 0)
         {
@@ -1049,9 +1178,9 @@
                 _searchQuery = value;
                 
                 // Setiap kali user mengetik/menghapus huruf, jalankan fungsi ini otomatis
-                InvokeAsync(() =>
+                _ = InvokeAsync(async () =>
                 {
-                    LoadData(1);
+                    await LoadData(1);
                     StateHasChanged();
                 });
             }

@@ -10,7 +10,7 @@
 <PageTitle>Laporan Request Barang (Giveaway)</PageTitle>
 
 <div class="py-12 bg-[#f5f4f0] min-h-screen font-sans">
-    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         <div class="mb-6 flex items-center justify-between">
             <div>
@@ -18,94 +18,115 @@
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
                     Back to Dashboard
                 </a>
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                    Laporan <span class="text-[#e8a000]">Request Barang</span>
-                </h2>
+                <h1 class="text-[1.6rem] font-bold text-[#1a1a1a] leading-none tracking-tight">Laporan <span class="text-[#e8a000]">Request Barang</span></h1>
+                <div class="text-[0.72rem] font-medium text-[#a09e99] mt-1">Daftar barang giveaway (GIVEAWAY)</div>
             </div>
-            <button @onclick="Print" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white text-sm font-semibold rounded-md shadow-sm transition">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
-                Print PDF
-            </button>
+            <a href="/api/pdf/request?start=@StartDate?.ToString("yyyy-MM-dd")&end=@EndDate?.ToString("yyyy-MM-dd")" target="_blank" class="inline-flex items-center gap-2 px-4 py-2.5 bg-[#e8a000] hover:bg-[#d49300] text-[#1a1a1a] text-sm font-bold rounded-lg shadow-sm transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                Download PDF
+            </a>
         </div>
 
-        <div class="bg-white border border-[#e5e3dc] rounded-lg shadow-sm overflow-hidden mb-6">
+        <div class="bg-white border border-[#e5e3dc] rounded-xl shadow-sm overflow-hidden mb-8">
             <div class="p-6">
-                <div class="flex flex-wrap items-end gap-4">
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">Start Date</label>
-                        <input type="date" @bind="StartDate" class="rounded-md border-gray-300 shadow-sm focus:border-[#e8a000] focus:ring-[#e8a000] sm:text-sm">
+                <div class="flex flex-col lg:flex-row flex-wrap gap-4 items-end">
+                    <div class="flex-1 min-w-[200px]">
+                        <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Start Date</label>
+                        <input type="date" @bind="StartDate" class="block w-full px-3 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
+                    </div>
+                    <div class="flex-1 min-w-[200px]">
+                        <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">End Date</label>
+                        <input type="date" @bind="EndDate" class="block w-full px-3 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">End Date</label>
-                        <input type="date" @bind="EndDate" class="rounded-md border-gray-300 shadow-sm focus:border-[#e8a000] focus:ring-[#e8a000] sm:text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">Status</label>
-                        <select @bind="Status" class="rounded-md border-gray-300 shadow-sm focus:border-[#e8a000] focus:ring-[#e8a000] sm:text-sm min-w-[150px]">
-                            <option value="">All Status</option>
-                            <option value="PENDING">Pending</option>
-                            <option value="APPROVED">Approved</option>
-                            <option value="REJECTED">Rejected</option>
-                        </select>
-                    </div>
-                    <div>
-                        <button type="button" @onclick="LoadData" class="px-4 py-2.5 bg-[#e8a000] hover:bg-[#d49300] text-[#1a1a1a] text-sm font-bold rounded-md shadow-sm transition">Apply Filter</button>
+                        <button type="button" @onclick="LoadData" class="px-6 py-2 bg-[#1a1a1a] text-white text-sm font-bold rounded-lg hover:bg-[#333] transition">Apply Filter</button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white border border-[#e5e3dc] rounded-lg shadow-sm overflow-hidden" id="printableArea">
-            <div class="p-6 border-b border-gray-100 print:block hidden mb-4">
-                <h2 class="text-xl font-bold text-center">Laporan Request Barang (Giveaway)</h2>
-                <p class="text-center text-sm text-gray-500">Periode: @StartDate?.ToString("dd MMM yyyy") - @EndDate?.ToString("dd MMM yyyy")</p>
-            </div>
+        <div class="bg-white border border-[#e5e3dc] rounded-[1.5rem] shadow-sm overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full text-left whitespace-nowrap">
                     <thead class="text-gray-500 text-[0.65rem] uppercase tracking-wider border-b border-gray-100 bg-gray-50">
                         <tr>
-                            <th class="px-6 py-3 font-semibold">No</th>
-                            <th class="px-6 py-3 font-semibold">Tanggal</th>
-                            <th class="px-4 py-3 font-semibold">Nama Pemohon</th>
-                            <th class="px-4 py-3 font-semibold">Barang</th>
-                            <th class="px-4 py-3 font-semibold text-center">Qty</th>
+                            <th class="px-4 py-3 font-semibold pl-6">Product</th>
+                            <th class="px-4 py-3 font-semibold">Quantity</th>
+                            <th class="px-4 py-3 font-semibold">Applicant</th>
+                            <th class="px-4 py-3 font-semibold">Division</th>
                             <th class="px-4 py-3 font-semibold">Status</th>
+                            <th class="px-4 py-3 font-semibold text-center">Approval By</th>
+                            <th class="px-4 py-3 font-semibold">Date</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
                         @if (Transactions == null)
                         {
-                            <tr><td colspan="6" class="px-6 py-8 text-center text-gray-500">Loading...</td></tr>
+                            <tr><td colspan="7" class="px-6 py-8 text-center text-gray-500">Loading data...</td></tr>
                         }
                         else if (!Transactions.Any())
                         {
-                            <tr><td colspan="6" class="px-6 py-8 text-center text-gray-500">Tidak ada data ditemukan.</td></tr>
+                            <tr><td colspan="7" class="px-6 py-8 text-center text-gray-500">No transactions found for the selected period.</td></tr>
                         }
                         else
                         {
-                            int i = 1;
                             foreach (var item in Transactions)
                             {
                                 <tr class="hover:bg-gray-50 transition">
-                                    <td class="px-6 py-3 text-sm text-gray-600">@(i++)</td>
-                                    <td class="px-6 py-3 text-sm text-gray-600">@item.created_at.ToString("dd/MM/yyyy HH:mm")</td>
-                                    <td class="px-4 py-3">
+                                    <td class="p-4 pl-6">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-9 h-9 rounded border border-gray-200 overflow-hidden shrink-0 bg-white flex items-center justify-center">
+                                                @if(!string.IsNullOrEmpty(item.Product?.image))
+                                                {
+                                                    <img src="/@item.Product.image" class="w-full h-full object-cover">
+                                                }
+                                                else
+                                                {
+                                                    <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                                }
+                                            </div>
+                                            <div class="min-w-0">
+                                                <div class="font-bold text-gray-900 text-sm truncate max-w-[200px]" title="@item.Product?.name">@item.Product?.name</div>
+                                                <code class="text-[10px] text-gray-500 bg-gray-50 border border-gray-100 px-1 rounded">@item.Product?.sku</code>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="p-4">
+                                        <span class="text-sm font-bold text-gray-900">@item.quantity</span>
+                                        <span class="text-[10px] text-gray-500">@(item.Product?.Unit?.name ?? "unit")</span>
+                                    </td>
+                                    <td class="p-4">
                                         <div class="text-sm font-semibold text-gray-900">@(item.applicant_name ?? item.Requester?.name)</div>
-                                        <div class="text-xs text-gray-500">@(item.Division?.name)</div>
+                                        <div class="text-[10px] text-gray-500">NRP: @(item.applicant_nrp ?? "-")</div>
                                     </td>
-                                    <td class="px-4 py-3">
-                                        <div class="text-sm font-semibold text-gray-900">@(item.Product?.name)</div>
-                                        <code class="text-xs text-gray-500">@(item.Product?.sku)</code>
+                                    <td class="p-4">
+                                        <span class="text-xs font-medium text-gray-600">@(item.Division?.name ?? "-")</span>
                                     </td>
-                                    <td class="px-4 py-3 text-sm font-bold text-gray-900 text-center">@item.quantity</td>
-                                    <td class="px-4 py-3">
+                                    <td class="p-4">
                                         @if (item.status == "PENDING" || item.status == "PENDING_MANAGER") {
-                                            <span class="inline-flex items-center px-2 py-0.5 border border-[#fde68a] rounded-md text-[0.65rem] font-bold bg-[#fef3c7] text-[#92400e]">PENDING</span>
+                                            <span class="inline-flex items-center px-2 py-0.5 border border-[#fde68a] rounded-md text-[0.65rem] font-bold bg-[#fef3c7] text-[#92400e]">WAITING</span>
                                         } else if (item.status == "APPROVED") {
                                             <span class="inline-flex items-center px-2 py-0.5 border border-[#b8e8c0] rounded-md text-[0.65rem] font-bold bg-[#eef9f0] text-[#1a7a30]">APPROVED</span>
+                                        } else if (item.status == "REJECTED") {
+                                            <span class="inline-flex items-center px-2 py-0.5 border border-[#f8c0c0] rounded-md text-[0.65rem] font-bold bg-[#fef0f0] text-[#d94040]">REJECTED</span>
                                         } else {
-                                            <span class="inline-flex items-center px-2 py-0.5 border border-[#f8c0c0] rounded-md text-[0.65rem] font-bold bg-[#fef0f0] text-[#d94040]">@item.status</span>
+                                            <span class="inline-flex items-center px-2 py-0.5 border border-gray-200 rounded-md text-[0.65rem] font-bold bg-gray-50 text-gray-600">@item.status</span>
                                         }
+                                    </td>
+                                    <td class="p-4 text-center">
+                                        @if (item.status == "APPROVED" && item.Approver != null)
+                                        {
+                                            <div class="text-[10px] font-bold text-emerald-700">@item.Approver.name</div>
+                                            <div class="text-[9px] text-gray-400">@item.Approver.role</div>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-gray-400">-</span>
+                                        }
+                                    </td>
+                                    <td class="p-4">
+                                        <div class="text-xs text-gray-700">@item.created_at.ToString("dd/MM/yyyy")</div>
+                                        <div class="text-[10px] text-gray-400">@item.created_at.ToString("HH:mm")</div>
                                     </td>
                                 </tr>
                             }

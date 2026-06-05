@@ -13,16 +13,30 @@ public class DashboardService
         _context = context;
     }
 
-    public async Task<(
-        int WidgetTotalItems, 
-        int PendingApprovals, 
-        int TotalStock, 
-        List<Category> Categories, 
-        List<Division> Divisions, 
-        List<Product> CatalogProducts, 
-        int TotalItems, 
-        int TotalPages)> 
-        GetDashboardDataAsync(int? category, string? search = null, int page = 1, int pageSize = 15)
+    public class DashboardData
+    {
+        public int WidgetTotalItems { get; set; }
+        public int PendingApprovals { get; set; }
+        public int TotalStock { get; set; }
+        public List<Category> Categories { get; set; } = new();
+        public List<Division> Divisions { get; set; } = new();
+        public List<Product> CatalogProducts { get; set; } = new();
+        public int TotalItems { get; set; }
+        public int TotalPages { get; set; }
+
+        public List<Product> LowStockProducts { get; set; } = new();
+        public int DonutApproved { get; set; }
+        public int DonutRejected { get; set; }
+        public int DonutPending { get; set; }
+        public int MerchAvailable { get; set; }
+        public int MerchLowStock { get; set; }
+        public int MerchOutOfStock { get; set; }
+        public int BorrowOverdue { get; set; }
+        public int BorrowAvailable { get; set; }
+        public int BorrowBorrowed { get; set; }
+    }
+
+    public async Task<DashboardData> GetDashboardDataAsync(int? category, string? search = null, int page = 1, int pageSize = 15)
     {
         var widgetTotalItems = await _context.Products.CountAsync();
         var pendingApprovals = await _context.Transactions.CountAsync(t => t.status == "PENDING");
@@ -57,7 +71,29 @@ public class DashboardService
             .Take(pageSize)
             .ToListAsync();
 
-        return (widgetTotalItems, pendingApprovals, totalStock, categories, divisions, catalogProducts, catalogTotalItems, totalPages);
+        var data = new DashboardData
+        {
+            WidgetTotalItems = widgetTotalItems,
+            PendingApprovals = pendingApprovals,
+            TotalStock = totalStock,
+            Categories = categories,
+            Divisions = divisions,
+            CatalogProducts = catalogProducts,
+            TotalItems = catalogTotalItems,
+            TotalPages = totalPages,
+            LowStockProducts = await _context.Products.Include(p => p.Unit).Where(p => p.current_stock <= 2 && p.current_stock >= 0).OrderBy(p => p.current_stock).Take(10).ToListAsync(),
+            DonutApproved = await _context.Transactions.CountAsync(t => t.status == "APPROVED"),
+            DonutRejected = await _context.Transactions.CountAsync(t => t.status == "REJECTED"),
+            DonutPending = await _context.Transactions.CountAsync(t => t.status == "PENDING" || t.status == "PENDING_MANAGER"),
+            MerchAvailable = await _context.Products.Where(p => p.is_returnable != 1 && p.current_stock > 2).CountAsync(),
+            MerchLowStock = await _context.Products.Where(p => p.is_returnable != 1 && p.current_stock > 0 && p.current_stock <= 2).CountAsync(),
+            MerchOutOfStock = await _context.Products.Where(p => p.is_returnable != 1 && p.current_stock <= 0).CountAsync(),
+            BorrowOverdue = await _context.Transactions.Where(t => t.request_type == "BORROW" && t.status == "APPROVED" && t.returned_quantity < t.quantity && t.expected_return_date < DateTime.Today).CountAsync(),
+            BorrowAvailable = await _context.Products.Where(p => p.is_returnable == 1 && p.current_stock > 0).CountAsync(),
+            BorrowBorrowed = await _context.Transactions.Where(t => t.request_type == "BORROW" && t.status == "APPROVED" && t.returned_quantity < t.quantity).CountAsync()
+        };
+
+        return data;
     }
 
     public async Task<List<Transaction>> GetActiveBorrowsAsync(int currentUserId, string? userRole)

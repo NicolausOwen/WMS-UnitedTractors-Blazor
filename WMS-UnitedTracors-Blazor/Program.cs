@@ -27,6 +27,8 @@ builder.Services.AddScoped<WMS_UnitedTracors_Blazor.Services.ProfileService>();
 builder.Services.AddScoped<WMS_UnitedTracors_Blazor.Services.CategoryService>();
 builder.Services.AddScoped<WMS_UnitedTracors_Blazor.Services.ReportService>();
 builder.Services.AddScoped<WMS_UnitedTracors_Blazor.Services.TrackingService>();
+builder.Services.AddScoped<WMS_UnitedTracors_Blazor.Services.PdfReportService>();
+builder.Services.AddScoped<WMS_UnitedTracors_Blazor.Services.PdfReceiptService>();
 
 // Database setup
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -209,6 +211,81 @@ if (app.Environment.IsDevelopment() ||
         logger.LogError(ex, "FAILED STARTUP: Migration or Seeding failed.");
     }
 }
+
+// =======================
+// API PDF Endpoints
+// =======================
+app.MapGet("/api/pdf/peminjaman", async (string start, string end, WMS_UnitedTracors_Blazor.Services.ReportService reportService, WMS_UnitedTracors_Blazor.Services.PdfReportService pdfService, IWebHostEnvironment env) =>
+{
+    var startDate = DateTime.Parse(start);
+    var endDate = DateTime.Parse(end);
+    var transactions = await reportService.GetTransactionsForReportAsync(startDate, endDate, "BORROW");
+    var pdf = pdfService.GeneratePeminjamanReport(transactions, startDate, endDate, env.WebRootPath);
+    return Results.File(pdf, "application/pdf", $"Laporan_Peminjaman_{DateTime.Now:yyyyMMdd}.pdf");
+});
+
+app.MapGet("/api/pdf/request", async (string start, string end, WMS_UnitedTracors_Blazor.Services.ReportService reportService, WMS_UnitedTracors_Blazor.Services.PdfReportService pdfService, IWebHostEnvironment env) =>
+{
+    var startDate = DateTime.Parse(start);
+    var endDate = DateTime.Parse(end);
+    var transactions = await reportService.GetTransactionsForReportAsync(startDate, endDate, "GIVEAWAY");
+    var pdf = pdfService.GenerateRequestReport(transactions, startDate, endDate, env.WebRootPath);
+    return Results.File(pdf, "application/pdf", $"Laporan_Request_{DateTime.Now:yyyyMMdd}.pdf");
+});
+
+app.MapGet("/api/pdf/adjust", async (string start, string end, WMS_UnitedTracors_Blazor.Services.ReportService reportService, WMS_UnitedTracors_Blazor.Services.PdfReportService pdfService, IWebHostEnvironment env) =>
+{
+    var startDate = DateTime.Parse(start);
+    var endDate = DateTime.Parse(end);
+    var transactions = await reportService.GetTransactionsForReportAsync(startDate, endDate, "ADJUST");
+    var pdf = pdfService.GenerateAdjustReport(transactions, startDate, endDate, env.WebRootPath);
+    return Results.File(pdf, "application/pdf", $"Laporan_UpdateStok_{DateTime.Now:yyyyMMdd}.pdf");
+});
+
+app.MapGet("/api/pdf/receipt/{groupId}", async (string groupId, WMS_UnitedTracors_Blazor.Services.TransactionService transactionService, WMS_UnitedTracors_Blazor.Services.PdfReceiptService pdfService, IWebHostEnvironment env) =>
+{
+    var transactions = await transactionService.GetTransactionsByGroupIdAsync(groupId);
+    if (!transactions.Any()) return Results.NotFound();
+    
+    var pdfBytes = pdfService.GenerateReceipt(transactions, env.WebRootPath);
+    return Results.File(pdfBytes, "application/pdf", $"Receipt_{DateTime.Now:yyyyMMdd_HHmmss}.pdf");
+});
+
+app.MapGet("/api/pdf/receipt-request/{groupId}", async (string groupId, WMS_UnitedTracors_Blazor.Services.TransactionService transactionService, WMS_UnitedTracors_Blazor.Services.PdfReceiptService pdfService, IWebHostEnvironment env) =>
+{
+    var transactions = await transactionService.GetTransactionsByGroupIdAsync(groupId);
+    if (!transactions.Any()) return Results.NotFound();
+    
+    var pdfBytes = pdfService.GenerateReceiptRequest(transactions, env.WebRootPath);
+    return Results.File(pdfBytes, "application/pdf", $"Request_Receipt_{DateTime.Now:yyyyMMdd_HHmmss}.pdf");
+});
+
+app.MapGet("/api/pdf/receipt-approval/{groupId}", async (string groupId, WMS_UnitedTracors_Blazor.Services.TransactionService transactionService, WMS_UnitedTracors_Blazor.Services.PdfReceiptService pdfService, IWebHostEnvironment env) =>
+{
+    var transactions = await transactionService.GetTransactionsByGroupIdAsync(groupId);
+    if (!transactions.Any()) return Results.NotFound();
+    
+    var pdfBytes = pdfService.GenerateReceiptApproval(transactions, env.WebRootPath);
+    return Results.File(pdfBytes, "application/pdf", $"Approval_Receipt_{DateTime.Now:yyyyMMdd_HHmmss}.pdf");
+});
+
+app.MapGet("/api/pdf/receipt-handover/{groupId}", async (string groupId, WMS_UnitedTracors_Blazor.Services.TransactionService transactionService, WMS_UnitedTracors_Blazor.Services.PdfReceiptService pdfService, IWebHostEnvironment env) =>
+{
+    var transactions = await transactionService.GetTransactionsByGroupIdAsync(groupId);
+    if (!transactions.Any()) return Results.NotFound();
+    
+    var pdfBytes = pdfService.GenerateReceiptHandover(transactions, env.WebRootPath);
+    return Results.File(pdfBytes, "application/pdf", $"Handover_Receipt_{DateTime.Now:yyyyMMdd_HHmmss}.pdf");
+});
+
+app.MapGet("/api/pdf/receipt-return/{groupId}", async (string groupId, WMS_UnitedTracors_Blazor.Services.TransactionService transactionService, WMS_UnitedTracors_Blazor.Services.PdfReceiptService pdfService, IWebHostEnvironment env) =>
+{
+    var transactions = await transactionService.GetTransactionsByGroupIdAsync(groupId);
+    if (!transactions.Any()) return Results.NotFound();
+    
+    var pdfBytes = pdfService.GenerateReturnReceipt(transactions, env.WebRootPath);
+    return Results.File(pdfBytes, "application/pdf", $"Return_Receipt_{DateTime.Now:yyyyMMdd_HHmmss}.pdf");
+});
 
 // =======================
 // Start Application

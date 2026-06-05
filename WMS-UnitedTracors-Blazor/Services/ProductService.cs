@@ -406,6 +406,6 @@ public class ProductService
             return new List<Product>();
         }
 
-        return await query.ToListAsync();
+        return await query.OrderBy(p => p.name).ToListAsync();
     }
 }

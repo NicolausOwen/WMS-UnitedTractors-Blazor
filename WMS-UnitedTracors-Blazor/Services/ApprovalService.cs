@@ -14,7 +14,7 @@ public class ApprovalService
         _context = context;
     }
 
-    public async Task<(Dictionary<string, List<Transaction>> GroupedApprovals, List<Transaction> PendingReturns, List<ProfileRequest> PendingProfileRequests)> GetApprovalsAsync(int currentUserId, string? userRole)
+    public async Task<(Dictionary<string, List<Transaction>> GroupedApprovals, List<Transaction> PendingReturns, List<ProfileRequest> PendingProfileRequests, Dictionary<string, List<Transaction>> GroupedHandovers)> GetApprovalsAsync(int currentUserId, string? userRole)
     {
         var query = _context.Transactions
             .Include(t => t.Product)
@@ -43,6 +43,7 @@ public class ApprovalService
 
         var pendingReturns = new List<Transaction>();
         var pendingProfileRequests = new List<ProfileRequest>();
+        var groupedHandovers = new Dictionary<string, List<Transaction>>();
 
         if (userRole == "admin" || userRole == "superadmin")
         {
@@ -61,9 +62,21 @@ public class ApprovalService
                 .Where(pr => pr.status == "PENDING")
                 .OrderByDescending(pr => pr.created_at)
                 .ToListAsync();
+
+            var handoversQuery = await _context.Transactions
+                .Include(t => t.Product)
+                .Include(t => t.Requester)
+                .Include(t => t.Division)
+                .Where(t => t.status == "WAITING_ADMIN_HANDOVER" && t.type == "OUT" && (t.request_type == "GIVEAWAY" || t.request_type == "BORROW"))
+                .OrderByDescending(t => t.updated_at)
+                .ToListAsync();
+
+            groupedHandovers = handoversQuery
+                .GroupBy(t => t.group_id)
+                .ToDictionary(g => g.Key, g => g.ToList());
         }
 
-        return (groupedApprovals, pendingReturns, pendingProfileRequests);
+        return (groupedApprovals, pendingReturns, pendingProfileRequests, groupedHandovers);
     }
 
     public async Task<string?> ApproveAsync(int id, string? notes, int currentUserId, string? userRole)
@@ -137,10 +150,10 @@ public class ApprovalService
                         transaction.returned_at = DateTime.UtcNow; // Mark finished
                     }
                 }
-                
+
                 transaction.approver_id = currentUserId;
                 transaction.updated_at = DateTime.UtcNow;
-                
+
                 if (userRole == "admin" || userRole == "superadmin")
                 {
                     transaction.admin_notes = notes;
@@ -220,7 +233,7 @@ public class ApprovalService
 
         transaction.status = "REVISION";
         transaction.approver_id = currentUserId;
-        transaction.rejection_reason = revisionReason; 
+        transaction.rejection_reason = revisionReason;
         transaction.updated_at = DateTime.UtcNow;
 
         if (userRole == "admin" || userRole == "superadmin")
@@ -292,6 +305,53 @@ public class ApprovalService
                 return "Approval failed: " + ex.Message;
             }
         });
+    }
+
+    public async Task<string?> ApproveHandoverBatchAsync(string groupId, int currentUserId, string? userRole)
+    {
+        if (userRole != "admin" && userRole != "superadmin") return "Unauthorized action.";
+
+        var query = await _context.Transactions
+            .Where(t => t.status == "WAITING_ADMIN_HANDOVER" && t.type == "OUT" && (t.request_type == "GIVEAWAY" || t.request_type == "BORROW"))
+            .ToListAsync();
+
+        var matched = query.Where(t => t.group_id == groupId).ToList();
+
+        if (matched.Count == 0) return "Tidak ada transaksi serah terima yang menunggu verifikasi pada event ini.";
+
+        foreach (var item in matched)
+        {
+            item.status = "APPROVED";
+            item.approver_id = currentUserId;
+            _context.Transactions.Update(item);
+        }
+
+        await _context.SaveChangesAsync();
+        return null;
+    }
+
+    public async Task<string?> RejectHandoverBatchAsync(string groupId, string rejectionReason, int currentUserId, string? userRole)
+    {
+        if (userRole != "admin" && userRole != "superadmin") return "Unauthorized action.";
+        if (string.IsNullOrWhiteSpace(rejectionReason)) return "Rejection reason is required.";
+
+        var query = await _context.Transactions
+            .Where(t => t.status == "WAITING_ADMIN_HANDOVER" && t.type == "OUT" && (t.request_type == "GIVEAWAY" || t.request_type == "BORROW"))
+            .ToListAsync();
+
+        var matched = query.Where(t => t.group_id == groupId).ToList();
+
+        if (matched.Count == 0) return "Tidak ada transaksi serah terima yang menunggu verifikasi pada event ini.";
+
+        foreach (var item in matched)
+        {
+            item.status = "WAITING_HANDOVER";
+            item.rejection_reason = rejectionReason;
+            _context.Transactions.Update(item);
+        }
+
+        await _context.SaveChangesAsync();
+        return null;
     }
 
     public async Task<string?> RejectReturnAsync(int id, int currentUserId, string? userRole)

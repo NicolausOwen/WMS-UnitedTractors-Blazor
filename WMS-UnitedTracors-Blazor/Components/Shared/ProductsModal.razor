@@ -1,0 +1,196 @@
+@using UT_WMSDotnet.Models
+@using WMS_UnitedTracors_Blazor.Services
+@inject ProductService ProductService
+@inject IJSRuntime JSRuntime
+
+@if (Show)
+{
+    <div class="fixed inset-0 z-[200] overflow-y-auto flex items-center justify-center p-4 bg-black/55 backdrop-blur-sm transition-opacity duration-300">
+        <div class="fixed inset-0" aria-hidden="true" @onclick="Close"></div>
+        <div class="relative w-full max-w-xl bg-white rounded-xl shadow-2xl flex flex-col max-h-[85vh] border border-[#e5e3dc]" @onclick:stopPropagation>
+            <!-- Header -->
+            <div class="px-4 md:px-6 py-4 border-b border-[#f0ede5] bg-[#faf9f5] flex items-center justify-between rounded-t-xl shrink-0">
+                <div>
+                    <h3 class="text-sm font-bold text-[#1a1a1a] font-syne">@Title</h3>
+                    <p class="text-[0.72rem] text-[#8a8880] mt-0.5">List of items belonging to this @Type</p>
+                </div>
+                <button type="button" @onclick="Close" class="text-[#8a8880] hover:text-[#1a1a1a] hover:bg-[#f0ede5] transition p-1.5 rounded-lg shrink-0">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <!-- Filters & Search -->
+            <div class="px-4 md:px-6 py-3 bg-white border-b border-[#f0ede5] flex flex-col sm:flex-row gap-2 shrink-0">
+                <div class="flex-1 relative">
+                    <input type="text" @bind="ModalSearchQuery" @bind:event="oninput" placeholder="Search product..."
+                        class="block w-full pl-8 pr-3 py-1.5 text-xs bg-[#f5f4f0] border border-[#e5e3dc] focus:border-[#e8a000] focus:ring-0 rounded-lg outline-none text-[#1a1a1a] transition-all duration-150 placeholder:text-gray-400">
+                    <svg class="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                </div>
+                <div class="flex gap-2">
+                    <select @bind="ModalStockFilter"
+                        class="flex-1 sm:flex-none py-1.5 px-2 text-xs bg-[#f5f4f0] border border-[#e5e3dc] focus:border-[#e8a000] focus:ring-0 rounded-lg outline-none text-gray-600">
+                        <option value="all">All Stock Status</option>
+                        <option value="in_stock">In Stock (> 0)</option>
+                        <option value="out_of_stock">Out of Stock (= 0)</option>
+                    </select>
+                    <select @bind="ModalSort"
+                        class="flex-1 sm:flex-none py-1.5 px-2 text-xs bg-[#f5f4f0] border border-[#e5e3dc] focus:border-[#e8a000] focus:ring-0 rounded-lg outline-none text-gray-600">
+                        <option value="name_asc">Name (A-Z)</option>
+                        <option value="name_desc">Name (Z-A)</option>
+                        <option value="stock_desc">Stock (Highest)</option>
+                        <option value="stock_asc">Stock (Lowest)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Products List -->
+            <div class="flex-1 overflow-y-auto px-2 md:px-4 py-2 bg-white rounded-b-xl">
+                @if (ModalProducts == null)
+                {
+                    <div class="flex justify-center py-12">
+                        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-[#e8a000]"></div>
+                    </div>
+                }
+                else if (!FilteredModalProducts.Any())
+                {
+                    <div class="text-center py-12">
+                        <p class="text-xs text-gray-400">No products found</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="divide-y divide-[#f0ede5]">
+                        @foreach (var p in FilteredModalProducts)
+                        {
+                            var stockColor = p.current_stock > 0 ? "bg-[#eef9f0] text-[#1a7a30] border-[#b8e8c0]" : "bg-[#fef0f0] text-[#d94040] border-[#f8c0c0]";
+                            <div class="py-3 flex flex-col sm:flex-row sm:items-center justify-between hover:bg-[#faf9f5] px-2 md:px-3 rounded-lg transition duration-150 gap-3 sm:gap-0">
+                                <div class="flex items-center gap-3">
+                                    @if (!string.IsNullOrEmpty(p.image))
+                                    {
+                                        <img src="@($"/{p.image}")" alt="@p.name" class="w-12 h-12 rounded-lg object-cover border border-[#e5e3dc] shrink-0" />
+                                    }
+                                    else
+                                    {
+                                        <div class="w-12 h-12 rounded-lg bg-gray-100 border border-[#e5e3dc] flex items-center justify-center shrink-0">
+                                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                        </div>
+                                    }
+                                    <div class="min-w-0">
+                                        <h4 class="text-xs font-bold text-[#1a1a1a] truncate" title="@p.name">@p.name</h4>
+                                        <p class="text-[10px] text-gray-400 font-mono truncate mt-0.5">@p.sku</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between sm:justify-end gap-3 shrink-0 sm:ml-4 w-full sm:w-auto">
+                                    <div class="text-[10px] text-[#8a8880] truncate max-w-[120px] hidden sm:block" title="@(p.Category?.name ?? "--") | @(p.Location?.name ?? "--")">@(p.Category?.name ?? "--") | @(p.Location?.name ?? "--")</div>
+                                    <span class="text-[10px] px-2 py-0.5 rounded-full font-bold border @stockColor whitespace-nowrap">
+                                        @p.current_stock @(p.Unit?.name ?? "--")
+                                    </span>
+                                    
+                                    @if (IsSuperAdmin)
+                                    {
+                                        <div class="flex items-center gap-1 border-l border-[#e5e3dc] pl-3 ml-auto sm:ml-1">
+                                            <a href="/editproduct/@p.id" class="text-[10px] font-bold text-[#3a3835] hover:text-[#1a1a1a] px-2 py-1 rounded bg-white border border-[#e5e3dc] hover:bg-[#f0ede5] transition cursor-pointer">
+                                                Edit
+                                            </a>
+                                            <button type="button" @onclick="() => DeleteProduct(p.id)" class="text-[10px] font-bold text-[#d94040] hover:text-[#b83535] px-2 py-1 rounded bg-[#fef0f0] border border-[#f8c0c0] hover:bg-[#fee2e2] transition cursor-pointer">
+                                                Del
+                                            </button>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Show { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public string Type { get; set; } = ""; // category, location, unit, division
+    [Parameter] public int TargetId { get; set; }
+    [Parameter] public bool IsSuperAdmin { get; set; }
+    [Parameter] public EventCallback<int> OnProductDeleted { get; set; }
+
+    private List<Product>? ModalProducts;
+    private string ModalSearchQuery = "";
+    private string ModalStockFilter = "all";
+    private string ModalSort = "name_asc";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Show && ModalProducts == null)
+        {
+            await LoadProducts();
+        }
+        else if (!Show)
+        {
+            ModalProducts = null;
+        }
+    }
+
+    private async Task LoadProducts()
+    {
+        ModalProducts = await ProductService.GetProductsByTypeAsync(Type, TargetId);
+    }
+
+    private IEnumerable<Product> FilteredModalProducts
+    {
+        get
+        {
+            if (ModalProducts == null) return Array.Empty<Product>();
+
+            var query = ModalProducts.AsEnumerable();
+
+            if (!string.IsNullOrWhiteSpace(ModalSearchQuery))
+            {
+                var search = ModalSearchQuery.ToLower();
+                query = query.Where(p => 
+                    (!string.IsNullOrEmpty(p.name) && p.name.ToLower().Contains(search)) || 
+                    (!string.IsNullOrEmpty(p.sku) && p.sku.ToLower().Contains(search)));
+            }
+
+            if (ModalStockFilter == "in_stock")
+            {
+                query = query.Where(p => p.current_stock > 0);
+            }
+            else if (ModalStockFilter == "out_of_stock")
+            {
+                query = query.Where(p => p.current_stock == 0);
+            }
+
+            query = ModalSort switch
+            {
+                "name_desc" => query.OrderByDescending(p => p.name),
+                "stock_desc" => query.OrderByDescending(p => p.current_stock),
+                "stock_asc" => query.OrderBy(p => p.current_stock),
+                _ => query.OrderBy(p => p.name)
+            };
+
+            return query;
+        }
+    }
+
+    private async Task Close()
+    {
+        await OnClose.InvokeAsync();
+    }
+
+    private async Task DeleteProduct(int id)
+    {
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "Delete this product?");
+        if (confirmed)
+        {
+            await ProductService.DeleteProductAsync(id);
+            if (ModalProducts != null)
+            {
+                ModalProducts.RemoveAll(p => p.id == id);
+            }
+            await OnProductDeleted.InvokeAsync(id);
+        }
+    }
+}

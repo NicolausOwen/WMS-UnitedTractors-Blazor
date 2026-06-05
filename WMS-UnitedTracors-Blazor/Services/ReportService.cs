@@ -162,4 +162,30 @@ public class ReportService
         
         return summary;
     }
-}
+
+    public async Task<List<Transaction>> GetTransactionsForReportAsync(DateTime startDate, DateTime endDate, string filterType)
+        {
+            var query = _context.Transactions
+                .Include(t => t.Product)
+                .ThenInclude(p => p.Unit)
+                .Include(t => t.Approver)
+                .Include(t => t.Requester)
+                .Include(t => t.Division)
+                .Where(t => t.created_at >= startDate && t.created_at <= endDate);
+
+            if (filterType == "BORROW")
+            {
+                query = query.Where(t => t.request_type == "BORROW");
+            }
+            else if (filterType == "GIVEAWAY")
+            {
+                query = query.Where(t => t.request_type == "GIVEAWAY");
+            }
+            else if (filterType == "ADJUST")
+            {
+                query = query.Where(t => t.type == "IN" || t.type == "OUT");
+            }
+
+            return await query.OrderBy(t => t.created_at).ToListAsync();
+        }
+    }

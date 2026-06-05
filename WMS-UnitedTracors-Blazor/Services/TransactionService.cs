@@ -258,7 +258,7 @@ public class TransactionService
         string photoPath = transaction.return_photo ?? "";
         if (model.return_photo != null)
         {
-            var uploads = Path.Combine(_env.WebRootPath, "images", "return");
+            var uploads = Path.Combine(_env.WebRootPath, "storage", "returns");
             if (!Directory.Exists(uploads)) Directory.CreateDirectory(uploads);
             var fileName = Guid.NewGuid().ToString() + Path.GetExtension(model.return_photo.FileName);
             var filePath = Path.Combine(uploads, fileName);
@@ -266,11 +266,11 @@ public class TransactionService
             {
                 await model.return_photo.CopyToAsync(fileStream);
             }
-            photoPath = "images/return/" + fileName;
+            photoPath = "storage/returns/" + fileName;
         }
         else if (model.return_photo_browser != null)
         {
-            var uploads = Path.Combine(_env.WebRootPath, "images", "return");
+            var uploads = Path.Combine(_env.WebRootPath, "storage", "returns");
             if (!Directory.Exists(uploads)) Directory.CreateDirectory(uploads);
             var fileName = Guid.NewGuid().ToString() + Path.GetExtension(model.return_photo_browser.Name);
             var filePath = Path.Combine(uploads, fileName);
@@ -278,7 +278,7 @@ public class TransactionService
             {
                 await model.return_photo_browser.OpenReadStream(10 * 1024 * 1024).CopyToAsync(fileStream);
             }
-            photoPath = "images/return/" + fileName;
+            photoPath = "storage/returns/" + fileName;
         }
         else if (string.IsNullOrEmpty(photoPath))
         {
@@ -393,7 +393,7 @@ public class TransactionService
         string photoPath;
         try
         {
-            var uploads = Path.Combine(_env.WebRootPath, "images", "handover");
+            var uploads = Path.Combine(_env.WebRootPath, "storage", "handovers");
             if (!Directory.Exists(uploads)) Directory.CreateDirectory(uploads);
             var fileName = Guid.NewGuid().ToString() + Path.GetExtension(photo.Name);
             var filePath = Path.Combine(uploads, fileName);
@@ -401,7 +401,7 @@ public class TransactionService
             {
                 await photo.OpenReadStream(10 * 1024 * 1024).CopyToAsync(fileStream);
             }
-            photoPath = "images/handover/" + fileName;
+            photoPath = "storage/handovers/" + fileName;
         }
         catch (Exception ex)
         {
@@ -580,4 +580,103 @@ public class TransactionService
         await _context.SaveChangesAsync();
         return null;
     }
-}
+
+    public async Task<List<Transaction>> GetTransactionsByGroupIdAsync(string groupId)
+    {
+        var allTransactions = await _context.Transactions
+            .Include(t => t.Product)
+            .ThenInclude(p => p.Unit)
+            .Include(t => t.Requester)
+            .Include(t => t.Approver)
+            .Include(t => t.Division)
+            .ToListAsync();
+
+        return allTransactions.Where(t => t.group_id == groupId).ToList();
+    }
+
+    public async Task<string?> SubmitHandoverBatchAsync(string groupId, string? photoPath, string? notes)
+    {
+        var transactions = await GetTransactionsByGroupIdAsync(groupId);
+        var matched = transactions.Where(t => t.status == "WAITING_HANDOVER" && t.type == "OUT" && (t.request_type == "GIVEAWAY" || t.request_type == "BORROW")).ToList();
+
+        if (matched.Count == 0) return "Tidak ada transaksi serah terima yang menunggu bukti pada event ini.";
+
+        foreach (var item in matched)
+        {
+            item.handover_photo = photoPath;
+            item.handover_notes = notes;
+            item.status = "WAITING_ADMIN_HANDOVER";
+            _context.Transactions.Update(item);
+        }
+
+        await _context.SaveChangesAsync();
+        return null;
+    }
+
+    public async Task ProcessScannerTransactionAsync(UT_WMSDotnet.ViewModels.ScannerTransactionViewModel model, int userId)
+        {
+            foreach (var item in model.Items)
+            {
+                var product = await _context.Products.FirstOrDefaultAsync(p => p.sku == item.Sku);
+                if (product == null)
+                    throw new Exception($"Produk dengan SKU {item.Sku} tidak ditemukan.");
+
+                if (model.Type == "OUT")
+                {
+                    if (product.current_stock < item.Quantity)
+                        throw new Exception($"Stok produk {product.name} ({item.Sku}) tidak mencukupi. Stok: {product.current_stock}");
+                    
+                    product.current_stock -= item.Quantity;
+                }
+                else
+                {
+                    product.current_stock += item.Quantity;
+                }
+
+                var transaction = new Transaction
+                {
+                    product_id = product.id,
+                    type = model.Type,
+                    quantity = item.Quantity,
+                    request_type = model.Type == "OUT" ? "BORROW" : null, // Default behavior
+                    status = "APPROVED",
+                    requester_id = userId,
+                    approver_id = userId,
+                    notes = model.Notes,
+                    created_at = DateTime.UtcNow,
+                    updated_at = DateTime.UtcNow
+                };
+
+                if (model.Type == "OUT")
+                {
+                    transaction.applicant_name = model.ApplicantName;
+                    transaction.applicant_nrp = model.ApplicantNrp;
+                    transaction.event_name = model.EventName;
+                    transaction.event_date = model.EventDate;
+                    transaction.division_id = model.DivisionId;
+                    transaction.documentation_link = model.DocumentationLink;
+                    
+                    if (product.is_returnable != 1)
+                    {
+                        transaction.request_type = "GIVEAWAY";
+                    }
+                }
+
+                _context.Transactions.Add(transaction);
+                
+                // Add stock log
+                int stockBefore = model.Type == "OUT" ? product.current_stock + item.Quantity : product.current_stock - item.Quantity;
+                _context.StockLogs.Add(new StockLog
+                {
+                    product_id = product.id,
+                    transaction_id = transaction.id,
+                    stock_before = stockBefore,
+                    stock_after = product.current_stock,
+                    created_at = DateTime.UtcNow,
+                    updated_at = DateTime.UtcNow
+                });
+            }
+
+            await _context.SaveChangesAsync();
+        }
+    }

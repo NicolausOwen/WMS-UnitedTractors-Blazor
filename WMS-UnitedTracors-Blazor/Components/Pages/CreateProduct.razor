@@ -59,7 +59,20 @@
                 @* SKU *@
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1.5">SKU / Barcode ID</label>
-                    <InputText @bind-Value="Model.sku" class="block w-full py-2 px-3 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#e8a000] focus:border-[#e8a000] outline-none transition" placeholder="Leave empty to auto-generate" />
+                    <div class="flex gap-2">
+                        <InputText id="skuInput" @bind-Value="Model.sku" class="block w-full py-2 px-3 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#e8a000] focus:border-[#e8a000] outline-none transition placeholder:text-gray-400" placeholder="UT-YYMMDD-XXXX (Leave blank to auto-generate)" />
+                        <button type="button" id="startButton" class="px-4 py-2 bg-gray-900 text-white rounded-lg font-medium text-sm hover:bg-gray-800 transition whitespace-nowrap">
+                            Scan
+                        </button>
+                        <button type="button" id="resetButton" class="hidden px-4 py-2 bg-gray-200 text-gray-800 rounded-lg font-medium text-sm hover:bg-gray-300 transition whitespace-nowrap">
+                            Stop
+                        </button>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-1">Leave empty to automatically generate a standard SKU (Format: UT-YYMMDD-0001) or scan/type a custom one.</p>
+                    <div id="scannerContainer" class="hidden mt-3 relative bg-black w-full rounded-lg overflow-hidden" style="padding-top: 60%;">
+                        <video id="video" autoplay muted playsinline class="absolute top-0 left-0 w-full h-full object-cover"></video>
+                        <div class="absolute inset-0 border-2 border-white/30 m-4 rounded pointer-events-none"></div>
+                    </div>
                     <ValidationMessage For="@(() => Model.sku)" class="text-red-600 text-xs mt-1 block" />
                 </div>
 
@@ -283,6 +296,14 @@
         
         var locResult = await LocationService.GetLocationsAsync(1, 100);
         Locations = locResult.Locations;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JSRuntime.InvokeVoidAsync("initProductScanner");
+        }
     }
 
     private void HandleImageSelected(Microsoft.AspNetCore.Components.Forms.InputFileChangeEventArgs e)

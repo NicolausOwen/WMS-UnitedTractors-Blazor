@@ -216,7 +216,7 @@
                                 }
                                 @if (groupItems.Any(i => i.returned_quantity > 0 || (i.pending_return_quantity > 0 && i.is_return_draft == 0)))
                                 {
-                                    <a href="/Receipt/Return/@firstItem.id" target="_blank" @onclick:stopPropagation="true" class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-white border border-[#b8e8c0] text-[#1a7a30] hover:bg-[#eef9f0] rounded text-xs font-semibold transition">
+                                    <a href="/api/pdf/receipt-return/@groupId" target="_blank" @onclick:stopPropagation="true" class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-white border border-[#b8e8c0] text-[#1a7a30] hover:bg-[#eef9f0] rounded text-xs font-semibold transition">
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                                         PDF Bukti Pengembalian
                                     </a>
@@ -227,36 +227,107 @@
                             </div>
                         </div>
 
-                        @* Body Accordion *@
                         @if(isExpanded)
                         {
                             <div class="border-t border-[#e5e3dc] bg-[#faf9f5]">
-                                @if (hasBorrow)
+                                <!-- PDF Bookkeeping Download Checklist -->
+                                <div class="p-4 bg-white border-b border-[#e5e3dc] flex flex-wrap gap-2.5 items-center">
+                                    <span class="text-[0.65rem] font-bold uppercase tracking-wider text-[#8a8780] mr-2 block w-full sm:w-auto">Dokumen Pembukuan (PDF):</span>
+                                    
+                                    <!-- 1. Bukti Pengajuan -->
+                                    @if(groupItems.Any(i => i.status == "WAITING_HANDOVER" || i.status == "WAITING_ADMIN_HANDOVER" || i.status == "APPROVED"))
+                                    {
+                                    <a href="/api/pdf/receipt-request/@groupId" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-700 rounded-lg text-xs font-semibold transition shadow-sm">
+                                        <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                        1. Bukti Pengajuan
+                                    </a>
+                                    }
+                                    else
+                                    {
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100/50 border border-gray-200/50 text-gray-400 rounded-lg text-xs font-semibold cursor-not-allowed" title="Menunggu persetujuan Admin/Manager">
+                                        <svg class="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                        1. Bukti Pengajuan
+                                    </span>
+                                    }
+
+                                    <!-- 2. Bukti Penyerahan -->
+                                    @if(groupItems.Any(i => i.status == "WAITING_ADMIN_HANDOVER" || i.status == "APPROVED"))
+                                    {
+                                    <a href="/api/pdf/receipt-handover/@groupId" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-700 rounded-lg text-xs font-semibold transition shadow-sm">
+                                        <svg class="w-3.5 h-3.5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                        2. Bukti Penyerahan
+                                    </a>
+                                    }
+                                    else
+                                    {
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100/50 border border-gray-200/50 text-gray-400 rounded-lg text-xs font-semibold cursor-not-allowed" title="Menunggu upload bukti serah terima">
+                                        <svg class="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                        2. Bukti Penyerahan
+                                    </span>
+                                    }
+
+                                    <!-- 3. Bukti Pengembalian -->
+                                    @if(hasBorrow)
+                                    {
+                                        @if(groupItems.Any(i => i.returned_quantity > 0 || (i.pending_return_quantity > 0 && i.is_return_draft == 0)))
+                                        {
+                                        <a href="/api/pdf/receipt-return/@groupId" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 rounded-lg text-xs font-semibold transition shadow-sm">
+                                            <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                            3. Bukti Pengembalian
+                                        </a>
+                                        }
+                                        else
+                                        {
+                                        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100/50 border border-gray-200/50 text-gray-400 rounded-lg text-xs font-semibold cursor-not-allowed" title="Menunggu pengembalian barang">
+                                            <svg class="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                            3. Bukti Pengembalian
+                                        </span>
+                                        }
+                                    }
+                                </div>
+                                
+                                @if(status == "WAITING_HANDOVER" && !string.IsNullOrEmpty(firstItem.rejection_reason))
                                 {
-                                    <div class="px-5 py-4 border-b border-[#e5e3dc] flex flex-col sm:flex-row sm:items-center gap-3">
-                                        <span class="text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880]">Dokumen Pembukuan (PDF):</span>
-                                        <div class="flex flex-wrap items-center gap-2">
-                                            <a href="/Receipt/Pengajuan/@firstItem.id" target="_blank" @onclick:stopPropagation="true" class="inline-flex items-center gap-2 px-3 py-2 bg-white border border-[#e5e3dc] text-[#3a3835] hover:border-[#1a1a1a] rounded-lg text-xs font-semibold transition">
-                                                <svg class="w-4 h-4 text-[#8a8880]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                                                1. Bukti Pengajuan
-                                            </a>
-                                            @if (handoverDone)
+                                    <div class="p-4 bg-[#fef0f0] border-b border-[#f8c0c0] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                                        <div class="flex items-start gap-3">
+                                            <div class="p-2 bg-[#fde2e2] text-[#d94040] rounded-lg shrink-0 mt-0.5 animate-pulse">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                            </div>
+                                            <div>
+                                                <h4 class="text-sm font-extrabold text-[#d94040]">Bukti Serah Terima Ditolak Admin</h4>
+                                                <p class="text-xs text-[#d94040] font-medium mt-0.5">Alasan: <span class="italic">"@firstItem.rejection_reason"</span></p>
+                                            </div>
+                                        </div>
+                                        <button type="button" @onclick='() => OpenHandoverModal(borrowItemsOnly)' class="inline-flex items-center gap-1.5 px-4 py-2 bg-[#d94040] hover:bg-[#b83535] text-white text-xs font-bold rounded-lg transition shadow-sm">
+                                            Upload Ulang Bukti
+                                        </button>
+                                    </div>
+                                }
+                                
+                                @if(!string.IsNullOrEmpty(firstItem.handover_photo))
+                                {
+                                    <div class="p-4 bg-white border-b border-[#e5e3dc] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                        <div class="flex items-start gap-4">
+                                            @if (firstItem.handover_photo.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
                                             {
-                                                <a href="/Receipt/Penyerahan/@firstItem.id" target="_blank" @onclick:stopPropagation="true" class="inline-flex items-center gap-2 px-3 py-2 bg-white border border-[#e5e3dc] text-[#3a3835] hover:border-[#1a1a1a] rounded-lg text-xs font-semibold transition">
-                                                    <svg class="w-4 h-4 text-[#8a8880]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                                                    2. Bukti Penyerahan
+                                                <a href="/storage/@firstItem.handover_photo" target="_blank" class="block w-20 h-20 rounded border border-gray-200 overflow-hidden bg-red-50 flex items-center justify-center flex-shrink-0 hover:opacity-95 transition cursor-pointer" title="Klik untuk membuka dokumen">
+                                                    <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
                                                 </a>
                                             }
                                             else
                                             {
-                                                <span class="inline-flex items-center gap-2 px-3 py-2 bg-[#f0ede5] border border-[#e5e3dc] text-[#b5b2aa] rounded-lg text-xs font-semibold cursor-not-allowed" title="Tersedia setelah serah terima barang">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                                                    2. Bukti Penyerahan
-                                                </span>
+                                                <a href="/storage/@firstItem.handover_photo" data-image-popup class="block w-20 h-20 rounded border border-gray-200 overflow-hidden bg-gray-50 flex-shrink-0 hover:opacity-95 transition cursor-pointer" title="Klik untuk memperbesar foto bukti">
+                                                    <img src="/storage/@firstItem.handover_photo" alt="Bukti Serah Terima" class="w-full h-full object-cover">
+                                                </a>
                                             }
+                                            <div>
+                                                <h4 class="text-xs font-bold text-gray-900 mb-1 tracking-wider uppercase">Bukti Serah Terima</h4>
+                                                <p class="text-xs text-gray-600 leading-relaxed max-w-xl italic">"@firstItem.handover_notes"</p>
+                                            </div>
                                         </div>
                                     </div>
                                 }
+
                                 <div class="overflow-x-auto">
                                     <table class="w-full text-left border-collapse">
                                         <thead>
@@ -390,6 +461,56 @@
     </div>
 </div>
 
+@if (IsHandoverModalOpen)
+{
+    <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" @onclick="CloseHandoverModal">
+        <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden" @onclick:stopPropagation="true">
+            <div class="p-6 border-b border-[#e5e3dc] flex justify-between items-center bg-[#faf9f5]">
+                <h3 class="font-syne text-lg font-bold text-[#1a1a1a]">Upload Bukti Serah Terima</h3>
+                <button type="button" @onclick="CloseHandoverModal" class="text-gray-400 hover:text-gray-600 transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            
+            <div class="p-6 space-y-4">
+                <div class="p-4 bg-blue-50 text-blue-700 text-xs rounded-lg border border-blue-100 flex items-start gap-3">
+                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <p>Mohon pastikan barang sudah diterima oleh pemohon (atau diserahkan oleh tim) dan buktinya difoto bersama pemohon atau barangnya langsung.</p>
+                </div>
+
+                <div>
+                  <div>
+                      <label class="block text-xs font-bold text-[#8a8880] uppercase tracking-wider mb-2">Foto/PDF Bukti Serah Terima <span class="text-[#d94040]">*</span></label>
+                      <InputFile OnChange="HandleHandoverFileSelected" accept="image/jpg,image/jpeg,image/png,image/webp,application/pdf" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-[#f5f4f0] file:text-[#1a1a1a] hover:file:bg-[#e5e3dc] transition cursor-pointer border border-[#e5e3dc] rounded-lg" required />
+                      <p class="text-[10px] text-gray-500 mt-1">Format: JPG, PNG, WEBP, PDF. Maks 4MB.</p>
+                      @if (HandoverFile != null && HandoverFile.ContentType == "application/pdf")
+                      {
+                          <div class="mt-2 p-2 bg-[#f0ede5] border border-[#e5e3dc] rounded-lg flex items-center gap-2">
+                              <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                              <span class="text-xs font-semibold text-[#1a1a1a] truncate">@HandoverFile.Name</span>
+                          </div>
+                      }
+                  </div></div>
+
+                <div>
+                    <label class="block text-xs font-bold text-[#8a8880] uppercase tracking-wider mb-2">Catatan Tambahan</label>
+                    <textarea @bind="HandoverNotes" class="w-full p-3 text-sm bg-white border border-[#e5e3dc] rounded-lg focus:border-[#e8a000] focus:ring-1 focus:ring-[#e8a000] outline-none h-24 transition-shadow" placeholder="Misal: Diserahkan kepada Bapak Budi dari Divisi IT..."></textarea>
+                </div>
+            </div>
+
+            <div class="p-6 border-t border-[#e5e3dc] bg-white flex justify-end gap-3">
+                <button type="button" @onclick="CloseHandoverModal" class="px-5 py-2.5 text-sm font-bold text-gray-600 hover:text-gray-900 bg-white border border-gray-200 hover:bg-gray-50 rounded-xl transition">Batal</button>
+                <button type="button" @onclick="SubmitHandover" disabled="@IsSubmitting" class="px-6 py-2.5 bg-[#e8a000] hover:bg-[#d49300] active:scale-[0.98] text-[#1a1a1a] text-sm font-bold tracking-wider rounded-xl transition shadow-sm disabled:opacity-50 inline-flex items-center gap-2">
+                    @if(IsSubmitting) {
+                        <span class="animate-spin inline-block w-4 h-4 border-2 border-[#1a1a1a] border-t-transparent rounded-full"></span>
+                    }
+                    Upload Bukti
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
 @if (IsReturnModalOpen && ReturnTransaction != null)
 {
     <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" @onclick="CloseReturnModal">
@@ -435,9 +556,17 @@
                 @if (!IsForceReturn)
                 {
                     <div>
-                        <label class="block text-xs font-bold text-[#8a8880] uppercase tracking-wider mb-2">Foto Bukti</label>
-                        <InputFile OnChange="HandleFileSelected" accept="image/*" class="w-full p-2 border border-[#e5e3dc] rounded-lg text-sm" />
-                    </div>
+                      <div>
+                          <label class="block text-xs font-bold text-[#8a8880] uppercase tracking-wider mb-2">Foto/PDF Bukti</label>
+                          <InputFile OnChange="HandleFileSelected" accept="image/jpg,image/jpeg,image/png,image/webp,application/pdf" class="w-full p-2 border border-[#e5e3dc] rounded-lg text-sm" />
+                          @if (SelectedFile != null && SelectedFile.ContentType == "application/pdf")
+                          {
+                              <div class="mt-2 p-2 bg-[#f0ede5] border border-[#e5e3dc] rounded-lg flex items-center gap-2">
+                                  <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                                  <span class="text-xs font-semibold text-[#1a1a1a] truncate">@SelectedFile.Name</span>
+                              </div>
+                          }
+                      </div></div>
                 }
             </div>
 
@@ -466,9 +595,17 @@
                 <p class="text-sm text-[#8a8880]">Unggah foto bukti barang telah diserahkan kepada peminjam. Setelah ini status berubah menjadi <span class="font-bold text-[#1a1a1a]">Sedang Dipinjam</span> dan barang dapat dikembalikan.</p>
 
                 <div>
-                    <label class="block text-xs font-bold text-[#8a8880] uppercase tracking-wider mb-2">Foto Bukti Serah Terima</label>
-                    <InputFile OnChange="HandleHandoverFileSelected" accept="image/*" class="w-full p-2 border border-[#e5e3dc] rounded-lg text-sm" />
-                </div>
+                  <div>
+                      <label class="block text-xs font-bold text-[#8a8880] uppercase tracking-wider mb-2">Foto/PDF Bukti Serah Terima</label>
+                      <InputFile OnChange="HandleHandoverFileSelected" accept="image/jpg,image/jpeg,image/png,image/webp,application/pdf" class="w-full p-2 border border-[#e5e3dc] rounded-lg text-sm" />
+                      @if (HandoverFile != null && HandoverFile.ContentType == "application/pdf")
+                      {
+                          <div class="mt-2 p-2 bg-[#f0ede5] border border-[#e5e3dc] rounded-lg flex items-center gap-2">
+                              <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                              <span class="text-xs font-semibold text-[#1a1a1a] truncate">@HandoverFile.Name</span>
+                          </div>
+                      }
+                  </div></div>
 
                 <div>
                     <label class="block text-xs font-bold text-[#8a8880] uppercase tracking-wider mb-2">Catatan (opsional)</label>
@@ -505,15 +642,15 @@
 
     private bool IsReturnModalOpen = false;
     private bool IsForceReturn = false;
-    private bool IsSubmitting = false;
-    private Transaction? ReturnTransaction;
-    private UT_WMSDotnet.ViewModels.ReturnItemViewModel ReturnModel = new();
-    private Microsoft.AspNetCore.Components.Forms.IBrowserFile? SelectedFile;
-
     private bool IsHandoverModalOpen = false;
     private List<int> HandoverTransactionIds = new();
     private string? HandoverNotes;
     private Microsoft.AspNetCore.Components.Forms.IBrowserFile? HandoverFile;
+
+    private bool IsSubmitting = false;
+    private Transaction? ReturnTransaction;
+    private UT_WMSDotnet.ViewModels.ReturnItemViewModel ReturnModel = new();
+    private Microsoft.AspNetCore.Components.Forms.IBrowserFile? SelectedFile;
 
     protected override async Task OnInitializedAsync()
     {
@@ -640,6 +777,7 @@
         DateTo = null;
         await LoadData();
     }
+
 
     private void OpenReturnModal(Transaction transaction, bool force)
     {
@@ -804,29 +942,33 @@
     {
         var firstItem = groupItems.First();
         var steps = new List<TrackingStep>();
-        steps.Add(new TrackingStep { Name = "Request", Status = "DONE" });
+        steps.Add(new TrackingStep { Name = "Pengajuan", Status = "DONE" });
 
         if (firstItem.request_type == "GIVEAWAY")
         {
             if (firstItem.status == "PENDING") {
                 steps.Add(new TrackingStep { Name = "Approval Admin", Status = "ACTIVE" });
-                steps.Add(new TrackingStep { Name = "Selesai", Status = "PENDING" });
+                steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "PENDING" });
             } else if (firstItem.status == "REVISION") {
                 steps.Add(new TrackingStep { Name = "Approval Admin", Status = "WARNING" });
-                steps.Add(new TrackingStep { Name = "Selesai", Status = "PENDING" });
-            } else if (firstItem.status == "PENDING_MANAGER") { // Fallback for old data
+                steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "PENDING" });
+            } else if (firstItem.status == "PENDING_MANAGER") { 
                 steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE" });
-                steps.Add(new TrackingStep { Name = "Selesai", Status = "PENDING" });
+                steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "PENDING" });
+            } else if (firstItem.status == "WAITING_HANDOVER" || firstItem.status == "WAITING_ADMIN_HANDOVER") {
+                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE" });
+                steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "ACTIVE" });
             } else if (firstItem.status == "APPROVED") {
                 steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE" });
-                steps.Add(new TrackingStep { Name = "Selesai", Status = "DONE" });
+                steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "DONE" });
+            } else if (firstItem.status == "REJECTED") {
+                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "WARNING" });
             }
         }
         else // BORROW
         {
             int totalQty = groupItems.Sum(i => i.quantity ?? 0);
             int totalReturned = groupItems.Sum(i => i.returned_quantity ?? 0);
-            int totalPendingReturn = groupItems.Sum(i => i.pending_return_quantity ?? 0);
 
             if (firstItem.status == "PENDING") {
                 steps.Add(new TrackingStep { Name = "Approval Admin", Status = "ACTIVE" });
@@ -849,6 +991,8 @@
                 } else {
                     steps.Add(new TrackingStep { Name = "Pengembalian", Status = "ACTIVE" });
                 }
+            } else if (firstItem.status == "REJECTED") {
+                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "WARNING" });
             }
         }
         return steps;

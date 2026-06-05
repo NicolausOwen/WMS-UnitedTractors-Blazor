@@ -12,27 +12,28 @@
 
 <PageTitle>Transaction History</PageTitle>
 
-<div class="py-8 md:py-12 bg-[#f5f4f0] min-h-screen">
+<div class="py-8 md:py-12 bg-[#f5f4f0] min-h-screen font-sans">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight mb-6">
-            Stock History
-        </h2>
+        <div class="mb-6">
+            <h1 class="text-[1.6rem] font-bold text-[#1a1a1a] leading-none tracking-tight">Riwayat <span class="text-[#e8a000]">Transaksi</span></h1>
+            <div class="text-[0.72rem] font-medium text-[#a09e99] mt-1">@DateTime.Now.ToString("dddd, dd MMMM yyyy")</div>
+        </div>
 
-        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg border border-gray-100 mb-6">
-            <div class="p-6 text-gray-900">
+        <div class="bg-white rounded-xl border border-[#e5e3dc] overflow-hidden shadow-sm mb-8">
+            <div class="p-6">
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:items-end gap-4">
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">Start Date</label>
-                        <input type="date" @bind="StartDate" class="w-full rounded-md border-gray-300 shadow-sm focus:border-[#e8a000] focus:ring-[#e8a000] sm:text-sm">
+                    <div class="flex-1 min-w-[150px]">
+                        <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Start Date</label>
+                        <input type="date" @bind="StartDate" class="block w-full px-3 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
                     </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">End Date</label>
-                        <input type="date" @bind="EndDate" class="w-full rounded-md border-gray-300 shadow-sm focus:border-[#e8a000] focus:ring-[#e8a000] sm:text-sm">
+                    <div class="flex-1 min-w-[150px]">
+                        <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">End Date</label>
+                        <input type="date" @bind="EndDate" class="block w-full px-3 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
                     </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">Filter Type</label>
-                        <select @bind="FilterType" @bind:after="OnFilterTypeChanged" class="w-full rounded-md border-gray-300 shadow-sm focus:border-[#e8a000] focus:ring-[#e8a000] sm:text-sm">
+                    <div class="min-w-[150px]">
+                        <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Filter Type</label>
+                        <select @bind="FilterType" @bind:after="OnFilterTypeChanged" class="block w-full px-3 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
                             <option value="">All Types</option>
                             <option value="IN">STOCK IN</option>
                             <option value="OUT">STOCK OUT</option>
@@ -40,29 +41,18 @@
                     </div>
                     @if (FilterType == "OUT")
                     {
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Request Type</label>
-                            <select @bind="FilterRequestType" @bind:after="OnFilterRequestTypeChanged" class="w-full rounded-md border-gray-300 shadow-sm focus:border-[#e8a000] focus:ring-[#e8a000] sm:text-sm">
+                        <div class="min-w-[150px]">
+                            <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Request Type</label>
+                            <select @bind="FilterRequestType" @bind:after="OnFilterRequestTypeChanged" class="block w-full px-3 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
                                 <option value="">All Request Types</option>
                                 <option value="GIVEAWAY">Diminta / Giveaway</option>
                                 <option value="BORROW">Dipinjam / Borrow</option>
                             </select>
                         </div>
                     }
-                    @if (FilterType == "OUT" && FilterRequestType == "BORROW")
-                    {
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Return Status</label>
-                            <select @bind="FilterIsReturnedStr" class="w-full rounded-md border-gray-300 shadow-sm focus:border-[#e8a000] focus:ring-[#e8a000] sm:text-sm">
-                                <option value="">All Statuses</option>
-                                <option value="true">Sudah Dikembalikan</option>
-                                <option value="false">Belum Dikembalikan</option>
-                            </select>
-                        </div>
-                    }
-                    <div class="sm:col-span-2 lg:col-span-1 flex items-end gap-2">
-                        <button type="button" @onclick="() => LoadData(1)" class="flex-1 lg:flex-none px-4 py-2.5 bg-[#1a1a1a] text-white text-sm font-semibold rounded-md shadow-sm hover:bg-gray-800 transition">Apply Filters</button>
-                        <button type="button" @onclick="ResetFilters" class="flex-1 lg:flex-none px-4 py-2.5 bg-white border border-gray-300 text-gray-700 text-sm font-semibold rounded-md shadow-sm hover:bg-gray-50 transition">Reset</button>
+                    <div class="flex gap-2">
+                        <button type="button" @onclick="() => LoadData(1)" class="px-6 py-2 bg-[#1a1a1a] text-white text-sm font-bold rounded-lg hover:bg-[#333] transition">Apply</button>
+                        <button type="button" @onclick="ResetFilters" class="px-6 py-2 bg-white border border-[#e5e3dc] text-gray-700 text-sm font-bold rounded-lg hover:bg-gray-50 transition">Reset</button>
                     </div>
                 </div>
             </div>
@@ -70,306 +60,184 @@
 
         @if (!string.IsNullOrEmpty(SuccessMessage))
         {
-            <div class="mb-4 flex items-center gap-3 bg-[#eef9f0] border border-[#b8e8c0] text-[#1a7a30] px-4 py-3 rounded-lg text-sm font-semibold">
+            <div class="mb-6 flex items-center gap-3 bg-[#eef9f0] border border-[#b8e8c0] text-[#1a7a30] px-4 py-3 rounded-lg text-sm font-semibold">
                 <svg class="w-4 h-4 shrink-0 text-[#1a7a30]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                 @SuccessMessage
             </div>
         }
         @if (!string.IsNullOrEmpty(ErrorMessage))
         {
-            <div class="mb-4 flex items-center gap-3 bg-[#fef0f0] border border-[#f8c0c0] text-[#d94040] px-4 py-3 rounded-lg text-sm font-semibold">
-                <svg class="w-4 h-4 shrink-0 text-[#d94040]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <div class="mb-6 flex items-center gap-3 bg-[#fef0f0] border border-[#f8c0c0] text-[#d94040] px-4 py-3 rounded-lg text-sm font-semibold">
+                <svg class="w-4 h-4 shrink-0 text-[#d94040]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                 @ErrorMessage
             </div>
         }
 
         @if (Transactions == null || !Transactions.Any())
         {
-            <div class="bg-white p-12 rounded-lg border border-gray-200 text-center shadow-sm">
-                <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
-                <p class="text-sm font-medium text-gray-500">No transaction history found.</p>
-                <p class="text-xs text-gray-400 mt-1">Try adjusting your filters or date range.</p>
+            <div class="bg-white p-16 rounded-xl border border-[#e5e3dc] text-center shadow-sm">
+                <svg class="w-16 h-16 text-[#d1d0cb] mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                <p class="text-base font-bold text-[#8a8880] tracking-wide">Tidak ada riwayat transaksi.</p>
+                <p class="text-xs text-[#a09e99] mt-1">Coba sesuaikan filter atau rentang tanggal Anda.</p>
             </div>
         }
         else
         {
-            <div class="space-y-4">
+            <div class="space-y-6">
                 @foreach (var group in GroupedTransactions)
                 {
                     var items = group.Value;
                     var firstItem = items.First();
                     bool isExpanded = ExpandedGroups.Contains(group.Key);
+                    var groupId = group.Key;
                     
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                        <!-- Accordion Header -->
-                        <div @onclick="() => ToggleGroup(group.Key)" class="flex items-center justify-between p-5 cursor-pointer hover:bg-gray-50 transition select-none">
-                            <div>
-                                <div class="flex items-center gap-3 mb-1">
-                                    <span class="text-xs font-bold px-2 py-0.5 rounded-full @(firstItem.type == "IN" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700")">
-                                        @(firstItem.type == "IN" ? "STOCK IN" : "STOCK OUT")
-                                    </span>
-                                    <span class="text-sm font-bold text-gray-900">
-                                        @(firstItem.created_at.ToString("dd MMM yyyy, HH:mm"))
-                                    </span>
-                                </div>
-                                <div class="text-xs text-gray-500 font-medium">
-                                    Submitted by: <span class="text-gray-700">@(firstItem.Requester?.name)</span>
-                                    @if (firstItem.type == "OUT" && !string.IsNullOrEmpty(firstItem.event_name)) {
-                                        <span class="mx-1">•</span> <span>Event: <span class="text-gray-700">@firstItem.event_name</span></span>
+                    <div class="bg-white rounded-[1.5rem] shadow-sm border border-[#e5e3dc] overflow-hidden transition-all duration-200">
+                        <!-- Header Accordion -->
+                        <div @onclick="() => ToggleGroup(groupId)" class="flex flex-col lg:flex-row lg:items-center justify-between p-5 lg:px-8 cursor-pointer hover:bg-[#faf9f5] transition select-none gap-4">
+                            <div class="flex items-center gap-4 flex-1 min-w-0">
+                                <div class="w-12 h-12 rounded-full @(firstItem.type == "IN" ? "bg-blue-50 border-blue-100 text-blue-600" : "bg-purple-50 border-purple-100 text-purple-600") border flex items-center justify-center shrink-0 shadow-sm">
+                                    @if(firstItem.type == "IN") {
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 4v16m0 0l-4-4m4 4l4-4"/></svg>
+                                    } else {
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20V4m0 0l-4 4m4-4l4 4"/></svg>
                                     }
                                 </div>
+                                <div class="min-w-0">
+                                    <div class="flex items-center gap-3 mb-1">
+                                        <h3 class="font-syne font-bold text-[#1a1a1a] text-base">@(firstItem.type == "IN" ? "Penambahan Stok" : (string.IsNullOrEmpty(firstItem.event_name) ? "Pengeluaran Barang" : firstItem.event_name))</h3>
+                                        <span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-[#f5f4f0] text-[#8a8780] border border-[#e5e3dc] whitespace-nowrap">@items.Count Items</span>
+                                    </div>
+                                    <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[#8a8880] font-medium">
+                                        <div class="flex items-center gap-1.5">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                            @firstItem.created_at.ToString("dd MMM yyyy, HH:mm")
+                                        </div>
+                                        <div class="flex items-center gap-1.5">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0M12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                            @(firstItem.Requester?.name ?? "System")
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="text-gray-400">
-                                <svg class="w-5 h-5 transform transition-transform duration-200 @(isExpanded ? "rotate-180" : "")" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+
+                            <div class="flex items-center justify-between lg:justify-end gap-4 shrink-0 border-t lg:border-t-0 pt-3 lg:pt-0 border-gray-100">
+                                @if (firstItem.type == "OUT")
+                                {
+                                    <a href="/api/pdf/receipt/@groupId" target="_blank" @onclick:stopPropagation="true" class="inline-flex items-center gap-1.5 px-4 py-2 bg-white border border-[#e5e3dc] text-gray-700 hover:bg-[#faf9f5] rounded-lg text-xs font-bold transition shadow-sm active:scale-95">
+                                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                                        Struk PDF
+                                    </a>
+                                }
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-[#f0ede5] transition">
+                                    <svg class="w-5 h-5 transform transition-transform duration-200 @(isExpanded ? "rotate-180" : "")" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                </div>
                             </div>
                         </div>
 
-                        <!-- Accordion Content -->
+                        <!-- Body Content -->
                         @if (isExpanded)
                         {
-                            <div class="border-t border-gray-200">
-                                @if (firstItem.type == "OUT") {
-                                <div class="p-4 bg-white border-b border-gray-100">
-                                    <h4 class="text-[0.65rem] font-bold uppercase tracking-wider text-gray-400 mb-3">Form Details</h4>
-                                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                            <div class="border-t border-[#f0ede5] bg-[#faf9f5]">
+                                @if (firstItem.type == "OUT")
+                                {
+                                    <div class="p-4 bg-white border-b border-[#e5e3dc] grid grid-cols-2 sm:grid-cols-4 gap-6 px-8">
                                         <div>
-                                            <div class="text-[0.65rem] text-gray-500 font-bold uppercase tracking-wider mb-1">Applicant</div>
-                                            <div class="text-sm font-medium text-gray-900">@(firstItem.applicant_name ?? "-")</div>
-                                            <div class="text-xs text-gray-500">NRP: @(firstItem.applicant_nrp ?? "-")</div>
+                                            <div class="text-[0.62rem] text-[#8a8880] font-bold uppercase tracking-wider mb-1">Nama Pemohon</div>
+                                            <div class="text-sm font-bold text-[#1a1a1a]">@(firstItem.applicant_name ?? "-")</div>
+                                            <div class="text-[10px] text-[#8a8880]">NRP: @(firstItem.applicant_nrp ?? "-")</div>
                                         </div>
                                         <div>
-                                            <div class="text-[0.65rem] text-gray-500 font-bold uppercase tracking-wider mb-1">Event / Program</div>
-                                            <div class="text-sm font-medium text-gray-900">@(firstItem.event_name ?? "-")</div>
-                                            <div class="text-xs text-gray-500">@(firstItem.event_date?.ToString("MMM dd, yyyy") ?? "-")</div>
+                                            <div class="text-[0.62rem] text-[#8a8880] font-bold uppercase tracking-wider mb-1">Divisi</div>
+                                            <div class="text-sm font-bold text-[#1a1a1a]">@(firstItem.Division?.name ?? "-")</div>
                                         </div>
                                         <div>
-                                            <div class="text-[0.65rem] text-gray-500 font-bold uppercase tracking-wider mb-1">Division</div>
-                                            <div class="text-sm font-medium text-gray-900">@(firstItem.Division?.name ?? "-")</div>
+                                            <div class="text-[0.62rem] text-[#8a8880] font-bold uppercase tracking-wider mb-1">Event / Keperluan</div>
+                                            <div class="text-sm font-bold text-[#1a1a1a]">@(firstItem.event_name ?? "-")</div>
+                                            <div class="text-[10px] text-[#8a8880]">@(firstItem.event_date?.ToString("dd MMM yyyy") ?? "-")</div>
                                         </div>
                                         <div>
-                                            <div class="text-[0.65rem] text-gray-500 font-bold uppercase tracking-wider mb-1">Documentation</div>
-                                            <div class="text-sm font-medium text-[#e8a000]">
-                                                @if (!string.IsNullOrEmpty(firstItem.documentation_link)) {
-                                                    <a href="@firstItem.documentation_link" target="_blank" class="hover:underline flex items-center gap-1">
-                                                        Link
-                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-                                                    </a>
-                                                } else {
-                                                    <span>-</span>
-                                                }
-                                            </div>
+                                            <div class="text-[0.62rem] text-[#8a8880] font-bold uppercase tracking-wider mb-1">Catatan</div>
+                                            <div class="text-xs text-[#5a5855] italic truncate" title="@firstItem.notes">@(firstItem.notes ?? "-")</div>
                                         </div>
                                     </div>
-                                </div>
                                 }
 
-                                <!-- Item List -->
-                                <div class="bg-gray-50 p-4">
-                                    <div class="flex justify-between items-center mb-3">
-                                        <h4 class="text-[0.65rem] font-bold uppercase tracking-wider text-gray-400">Items Requested</h4>
-                                        <a href="/Receipt/@(firstItem.type == "IN" ? "Return" : "Transaction")/@firstItem.id" target="_blank" class="text-xs font-bold text-[#1a1a1a] bg-white border border-[#e5e3dc] rounded px-3 py-1 hover:bg-gray-100 flex items-center gap-1">
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
-                                            Cetak Struk / PDF
-                                        </a>
-                                    </div>
-                                    
-                                    <!-- Desktop View Table -->
-                                    <div class="hidden md:block overflow-x-auto">
-                                        <table class="w-full text-left">
-                                            <thead>
-                                                <tr class="border-b border-gray-200">
-                                                    <th class="pb-2 text-[0.65rem] font-bold text-gray-500 uppercase tracking-wider">Product</th>
-                                                    <th class="pb-2 text-[0.65rem] font-bold text-gray-500 uppercase tracking-wider text-center">Qty</th>
-                                                    <th class="pb-2 text-[0.65rem] font-bold text-gray-500 uppercase tracking-wider">Status</th>
-                                                    <th class="pb-2 text-[0.65rem] font-bold text-gray-500 uppercase tracking-wider">Return Status</th>
-                                                    <th class="pb-2 text-[0.65rem] font-bold text-gray-500 uppercase tracking-wider text-right">Notes</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody class="divide-y divide-gray-100">
-                                                @foreach (var item in items) {
-                                                <tr class="bg-white">
-                                                    <td class="py-3 px-3">
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-left whitespace-nowrap">
+                                        <thead class="text-gray-500 text-[0.62rem] uppercase tracking-wider border-b border-[#e5e3dc] bg-white/50">
+                                            <tr>
+                                                <th class="px-6 py-3 font-bold pl-8">Product Details</th>
+                                                <th class="px-4 py-3 font-bold">Qty / Stok</th>
+                                                <th class="px-4 py-3 font-bold">Type</th>
+                                                <th class="px-4 py-3 font-bold">Reviewer</th>
+                                                <th class="px-4 py-3 font-bold">Status</th>
+                                                <th class="px-4 py-3 font-bold text-right pr-8">Return Info</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-[#f0ede5]">
+                                            @foreach (var item in items)
+                                            {
+                                                <tr class="bg-white hover:bg-gray-50 transition-colors">
+                                                    <td class="p-4 pl-8">
                                                         <div class="flex items-center gap-3">
-                                                            @if (!string.IsNullOrEmpty(item.Product?.image)) {
-                                                                <img src="@($"/{item.Product.image}")" class="w-8 h-8 rounded object-cover border border-gray-200" />
-                                                            }
+                                                            <div class="w-10 h-10 rounded border border-[#e5e3dc] overflow-hidden shrink-0 bg-white">
+                                                                <img src="/@(item.Product?.image ?? "img/logo.svg")" class="w-full h-full object-cover">
+                                                            </div>
                                                             <div>
-                                                                <div class="text-sm font-semibold text-gray-900">
-                                                                    @(item.Product?.name)
-                                                                    @if(item.ProductVariant != null) {
-                                                                        var variantTexts = new List<string>();
-                                                                        if (!string.IsNullOrEmpty(item.ProductVariant.color)) variantTexts.Add(item.ProductVariant.color);
-                                                                        if (!string.IsNullOrEmpty(item.ProductVariant.size)) variantTexts.Add(item.ProductVariant.size);
-                                                                        if (variantTexts.Any()) {
-                                                                            <span class="text-xs text-gray-500 font-normal ml-1">(@string.Join(", ", variantTexts))</span>
-                                                                        }
-                                                                    }
-                                                                </div>
-                                                                <div class="text-[10px] text-gray-500">@(item.Product?.sku)</div>
+                                                                <div class="text-xs font-bold text-[#1a1a1a]">@(item.Product?.name)</div>
+                                                                <code class="text-[9px] text-[#8a8880] bg-[#f5f4f0] px-1.5 py-0.5 rounded">@(item.Product?.sku)</code>
                                                             </div>
                                                         </div>
                                                     </td>
-                                                    <td class="py-3 px-3 text-center">
-                                                                 <div class="text-sm font-bold text-gray-900">@(item.quantity ?? 0)</div>
+                                                    <td class="p-4">
+                                                        <div class="text-sm font-bold text-[#1a1a1a]">@item.quantity</div>
+                                                        <div class="text-[10px] text-[#8a8880]">Stock: @(item.Product?.current_stock)</div>
                                                     </td>
-                                                    <td class="py-3 px-3">
-                                                        @if (item.status == "PENDING") {
-                                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-[#fef3c7] text-[#92400e] border border-[#fde68a]">PENDING</span>
+                                                    <td class="p-4">
+                                                        @if (item.request_type == "BORROW") {
+                                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#eef9f0] text-[#1a7a30] border border-[#b8e8c0]">BORROW</span>
+                                                        } else if (item.request_type == "GIVEAWAY") {
+                                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#e0f2fe] text-[#1a6b8a] border border-[#bae6fd]">GIVEAWAY</span>
+                                                        } else {
+                                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-50 text-blue-600 border border-blue-100">STOCK IN</span>
+                                                        }
+                                                    </td>
+                                                    <td class="p-4">
+                                                        @if (item.Approver != null) {
+                                                            <div class="text-xs font-bold text-[#1a1a1a]">@item.Approver.name</div>
+                                                            <div class="text-[9px] text-[#8a8880]">@item.Approver.role</div>
+                                                        } else { <span class="text-gray-300">-</span> }
+                                                    </td>
+                                                    <td class="p-4">
+                                                        @if (item.status == "PENDING" || item.status == "PENDING_MANAGER") {
+                                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-[#fef3c7] text-[#92400e] border border-[#fde68a]">WAITING</span>
                                                         } else if (item.status == "APPROVED") {
                                                             <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-[#eef9f0] text-[#1a7a30] border border-[#b8e8c0]">APPROVED</span>
-                                                            <div class="text-[10px] text-gray-500 mt-1">By @(item.Approver?.name)</div>
                                                         } else if (item.status == "REVISION") {
-                                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-[#e0e7ff] text-[#4338ca] border border-[#c7d2fe]">REVISION</span>
-                                                            @if (!string.IsNullOrEmpty(item.rejection_reason)) {
-                                                                <div class="text-[10px] text-[#4338ca] mt-1 italic">"@item.rejection_reason"</div>
-                                                            }
-                                                            <div class="mt-2 flex flex-col items-start sm:flex-row gap-1.5 sm:items-end">
-                                                                <button type="button" @onclick="() => OpenRevisionModal(item)" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-amber-500 active:scale-95 rounded-md shadow-sm cursor-pointer">
-                                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                                                                    Revise
-                                                                </button>
-                                                                <button type="button" @onclick="() => CancelRevision(item.id)" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-red-600 bg-red-50 rounded-md border border-red-200 shadow-sm cursor-pointer">
-                                                                    Cancel
-                                                                </button>
+                                                            <div class="flex flex-col gap-2">
+                                                                <span class="w-max inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-[#e0f2fe] text-[#1a6b8a] border border-[#bae6fd]">REVISION</span>
+                                                                <button @onclick="() => OpenRevisionModal(item)" class="text-[10px] font-bold bg-[#e8a000] text-[#1a1a1a] px-2.5 py-1 rounded shadow-sm hover:bg-[#d49300]">Revise Now</button>
                                                             </div>
                                                         } else {
                                                             <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-[#fef0f0] text-[#d94040] border border-[#f8c0c0]">REJECTED</span>
-                                                            @if (!string.IsNullOrEmpty(item.rejection_reason)) {
-                                                                <div class="text-[10px] text-red-500 mt-1 italic">"@item.rejection_reason"</div>
-                                                            }
                                                         }
                                                     </td>
-                                                    <td class="py-3 px-3">
-                                                        @if (item.type == "OUT" && item.status == "APPROVED") {
-                                                            if (item.request_type == "GIVEAWAY") {
-                                                                <span class="text-xs font-semibold text-[#8a8880] italic">Given Away (No return)</span>
+                                                    <td class="p-4 text-right pr-8">
+                                                        @if (item.request_type == "BORROW" && item.status == "APPROVED")
+                                                        {
+                                                            if (item.returned_quantity >= item.quantity) {
+                                                                <span class="text-[10px] font-bold text-emerald-600">Full Returned</span>
                                                             } else {
-                                                                 int remaining = (item.quantity ?? 0) - (item.returned_quantity ?? 0);
-                                                                if (remaining <= 0) {
-                                                                    <span class="inline-flex items-center gap-1 text-xs font-bold text-[#1a7a30]">
-                                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                                                        Returned Fully
-                                                                    </span>
-                                                                    @if (!string.IsNullOrEmpty(item.return_photo) && item.return_photo != "forced-by-admin") {
-                                                                        <div class="mt-1">
-                                                                            <a href="@($"/{item.return_photo}")" target="_blank" class="inline-flex items-center gap-1 text-[10px] font-bold text-[#1a6b8a] hover:underline">
-                                                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                                                                                View Proof
-                                                                            </a>
-                                                                        </div>
-                                                                    }
-                                                                } else {
-                                                                    <span class="text-xs font-semibold text-gray-600">
-                                                                        Returned: @(item.returned_quantity)/@(item.quantity)
-                                                                    </span>
-                                                                    if (item.is_return_draft != 0 && item.pending_return_quantity > 0) {
-                                                                        <div class="text-[10px] font-bold text-orange-600 mt-1">Pending approval: @item.pending_return_quantity</div>
-                                                                    }
-                                                                }
+                                                                <span class="text-[10px] font-bold text-amber-600">Pending Return</span>
+                                                                <div class="text-[9px] text-[#8a8880]">@item.returned_quantity / @item.quantity</div>
                                                             }
-                                                        } else {
-                                                            <span class="text-gray-300 text-xs">-</span>
                                                         }
-                                                    </td>
-                                                    <td class="py-3 px-3 text-right text-xs text-gray-500 space-y-1">
-                                                        @if (!string.IsNullOrEmpty(item.notes)) { <div><span class="font-bold text-gray-400">User:</span> @item.notes</div> }
-                                                        @if (!string.IsNullOrEmpty(item.admin_notes)) { <div><span class="font-bold text-[#e8a000]">Admin:</span> @item.admin_notes</div> }
-                                                        @if (!string.IsNullOrEmpty(item.manager_notes)) { <div><span class="font-bold text-[#e8a000]">Manager:</span> @item.manager_notes</div> }
-                                                        @if (string.IsNullOrEmpty(item.notes) && string.IsNullOrEmpty(item.admin_notes) && string.IsNullOrEmpty(item.manager_notes)) { <span>-</span> }
+                                                        else { <span class="text-gray-300">-</span> }
                                                     </td>
                                                 </tr>
-                                                }
-                                            </tbody>
-                                        </table>
-                                    </div>
-
-                                    <!-- Mobile View Card List -->
-                                    <div class="block md:hidden space-y-3">
-                                        @foreach (var item in items) {
-                                            <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm space-y-3">
-                                                <div class="flex items-center gap-3">
-                                                    @if (!string.IsNullOrEmpty(item.Product?.image)) {
-                                                        <img src="@($"/{item.Product.image}")" class="w-10 h-10 rounded object-cover border border-gray-200" />
-                                                    }
-                                                    <div>
-                                                        <div class="text-sm font-semibold text-gray-900">
-                                                            @(item.Product?.name)
-                                                            @if(item.ProductVariant != null) {
-                                                                var variantTexts = new List<string>();
-                                                                if (!string.IsNullOrEmpty(item.ProductVariant.color)) variantTexts.Add(item.ProductVariant.color);
-                                                                if (!string.IsNullOrEmpty(item.ProductVariant.size)) variantTexts.Add(item.ProductVariant.size);
-                                                                if (variantTexts.Any()) {
-                                                                    <span class="text-xs text-gray-500 font-normal ml-1">(@string.Join(", ", variantTexts))</span>
-                                                                }
-                                                            }
-                                                        </div>
-                                                        <div class="text-[10px] text-gray-500">@(item.Product?.sku)</div>
-                                                    </div>
-                                                </div>
-                                                <div class="grid grid-cols-2 gap-2 pt-2 border-t border-gray-100 text-xs">
-                                                    <div>
-                                                        <span class="text-gray-400 font-medium">Qty:</span>
-                                                                 <span class="font-bold text-gray-900 ml-1">@(item.quantity ?? 0)</span>
-                                                    </div>
-                                                    <div>
-                                                        <span class="text-gray-400 font-medium">Status:</span>
-                                                        <span class="ml-1">
-                                                            @if (item.status == "PENDING") {
-                                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-[#fef3c7] text-[#92400e] border border-[#fde68a]">PENDING</span>
-                                                            } else if (item.status == "APPROVED") {
-                                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-[#eef9f0] text-[#1a7a30] border border-[#b8e8c0]">APPROVED</span>
-                                                            } else if (item.status == "REVISION") {
-                                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-[#e0e7ff] text-[#4338ca] border border-[#c7d2fe]">REVISION</span>
-                                                                <div class="mt-2 flex gap-1.5 items-end">
-                                                                    <button type="button" @onclick="() => OpenRevisionModal(item)" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-amber-500 active:scale-95 rounded-md shadow-sm cursor-pointer">
-                                                                        Revise
-                                                                    </button>
-                                                                    <button type="button" @onclick="() => CancelRevision(item.id)" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-red-600 bg-red-50 rounded-md border border-red-200 shadow-sm cursor-pointer">
-                                                                        Cancel
-                                                                    </button>
-                                                                </div>
-                                                            } else {
-                                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-[#fef0f0] text-[#d94040] border border-[#f8c0c0]">REJECTED</span>
-                                                            }
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                                <div class="text-xs pt-1">
-                                                    <span class="text-gray-400 font-medium">Return Status:</span>
-                                                    <span class="ml-1">
-                                                        @if (item.type == "OUT" && item.status == "APPROVED") {
-                                                            if (item.request_type == "GIVEAWAY") {
-                                                                <span class="font-semibold text-[#8a8880] italic">Given Away (No return)</span>
-                                                            } else {
-                                                                 int remaining = (item.quantity ?? 0) - (item.returned_quantity ?? 0);
-                                                                if (remaining <= 0) {
-                                                                    <span class="font-bold text-[#1a7a30] block">Returned Fully</span>
-                                                                    @if (!string.IsNullOrEmpty(item.return_photo) && item.return_photo != "forced-by-admin") {
-                                                                        <a href="@($"/{item.return_photo}")" target="_blank" class="inline-flex items-center gap-1 text-[10px] font-bold text-[#1a6b8a] hover:underline mt-1">
-                                                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                                                                            View Proof
-                                                                        </a>
-                                                                    }
-                                                                } else {
-                                                                    <span class="font-semibold text-gray-600">Returned: @(item.returned_quantity)/@(item.quantity)</span>
-                                                                }
-                                                            }
-                                                        } else {
-                                                            <span class="text-gray-400">-</span>
-                                                        }
-                                                    </span>
-                                                </div>
-                                                @if (!string.IsNullOrEmpty(item.notes) || !string.IsNullOrEmpty(item.admin_notes) || !string.IsNullOrEmpty(item.manager_notes)) {
-                                                    <div class="text-xs pt-1 bg-gray-50 p-2 rounded border border-gray-100 italic text-gray-600 space-y-1">
-                                                        @if (!string.IsNullOrEmpty(item.notes)) { <div><span class="font-medium text-gray-400 not-italic">User:</span> @item.notes</div> }
-                                                        @if (!string.IsNullOrEmpty(item.admin_notes)) { <div><span class="font-medium text-[#e8a000] not-italic">Admin:</span> @item.admin_notes</div> }
-                                                        @if (!string.IsNullOrEmpty(item.manager_notes)) { <div><span class="font-medium text-[#e8a000] not-italic">Manager:</span> @item.manager_notes</div> }
-                                                    </div>
-                                                }
-                                            </div>
-                                        }
-                                    </div>
-
+                                            }
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         }
@@ -379,11 +247,15 @@
 
             @if (TotalPages > 1)
             {
-                <div class="mt-4 shadow-sm border border-[#e5e3dc] rounded-xl overflow-hidden bg-white flex items-center justify-between px-6 py-4">
-                    <span class="text-sm text-gray-500 font-medium">Showing page @CurrentPage of @TotalPages</span>
+                <div class="mt-8 flex items-center justify-between bg-white px-6 py-4 rounded-xl border border-[#e5e3dc] shadow-sm">
+                    <span class="text-xs font-bold text-[#8a8880]">Halaman <span class="text-[#1a1a1a]">@CurrentPage</span> dari @TotalPages</span>
                     <div class="flex gap-2">
-                        <button disabled="@(CurrentPage == 1)" @onclick="() => LoadData(CurrentPage - 1)" class="px-3 py-1.5 border border-[#e5e3dc] rounded-md text-sm font-semibold hover:bg-gray-50 disabled:opacity-50 transition">Previous</button>
-                        <button disabled="@(CurrentPage == TotalPages)" @onclick="() => LoadData(CurrentPage + 1)" class="px-3 py-1.5 border border-[#e5e3dc] rounded-md text-sm font-semibold hover:bg-gray-50 disabled:opacity-50 transition">Next</button>
+                        <button disabled="@(CurrentPage == 1)" @onclick="() => LoadData(CurrentPage - 1)" class="w-10 h-10 flex items-center justify-center rounded-lg border border-[#e5e3dc] hover:bg-[#faf9f5] transition disabled:opacity-30">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                        </button>
+                        <button disabled="@(CurrentPage == TotalPages)" @onclick="() => LoadData(CurrentPage + 1)" class="w-10 h-10 flex items-center justify-center rounded-lg border border-[#e5e3dc] hover:bg-[#faf9f5] transition disabled:opacity-30">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                        </button>
                     </div>
                 </div>
             }
@@ -393,121 +265,58 @@
 
 @if (ShowRevisionModal && RevisionItem != null)
 {
-    <!-- Revision Edit Modal -->
-    <div id="revisionModal" class="fixed inset-0 z-[80] flex" role="dialog" aria-modal="true">
-        <!-- Backdrop -->
-        <div class="fixed inset-0 bg-black/65 backdrop-blur-sm transition-opacity" @onclick="CloseRevisionModal"></div>
-
-        <!-- Modal Wrapper -->
-        <div class="fixed inset-0 z-10 overflow-y-auto">
-            <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
-                <div class="relative transform overflow-hidden rounded-xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg border border-[#e5e3dc] w-full" @onclick:stopPropagation="true">
-                    
-                        <div class="bg-white px-6 pt-6 pb-4">
-                            <div class="flex items-center justify-between mb-5">
-                                <h3 class="font-syne text-[1.05rem] font-bold text-[#1a1a1a]">Revise Request</h3>
-                                <button type="button" @onclick="CloseRevisionModal" class="text-[#a09e99] bg-transparent border-0 cursor-pointer p-1">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                                </button>
-                            </div>
-
-                            <div class="mb-4 p-4 rounded-xl bg-[#faf9f5] border border-[#e5e3dc]">
-                                <div class="text-[0.85rem] font-bold text-[#1a1a1a]">@(RevisionItem.Product?.name)</div>
-                                <div class="text-[0.72rem] text-[#8a8880] mt-1">Stock: @(RevisionItem.Product?.current_stock) @(RevisionItem.Product?.Unit?.name ?? "unit")</div>
-                            </div>
-
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Nama Pemohon</label>
-                                    <input type="text" @bind="RevisionModel.applicant_name" required class="w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none text-[#1a1a1a] transition-colors duration-150 shadow-sm">
-                                </div>
-                                <div>
-                                    <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">NRP Pemohon</label>
-                                    <input type="text" @bind="RevisionModel.applicant_nrp" required class="w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none text-[#1a1a1a] transition-colors duration-150 shadow-sm">
-                                </div>
-                            </div>
-
-                            <div class="mt-4">
-                                <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Event / Program</label>
-                                <input type="text" @bind="RevisionModel.event_name" required class="w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none text-[#1a1a1a] transition-colors duration-150 shadow-sm">
-                            </div>
-
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-                                <div>
-                                    <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Tanggal Event</label>
-                                    <input type="date" @bind="RevisionModel.event_date" required class="w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none text-[#1a1a1a] transition-colors duration-150 shadow-sm">
-                                </div>
-                                <div>
-                                    <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Quantity</label>
-                                    <div class="flex items-center">
-                                        <input type="number" @bind="RevisionModel.quantity" min="1" max="@RevisionItem.Product?.current_stock" required class="w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-l-lg outline-none text-[#1a1a1a] transition-colors duration-150 shadow-sm">
-                                        <span class="inline-flex items-center px-3.5 py-2 bg-[#f0ede5] border border-[#e5e3dc] border-l-0 rounded-r-lg text-[0.72rem] font-semibold text-[#5a5855] whitespace-nowrap">@(RevisionItem.Product?.Unit?.name ?? "unit")</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="mt-4">
-                                <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Request Type</label>
-                                <div class="flex items-center gap-4">
-                                    @if (RevisionItem.Product?.is_returnable == 1) {
-                                        <label class="flex items-center gap-2 cursor-pointer">
-                                            <input type="radio" checked="@(RevisionModel.request_type == "BORROW")" @onchange='() => RevisionModel.request_type = "BORROW"' class="text-[#e8a000] focus:ring-[#e8a000]">
-                                            <span class="text-[0.82rem] text-[#1a1a1a] font-semibold">Borrow (Bisa Return)</span>
-                                        </label>
-                                    }
-                                    <label class="flex items-center gap-2 cursor-pointer">
-                                        <input type="radio" checked="@(RevisionModel.request_type == "GIVEAWAY")" @onchange='() => RevisionModel.request_type = "GIVEAWAY"' class="text-[#e8a000] focus:ring-[#e8a000]">
-                                        <span class="text-[0.82rem] text-[#1a1a1a] font-semibold">Request (Giveaway)</span>
-                                    </label>
-                                </div>
-                            </div>
-                            
-                            @if (RevisionModel.request_type == "BORROW")
-                            {
-                                <div class="gap-4 mt-4 grid grid-cols-2">
-                                    <div>
-                                        <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Tgl Pinjam</label>
-                                        <input type="date" @bind="RevisionStartDate" class="w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none text-[#1a1a1a] transition-colors duration-150 shadow-sm">
-                                    </div>
-                                    <div>
-                                        <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Tgl Kembali</label>
-                                        <input type="date" @bind="RevisionEndDate" class="w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none text-[#1a1a1a] transition-colors duration-150 shadow-sm">
-                                    </div>
-                                </div>
-                            }
-
-                            <div class="mt-4">
-                                <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Division</label>
-                                <select @bind="RevisionModel.division_id" required class="w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none text-[#1a1a1a] transition-colors duration-150 shadow-sm">
-                                    <option value="">Select Division</option>
-                                    @foreach(var div in Divisions)
-                                    {
-                                        <option value="@div.id">@div.name</option>
-                                    }
-                                </select>
-                            </div>
-
-                            <div class="mt-4">
-                                <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Dokumentasi (Link GDrive)</label>
-                                <input type="url" @bind="RevisionModel.documentation_link" required class="w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none text-[#1a1a1a] transition-colors duration-150 shadow-sm">
-                            </div>
-
-                            <div class="mt-4">
-                                <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Catatan Tambahan</label>
-                                <textarea @bind="RevisionModel.notes" rows="2" class="w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none text-[#1a1a1a] transition-colors duration-150 resize-none shadow-sm"></textarea>
-                            </div>
-                        </div>
-
-                        <div class="px-6 py-4 flex flex-row-reverse gap-3 bg-[#faf9f5] border-t border-[#f0ede5]">
-                            <button type="button" @onclick="SubmitRevision" class="px-5 py-2.5 text-[0.82rem] font-bold tracking-wide text-white bg-[#e8a000] active:scale-95 rounded-md duration-100 cursor-pointer shadow-sm">
-                                Submit Revision
-                            </button>
-                            <button type="button" @onclick="CloseRevisionModal" class="inline-flex justify-center px-5 py-2.5 text-[0.82rem] font-bold text-[#3a3835] bg-white border border-[#e5e3dc] rounded-lg duration-150 cursor-pointer">
-                                Cancel
-                            </button>
-                        </div>
-                    
+    <div class="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" @onclick="CloseRevisionModal">
+        <div class="bg-white rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden" @onclick:stopPropagation="true">
+            <div class="p-6 border-b border-[#e5e3dc] flex justify-between items-center bg-[#faf9f5]">
+                <h3 class="font-syne text-lg font-bold text-[#1a1a1a]">Revisi Permintaan</h3>
+                <button type="button" @onclick="CloseRevisionModal" class="text-gray-400 hover:text-gray-600 transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            
+            <div class="p-6 max-h-[70vh] overflow-y-auto space-y-5">
+                <div class="p-4 bg-[#fffbeb] border border-[#fde68a] text-[#92400e] text-xs rounded-xl flex items-start gap-3">
+                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                    <div>
+                        <div class="font-bold">Alasan Revisi dari Admin:</div>
+                        <div class="mt-1 italic">"@RevisionItem.rejection_reason"</div>
+                    </div>
                 </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Nama Pemohon</label>
+                        <input type="text" @bind="RevisionModel.applicant_name" class="w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] border border-[#e5e3dc] rounded-lg outline-none focus:border-[#e8a000]" />
+                    </div>
+                    <div>
+                        <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">NRP</label>
+                        <input type="text" @bind="RevisionModel.applicant_nrp" class="w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] border border-[#e5e3dc] rounded-lg outline-none focus:border-[#e8a000]" />
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Kuantitas</label>
+                        <input type="number" @bind="RevisionModel.quantity" class="w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] border border-[#e5e3dc] rounded-lg outline-none focus:border-[#e8a000]" />
+                    </div>
+                    <div>
+                        <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Division</label>
+                        <select @bind="RevisionModel.division_id" class="w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] border border-[#e5e3dc] rounded-lg outline-none focus:border-[#e8a000]">
+                            <option value="">Select Division</option>
+                            @foreach(var div in Divisions) { <option value="@div.id">@div.name</option> }
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Event / Program</label>
+                    <input type="text" @bind="RevisionModel.event_name" class="w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] border border-[#e5e3dc] rounded-lg outline-none focus:border-[#e8a000]" />
+                </div>
+            </div>
+
+            <div class="p-6 border-t border-[#e5e3dc] bg-white flex justify-end gap-3">
+                <button type="button" @onclick="CloseRevisionModal" class="px-5 py-2.5 text-sm font-bold text-gray-600 hover:text-gray-900 bg-white border border-[#e5e3dc] rounded-xl transition">Batal</button>
+                <button type="button" @onclick="SubmitRevision" class="px-6 py-2.5 bg-[#e8a000] hover:bg-[#d49300] active:scale-[0.98] text-[#1a1a1a] text-sm font-bold tracking-wider rounded-xl transition shadow-sm">Kirim Perbaikan</button>
             </div>
         </div>
     </div>
@@ -539,8 +348,6 @@
     private bool ShowRevisionModal = false;
     private Transaction? RevisionItem;
     private UT_WMSDotnet.ViewModels.TransactionRequestViewModel RevisionModel = new();
-    private DateTime? RevisionStartDate;
-    private DateTime? RevisionEndDate;
 
     protected override async Task OnInitializedAsync()
     {
@@ -549,11 +356,8 @@
 
         if (user.Identity != null && user.Identity.IsAuthenticated)
         {
-            var idClaim = user.FindFirst(ClaimTypes.NameIdentifier);
-            if (idClaim != null && int.TryParse(idClaim.Value, out int id))
-            {
+            if (int.TryParse(user.FindFirst(ClaimTypes.NameIdentifier)?.Value, out int id))
                 CurrentUserId = id;
-            }
             UserRole = user.FindFirst(ClaimTypes.Role)?.Value;
         }
 
@@ -561,9 +365,15 @@
         await LoadData(1);
     }
 
+    private bool IsLoading = false;
+
     private async Task LoadData(int page)
     {
-        CurrentPage = page;
+        if (IsLoading) return;
+        IsLoading = true;
+        try 
+        {
+            CurrentPage = page;
         bool? isReturnedBool = FilterIsReturnedStr == "true" ? true : (FilterIsReturnedStr == "false" ? false : null);
         
         var result = await TransactionService.GetHistoryAsync(
@@ -579,18 +389,19 @@
                 .GroupBy(t => t.type == "OUT" ? TransactionService.CreateGroupId(t.created_at, t.requester_id, t.applicant_name ?? string.Empty) : t.id.ToString())
                 .ToDictionary(g => g.Key, g => g.ToList());
         }
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
     private void ToggleGroup(string groupId)
     {
         if (ExpandedGroups.Contains(groupId))
-        {
             ExpandedGroups.Remove(groupId);
-        }
         else
-        {
             ExpandedGroups.Add(groupId);
-        }
     }
     
     private async Task ResetFilters()
@@ -637,8 +448,6 @@
             documentation_link = item.documentation_link,
             notes = item.notes
         };
-        RevisionStartDate = item.borrow_start_date;
-        RevisionEndDate = item.expected_return_date;
         ShowRevisionModal = true;
     }
 
@@ -652,42 +461,13 @@
     {
         if (RevisionItem == null) return;
         
-        if (RevisionModel.request_type == "BORROW")
-        {
-            RevisionModel.items = new List<UT_WMSDotnet.ViewModels.TransactionItemViewModel>
-            {
-                new UT_WMSDotnet.ViewModels.TransactionItemViewModel
-                {
-                    borrow_start_date = RevisionStartDate,
-                    expected_return_date = RevisionEndDate
-                }
-            };
-        }
-
         var error = await TransactionService.UpdateRevisionAsync(RevisionItem.id, RevisionModel);
-        if (error != null)
-        {
-            ErrorMessage = error;
-        }
+        if (error != null) ErrorMessage = error;
         else
         {
             SuccessMessage = "Revision submitted successfully.";
             await LoadData(CurrentPage);
-        }
-        CloseRevisionModal();
-    }
-
-    private async Task CancelRevision(int id)
-    {
-        var error = await TransactionService.CancelRevisionAsync(id);
-        if (error != null)
-        {
-            ErrorMessage = error;
-        }
-        else
-        {
-            SuccessMessage = "Request cancelled.";
-            await LoadData(CurrentPage);
+            CloseRevisionModal();
         }
     }
 }

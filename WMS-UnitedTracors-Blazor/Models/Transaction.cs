@@ -59,6 +59,8 @@ public class Transaction
     [StringLength(255)]
     public string? return_condition { get; set; }
 
+
+
     [Required]
     [StringLength(50)]
     public string status { get; set; } = string.Empty;

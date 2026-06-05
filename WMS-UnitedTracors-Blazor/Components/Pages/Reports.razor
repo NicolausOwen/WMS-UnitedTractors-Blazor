@@ -8,30 +8,91 @@
 @inject IJSRuntime JSRuntime
 @rendermode InteractiveServer
 
-<PageTitle>Reports</PageTitle>
+<PageTitle>Laporan Stok</PageTitle>
 
-<div class="py-12 bg-[#f5f4f0] min-h-screen">
+<div class="py-12 bg-[#f5f4f0] min-h-screen font-sans">
     <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight mb-6">
-            Report Dashboard
-        </h2>
+        <div class="mb-6">
+            <h1 class="text-[1.6rem] font-bold text-[#1a1a1a] leading-none tracking-tight">Laporan <span class="text-[#e8a000]">Stok</span></h1>
+            <div class="text-[0.72rem] font-medium text-[#a09e99] mt-1">@DateTime.Now.ToString("dddd, dd MMMM yyyy")</div>
+        </div>
 
-        <div class="bg-white border border-[#e5e3dc] rounded-lg shadow-sm p-6 mb-8">
-            <div class="flex flex-wrap items-end gap-4">
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1">Start Date</label>
-                    <input type="date" @bind="StartDate" class="rounded-md border-gray-300 shadow-sm focus:border-[#e8a000] focus:ring-[#e8a000] sm:text-sm">
+        <div class="bg-white rounded-xl border border-[#e5e3dc] mb-6 overflow-hidden shadow-sm">
+            
+            @* Collapsible Header *@
+            <div @onclick="ToggleFilters" 
+                 role="button"
+                 tabindex="0"
+                 class="px-5 py-3.5 bg-[#faf9f5] flex items-center justify-between cursor-pointer select-none hover:bg-[#f3f2eb] transition duration-150 group outline-none focus:bg-[#f3f2eb] @(ShowFilters ? "border-b border-[#e5e3dc]" : "")">
+                <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4 text-[#8a8880] group-hover:text-gray-900 transition" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 0 1-.659 1.591l-5.432 5.432a2.25 2.25 0 0 0-.659 1.591v2.927a2.25 2.25 0 0 1-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 0 0-.659-1.591L3.659 7.409A2.25 2.25 0 0 1 3 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0 1 12 3Z"/>
+                    </svg>
+                    <span class="text-[0.68rem] font-extrabold text-[#5a5855] group-hover:text-gray-900 tracking-wider uppercase transition">Filter Laporan</span>
+                    @if (HasActiveFilters)
+                    {
+                        <span class="px-2 py-0.5 rounded text-[9px] font-extrabold bg-[#fff8e6] text-[#b37a00] border border-[#ffe099] uppercase tracking-wider">
+                            Aktif
+                        </span>
+                    }
                 </div>
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1">End Date</label>
-                    <input type="date" @bind="EndDate" class="rounded-md border-gray-300 shadow-sm focus:border-[#e8a000] focus:ring-[#e8a000] sm:text-sm">
+                <div class="text-[#8a8880] group-hover:text-gray-700 transition">
+                    <svg class="w-4 h-4 transition-transform duration-200 @(!ShowFilters ? "rotate-180" : "")" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5"/>
+                    </svg>
                 </div>
-                <div>
-                    <button type="button" @onclick="ApplyFilter" class="px-4 py-2.5 bg-[#1a1a1a] text-white text-sm font-semibold rounded-md shadow-sm hover:bg-gray-800 transition">Apply</button>
-                    <button type="button" @onclick="ResetFilter" class="ml-2 px-4 py-2.5 bg-gray-100 text-gray-700 text-sm font-semibold rounded-md hover:bg-gray-200 transition inline-block border border-gray-200">Reset</button>
-                </div>
-                <!-- PDF buttons can be added here if needed, but skipping for pure UI migration to Blazor unless we have endpoints -->
             </div>
+
+            @* Collapsible Content *@
+            @if (ShowFilters)
+            {
+                <div class="bg-white">
+                    <div class="px-5 py-4">
+                        <div class="flex flex-col lg:flex-row flex-wrap gap-3 items-end">
+                            <div class="flex-1 min-w-[180px] w-full">
+                                <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Start Date</label>
+                                <input type="date" @bind="StartDate" class="block w-full px-3 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
+                            </div>
+                            <div class="flex-1 min-w-[180px] w-full">
+                                <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">End Date</label>
+                                <input type="date" @bind="EndDate" class="block w-full px-3 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
+                            </div>
+                            <div class="min-w-[150px] w-full lg:w-auto">
+                                <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Filter Type</label>
+                                <select @bind="FilterType" class="block w-full px-3 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
+                                    <option value="">All Types</option>
+                                    <option value="IN">STOCK IN</option>
+                                    <option value="OUT">STOCK OUT</option>
+                                </select>
+                            </div>
+                            <div class="flex gap-2 w-full lg:w-auto justify-end">
+                                <button type="button" @onclick="ApplyFilter" class="px-5 py-2 bg-[#e8a000] text-[#1a1a1a] text-xs font-bold rounded-lg transition active:scale-95 cursor-pointer whitespace-nowrap">
+                                    Apply
+                                </button>
+                                <button type="button" @onclick="ResetFilter" class="px-5 py-2 bg-white border border-[#e5e3dc] text-[#3a3835] text-xs font-bold rounded-lg cursor-pointer">
+                                    Reset
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="px-5 pb-4">
+                        <div class="flex flex-col sm:flex-row flex-wrap gap-2 justify-end">
+                            <a href="/api/pdf/peminjaman?start=@StartDate.ToString("yyyy-MM-dd")&end=@EndDate.ToString("yyyy-MM-dd")" target="_blank" class="w-full sm:w-auto px-4 py-2.5 bg-[#e8a000] hover:bg-[#d49300] text-[#1a1a1a] text-xs font-bold rounded-lg transition inline-flex items-center justify-center gap-1.5 shadow-sm">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                PDF Peminjaman
+                            </a>
+                            <a href="/api/pdf/request?start=@StartDate.ToString("yyyy-MM-dd")&end=@EndDate.ToString("yyyy-MM-dd")" target="_blank" class="w-full sm:w-auto px-4 py-2.5 bg-[#e8a000] hover:bg-[#d49300] text-[#1a1a1a] text-xs font-bold rounded-lg transition inline-flex items-center justify-center gap-1.5 shadow-sm">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                PDF Request
+                            </a>
+                            <a href="/api/pdf/adjust?start=@StartDate.ToString("yyyy-MM-dd")&end=@EndDate.ToString("yyyy-MM-dd")" target="_blank" class="w-full sm:w-auto px-4 py-2.5 bg-[#e8a000] hover:bg-[#d49300] text-[#1a1a1a] text-xs font-bold rounded-lg transition inline-flex items-center justify-center gap-1.5 shadow-sm">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                PDF Adjust
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
         </div>
 
         @if (Summary != null && ExecSummary != null)
@@ -179,10 +240,10 @@
             </div>
 
             <!-- Recent Transactions -->
-            <div class="bg-white border border-[#e5e3dc] rounded-lg shadow-sm overflow-hidden">
+            <div class="bg-white/95 border border-gray-200 rounded-[1.5rem] shadow-xl overflow-hidden">
                 <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
                     <h3 class="font-bold text-gray-900">Recent Transactions</h3>
-                    <a href="/Transactions/History" class="text-sm font-semibold text-[#e8a000] hover:underline">View All</a>
+                    <a href="/Transactions/History" class="text-sm font-semibold text-[var(--color-ut-yellow)] hover:underline">View All</a>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left whitespace-nowrap">
@@ -348,6 +409,16 @@
 @code {
     private Dictionary<string, ReportSummaryDto>? Summary;
     private ExecutiveSummaryDto? ExecSummary;
+
+    private bool ShowFilters = false;
+    private string? FilterType = "";
+
+    private bool HasActiveFilters => StartDate != DateTime.Now.AddMonths(-1).Date || EndDate != DateTime.Now.Date || !string.IsNullOrEmpty(FilterType);
+
+    private void ToggleFilters()
+    {
+        ShowFilters = !ShowFilters;
+    }
 
     private DateTime StartDate = DateTime.Now.AddMonths(-1).Date;
     private DateTime EndDate = DateTime.Now.Date;
