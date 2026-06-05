@@ -176,7 +176,7 @@
         }
         else if (ActiveTab == "returns")
         {
-             @if (PendingReturns == null || PendingReturns.Count == 0)
+            @if (PendingReturns == null || PendingReturns.Count == 0)
             {
                 <div class="bg-white p-12 rounded-xl border border-[#e5e3dc] text-center shadow-sm">
                     <p class="text-sm font-bold text-[#8a8880] tracking-wide">No pending returns.</p>
@@ -184,48 +184,53 @@
             }
             else
             {
-                <div class="flex justify-end mb-4">
-                    <button type="button" @onclick="ProcessBatchReturns" disabled="@(ReturnDecisions.Count == 0 || IsProcessing)" class="inline-flex items-center gap-2 px-6 py-2.5 bg-[#4338ca] text-white text-xs font-bold rounded-xl shadow-lg hover:bg-[#3730a3] transition disabled:opacity-50">
-                        Submit Return Decisions (@ReturnDecisions.Count)
-                    </button>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="space-y-4">
                     @foreach (var item in PendingReturns)
                     {
-                        <div class="bg-white rounded-xl border border-[#e5e3dc] p-4 shadow-sm">
-                            <div class="flex items-start gap-4">
-                                <div class="w-16 h-16 rounded-lg border border-[#e5e3dc] overflow-hidden bg-white shrink-0">
-                                    <img src="@ImageHelper.ResolveProduct(item.Product, "/img/logo.svg")" class="w-full h-full object-cover">
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <h4 class="text-sm font-bold text-[#1a1a1a] truncate">@item.Product?.name</h4>
-                                    <div class="text-[10px] text-[#8a8880] mt-1">
-                                        Borrowed: <span class="font-bold text-[#1a1a1a]">@item.quantity</span> | Pending: <span class="font-bold text-[#e8a000]">@item.pending_return_quantity</span>
+                        <div class="bg-white rounded-xl border border-[#e5e3dc] shadow-sm overflow-hidden">
+                            <div class="px-5 py-4 border-b border-[#f0ede5] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                <div class="flex items-center gap-3 min-w-0">
+                                    <div class="w-12 h-12 rounded-lg border border-[#e5e3dc] overflow-hidden bg-white shrink-0">
+                                        <img src="@ImageHelper.ResolveProduct(item.Product, "/img/logo.svg")" class="w-full h-full object-cover">
                                     </div>
-                                    <div class="text-[10px] text-gray-500 mt-0.5">Pemohon: @(item.applicant_name ?? item.Requester?.name)</div>
-                                    
-                                    <div class="mt-3 flex flex-col gap-2">
-                                        <div class="flex items-center gap-2">
-                                            @if (ReturnDecisions.GetValueOrDefault(item.id) == "APPROVE")
-                                            {
-                                                <button type="button" @onclick='() => ClearDecision(item.id, true)' class="flex-1 py-1.5 text-xs font-bold rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition shadow-sm">Undo Approve</button>
-                                            }
-                                            else if (ReturnDecisions.GetValueOrDefault(item.id) == "REJECT")
-                                            {
-                                                <button type="button" @onclick='() => ClearDecision(item.id, true)' class="flex-1 py-1.5 text-xs font-bold rounded-lg border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 transition shadow-sm">Undo Reject</button>
-                                            }
-                                            else
-                                            {
-                                                <button type="button" @onclick='() => SetReturnDecision(item.id, "APPROVE")' class="flex-1 py-1.5 text-xs font-bold rounded-lg border border-[#e5e3dc] bg-white text-gray-600 hover:bg-gray-50 transition">Approve</button>
-                                                <button type="button" @onclick='() => SetReturnDecision(item.id, "REJECT")' class="flex-1 py-1.5 text-xs font-bold rounded-lg border border-[#e5e3dc] bg-white text-gray-600 hover:bg-gray-50 transition">Reject</button>
-                                            }
+                                    <div class="min-w-0">
+                                        <h4 class="font-bold text-[#1a1a1a] truncate">@item.Product?.name</h4>
+                                        <div class="text-xs text-gray-500 mt-1">Pemohon: @(item.applicant_name ?? item.Requester?.name) | Pengembalian: @item.pending_return_quantity dari @item.quantity</div>
+                                    </div>
+                                </div>
+                                <div class="flex gap-2 shrink-0">
+                                    <button type="button" @onclick="() => ApproveReturn(item.id)" disabled="@IsProcessing" class="px-4 py-2 bg-gray-900 text-white text-xs font-bold rounded-lg shadow-sm hover:bg-gray-800 transition disabled:opacity-50">Approve Pengembalian</button>
+                                    <button type="button" @onclick="() => OpenRejectModal(item.id, true)" class="px-4 py-2 bg-white border border-red-200 text-red-600 text-xs font-bold rounded-lg hover:bg-red-50 transition">Reject</button>
+                                </div>
+                            </div>
+
+                            <div class="p-4 bg-gray-50/50 flex flex-col md:flex-row gap-6">
+                                <div class="w-32 h-32 rounded-lg border border-[#e5e3dc] overflow-hidden bg-white shrink-0">
+                                    @if (!string.IsNullOrEmpty(item.return_photo) && item.return_photo != "forced-by-admin")
+                                    {
+                                        <a href="@ImageHelper.Resolve(item.return_photo)" target="_blank" data-image-popup>
+                                            <img src="@ImageHelper.Resolve(item.return_photo)" class="w-full h-full object-cover" />
+                                        </a>
+                                    }
+                                    else { <div class="w-full h-full flex items-center justify-center text-[10px] text-gray-300">No Photo</div> }
+                                </div>
+                                <div class="flex-1">
+                                    <h5 class="text-[10px] font-bold text-[#8a8880] uppercase mb-1">Kondisi Barang</h5>
+                                    <p class="text-xs text-[#5a5855] font-semibold capitalize">@(item.return_status ?? "-")</p>
+
+                                    @if (!string.IsNullOrEmpty(item.return_reason))
+                                    {
+                                        <h5 class="text-[10px] font-bold text-[#8a8880] uppercase mb-1 mt-3">Catatan / Alasan</h5>
+                                        <p class="text-xs text-[#5a5855] italic">"@item.return_reason"</p>
+                                    }
+
+                                    <div class="mt-4">
+                                        <h5 class="text-[10px] font-bold text-[#8a8880] uppercase mb-2">Detail Item</h5>
+                                        <div class="flex flex-wrap gap-2">
+                                            <div class="px-2 py-1 bg-white border border-[#e5e3dc] rounded text-[10px] font-semibold text-[#1a1a1a]">SKU: @item.Product?.sku</div>
+                                            <div class="px-2 py-1 bg-white border border-[#e5e3dc] rounded text-[10px] font-semibold text-[#1a1a1a]">Dipinjam: @item.quantity</div>
+                                            <div class="px-2 py-1 bg-amber-50 border border-amber-200 rounded text-[10px] font-semibold text-amber-700">Diajukan kembali: @item.pending_return_quantity</div>
                                         </div>
-                                        @if (ReturnDecisions.ContainsKey(item.id))
-                                        {
-                                            <div class="mt-1">
-                                                <input type="text" @bind="ReturnReasons[item.id]" placeholder="Notes..." class="w-full px-2.5 py-1 text-xs border border-gray-300 rounded-lg bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-amber-500 focus:border-amber-500 shadow-sm" />
-                                            </div>
-                                        }
                                     </div>
                                 </div>
                             </div>
@@ -355,9 +360,9 @@
                                 </svg>
                             </div>
                             <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left w-full">
-                                <h3 class="text-base font-semibold leading-6 text-gray-900" id="modal-title">Reject Request</h3>
+                                <h3 class="text-base font-semibold leading-6 text-gray-900" id="modal-title">@(IsRejectingReturn ? "Tolak Pengembalian" : "Reject Request")</h3>
                                     <div class="mt-2">
-                                        <p class="text-sm text-gray-500 mb-4">Please provide a reason for rejecting this request. This will be recorded and visible to the requester.</p>
+                                        <p class="text-sm text-gray-500 mb-4">@(IsRejectingReturn ? "Berikan alasan penolakan pengembalian ini. Barang akan dikembalikan ke status pinjam untuk diajukan ulang." : "Please provide a reason for rejecting this request. This will be recorded and visible to the requester.")</p>
                                         <textarea @bind="RejectReason" @bind:event="oninput" @onkeypress="() => RejectionError = false" class="w-full rounded-md border shadow-sm sm:text-sm @(RejectionError ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:border-red-500 focus:ring-red-500")" rows="3" placeholder="Enter rejection reason here..."></textarea>
                                         @if (RejectionError)
                                         {
@@ -664,7 +669,7 @@
         RejectionError = false;
     }
 
-    private void SubmitReject(string decision)
+    private async Task SubmitReject(string decision)
     {
         if (string.IsNullOrWhiteSpace(RejectReason))
         {
@@ -672,20 +677,65 @@
             return;
         }
 
+        // Pengembalian: tolak langsung (alur instan, sama seperti serah terima).
+        if (IsRejectingReturn)
+        {
+            var id = RejectItemId;
+            var reason = RejectReason;
+            CloseRejectModal();
+
+            if (id <= 0 || IsProcessing) return;
+            IsProcessing = true;
+            ErrorMessage = null;
+            SuccessMessage = null;
+            try
+            {
+                var err = await ApprovalService.RejectReturnAsync(id, reason, CurrentUserId, UserRole);
+                if (err == null) SuccessMessage = "Pengembalian ditolak.";
+                else ErrorMessage = err;
+                await LoadData();
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = "Terjadi kesalahan saat menolak pengembalian: " + ex.Message;
+            }
+            finally
+            {
+                IsProcessing = false;
+            }
+            return;
+        }
+
+        // Permintaan baru (New Requests): tetap pakai pola batch.
         if (RejectItemId > 0)
         {
-            if (IsRejectingReturn)
-            {
-                ReturnDecisions[RejectItemId] = "REJECT";
-                ReturnReasons[RejectItemId] = RejectReason;
-            }
-            else
-            {
-                Decisions[RejectItemId] = decision;
-                Reasons[RejectItemId] = RejectReason;
-            }
+            Decisions[RejectItemId] = decision;
+            Reasons[RejectItemId] = RejectReason;
         }
         CloseRejectModal();
+    }
+
+    private async Task ApproveReturn(int id)
+    {
+        if (IsProcessing) return;
+        IsProcessing = true;
+        ErrorMessage = null;
+        SuccessMessage = null;
+        try
+        {
+            var err = await ApprovalService.ApproveReturnAsync(id, CurrentUserId, UserRole);
+            if (err == null) SuccessMessage = "Pengembalian disetujui.";
+            else ErrorMessage = err;
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Terjadi kesalahan saat menyetujui pengembalian: " + ex.Message;
+        }
+        finally
+        {
+            IsProcessing = false;
+        }
     }
 
     private void ClearDecision(int id, bool isReturn = false)

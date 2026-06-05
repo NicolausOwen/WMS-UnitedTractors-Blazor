@@ -117,6 +117,8 @@
                     // Tombol upload hanya saat menunggu bukti dari user (WAITING_HANDOVER), bukan saat menunggu verifikasi admin.
                     var canHandover = hasBorrow && borrowItemsOnly.Any(i => i.status == "WAITING_HANDOVER")
                                       && (UserRole == "admin" || UserRole == "superadmin" || firstItem.requester_id == CurrentUserId);
+                    // Draft serah terima: status masih WAITING_HANDOVER tapi foto sudah diunggah (belum disubmit ke admin).
+                    var hasHandoverDraftPhoto = hasBorrow && borrowItemsOnly.Any(i => i.status == "WAITING_HANDOVER" && !string.IsNullOrEmpty(i.handover_photo));
 
                     var isExpanded = ExpandedGroupIds.Contains(groupId);
 
@@ -212,7 +214,7 @@
                             </div>
 
                             <div class="flex items-center justify-end gap-3 shrink-0">
-                                @if (canHandover)
+                                @if (canHandover && !hasHandoverDraftPhoto)
                                 {
                                     <button type="button" @onclick="() => OpenHandoverModal(borrowItemsOnly)" @onclick:stopPropagation="true" class="inline-flex items-center gap-2 px-4 py-2.5 bg-[#e8a000] hover:bg-[#d49300] text-[#1a1a1a] text-sm font-bold rounded-lg shadow-sm transition active:scale-95 cursor-pointer whitespace-nowrap">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
@@ -311,25 +313,43 @@
                                 
                                 @if(!string.IsNullOrEmpty(firstItem.handover_photo))
                                 {
-                                    <div class="p-4 bg-white border-b border-[#e5e3dc] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                    var handoverPhotoSrc = ImageHelper.Resolve(firstItem.handover_photo);
+                                    <div class="p-4 @(status == "WAITING_HANDOVER" ? "bg-[#fffbeb]" : "bg-white") border-b border-[#e5e3dc] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                                         <div class="flex items-start gap-4">
                                             @if (firstItem.handover_photo.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
                                             {
-                                                <a href="/@firstItem.handover_photo" target="_blank" class="block w-20 h-20 rounded border border-gray-200 overflow-hidden bg-red-50 flex items-center justify-center flex-shrink-0 hover:opacity-95 transition cursor-pointer" title="Klik untuk membuka dokumen">
+                                                <a href="@handoverPhotoSrc" target="_blank" class="block w-20 h-20 rounded border border-gray-200 overflow-hidden bg-red-50 flex items-center justify-center flex-shrink-0 hover:opacity-95 transition cursor-pointer" title="Klik untuk membuka dokumen">
                                                     <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
                                                 </a>
                                             }
                                             else
                                             {
-                                                <a href="/@firstItem.handover_photo" data-image-popup class="block w-20 h-20 rounded border border-gray-200 overflow-hidden bg-gray-50 flex-shrink-0 hover:opacity-95 transition cursor-pointer" title="Klik untuk memperbesar foto bukti">
-                                                    <img src="/@firstItem.handover_photo" alt="Bukti Serah Terima" class="w-full h-full object-cover">
+                                                <a href="@handoverPhotoSrc" data-image-popup class="block w-20 h-20 rounded border border-gray-200 overflow-hidden bg-gray-50 flex-shrink-0 hover:opacity-95 transition cursor-pointer" title="Klik untuk memperbesar foto bukti">
+                                                    <img src="@handoverPhotoSrc" alt="Bukti Serah Terima" class="w-full h-full object-cover">
                                                 </a>
                                             }
                                             <div>
-                                                <h4 class="text-xs font-bold text-gray-900 mb-1 tracking-wider uppercase">Bukti Serah Terima</h4>
+                                                <div class="flex items-center gap-2 mb-1">
+                                                    <h4 class="text-xs font-bold text-gray-900 tracking-wider uppercase">Bukti Serah Terima</h4>
+                                                    @if (status == "WAITING_HANDOVER")
+                                                    {
+                                                        <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#ede9fe] text-[#6d28d9] border border-[#c4b5fd]">DRAFT — Belum Dikirim</span>
+                                                    }
+                                                    else if (status == "WAITING_ADMIN_HANDOVER")
+                                                    {
+                                                        <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#e0f2fe] text-[#1a6b8a] border border-[#bae6fd]">Menunggu Verifikasi Admin</span>
+                                                    }
+                                                </div>
                                                 <p class="text-xs text-gray-600 leading-relaxed max-w-xl italic">"@firstItem.handover_notes"</p>
                                             </div>
                                         </div>
+                                        @if (canHandover && status == "WAITING_HANDOVER")
+                                        {
+                                            <div class="flex gap-2 shrink-0 w-full sm:w-auto">
+                                                <button type="button" @onclick="() => OpenHandoverModal(borrowItemsOnly)" class="px-3 py-2 bg-white border border-[#e5e3dc] text-[#3a3835] hover:border-[#1a1a1a] text-xs font-bold rounded-lg transition">Ganti Foto</button>
+                                                <button type="button" @onclick="() => SubmitHandoverToAdmin(borrowItemsOnly)" disabled="@IsSubmitting" class="px-4 py-2 bg-[#1a7a30] hover:bg-[#166528] text-white text-xs font-bold rounded-lg shadow-sm transition disabled:opacity-50">Submit ke Admin</button>
+                                            </div>
+                                        }
                                     </div>
                                 }
 
@@ -395,6 +415,9 @@
                                                                     <span class="inline-flex items-center px-2 py-0.5 border border-[#c4b5fd] rounded text-[10px] font-bold bg-[#ede9fe] text-[#6d28d9]">
                                                                         DRAFT (@usage.pending_return_quantity @(usage.Product?.Unit?.name ?? "unit"))
                                                                     </span>
+                                                                    @if (!string.IsNullOrEmpty(usage.return_rejection_reason)) {
+                                                                        <div class="text-[10px] text-[#d94040] mt-1.5 italic font-semibold">Ditolak admin: "@usage.return_rejection_reason" — silakan unggah ulang lalu submit.</div>
+                                                                    }
                                                                 } else if (usage.pending_return_quantity > 0 && usage.is_return_draft == 0) {
                                                                     <span class="inline-flex items-center px-2 py-0.5 border border-[#bae6fd] rounded text-[10px] font-bold bg-[#e0f2fe] text-[#1a6b8a]">
                                                                         Menunggu ACC (@usage.pending_return_quantity)
@@ -442,7 +465,10 @@
                                                             var canReturn = usage.status == "APPROVED" && usage.request_type == "BORROW"
                                                                             && usage.returned_quantity < usage.quantity
                                                                             && (usage.pending_return_quantity ?? 0) == 0;
-                                                            var hasAction = canReturn || usage.status == "REVISION";
+                                                            var isReturnDraft = usage.status == "APPROVED" && usage.request_type == "BORROW"
+                                                                                && (usage.pending_return_quantity ?? 0) > 0 && usage.is_return_draft == 1;
+                                                            var canManageDraft = isReturnDraft && (UserRole == "admin" || UserRole == "superadmin" || usage.requester_id == CurrentUserId);
+                                                            var hasAction = canReturn || canManageDraft || usage.status == "REVISION";
                                                         }
                                                         @if (canReturn)
                                                         {
@@ -456,6 +482,20 @@
                                                                         Force Return
                                                                     </button>
                                                                 }
+                                                            </div>
+                                                        }
+                                                        else if (canManageDraft)
+                                                        {
+                                                            <div class="flex items-center justify-end gap-2 flex-wrap">
+                                                                <button type="button" @onclick="() => SubmitReturnDraftItem(usage.id)" disabled="@IsSubmitting" class="text-[10px] px-2 py-1 bg-[#1a7a30] hover:bg-[#166528] text-white rounded transition font-bold whitespace-nowrap disabled:opacity-50">
+                                                                    Submit
+                                                                </button>
+                                                                <button type="button" @onclick="() => OpenReturnModal(usage, false)" class="text-[10px] px-2 py-1 bg-white border border-[#e5e3dc] rounded hover:border-[#1a1a1a] transition font-bold whitespace-nowrap">
+                                                                    Ganti Foto
+                                                                </button>
+                                                                <button type="button" @onclick="() => CancelReturnDraftItem(usage.id)" disabled="@IsSubmitting" class="text-[10px] px-2 py-1 bg-white border border-[#f8c0c0] text-[#d94040] rounded hover:bg-[#fef0f0] transition font-bold whitespace-nowrap disabled:opacity-50">
+                                                                    Batal
+                                                                </button>
                                                             </div>
                                                         }
                                                         else if (usage.status == "REVISION")
@@ -497,7 +537,7 @@
             <div class="p-6 space-y-4">
                 <div class="p-4 bg-blue-50 text-blue-700 text-xs rounded-lg border border-blue-100 flex items-start gap-3">
                     <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    <p>Mohon pastikan barang sudah diterima oleh pemohon (atau diserahkan oleh tim) dan buktinya difoto bersama pemohon atau barangnya langsung.</p>
+                    <p>Foto akan disimpan sebagai <span class="font-bold">draft</span> — Anda masih bisa menggantinya berkali-kali. Setelah yakin benar, klik <span class="font-bold">Submit ke Admin</span> untuk mengirim verifikasi.</p>
                 </div>
 
                 <div>
@@ -526,7 +566,7 @@
                     @if(IsSubmitting) {
                         <span class="animate-spin inline-block w-4 h-4 border-2 border-[#1a1a1a] border-t-transparent rounded-full"></span>
                     }
-                    Upload Bukti
+                    Simpan Draft
                 </button>
             </div>
         </div>
@@ -603,57 +643,7 @@
             <div class="p-6 border-t border-[#e5e3dc] bg-[#faf9f5] flex justify-end gap-3">
                 <button type="button" @onclick="CloseReturnModal" class="px-4 py-2 font-bold text-[#8a8880] hover:text-[#1a1a1a] transition">Batal</button>
                 <button type="button" @onclick="SubmitReturn" disabled="@IsSubmitting" class="px-6 py-2 bg-[#1a1a1a] text-white font-bold rounded-lg hover:bg-[#333] transition disabled:opacity-50">
-                    @(IsSubmitting ? "Memproses..." : "Simpan")
-                </button>
-            </div>
-        </div>
-    </div>
-}
-
-@if (IsHandoverModalOpen)
-{
-    <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" @onclick="CloseHandoverModal">
-        <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden" @onclick:stopPropagation="true">
-            <div class="p-6 border-b border-[#e5e3dc] flex justify-between items-center">
-                <h3 class="text-lg font-bold text-[#1a1a1a]">Bukti Serah Terima Barang</h3>
-                <button type="button" @onclick="CloseHandoverModal" class="text-gray-400 hover:text-gray-600 transition">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
-            </div>
-
-            <div class="p-6 space-y-4">
-                @if (!string.IsNullOrEmpty(ModalError))
-                {
-                    <div class="bg-[#fef0f0] border border-[#f8c0c0] text-[#d94040] px-4 py-3 rounded-lg flex items-start gap-2.5">
-                        <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        <p class="text-xs font-semibold">@ModalError</p>
-                    </div>
-                }
-                <p class="text-sm text-[#8a8880]">Unggah foto bukti barang telah diserahkan kepada peminjam. Setelah ini status berubah menjadi <span class="font-bold text-[#1a1a1a]">Sedang Dipinjam</span> dan barang dapat dikembalikan.</p>
-
-                <div>
-                  <div>
-                      <label class="block text-xs font-bold text-[#8a8880] uppercase tracking-wider mb-2">Foto/PDF Bukti Serah Terima</label>
-                      <InputFile OnChange="HandleHandoverFileSelected" accept="image/jpg,image/jpeg,image/png,image/webp,application/pdf" class="w-full p-2 border border-[#e5e3dc] rounded-lg text-sm" />
-                      @if (HandoverFile != null && HandoverFile.ContentType == "application/pdf")
-                      {
-                          <div class="mt-2 p-2 bg-[#f0ede5] border border-[#e5e3dc] rounded-lg flex items-center gap-2">
-                              <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                              <span class="text-xs font-semibold text-[#1a1a1a] truncate">@HandoverFile.Name</span>
-                          </div>
-                      }
-                  </div></div>
-
-                <div>
-                    <label class="block text-xs font-bold text-[#8a8880] uppercase tracking-wider mb-2">Catatan (opsional)</label>
-                    <textarea @bind="HandoverNotes" class="w-full p-2 border border-[#e5e3dc] rounded-lg focus:border-[#e8a000] outline-none h-20" placeholder="Catatan serah terima..."></textarea>
-                </div>
-            </div>
-
-            <div class="p-6 border-t border-[#e5e3dc] bg-[#faf9f5] flex justify-end gap-3">
-                <button type="button" @onclick="CloseHandoverModal" class="px-4 py-2 font-bold text-[#8a8880] hover:text-[#1a1a1a] transition">Batal</button>
-                <button type="button" @onclick="SubmitHandover" disabled="@IsSubmitting" class="px-6 py-2 bg-[#1a1a1a] text-white font-bold rounded-lg hover:bg-[#333] transition disabled:opacity-50">
-                    @(IsSubmitting ? "Memproses..." : "Simpan")
+                    @(IsSubmitting ? "Memproses..." : (IsForceReturn ? "Proses Force Return" : "Simpan Draft"))
                 </button>
             </div>
         </div>
@@ -870,11 +860,12 @@
 
     private void OpenHandoverModal(List<Transaction> borrowItems)
     {
+        // Hanya item draft (WAITING_HANDOVER) yang bisa diunggah/diganti fotonya.
         HandoverTransactionIds = borrowItems
-            .Where(i => i.status == "WAITING_HANDOVER" || i.status == "WAITING_ADMIN_HANDOVER")
+            .Where(i => i.status == "WAITING_HANDOVER")
             .Select(i => i.id)
             .ToList();
-        HandoverNotes = null;
+        HandoverNotes = borrowItems.FirstOrDefault(i => i.status == "WAITING_HANDOVER" && !string.IsNullOrEmpty(i.handover_notes))?.handover_notes;
         HandoverFile = null;
         ModalError = null;
         IsHandoverModalOpen = true;
@@ -925,7 +916,7 @@
             var err = await TransactionService.ConfirmHandoverAsync(HandoverTransactionIds, HandoverFile, HandoverNotes);
             if (err == null)
             {
-                SuccessMessage = "Bukti serah terima berhasil dikirim. Menunggu verifikasi admin.";
+                SuccessMessage = "Draft bukti serah terima tersimpan. Periksa lalu klik 'Submit ke Admin' untuk mengirim.";
                 CloseHandoverModal();
                 await LoadData();
             }
@@ -933,6 +924,38 @@
             {
                 ErrorMessage = err;
             }
+        }
+        finally
+        {
+            IsSubmitting = false;
+        }
+    }
+
+    private async Task SubmitHandoverToAdmin(List<Transaction> borrowItems)
+    {
+        if (IsSubmitting) return;
+        var ids = borrowItems.Where(i => i.status == "WAITING_HANDOVER").Select(i => i.id).ToList();
+        if (!ids.Any()) return;
+
+        IsSubmitting = true;
+        ErrorMessage = null;
+        SuccessMessage = null;
+        try
+        {
+            var err = await TransactionService.SubmitHandoverAsync(ids);
+            if (err == null)
+            {
+                SuccessMessage = "Bukti serah terima dikirim. Menunggu verifikasi admin.";
+                await LoadData();
+            }
+            else
+            {
+                ErrorMessage = err;
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Terjadi kesalahan saat submit serah terima: " + ex.Message;
         }
         finally
         {
@@ -983,12 +1006,15 @@
             else
             {
                 ReturnModel.return_photo_browser = SelectedFile;
-                err = await TransactionService.ReturnItemAsync(ReturnModel);
+                // Simpan sebagai DRAFT dulu — bisa diganti/re-upload sebelum di-submit.
+                err = await TransactionService.ReturnItemAsync(ReturnModel, asDraft: true);
             }
 
             if (err == null)
             {
-                SuccessMessage = "Permintaan pengembalian dikirim. Menunggu persetujuan admin.";
+                SuccessMessage = IsForceReturn
+                    ? "Pengembalian (force) berhasil diproses."
+                    : "Draft pengembalian tersimpan. Periksa lalu klik 'Submit' untuk diajukan ke admin.";
                 CloseReturnModal();
                 await LoadData();
             }
@@ -996,6 +1022,64 @@
             {
                 ErrorMessage = err;
             }
+        }
+        finally
+        {
+            IsSubmitting = false;
+        }
+    }
+
+    private async Task SubmitReturnDraftItem(int id)
+    {
+        if (IsSubmitting) return;
+        IsSubmitting = true;
+        ErrorMessage = null;
+        SuccessMessage = null;
+        try
+        {
+            var err = await TransactionService.SubmitReturnDraftAsync(id);
+            if (err == null)
+            {
+                SuccessMessage = "Pengembalian diajukan. Menunggu persetujuan admin.";
+                await LoadData();
+            }
+            else
+            {
+                ErrorMessage = err;
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Terjadi kesalahan saat submit pengembalian: " + ex.Message;
+        }
+        finally
+        {
+            IsSubmitting = false;
+        }
+    }
+
+    private async Task CancelReturnDraftItem(int id)
+    {
+        if (IsSubmitting) return;
+        IsSubmitting = true;
+        ErrorMessage = null;
+        SuccessMessage = null;
+        try
+        {
+            var err = await TransactionService.CancelReturnDraftAsync(id);
+            if (err == null)
+            {
+                SuccessMessage = "Draft pengembalian dibatalkan.";
+                await LoadData();
+            }
+            else
+            {
+                ErrorMessage = err;
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Terjadi kesalahan: " + ex.Message;
         }
         finally
         {

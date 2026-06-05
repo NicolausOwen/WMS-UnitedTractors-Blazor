@@ -274,8 +274,10 @@ public class TransactionService
         if (transaction.request_type == "GIVEAWAY")
             return "This item was given away and cannot be returned.";
 
-        if ((transaction.pending_return_quantity ?? 0) > 0)
-            return "Sudah ada proses pengembalian yang sedang berjalan untuk item ini.";
+        // Boleh menimpa draft sendiri (is_return_draft == 1) untuk re-upload,
+        // tapi blokir jika sudah disubmit & menunggu persetujuan admin.
+        if ((transaction.pending_return_quantity ?? 0) > 0 && transaction.is_return_draft == 0)
+            return "Pengembalian sudah diajukan dan menunggu persetujuan admin.";
 
         var remainingToReturn = transaction.quantity - transaction.returned_quantity;
         if (model.return_quantity > remainingToReturn)
@@ -429,9 +431,9 @@ public class TransactionService
             .Where(t => transactionIds.Contains(t.id))
             .ToListAsync();
 
+        // Hanya item yang masih menunggu bukti (draft) yang bisa diunggah/diganti.
         var pending = transactions
-            .Where(t => t.request_type == "BORROW" &&
-                        (t.status == "WAITING_HANDOVER" || t.status == "WAITING_ADMIN_HANDOVER"))
+            .Where(t => t.request_type == "BORROW" && t.status == "WAITING_HANDOVER")
             .ToList();
 
         if (!pending.Any())
@@ -463,15 +465,60 @@ public class TransactionService
 
         foreach (var item in pending)
         {
+            // Disimpan sebagai DRAFT: status tetap WAITING_HANDOVER sampai user klik Submit.
+            // Bisa diunggah ulang berkali-kali sebelum benar-benar disubmit ke admin.
             item.handover_photo = photoPath;
             item.handover_notes = notes;
-            // Bukti diunggah user -> menunggu verifikasi/approval admin.
-            item.status = "WAITING_ADMIN_HANDOVER";
             item.rejection_reason = null; // bersihkan alasan penolakan sebelumnya (jika re-upload)
             item.updated_at = DateTime.UtcNow;
             _context.Transactions.Update(item);
         }
 
+        await _context.SaveChangesAsync();
+        return null;
+    }
+
+    /// <summary>Submit draft serah terima ke admin: WAITING_HANDOVER (dengan foto) -> WAITING_ADMIN_HANDOVER.</summary>
+    public async Task<string?> SubmitHandoverAsync(List<int> transactionIds)
+    {
+        if (transactionIds == null || !transactionIds.Any())
+            return "Tidak ada item serah terima.";
+
+        var pending = await _context.Transactions
+            .Where(t => transactionIds.Contains(t.id) && t.request_type == "BORROW" && t.status == "WAITING_HANDOVER")
+            .ToListAsync();
+
+        if (!pending.Any())
+            return "Tidak ada draft serah terima yang bisa disubmit.";
+
+        if (pending.Any(t => string.IsNullOrEmpty(t.handover_photo)))
+            return "Unggah bukti serah terima terlebih dahulu sebelum submit.";
+
+        foreach (var item in pending)
+        {
+            item.status = "WAITING_ADMIN_HANDOVER"; // dikirim ke admin untuk verifikasi
+            item.updated_at = DateTime.UtcNow;
+            _context.Transactions.Update(item);
+        }
+
+        await _context.SaveChangesAsync();
+        return null;
+    }
+
+    /// <summary>Submit satu draft pengembalian ke admin: is_return_draft 1 -> 0 (menunggu ACC).</summary>
+    public async Task<string?> SubmitReturnDraftAsync(int id)
+    {
+        var transaction = await _context.Transactions.FindAsync(id);
+        if (transaction == null) return "Transaction not found.";
+        if (transaction.is_return_draft != 1 || (transaction.pending_return_quantity ?? 0) <= 0)
+            return "Item ini bukan draft pengembalian.";
+
+        if (string.IsNullOrEmpty(transaction.return_photo) || transaction.return_photo == "forced-by-admin")
+            return "Unggah bukti pengembalian terlebih dahulu sebelum submit.";
+
+        transaction.is_return_draft = 0; // diajukan, menunggu persetujuan admin
+        transaction.updated_at = DateTime.UtcNow;
+        _context.Transactions.Update(transaction);
         await _context.SaveChangesAsync();
         return null;
     }
