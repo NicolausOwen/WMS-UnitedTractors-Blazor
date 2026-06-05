@@ -233,7 +233,14 @@
                         <div class="flex items-center justify-between text-xs pb-1 border-b border-transparent">
                             <div class="flex flex-col gap-0.5">
                                 <span class="text-[#8a8880] text-[0.65rem]">Kredit</span>
-                                <span class="font-bold text-[#e8a000]">@product.value <span class="font-normal text-[0.65rem] text-[#8a8880]">pts</span></span>
+                                @if (product.is_returnable == 1 || product.transaction_type == "BORROW")
+                                {
+                                    <span class="font-bold text-[#8a8880]">-</span>
+                                }
+                                else
+                                {
+                                    <span class="font-bold text-[#e8a000]">@product.value <span class="font-normal text-[0.65rem] text-[#8a8880]">pts</span></span>
+                                }
                             </div>
                             <div class="flex flex-col gap-0.5 text-right">
                                 <span class="text-[#8a8880] text-[0.65rem]">Stok</span>
@@ -494,7 +501,16 @@
                                         <h4 class="text-base font-bold text-[#1a1a1a] leading-tight">@SelectedProduct.name</h4>
                                         <div class="text-right shrink-0">
                                             <span class="text-xs text-[#8a8880]">Kredit</span>
-                                            <div class="font-bold text-[#e8a000] text-lg leading-none"><span>@SelectedProduct.value</span><span class="text-[0.6rem] font-normal text-[#8a8880] ml-0.5">pts</span></div>
+                                            <div class="font-bold text-[#e8a000] text-lg leading-none">
+                                                @if (SelectedProduct.is_returnable == 1 || SelectedProduct.transaction_type == "BORROW")
+                                                {
+                                                    <span class="text-[#8a8880]">-</span>
+                                                }
+                                                else
+                                                {
+                                                    <span>@SelectedProduct.value</span><span class="text-[0.6rem] font-normal text-[#8a8880] ml-0.5">pts</span>
+                                                }
+                                            </div>
                                         </div>
                                     </div>
                                     <code class="text-[0.65rem] font-medium text-[#8a8880] bg-[#f0ede5] px-1.5 py-0.5 rounded">@SelectedProduct.sku</code>
