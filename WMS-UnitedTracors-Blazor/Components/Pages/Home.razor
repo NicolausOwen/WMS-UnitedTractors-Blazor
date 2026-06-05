@@ -734,23 +734,28 @@
             {
                 SelectedVariantColor = variantWithImage.color;
                 SelectedVariantSize = variantWithImage.size;
-                UpdateSelectedVariant();
+                SelectedVariantId = variantWithImage.id;
+                SelectedQuantity = 1;
                 return;
             }
 
             var colorsList = SelectedProduct.ProductVariants.Select(v => v.color).Where(c => !string.IsNullOrEmpty(c)).Distinct().ToList();
             int imgIndex = ModalImages.IndexOf(normalizedImage);
+
             if (imgIndex > 0 && imgIndex <= colorsList.Count)
             {
-                SelectedVariantColor = colorsList[imgIndex - 1];
-                UpdateSelectedVariant();
-            }
-            else if (imgIndex == 0 && colorsList.Count > 0)
-            {
-                SelectedVariantColor = colorsList[0];
-                UpdateSelectedVariant();
+                var matchedColor = colorsList[imgIndex - 1];
+                var matchedVariant = SelectedProduct.ProductVariants
+                    .FirstOrDefault(v => v.color == matchedColor);
+                if (matchedVariant != null)
+                {
+                    SelectedVariantColor = matchedVariant.color;
+                    SelectedVariantSize = matchedVariant.size;
+                    SelectedVariantId = matchedVariant.id;
+                }
             }
         }
+        SelectedQuantity = 1;
     }
 
     private void UpdateSelectedVariant()
