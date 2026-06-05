@@ -119,7 +119,7 @@
                                                         <td class="py-3 px-3">
                                                             <div class="flex items-center gap-3">
                                                                 <div class="w-8 h-8 rounded border border-[#e5e3dc] overflow-hidden shrink-0">
-                                                                    <img src="@ImageHelper.ResolveProduct(item.Product, "/img/logo.svg")" class="w-full h-full object-cover">
+                                                                    <img src="/@(item.Product?.image ?? "img/logo.svg")" class="w-full h-full object-cover">
                                                                 </div>
                                                                 <div>
                                                                     <div class="text-xs font-bold text-[#1a1a1a]">@(item.Product?.name)</div>
@@ -245,7 +245,7 @@
                         <div class="bg-white rounded-xl border border-[#e5e3dc] p-4 shadow-sm">
                             <div class="flex items-start gap-4">
                                 <div class="w-16 h-16 rounded-lg border border-[#e5e3dc] overflow-hidden bg-white shrink-0">
-                                    <img src="@ImageHelper.ResolveProduct(item.Product, "/img/logo.svg")" class="w-full h-full object-cover">
+                                    <img src="/@(item.Product?.image ?? "img/logo.svg")" class="w-full h-full object-cover">
                                 </div>
                                 <div class="flex-1 min-w-0">
                                     <h4 class="text-sm font-bold text-[#1a1a1a] truncate">@item.Product?.name</h4>
