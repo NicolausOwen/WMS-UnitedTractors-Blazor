@@ -358,7 +358,7 @@ public class ApprovalService
         return null;
     }
 
-    public async Task<string?> RejectReturnAsync(int id, int currentUserId, string? userRole)
+    public async Task<string?> RejectReturnAsync(int id, string? rejectionReason, int currentUserId, string? userRole)
     {
         var transaction = await _context.Transactions.FirstOrDefaultAsync(t => t.id == id);
         if (transaction == null) return "Transaction not found.";
@@ -366,6 +366,7 @@ public class ApprovalService
             return "Transaction is not pending return approval.";
 
         transaction.is_return_draft = 1; // Send back to draft
+        transaction.return_rejection_reason = rejectionReason;
         transaction.updated_at = DateTime.UtcNow;
 
         _context.Transactions.Update(transaction);

@@ -81,78 +81,26 @@
             else
             {
                 <div class="flex justify-end mb-4">
-                    <button type="button" @onclick="ProcessBatch" disabled="@(Decisions.Count == 0 || IsProcessing)" class="inline-flex items-center gap-2 px-4 py-2 bg-[#1a1a1a] text-white text-xs font-bold rounded-lg shadow-sm hover:bg-[#333] transition disabled:opacity-50">
+                    <button type="button" @onclick="OpenBatchConfirmModal" disabled="@(Decisions.Count == 0 || IsProcessing)" class="inline-flex items-center gap-2 px-4 py-2 bg-[#1a1a1a] text-white text-xs font-bold rounded-lg shadow-sm hover:bg-[#333] transition disabled:opacity-50">
                         Process Selected Items (@Decisions.Count)
                     </button>
                 </div>
 
-                <div class="space-y-4">
-                    @foreach (var group in GroupedApprovals)
-                    {
-                        var firstItem = group.Value.First();
-                        bool isExpanded = ExpandedGroups.Contains(group.Key);
+                var borrowGroups = GroupedApprovals.Where(g => g.Value.FirstOrDefault()?.request_type == "BORROW").ToList();
+                var giveawayGroups = GroupedApprovals.Where(g => g.Value.FirstOrDefault()?.request_type == "GIVEAWAY").ToList();
 
-                        <div class="bg-white rounded-xl border border-[#e5e3dc] overflow-hidden shadow-sm transition-all duration-200">
-                            <div class="px-5 py-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white">
-                                <div class="flex items-center gap-4 flex-1 min-w-0">
-                                    <div class="w-10 h-10 rounded-full bg-[#f5f4f0] border border-[#e5e3dc] flex items-center justify-center shrink-0">
-                                        <svg class="w-5 h-5 text-[#e8a000]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                    </div>
-                                    <div class="flex-1 min-w-0">
-                                        <h3 class="font-syne font-bold text-[#1a1a1a] truncate">@(firstItem.event_name ?? "Request Barang")</h3>
-                                        <div class="flex items-center gap-2 text-xs text-[#8a8880] mt-0.5">
-                                            <span class="font-semibold text-gray-700">@(firstItem.applicant_name ?? firstItem.Requester?.name)</span>
-                                            <span>•</span>
-                                            <span>@firstItem.created_at.ToString("dd MMM yyyy, HH:mm")</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div class="flex items-center gap-3">
-                                    @if (UserRole == "manager" || UserRole == "admin" || UserRole == "superadmin")
-                                    {
-                                        <button type="button" @onclick="() => ApproveAllGroup(group.Value)" disabled="@IsProcessing" class="px-3 py-1.5 text-xs font-bold text-white bg-[#e8a000] rounded-md hover:bg-[#d49300] transition shadow-sm disabled:opacity-50">
-                                            Approve All
-                                        </button>
-                                    }
-                                    <div class="text-[#8a8880] cursor-pointer" @onclick="() => ToggleGroup(group.Key)">
-                                        <svg class="w-5 h-5 transform transition-transform duration-200 @(isExpanded ? "rotate-180" : "")" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                                    </div>
-                                </div>
-                            </div>
-
-                            @if (isExpanded)
+                @if (giveawayGroups.Count > 0)
+                {
+                    <div class="mb-8">
+                        <h3 class="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wider">Giveaway Requests</h3>
+                        <div class="space-y-4">
+                            @foreach (var group in giveawayGroups)
                             {
-                                <div class="bg-[#faf9f5] p-4 border-t border-[#f0ede5]">
-                                    @if (firstItem.type == "OUT")
-                                    {
-                                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4 bg-white p-3 rounded-lg border border-[#e5e3dc]">
-                                            <div>
-                                                <div class="text-[0.6rem] text-[#8a8880] font-bold uppercase mb-0.5">Applicant</div>
-                                                <div class="text-xs font-bold text-[#1a1a1a]">@(firstItem.applicant_name ?? "-")</div>
-                                                <div class="text-[10px] text-[#8a8880]">NRP: @(firstItem.applicant_nrp ?? "-")</div>
-                                            </div>
-                                            <div>
-                                                <div class="text-[0.6rem] text-[#8a8880] font-bold uppercase mb-0.5">Event Date</div>
-                                                <div class="text-xs font-bold text-[#1a1a1a]">@(firstItem.event_date?.ToString("dd MMM yyyy") ?? "-")</div>
-                                            </div>
-                                            <div>
-                                                <div class="text-[0.6rem] text-[#8a8880] font-bold uppercase mb-0.5">Division</div>
-                                                <div class="text-xs font-bold text-[#1a1a1a]">@(firstItem.Division?.name ?? "-")</div>
-                                            </div>
-                                            <div>
-                                                <div class="text-[0.6rem] text-[#8a8880] font-bold uppercase mb-0.5">Documentation</div>
-                                                @if (!string.IsNullOrEmpty(firstItem.documentation_link))
-                                                {
-                                                    <a href="@firstItem.documentation_link" target="_blank" class="text-xs font-bold text-[#e8a000] hover:underline flex items-center gap-1">
-                                                        View Link
-                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-                                                    </a>
-                                                }
-                                                else { <span class="text-xs">-</span> }
-                                            </div>
-                                        </div>
-                                    }
+                                @RenderGroup(group)
+                            }
+                        </div>
+                    </div>
+                }
 
                                     <div class="overflow-x-auto">
                                         <table class="w-full text-left">
@@ -240,24 +188,16 @@
                                 </div>
                                 <div class="flex gap-2">
                                     <button type="button" @onclick="() => ApproveHandoverBatch(group.Key)" disabled="@IsProcessing" class="px-4 py-2 bg-gray-900 text-white text-xs font-bold rounded-lg shadow-sm hover:bg-gray-800 transition">Approve Handover</button>
-                                    <button type="button" @onclick="() => SetHandoverReject(group.Key)" class="px-4 py-2 bg-white border border-red-200 text-red-600 text-xs font-bold rounded-lg hover:bg-red-50 transition">Reject Proof</button>
+                                    <button type="button" @onclick="() => OpenHandoverRejectModal(group.Key)" class="px-4 py-2 bg-white border border-red-200 text-red-600 text-xs font-bold rounded-lg hover:bg-red-50 transition">Reject Proof</button>
                                 </div>
                             </div>
                             
-                            @if (HandoverRejectGroup == group.Key)
-                            {
-                                <div class="px-5 py-3 bg-red-50 border-b border-red-100 flex gap-2">
-                                    <input type="text" @bind="HandoverRejectReason" placeholder="Alasan penolakan..." class="flex-1 px-3 py-1.5 text-xs rounded border border-red-200 outline-none focus:border-red-400" />
-                                    <button type="button" @onclick="() => RejectHandoverBatch(group.Key)" class="px-3 py-1.5 bg-red-600 text-white text-xs font-bold rounded hover:bg-red-700">Confirm Reject</button>
-                                </div>
-                            }
-
                             <div class="p-4 bg-gray-50/50 flex flex-col md:flex-row gap-6">
                                 <div class="w-32 h-32 rounded-lg border border-[#e5e3dc] overflow-hidden bg-white shrink-0">
                                     @if (!string.IsNullOrEmpty(firstItem.handover_photo))
                                     {
-                                        <a href="/storage/@firstItem.handover_photo" target="_blank" data-image-popup>
-                                            <img src="/storage/@firstItem.handover_photo" class="w-full h-full object-cover" />
+                                        <a href="@($"/{firstItem.handover_photo.TrimStart('/')}")" target="_blank" data-image-popup>
+                                            <img src="@($"/{firstItem.handover_photo.TrimStart('/')}")" class="w-full h-full object-cover" />
                                         </a>
                                     }
                                     else { <div class="w-full h-full flex items-center justify-center text-[10px] text-gray-300">No Photo</div> }
@@ -314,9 +254,28 @@
                                     </div>
                                     <div class="text-[10px] text-gray-500 mt-0.5">Pemohon: @(item.applicant_name ?? item.Requester?.name)</div>
                                     
-                                    <div class="mt-3 flex items-center gap-2">
-                                        <button type="button" @onclick='() => SetReturnDecision(item.id, "APPROVE")' class="flex-1 py-1.5 text-xs font-bold rounded-lg border transition @(ReturnDecisions.GetValueOrDefault(item.id) == "APPROVE" ? "bg-emerald-600 border-emerald-600 text-white shadow-sm" : "bg-white border-[#e5e3dc] text-gray-600 hover:bg-gray-50")">Approve</button>
-                                        <button type="button" @onclick='() => SetReturnDecision(item.id, "REJECT")' class="flex-1 py-1.5 text-xs font-bold rounded-lg border transition @(ReturnDecisions.GetValueOrDefault(item.id) == "REJECT" ? "bg-red-600 border-red-600 text-white shadow-sm" : "bg-white border-[#e5e3dc] text-gray-600 hover:bg-gray-50")">Reject</button>
+                                    <div class="mt-3 flex flex-col gap-2">
+                                        <div class="flex items-center gap-2">
+                                            @if (ReturnDecisions.GetValueOrDefault(item.id) == "APPROVE")
+                                            {
+                                                <button type="button" @onclick='() => ClearDecision(item.id, true)' class="flex-1 py-1.5 text-xs font-bold rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition shadow-sm">Undo Approve</button>
+                                            }
+                                            else if (ReturnDecisions.GetValueOrDefault(item.id) == "REJECT")
+                                            {
+                                                <button type="button" @onclick='() => ClearDecision(item.id, true)' class="flex-1 py-1.5 text-xs font-bold rounded-lg border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 transition shadow-sm">Undo Reject</button>
+                                            }
+                                            else
+                                            {
+                                                <button type="button" @onclick='() => SetReturnDecision(item.id, "APPROVE")' class="flex-1 py-1.5 text-xs font-bold rounded-lg border border-[#e5e3dc] bg-white text-gray-600 hover:bg-gray-50 transition">Approve</button>
+                                                <button type="button" @onclick='() => SetReturnDecision(item.id, "REJECT")' class="flex-1 py-1.5 text-xs font-bold rounded-lg border border-[#e5e3dc] bg-white text-gray-600 hover:bg-gray-50 transition">Reject</button>
+                                            }
+                                        </div>
+                                        @if (ReturnDecisions.ContainsKey(item.id))
+                                        {
+                                            <div class="mt-1">
+                                                <input type="text" @bind="ReturnReasons[item.id]" placeholder="Notes..." class="w-full px-2.5 py-1 text-xs border border-gray-300 rounded-lg bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-amber-500 focus:border-amber-500 shadow-sm" />
+                                            </div>
+                                        }
                                     </div>
                                 </div>
                             </div>
@@ -362,7 +321,307 @@
     </div>
 </div>
 
+@if (ShowBatchConfirmModal)
+{
+    <div class="relative z-50" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 backdrop-blur-md bg-black/5 transition-opacity"></div>
+        <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+            <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                <div class="relative transform overflow-hidden rounded-xl bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg border border-gray-100">
+                    <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                        <div class="sm:flex sm:items-start">
+                            <div class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-amber-50 sm:mx-0 sm:h-10 sm:w-10">
+                                <svg class="h-6 w-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                            </div>
+                            <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
+                                <h3 class="text-base font-semibold leading-6 text-gray-900">Submit Decisions</h3>
+                                <div class="mt-2">
+                                    <p class="text-sm text-gray-500">Are you sure you want to submit @Decisions.Count decision(s)? Once submitted, they will be finalized and disappear from this view.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 gap-2">
+                        <button type="button" @onclick="ProcessBatch" class="inline-flex w-full justify-center rounded-md bg-[#e8a000] px-3 py-2 text-sm font-bold text-[#1a1a1a] shadow-sm hover:bg-[#d49300] sm:w-auto transition">Submit Now</button>
+                        <button type="button" @onclick="() => ShowBatchConfirmModal = false" class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto transition">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (ShowHandoverRejectModal)
+{
+    <div class="relative z-50" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 backdrop-blur-md bg-black/5 transition-opacity"></div>
+        <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+            <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                <div class="relative transform overflow-hidden rounded-xl bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg border border-gray-100">
+                    <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                        <div class="sm:flex sm:items-start">
+                            <div class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-50 sm:mx-0 sm:h-10 sm:w-10">
+                                <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                            </div>
+                            <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left w-full">
+                                <h3 class="text-base font-semibold leading-6 text-gray-900">Reject Handover Proof</h3>
+                                <div class="mt-2">
+                                    <p class="text-sm text-gray-500 mb-4">Please provide a reason for rejecting this handover proof. The applicant will be asked to re-upload the proof.</p>
+                                    <textarea @bind="HandoverRejectReason" @bind:event="oninput" @onkeypress="() => HandoverRejectionError = false" class="w-full rounded-md border shadow-sm sm:text-sm @(HandoverRejectionError ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:border-red-500 focus:ring-red-500")" rows="3" placeholder="Enter reason here..."></textarea>
+                                    @if (HandoverRejectionError)
+                                    {
+                                        <p class="mt-1 text-xs text-red-600">A reason is required to reject proof.</p>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 gap-2">
+                        <button type="button" @onclick="ConfirmHandoverReject" class="inline-flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:w-auto transition">Reject Proof</button>
+                        <button type="button" @onclick="CloseHandoverRejectModal" class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto transition">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (ShowRejectModal)
+{
+    <div class="relative z-50" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 backdrop-blur-md bg-black/5 transition-opacity"></div>
+        <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+            <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                <div class="relative transform overflow-hidden rounded-xl bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg border border-gray-100">
+                    <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                        <div class="sm:flex sm:items-start">
+                            <div class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-50 sm:mx-0 sm:h-10 sm:w-10">
+                                <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                            </div>
+                            <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left w-full">
+                                <h3 class="text-base font-semibold leading-6 text-gray-900" id="modal-title">Reject Request</h3>
+                                    <div class="mt-2">
+                                        <p class="text-sm text-gray-500 mb-4">Please provide a reason for rejecting this request. This will be recorded and visible to the requester.</p>
+                                        <textarea @bind="RejectReason" @bind:event="oninput" @onkeypress="() => RejectionError = false" class="w-full rounded-md border shadow-sm sm:text-sm @(RejectionError ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:border-red-500 focus:ring-red-500")" rows="3" placeholder="Enter rejection reason here..."></textarea>
+                                        @if (RejectionError)
+                                        {
+                                            <p class="mt-1 text-xs text-red-600">A reason is required to reject this request.</p>
+                                        }
+                                    </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 px-4 py-3 flex flex-col sm:flex-row-reverse sm:px-6 gap-2">
+                        <button type="button" @onclick='() => SubmitReject("REJECT")' class="inline-flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:w-auto transition">Reject Total</button>
+                        @if (!IsRejectingReturn)
+                        {
+                            <button type="button" @onclick='() => SubmitReject("REVISE")' class="inline-flex w-full justify-center rounded-md bg-amber-500 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-amber-600 sm:w-auto transition">Butuh Revisi</button>
+                        }
+                        <button type="button" @onclick="CloseRejectModal" class="inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:w-auto transition">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
+    private RenderFragment RenderGroup(KeyValuePair<string, List<Transaction>> group) => __builder => {
+        var firstItem = group.Value.First();
+        bool isExpanded = ExpandedGroups.Contains(group.Key);
+
+        <div class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden group-card transition-all duration-200">
+            <!-- Accordion Header -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-gray-50 cursor-pointer hover:bg-gray-100 transition gap-3" @onclick="() => ToggleGroup(group.Key)">
+                <div class="flex-1 min-w-0">
+                    <div class="text-sm font-bold text-gray-900 flex flex-wrap items-center gap-2">
+                        <span>Request @firstItem.created_at.ToString("MMM dd, yyyy HH:mm")</span>
+                        <span class="px-2 py-0.5 rounded bg-white border border-gray-200 text-xs text-gray-700 font-semibold shrink-0">@group.Value.Count Items</span>
+                        @if (firstItem.type == "OUT" && group.Value.Any(i => i.status == "APPROVED" || Decisions.GetValueOrDefault(i.id) == "APPROVE"))
+                        {
+                            <a href="/api/pdf/receipt-request/@group.Key" target="_blank" @onclick:stopPropagation="true" class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white border border-gray-200 text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded text-xs font-semibold transition shrink-0">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                Download PDF
+                            </a>
+                        }
+                    </div>
+                    <div class="text-xs text-gray-500 font-medium mt-1 break-words">
+                        Submitted by: <span class="text-gray-700 font-semibold">@(firstItem.applicant_name ?? firstItem.Requester?.name ?? "-")</span>
+                        @if (firstItem.type == "OUT" && !string.IsNullOrEmpty(firstItem.event_name))
+                        {
+                            <span class="mx-1 text-gray-300">•</span> <span>Event: <span class="text-gray-700 font-semibold">@firstItem.event_name</span></span>
+                        }
+                    </div>
+                </div>
+                <div class="flex items-center justify-end w-auto gap-3">
+                    @if (UserRole == "manager" || UserRole == "admin" || UserRole == "superadmin")
+                    {
+                        <button type="button" @onclick="() => ApproveAllGroup(group.Value)" @onclick:stopPropagation="true" disabled="@IsProcessing" class="px-3 py-1.5 text-xs font-bold text-[#1a1a1a] bg-[#e8a000] rounded-md shadow-sm hover:bg-[#d49300] transition active:scale-[0.98] uppercase tracking-wider disabled:opacity-50">
+                            APPROVE ALL
+                        </button>
+                    }
+                    <div class="text-gray-400 p-1 hover:text-gray-600 transition shrink-0">
+                        <svg class="w-5 h-5 transform transition-transform duration-200 @(isExpanded ? "rotate-180" : "")" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </div>
+                </div>
+            </div>
+
+            @if (isExpanded)
+            {
+                <div class="border-t border-gray-200">
+                    @if (firstItem.type == "OUT")
+                    {
+                        <div class="p-4 bg-white border-b border-gray-100">
+                            <h4 class="text-[0.65rem] font-bold uppercase tracking-wider text-gray-400 mb-3">Form Details</h4>
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                <div class="border-l-4 border-l-[#e8a000] pl-6">
+                                    <div class="text-[0.65rem] text-gray-500 font-bold uppercase tracking-wider mb-1">Applicant</div>
+                                    <div class="text-sm font-medium text-gray-900">@(firstItem.applicant_name ?? firstItem.Requester?.name ?? "-")</div>
+                                    <div class="text-xs text-gray-500">NRP: @(firstItem.applicant_nrp ?? "-")</div>
+                                </div>
+                                <div class="border-l-4 border-l-[#e8a000] pl-6">
+                                    <div class="text-[0.65rem] text-gray-500 font-bold uppercase tracking-wider mb-1">Event / Program</div>
+                                    <div class="text-sm font-medium text-gray-900">@(firstItem.event_name ?? "-")</div>
+                                    <div class="text-xs text-gray-500">@(firstItem.event_date?.ToString("MMM dd, yyyy") ?? "-")</div>
+                                </div>
+                                <div class="border-l-4 border-l-[#e8a000] pl-6">
+                                    <div class="text-[0.65rem] text-gray-500 font-bold uppercase tracking-wider mb-1">Division</div>
+                                    <div class="text-sm font-medium text-gray-900">@(firstItem.Division?.name ?? "-")</div>
+                                </div>
+                                <div class="border-l-4 border-l-[#e8a000] pl-6">
+                                    <div class="text-[0.65rem] text-gray-500 font-bold uppercase tracking-wider mb-1">Total Kredit Keluar</div>
+                                    <div class="text-sm font-bold text-[#e8a000] flex items-center gap-1">
+                                        @{ var totalCredit = group.Value.Where(i => i.request_type == "GIVEAWAY").Sum(i => i.quantity * (i.Product?.value ?? 0)); }
+                                        @if(totalCredit > 0)
+                                        {
+                                            <svg class="w-4 h-4 text-[#e8a000]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                            @(((double)totalCredit).ToString("N0")) <text>Poin</text>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-gray-400 font-medium">-</span>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                            @if (!string.IsNullOrEmpty(firstItem.notes))
+                            {
+                                <div class="mt-4 pt-2 border-t border-gray-50">
+                                    <div class="text-[0.65rem] text-gray-500 font-bold uppercase tracking-wider mb-1">Notes</div>
+                                    <div class="text-sm text-gray-700">@firstItem.notes</div>
+                                </div>
+                            }
+                        </div>
+                    }
+
+                    <div class="overflow-x-auto bg-gray-50/30">
+                        <table class="w-full text-left whitespace-nowrap">
+                            <thead class="text-gray-500 text-[0.65rem] uppercase tracking-wider border-b border-gray-100 bg-white">
+                                <tr>
+                                    <th class="px-4 py-3 font-semibold pl-6">Product Details</th>
+                                    <th class="px-4 py-3 font-semibold">Qty / Stok</th>
+                                    <th class="px-4 py-3 font-semibold">Credit</th>
+                                    <th class="px-4 py-3 font-semibold">Type</th>
+                                    <th class="px-4 py-3 font-semibold">Status</th>
+                                    @if (UserRole == "manager" || UserRole == "admin" || UserRole == "superadmin")
+                                    {
+                                        <th class="px-4 py-3 font-semibold text-right">Actions</th>
+                                    }
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                @foreach (var item in group.Value)
+                                {
+                                    <tr class="bg-white hover:bg-gray-50/50 transition">
+                                        <td class="p-4 pl-6">
+                                            <div class="flex items-center gap-3">
+                                                <div class="w-9 h-9 rounded border border-gray-200 overflow-hidden flex-shrink-0 bg-white flex items-center justify-center">
+                                                    <img src="@($"/{((item.Product?.image ?? "img/logo.svg").TrimStart('/'))}")" class="w-full h-full object-cover">
+                                                </div>
+                                                <div>
+                                                    <div class="font-bold text-gray-900 text-sm">@(item.Product?.name)</div>
+                                                    <code class="text-[10px] text-gray-500 bg-white border border-gray-100 px-1.5 py-0.5 rounded">@(item.Product?.sku)</code>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="p-4">
+                                            <div class="text-sm font-bold text-gray-900">
+                                                @item.quantity/<span class="text-gray-500 font-medium">@(item.Product?.current_stock)</span>
+                                                <span class="text-xs font-normal text-gray-400 ml-0.5">@(item.Product?.Unit?.name ?? "--")</span>
+                                            </div>
+                                        </td>
+                                        <td class="p-4">
+                                            @if (item.request_type == "GIVEAWAY")
+                                            {
+                                                <div class="text-sm font-semibold text-gray-700 bg-gray-100/60 border border-gray-200/80 px-2 py-0.5 rounded w-max text-center">
+                                                    @(((double)(item.Product?.value ?? 0)).ToString("N0")) Poin
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-gray-400 font-medium">-</span>
+                                            }
+                                        </td>
+                                        <td class="p-4">
+                                            @if (item.request_type == "GIVEAWAY")
+                                            {
+                                                <span class="inline-flex items-center px-2 py-0.5 border border-[#fde68a] rounded-md text-[0.65rem] font-bold bg-[#fffbeb] text-[#d97706] uppercase tracking-wider block w-max shadow-sm">GIVEAWAY</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="inline-flex items-center px-2 py-0.5 border border-[#bae6fd] rounded-md text-[0.65rem] font-bold bg-[#f0f9ff] text-[#0284c7] uppercase tracking-wider block w-max shadow-sm">BORROW</span>
+                                            }
+                                        </td>
+                                        <td class="p-4">
+                                            @if (item.status == "PENDING" || item.status == "PENDING_MANAGER")
+                                            {
+                                                <span class="inline-flex items-center px-2 py-0.5 border border-[#fde68a] rounded-md text-[0.65rem] font-bold bg-[#fef3c7] text-[#92400e] uppercase tracking-wider">WAITING ADMIN</span>
+                                            }
+                                        </td>
+                                        @if (UserRole == "manager" || UserRole == "admin" || UserRole == "superadmin")
+                                        {
+                                            <td class="p-4 text-right">
+                                                <div class="flex flex-col items-end gap-1.5">
+                                                    <div class="flex items-center justify-end gap-2">
+                                                        @if (Decisions.GetValueOrDefault(item.id) == "APPROVE")
+                                                        {
+                                                            <button type="button" @onclick="() => ClearDecision(item.id)" class="px-3 py-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 rounded-md hover:bg-emerald-100 transition border border-emerald-200">Undo Approve</button>
+                                                        }
+                                                        else if (Decisions.GetValueOrDefault(item.id) == "REJECT" || Decisions.GetValueOrDefault(item.id) == "REVISE")
+                                                        {
+                                                            <button type="button" @onclick="() => ClearDecision(item.id)" class="px-3 py-1.5 text-xs font-bold text-red-700 bg-red-50 rounded-md hover:bg-red-100 transition border border-red-200">Undo Reject</button>
+                                                        }
+                                                        else
+                                                        {
+                                                            <button type="button" @onclick='() => SetDecision(item.id, "APPROVE")' class="px-3 py-1.5 text-xs font-medium text-white bg-gray-900 rounded-md hover:bg-gray-800 transition">Approve</button>
+                                                            <button type="button" @onclick='() => OpenRejectModal(item.id)' class="px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 transition">Reject / Revise</button>
+                                                        }
+                                                    </div>
+                                                    @if (Decisions.ContainsKey(item.id))
+                                                    {
+                                                        <div class="mt-1">
+                                                            <input type="text" @bind="Reasons[item.id]" placeholder="Notes..." class="px-2.5 py-1 text-xs border border-gray-300 rounded-lg w-48 text-right bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-amber-500 focus:border-amber-500 shadow-sm" />
+                                                        </div>
+                                                    }
+                                                </div>
+                                            </td>
+                                        }
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+        </div>
+    };
+
     private Dictionary<string, List<Transaction>>? GroupedApprovals;
     private List<Transaction>? PendingReturns;
     private List<ProfileRequest>? PendingProfileRequests;
@@ -381,9 +640,7 @@
     private Dictionary<int, string> Decisions = new();
     private Dictionary<int, string> Reasons = new();
     private Dictionary<int, string> ReturnDecisions = new();
-
-    private string HandoverRejectGroup = "";
-    private string HandoverRejectReason = "";
+    private Dictionary<int, string> ReturnReasons = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -433,15 +690,124 @@
         if (!Reasons.ContainsKey(id)) Reasons[id] = "";
     }
     
-    private void SetReturnDecision(int id, string decision)
+    private bool ShowRejectModal = false;
+    private int RejectItemId = 0;
+    private string RejectReason = "";
+    private bool IsRejectingReturn = false;
+    private bool RejectionError = false;
+
+    private void OpenRejectModal(int id, bool isReturn = false)
     {
-        ReturnDecisions[id] = decision;
+        RejectItemId = id;
+        IsRejectingReturn = isReturn;
+        RejectReason = "";
+        RejectionError = false;
+        ShowRejectModal = true;
     }
 
-    private void SetHandoverReject(string groupId)
+    private void CloseRejectModal()
     {
-        HandoverRejectGroup = groupId;
+        ShowRejectModal = false;
+        RejectItemId = 0;
+        IsRejectingReturn = false;
+        RejectionError = false;
+    }
+
+    private void SubmitReject(string decision)
+    {
+        if (string.IsNullOrWhiteSpace(RejectReason))
+        {
+            RejectionError = true;
+            return;
+        }
+
+        if (RejectItemId > 0)
+        {
+            if (IsRejectingReturn)
+            {
+                ReturnDecisions[RejectItemId] = "REJECT";
+                ReturnReasons[RejectItemId] = RejectReason;
+            }
+            else
+            {
+                Decisions[RejectItemId] = decision;
+                Reasons[RejectItemId] = RejectReason;
+            }
+        }
+        CloseRejectModal();
+    }
+
+    private void ClearDecision(int id, bool isReturn = false)
+    {
+        if (isReturn)
+        {
+            if (ReturnDecisions.ContainsKey(id)) ReturnDecisions.Remove(id);
+            if (ReturnReasons.ContainsKey(id)) ReturnReasons.Remove(id);
+        }
+        else
+        {
+            if (Decisions.ContainsKey(id)) Decisions.Remove(id);
+            if (Reasons.ContainsKey(id)) Reasons.Remove(id);
+        }
+    }
+
+    private void SetReturnDecision(int id, string decision)
+    {
+        if (decision == "REJECT")
+        {
+            OpenRejectModal(id, true);
+        }
+        else
+        {
+            ReturnDecisions[id] = decision;
+        }
+    }
+
+    private bool ShowBatchConfirmModal = false;
+    private void OpenBatchConfirmModal()
+    {
+        if (Decisions.Count == 0) return;
+        ShowBatchConfirmModal = true;
+    }
+
+    private bool ShowHandoverRejectModal = false;
+    private string HandoverRejectGroupId = "";
+    private string HandoverRejectReason = "";
+    private bool HandoverRejectionError = false;
+
+    private void OpenHandoverRejectModal(string groupId)
+    {
+        HandoverRejectGroupId = groupId;
         HandoverRejectReason = "";
+        HandoverRejectionError = false;
+        ShowHandoverRejectModal = true;
+    }
+
+    private void CloseHandoverRejectModal()
+    {
+        ShowHandoverRejectModal = false;
+        HandoverRejectGroupId = "";
+        HandoverRejectionError = false;
+    }
+
+    private async Task ConfirmHandoverReject()
+    {
+        if (string.IsNullOrWhiteSpace(HandoverRejectReason))
+        {
+            HandoverRejectionError = true;
+            return;
+        }
+
+        IsProcessing = true;
+        var err = await ApprovalService.RejectHandoverBatchAsync(HandoverRejectGroupId, HandoverRejectReason, CurrentUserId, UserRole);
+        if (err == null)
+        {
+            SuccessMessage = "Handover rejected successfully.";
+            CloseHandoverRejectModal();
+            await LoadData();
+        }
+        else ErrorMessage = err;
+        IsProcessing = false;
     }
 
     private async Task ApproveAllGroup(List<Transaction> items)
@@ -476,7 +842,7 @@
             var action = kvp.Value;
             var reason = Reasons.GetValueOrDefault(id, "");
 
-            if ((action == "REJECT" || action == "REVISION") && string.IsNullOrWhiteSpace(reason))
+            if ((action == "REJECT" || action == "REVISE") && string.IsNullOrWhiteSpace(reason))
             {
                 ErrorMessage = "Please provide a reason for all rejected or revised items.";
                 IsProcessing = false;
@@ -486,7 +852,7 @@
             string? err = null;
             if (action == "APPROVE") err = await ApprovalService.ApproveAsync(id, reason, CurrentUserId, UserRole);
             else if (action == "REJECT") err = await ApprovalService.RejectAsync(id, reason, CurrentUserId, UserRole);
-            else if (action == "REVISION") err = await ApprovalService.RequestRevisionAsync(id, reason, CurrentUserId, UserRole);
+            else if (action == "REVISE") err = await ApprovalService.RequestRevisionAsync(id, reason, CurrentUserId, UserRole);
 
             if (err != null) ErrorMessage += $"Item {id}: {err} | ";
             else successCount++;
@@ -494,6 +860,7 @@
 
         if (successCount > 0) SuccessMessage = $"{successCount} items processed.";
         await LoadData();
+        ShowBatchConfirmModal = false;
         IsProcessing = false;
     }
     
@@ -508,10 +875,11 @@
         {
             var id = kvp.Key;
             var action = kvp.Value;
+            var reason = ReturnReasons.GetValueOrDefault(id, "");
             
             string? err = null;
             if (action == "APPROVE") err = await ApprovalService.ApproveReturnAsync(id, CurrentUserId, UserRole);
-            else if (action == "REJECT") err = await ApprovalService.RejectReturnAsync(id, CurrentUserId, UserRole);
+            else if (action == "REJECT") err = await ApprovalService.RejectReturnAsync(id, reason, CurrentUserId, UserRole);
             
             if (err != null) ErrorMessage += $"Return {id}: {err} | ";
             else successCount++;
@@ -545,7 +913,7 @@
         if (err == null) 
         {
             SuccessMessage = "Handover rejected successfully.";
-            HandoverRejectGroup = "";
+            HandoverRejectGroupId = "";
         }
         else ErrorMessage = err;
         

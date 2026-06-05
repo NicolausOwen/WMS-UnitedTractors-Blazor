@@ -75,7 +75,7 @@
     {
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
             @* 1. Transaction Status Donut *@
-            <section class="rounded-[18px] border border-[#e5e3dc] bg-white p-5 shadow-sm flex flex-col min-h-[260px] widget-card">
+            <section class="min-w-0 rounded-[18px] border border-[#e5e3dc] bg-white p-5 shadow-sm flex flex-col min-h-[260px] widget-card">
                 <p class="text-[0.7rem] font-bold uppercase tracking-[0.18em] text-[#8a8880] mb-3">Transaction Status</p>
                 <div class="relative w-full flex-1 flex items-center justify-center min-h-[150px]">
                     <canvas id="donutChartStatus"></canvas>
@@ -88,7 +88,7 @@
             </section>
 
             @* 2. Item Status Donut (Merch / Borrow Slide Toggle) *@
-            <section class="rounded-[18px] border border-[#e5e3dc] bg-white p-5 shadow-sm flex flex-col min-h-[260px] widget-card">
+            <section class="min-w-0 rounded-[18px] border border-[#e5e3dc] bg-white p-5 shadow-sm flex flex-col min-h-[260px] widget-card">
                 <div class="flex items-center justify-between mb-3">
                     <p class="text-[0.7rem] font-bold uppercase tracking-[0.18em] text-[#8a8880]">Item Status</p>
                     <div class="relative flex bg-[#f0ede5] rounded-full p-0.5" id="itemStatusToggle">
@@ -123,7 +123,7 @@
             </section>
 
             @* 3. Low Stock Products List *@
-            <section class="rounded-[18px] border border-[#e5e3dc] bg-white p-5 shadow-sm flex flex-col min-h-[260px] widget-card">
+            <section class="min-w-0 rounded-[18px] border border-[#e5e3dc] bg-white p-5 shadow-sm flex flex-col min-h-[260px] widget-card">
                 <p class="text-[0.7rem] font-bold uppercase tracking-[0.18em] text-[#8a8880] mb-3">Low Stock</p>
                 @if(LowStockProducts != null && LowStockProducts.Any())
                 {
@@ -697,10 +697,13 @@
         await LoadData(1);
     }
 
+    private bool _shouldRenderCharts = false;
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender && (UserRole == "superadmin" || UserRole == "admin" || UserRole == "manager"))
+        if (_shouldRenderCharts && (UserRole == "superadmin" || UserRole == "admin" || UserRole == "manager"))
         {
+            _shouldRenderCharts = false;
             await JSRuntime.InvokeVoidAsync("renderDashboardCharts", new {
                 donutData = new { approved = DonutApproved, rejected = DonutRejected, pending = DonutPending },
                 merchStatus = new { available = MerchAvailable, low_stock = MerchLowStock, out_of_stock = MerchOutOfStock },
@@ -740,6 +743,8 @@
         {
             ActiveBorrows = await DashboardService.GetActiveBorrowsAsync(CurrentUserId, UserRole);
         }
+
+        _shouldRenderCharts = true;
     }
 
     private async Task FilterByCategory(int? categoryId)

@@ -1047,6 +1047,11 @@ body.ut-collapsed .ut-credit-pts {
   margin: 1rem;
 }
 
+.mx-1 {
+  margin-left: 0.25rem;
+  margin-right: 0.25rem;
+}
+
 .mx-4 {
   margin-left: 1rem;
   margin-right: 1rem;
@@ -1590,6 +1595,10 @@ body.ut-collapsed .ut-credit-pts {
   max-width: 200px;
 }
 
+.max-w-\[220px\] {
+  max-width: 220px;
+}
+
 .max-w-\[280px\] {
   max-width: 280px;
 }
@@ -1968,6 +1977,10 @@ body.ut-collapsed .ut-credit-pts {
 
 .whitespace-pre-wrap {
   white-space: pre-wrap;
+}
+
+.break-words {
+  overflow-wrap: break-word;
 }
 
 .break-all {
@@ -2419,6 +2432,11 @@ body.ut-collapsed .ut-credit-pts {
   background-color: rgb(240 237 229 / var(--tw-bg-opacity, 1));
 }
 
+.bg-\[\#f0f9ff\] {
+  --tw-bg-opacity: 1;
+  background-color: rgb(240 249 255 / var(--tw-bg-opacity, 1));
+}
+
 .bg-\[\#f3e8ff\] {
   --tw-bg-opacity: 1;
   background-color: rgb(243 232 255 / var(--tw-bg-opacity, 1));
@@ -2655,6 +2673,10 @@ body.ut-collapsed .ut-credit-pts {
 .object-cover {
   -o-object-fit: cover;
      object-fit: cover;
+}
+
+.p-0 {
+  padding: 0px;
 }
 
 .p-0\.5 {
@@ -3248,6 +3270,11 @@ body.ut-collapsed .ut-credit-pts {
 .\!text-white {
   --tw-text-opacity: 1 !important;
   color: rgb(255 255 255 / var(--tw-text-opacity, 1)) !important;
+}
+
+.text-\[\#0284c7\] {
+  --tw-text-opacity: 1;
+  color: rgb(2 132 199 / var(--tw-text-opacity, 1));
 }
 
 .text-\[\#0369a1\] {
@@ -4562,6 +4589,10 @@ body.ut-collapsed .ut-credit-pts {
 
   .sm\:gap-6 {
     gap: 1.5rem;
+  }
+
+  .sm\:self-center {
+    align-self: center;
   }
 
   .sm\:rounded-lg {
