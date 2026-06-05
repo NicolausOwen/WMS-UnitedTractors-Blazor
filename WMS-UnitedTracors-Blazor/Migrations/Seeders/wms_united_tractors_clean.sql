@@ -454,6 +454,19 @@ INSERT INTO `products` (`id`, `sku`, `barcode_type`, `name`, `description`, `tra
 (429, 'MHE-260511-0037', 'TYPE_CODE_128', 'Merch Assessment - Tumbler Corkcilcke',             NULL, NULL, 50.00, '/images/products/8jZaNApx2sjjOOF4A6sJCBwn54J1HvdX5CiqAtm1.jpg', '["/images/products/8jZaNApx2sjjOOF4A6sJCBwn54J1HvdX5CiqAtm1.jpg"]', 6,    4,    NULL, 4,   2,   3,  1, 0, '2026-05-11 13:46:23', '2026-05-26 09:46:52'),
 (431, 'MHE-260511-0038', 'TYPE_CODE_128', 'RACER',                                             NULL, NULL, 50.00, NULL, NULL, 6,    4,    NULL, 86,  12,  3,  1, 0, '2026-05-11 13:46:23', '2026-05-26 09:46:52');
 
+-- Normalize is_returnable by category (from PHP migration):
+--   Giveaway categories (Merchandise, ATK, Makanan, Facility) -> not returnable
+--   Borrowing categories (Alat Musik, Elektronik, Game)       -> returnable
+UPDATE `products` p
+  JOIN `categories` c ON c.`id` = p.`category_id`
+  SET p.`is_returnable` = 0
+  WHERE c.`name` IN ('Merchandise', 'ATK', 'Makanan', 'Facility');
+
+UPDATE `products` p
+  JOIN `categories` c ON c.`id` = p.`category_id`
+  SET p.`is_returnable` = 1
+  WHERE c.`name` IN ('Alat Musik', 'Elektronik', 'Game');
+
 -- ------------------------------------------------------------
 -- Table: product_variants
 -- ------------------------------------------------------------
@@ -621,11 +634,13 @@ CREATE TABLE `transactions` (
   `pending_return_quantity` int NOT NULL DEFAULT '0',
   `returned_at` timestamp NULL DEFAULT NULL,
   `return_photo` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `handover_photo` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `handover_notes` text COLLATE utf8mb4_unicode_ci,
   `return_status` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `return_reason` text COLLATE utf8mb4_unicode_ci,
   `is_return_draft` tinyint(1) NOT NULL DEFAULT '0',
   `return_condition` enum('BAIK','RUSAK','HILANG') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `status` enum('PENDING','PENDING_MANAGER','APPROVED','REJECTED','REVISION') COLLATE utf8mb4_unicode_ci DEFAULT 'PENDING',
+  `status` enum('PENDING','PENDING_MANAGER','WAITING_HANDOVER','WAITING_ADMIN_HANDOVER','APPROVED','REJECTED','REVISION') COLLATE utf8mb4_unicode_ci DEFAULT 'PENDING',
   `rejection_reason` text COLLATE utf8mb4_unicode_ci,
   `admin_notes` text COLLATE utf8mb4_unicode_ci,
   `manager_notes` text COLLATE utf8mb4_unicode_ci,

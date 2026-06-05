@@ -15,7 +15,13 @@ else
     <div class="bg-white p-8 max-w-4xl mx-auto my-8 border border-gray-200 shadow-sm print:shadow-none print:border-none print:m-0 print:p-0">
         <div class="text-center mb-8 border-b-2 border-gray-800 pb-4">
             <h1 class="text-2xl font-bold uppercase m-0 mb-1">
-                @(Type == "Return" ? "Bukti Pengembalian Barang" : "Bukti Transaksi Barang")
+                @(Type switch
+                {
+                    "Return" => "Bukti Pengembalian Barang",
+                    "Penyerahan" => "Bukti Serah Terima Barang",
+                    "Pengajuan" => "Bukti Pengajuan Barang",
+                    _ => "Bukti Transaksi Barang"
+                })
             </h1>
             <p class="text-sm text-gray-600 m-0">Warehouse Management System - United Tractors</p>
         </div>
@@ -49,6 +55,20 @@ else
                 <tr>
                     <td class="font-bold w-40 py-1 align-top">Tanggal Dikembalikan</td>
                     <td class="py-1 align-top">: @FirstItem.updated_at.ToString("dd MMM yyyy HH:mm:ss")</td>
+                </tr>
+            }
+            @if (Type == "Penyerahan" && FirstItem.updated_at != DateTime.MinValue)
+            {
+                <tr>
+                    <td class="font-bold w-40 py-1 align-top">Tanggal Serah Terima</td>
+                    <td class="py-1 align-top">: @FirstItem.updated_at.ToString("dd MMM yyyy HH:mm:ss")</td>
+                </tr>
+            }
+            @if (Type == "Penyerahan" && !string.IsNullOrEmpty(FirstItem.handover_notes))
+            {
+                <tr>
+                    <td class="font-bold w-40 py-1 align-top">Catatan Serah Terima</td>
+                    <td class="py-1 align-top">: @FirstItem.handover_notes</td>
                 </tr>
             }
             @if (!string.IsNullOrEmpty(FirstItem.notes))
@@ -112,6 +132,14 @@ else
                 }
             </tbody>
         </table>
+
+        @if (Type == "Penyerahan" && !string.IsNullOrEmpty(FirstItem.handover_photo))
+        {
+            <div class="mb-8">
+                <p class="font-bold mb-2">Foto Bukti Serah Terima:</p>
+                <img src="/@FirstItem.handover_photo" alt="Bukti Serah Terima" class="max-w-xs border border-gray-300 rounded" />
+            </div>
+        }
 
         <p class="text-xs text-gray-500 italic mb-12">
             * Barang peminjaman (Wajib Kembali) harus dikembalikan dalam kondisi baik sesuai dengan jumlah yang dipinjam.<br>

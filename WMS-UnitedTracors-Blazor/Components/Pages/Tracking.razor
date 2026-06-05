@@ -111,6 +111,10 @@
                     var isGiveaway = !hasBorrow;
                     var status = firstItem.status;
 
+                    var isHandoverPending = hasBorrow && borrowItemsOnly.Any(i => i.status == "WAITING_HANDOVER" || i.status == "WAITING_ADMIN_HANDOVER");
+                    var handoverDone = hasBorrow && borrowItemsOnly.Any(i => i.status == "APPROVED" && !string.IsNullOrEmpty(i.handover_photo));
+                    var canHandover = isHandoverPending && (UserRole == "admin" || UserRole == "superadmin" || firstItem.requester_id == CurrentUserId);
+
                     var isExpanded = ExpandedGroupIds.Contains(groupId);
 
                     <div class="bg-white rounded-xl border border-[#e5e3dc] overflow-hidden shadow-sm transition-all duration-200">
@@ -143,6 +147,8 @@
                                                 <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#fef0f0] text-[#d94040] border border-[#f8c0c0]">Ditolak</span>
                                             } else if(status == "REVISION") {
                                                 <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#fffbeb] text-[#d97706] border border-[#fde68a]">Butuh Revisi</span>
+                                            } else if(status == "WAITING_HANDOVER" || status == "WAITING_ADMIN_HANDOVER") {
+                                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#fff8e6] text-[#b37a00] border border-[#ffe099]">Menunggu Bukti Serah Terima</span>
                                             } else if(allReturned) {
                                                 <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#eef9f0] text-[#1a7a30] border border-[#b8e8c0]">Selesai</span>
                                             } else {
@@ -201,6 +207,13 @@
                             </div>
 
                             <div class="flex items-center justify-end gap-3 shrink-0">
+                                @if (canHandover)
+                                {
+                                    <button type="button" @onclick="() => OpenHandoverModal(borrowItemsOnly)" @onclick:stopPropagation="true" class="inline-flex items-center gap-2 px-4 py-2.5 bg-[#e8a000] hover:bg-[#d49300] text-[#1a1a1a] text-sm font-bold rounded-lg shadow-sm transition active:scale-95 cursor-pointer whitespace-nowrap">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                                        Upload Bukti Serah Terima
+                                    </button>
+                                }
                                 @if (groupItems.Any(i => i.returned_quantity > 0 || (i.pending_return_quantity > 0 && i.is_return_draft == 0)))
                                 {
                                     <a href="/Receipt/Return/@firstItem.id" target="_blank" @onclick:stopPropagation="true" class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-white border border-[#b8e8c0] text-[#1a7a30] hover:bg-[#eef9f0] rounded text-xs font-semibold transition">
@@ -218,6 +231,32 @@
                         @if(isExpanded)
                         {
                             <div class="border-t border-[#e5e3dc] bg-[#faf9f5]">
+                                @if (hasBorrow)
+                                {
+                                    <div class="px-5 py-4 border-b border-[#e5e3dc] flex flex-col sm:flex-row sm:items-center gap-3">
+                                        <span class="text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880]">Dokumen Pembukuan (PDF):</span>
+                                        <div class="flex flex-wrap items-center gap-2">
+                                            <a href="/Receipt/Pengajuan/@firstItem.id" target="_blank" @onclick:stopPropagation="true" class="inline-flex items-center gap-2 px-3 py-2 bg-white border border-[#e5e3dc] text-[#3a3835] hover:border-[#1a1a1a] rounded-lg text-xs font-semibold transition">
+                                                <svg class="w-4 h-4 text-[#8a8880]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                                1. Bukti Pengajuan
+                                            </a>
+                                            @if (handoverDone)
+                                            {
+                                                <a href="/Receipt/Penyerahan/@firstItem.id" target="_blank" @onclick:stopPropagation="true" class="inline-flex items-center gap-2 px-3 py-2 bg-white border border-[#e5e3dc] text-[#3a3835] hover:border-[#1a1a1a] rounded-lg text-xs font-semibold transition">
+                                                    <svg class="w-4 h-4 text-[#8a8880]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                                    2. Bukti Penyerahan
+                                                </a>
+                                            }
+                                            else
+                                            {
+                                                <span class="inline-flex items-center gap-2 px-3 py-2 bg-[#f0ede5] border border-[#e5e3dc] text-[#b5b2aa] rounded-lg text-xs font-semibold cursor-not-allowed" title="Tersedia setelah serah terima barang">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                                    2. Bukti Penyerahan
+                                                </span>
+                                            }
+                                        </div>
+                                    </div>
+                                }
                                 <div class="overflow-x-auto">
                                     <table class="w-full text-left border-collapse">
                                         <thead>
@@ -260,6 +299,10 @@
                                                         } else if (usage.status == "PENDING_MANAGER") {
                                                             <span class="inline-flex items-center px-2 py-0.5 border border-[#c4b5fd] rounded text-[10px] font-bold bg-[#ede9fe] text-[#6d28d9]">
                                                                 Menunggu Manager
+                                                            </span>
+                                                        } else if (usage.status == "WAITING_HANDOVER" || usage.status == "WAITING_ADMIN_HANDOVER") {
+                                                            <span class="inline-flex items-center px-2 py-0.5 border border-[#fde68a] rounded text-[10px] font-bold bg-[#fef3c7] text-[#92400e]">
+                                                                Menunggu Serah Terima
                                                             </span>
                                                         } else if (usage.status == "APPROVED") {
                                                             @if (usage.request_type == "BORROW") {
@@ -408,6 +451,41 @@
     </div>
 }
 
+@if (IsHandoverModalOpen)
+{
+    <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" @onclick="CloseHandoverModal">
+        <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden" @onclick:stopPropagation="true">
+            <div class="p-6 border-b border-[#e5e3dc] flex justify-between items-center">
+                <h3 class="text-lg font-bold text-[#1a1a1a]">Bukti Serah Terima Barang</h3>
+                <button type="button" @onclick="CloseHandoverModal" class="text-gray-400 hover:text-gray-600 transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-4">
+                <p class="text-sm text-[#8a8880]">Unggah foto bukti barang telah diserahkan kepada peminjam. Setelah ini status berubah menjadi <span class="font-bold text-[#1a1a1a]">Sedang Dipinjam</span> dan barang dapat dikembalikan.</p>
+
+                <div>
+                    <label class="block text-xs font-bold text-[#8a8880] uppercase tracking-wider mb-2">Foto Bukti Serah Terima</label>
+                    <InputFile OnChange="HandleHandoverFileSelected" accept="image/*" class="w-full p-2 border border-[#e5e3dc] rounded-lg text-sm" />
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-[#8a8880] uppercase tracking-wider mb-2">Catatan (opsional)</label>
+                    <textarea @bind="HandoverNotes" class="w-full p-2 border border-[#e5e3dc] rounded-lg focus:border-[#e8a000] outline-none h-20" placeholder="Catatan serah terima..."></textarea>
+                </div>
+            </div>
+
+            <div class="p-6 border-t border-[#e5e3dc] bg-[#faf9f5] flex justify-end gap-3">
+                <button type="button" @onclick="CloseHandoverModal" class="px-4 py-2 font-bold text-[#8a8880] hover:text-[#1a1a1a] transition">Batal</button>
+                <button type="button" @onclick="SubmitHandover" disabled="@IsSubmitting" class="px-6 py-2 bg-[#1a1a1a] text-white font-bold rounded-lg hover:bg-[#333] transition disabled:opacity-50">
+                    @(IsSubmitting ? "Memproses..." : "Simpan")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     private List<Division> Divisions = new();
     private Dictionary<string, List<Transaction>> GroupedUsages = new();
@@ -431,6 +509,11 @@
     private Transaction? ReturnTransaction;
     private UT_WMSDotnet.ViewModels.ReturnItemViewModel ReturnModel = new();
     private Microsoft.AspNetCore.Components.Forms.IBrowserFile? SelectedFile;
+
+    private bool IsHandoverModalOpen = false;
+    private List<int> HandoverTransactionIds = new();
+    private string? HandoverNotes;
+    private Microsoft.AspNetCore.Components.Forms.IBrowserFile? HandoverFile;
 
     protected override async Task OnInitializedAsync()
     {
@@ -584,6 +667,62 @@
         SelectedFile = e.File;
     }
 
+    private void OpenHandoverModal(List<Transaction> borrowItems)
+    {
+        HandoverTransactionIds = borrowItems
+            .Where(i => i.status == "WAITING_HANDOVER" || i.status == "WAITING_ADMIN_HANDOVER")
+            .Select(i => i.id)
+            .ToList();
+        HandoverNotes = null;
+        HandoverFile = null;
+        IsHandoverModalOpen = true;
+    }
+
+    private void CloseHandoverModal()
+    {
+        IsHandoverModalOpen = false;
+        HandoverTransactionIds = new();
+        HandoverFile = null;
+        HandoverNotes = null;
+    }
+
+    private void HandleHandoverFileSelected(Microsoft.AspNetCore.Components.Forms.InputFileChangeEventArgs e)
+    {
+        HandoverFile = e.File;
+    }
+
+    private async Task SubmitHandover()
+    {
+        if (HandoverFile == null)
+        {
+            ErrorMessage = "Foto bukti serah terima wajib diunggah.";
+            return;
+        }
+
+        IsSubmitting = true;
+        ErrorMessage = null;
+        SuccessMessage = null;
+
+        try
+        {
+            var err = await TransactionService.ConfirmHandoverAsync(HandoverTransactionIds, HandoverFile, HandoverNotes);
+            if (err == null)
+            {
+                SuccessMessage = "Bukti serah terima berhasil disimpan. Barang kini sedang dipinjam.";
+                CloseHandoverModal();
+                await LoadData();
+            }
+            else
+            {
+                ErrorMessage = err;
+            }
+        }
+        finally
+        {
+            IsSubmitting = false;
+        }
+    }
+
     private async Task SubmitReturn()
     {
         if (ReturnModel.return_quantity <= 0)
@@ -691,13 +830,20 @@
 
             if (firstItem.status == "PENDING") {
                 steps.Add(new TrackingStep { Name = "Approval Admin", Status = "ACTIVE" });
+                steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "PENDING" });
                 steps.Add(new TrackingStep { Name = "Pengembalian", Status = "PENDING" });
             } else if (firstItem.status == "REVISION") {
                 steps.Add(new TrackingStep { Name = "Approval Admin", Status = "WARNING" });
+                steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "PENDING" });
+                steps.Add(new TrackingStep { Name = "Pengembalian", Status = "PENDING" });
+            } else if (firstItem.status == "WAITING_HANDOVER" || firstItem.status == "WAITING_ADMIN_HANDOVER") {
+                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE" });
+                steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "ACTIVE" });
                 steps.Add(new TrackingStep { Name = "Pengembalian", Status = "PENDING" });
             } else if (firstItem.status == "APPROVED") {
                 steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE" });
-                
+                steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "DONE" });
+
                 if (totalReturned >= totalQty && totalQty > 0) {
                     steps.Add(new TrackingStep { Name = "Pengembalian", Status = "DONE" });
                 } else {

@@ -42,6 +42,12 @@ public class Transaction
     [StringLength(255)]
     public string? return_photo { get; set; }
 
+    [StringLength(255)]
+    public string? handover_photo { get; set; }
+
+    [Column(TypeName = "text")]
+    public string? handover_notes { get; set; }
+
     [StringLength(50)]
     public string? return_status { get; set; }
 

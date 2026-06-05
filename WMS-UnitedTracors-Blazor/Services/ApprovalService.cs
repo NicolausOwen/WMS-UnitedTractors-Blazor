@@ -123,10 +123,19 @@ public class ApprovalService
                 };
                 _context.StockLogs.Add(stockLog);
 
-                transaction.status = "APPROVED";
-                if (transaction.request_type == "GIVEAWAY")
+                // Borrowing (OUT + BORROW) requires a handover step before it is considered
+                // actively borrowed. Giveaways and stock-in are finalized immediately.
+                if (transaction.type == "OUT" && transaction.request_type == "BORROW")
                 {
-                    transaction.returned_at = DateTime.UtcNow; // Mark finished
+                    transaction.status = "WAITING_HANDOVER";
+                }
+                else
+                {
+                    transaction.status = "APPROVED";
+                    if (transaction.request_type == "GIVEAWAY")
+                    {
+                        transaction.returned_at = DateTime.UtcNow; // Mark finished
+                    }
                 }
                 
                 transaction.approver_id = currentUserId;

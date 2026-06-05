@@ -367,6 +367,60 @@ public class TransactionService
         return await ReturnItemAsync(model);
     }
 
+    public async Task<string?> ConfirmHandoverAsync(
+        List<int> transactionIds,
+        Microsoft.AspNetCore.Components.Forms.IBrowserFile? photo,
+        string? notes)
+    {
+        if (transactionIds == null || !transactionIds.Any())
+            return "Tidak ada item yang menunggu serah terima.";
+
+        var transactions = await _context.Transactions
+            .Where(t => transactionIds.Contains(t.id))
+            .ToListAsync();
+
+        var pending = transactions
+            .Where(t => t.request_type == "BORROW" &&
+                        (t.status == "WAITING_HANDOVER" || t.status == "WAITING_ADMIN_HANDOVER"))
+            .ToList();
+
+        if (!pending.Any())
+            return "Item ini tidak sedang menunggu bukti serah terima.";
+
+        if (photo == null)
+            return "Foto bukti serah terima wajib diunggah.";
+
+        string photoPath;
+        try
+        {
+            var uploads = Path.Combine(_env.WebRootPath, "images", "handover");
+            if (!Directory.Exists(uploads)) Directory.CreateDirectory(uploads);
+            var fileName = Guid.NewGuid().ToString() + Path.GetExtension(photo.Name);
+            var filePath = Path.Combine(uploads, fileName);
+            using (var fileStream = new FileStream(filePath, FileMode.Create))
+            {
+                await photo.OpenReadStream(10 * 1024 * 1024).CopyToAsync(fileStream);
+            }
+            photoPath = "images/handover/" + fileName;
+        }
+        catch (Exception ex)
+        {
+            return "Gagal mengunggah foto: " + ex.Message;
+        }
+
+        foreach (var item in pending)
+        {
+            item.handover_photo = photoPath;
+            item.handover_notes = notes;
+            item.status = "APPROVED";
+            item.updated_at = DateTime.UtcNow;
+            _context.Transactions.Update(item);
+        }
+
+        await _context.SaveChangesAsync();
+        return null;
+    }
+
     public async Task<string?> CancelReturnDraftAsync(int id)
     {
         var transaction = await _context.Transactions.FindAsync(id);
