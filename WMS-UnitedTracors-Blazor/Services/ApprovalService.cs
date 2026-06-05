@@ -292,6 +292,10 @@ public class ApprovalService
 
                 transaction.returned_quantity = (transaction.returned_quantity ?? 0) + (transaction.pending_return_quantity ?? 0);
                 transaction.pending_return_quantity = 0;
+                if (transaction.returned_quantity >= transaction.quantity)
+                {
+                    transaction.returned_at = DateTime.UtcNow; // Tandai selesai dikembalikan
+                }
                 transaction.updated_at = DateTime.UtcNow;
                 _context.Transactions.Update(transaction);
 

@@ -492,7 +492,7 @@
             };
         }
 
-        var err = await TransactionService.ReturnItemAsync(ReturnModel);
+        var err = await TransactionService.ReturnItemAsync(ReturnModel, asDraft: true);
         if (err != null)
         {
             ErrorMessage = err;

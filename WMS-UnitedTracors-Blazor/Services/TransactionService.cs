@@ -18,6 +18,22 @@ public class TransactionService
         _env = env;
     }
 
+    // Shared upload constraints for proof photos/PDFs (handover & return).
+    public const long MaxUploadBytes = 4 * 1024 * 1024; // 4 MB
+    private static readonly string[] AllowedUploadTypes =
+    {
+        "image/jpg", "image/jpeg", "image/png", "image/webp", "application/pdf"
+    };
+
+    private static string? ValidateUploadFile(Microsoft.AspNetCore.Components.Forms.IBrowserFile file)
+    {
+        if (!AllowedUploadTypes.Contains(file.ContentType))
+            return "Format file tidak didukung. Gunakan JPG, PNG, WEBP, atau PDF.";
+        if (file.Size > MaxUploadBytes)
+            return $"Ukuran file terlalu besar ({file.Size / 1024.0 / 1024.0:0.#} MB). Maksimal 4 MB.";
+        return null;
+    }
+
     public async Task<string?> StoreTransactionAsync(TransactionRequestViewModel model, int currentUserId)
     {
         var items = new List<TransactionItemViewModel>();
@@ -107,7 +123,14 @@ public class TransactionService
                     return $"Stok tidak mencukupi untuk produk: {product.name}.";
                 }
 
-                totalPointsRequired += (product.value * item.quantity);
+                // Hanya barang non-returnable (GIVEAWAY) yang memakai poin.
+                // Barang returnable (BORROW) dipinjam tanpa biaya poin.
+                // (Harus selaras dengan logika refund yang memakai request_type == "GIVEAWAY".)
+                var itemReqType = item.request_type ?? "BORROW";
+                if (itemReqType == "GIVEAWAY")
+                {
+                    totalPointsRequired += (product.value * item.quantity);
+                }
             }
 
             if (totalPointsRequired > 0)
@@ -227,7 +250,7 @@ public class TransactionService
         return (transactions, totalItems, totalPages);
     }
 
-    public async Task<string?> ReturnItemAsync(ReturnItemViewModel model)
+    public async Task<string?> ReturnItemAsync(ReturnItemViewModel model, bool asDraft = false)
     {
         var transaction = await _context.Transactions
             .Include(t => t.Product)
@@ -251,6 +274,9 @@ public class TransactionService
         if (transaction.request_type == "GIVEAWAY")
             return "This item was given away and cannot be returned.";
 
+        if ((transaction.pending_return_quantity ?? 0) > 0)
+            return "Sudah ada proses pengembalian yang sedang berjalan untuk item ini.";
+
         var remainingToReturn = transaction.quantity - transaction.returned_quantity;
         if (model.return_quantity > remainingToReturn)
             return $"You can only return up to {remainingToReturn} items.";
@@ -270,13 +296,16 @@ public class TransactionService
         }
         else if (model.return_photo_browser != null)
         {
+            var uploadError = ValidateUploadFile(model.return_photo_browser);
+            if (uploadError != null) return uploadError;
+
             var uploads = Path.Combine(_env.WebRootPath, "storage", "returns");
             if (!Directory.Exists(uploads)) Directory.CreateDirectory(uploads);
             var fileName = Guid.NewGuid().ToString() + Path.GetExtension(model.return_photo_browser.Name);
             var filePath = Path.Combine(uploads, fileName);
             using (var fileStream = new FileStream(filePath, FileMode.Create))
             {
-                await model.return_photo_browser.OpenReadStream(10 * 1024 * 1024).CopyToAsync(fileStream);
+                await model.return_photo_browser.OpenReadStream(MaxUploadBytes).CopyToAsync(fileStream);
             }
             photoPath = "storage/returns/" + fileName;
         }
@@ -289,19 +318,62 @@ public class TransactionService
             }
         }
 
+        // Pengembalian tidak langsung selesai: dibuat sebagai pending dan menunggu
+        // persetujuan admin (ApproveReturnAsync) sebelum stok ditambahkan kembali.
         transaction.return_photo = photoPath;
         transaction.return_status = model.return_status;
         transaction.return_reason = model.return_reason;
-        
-        // Process the return immediately
+        transaction.pending_return_quantity = model.return_quantity;
+        // asDraft=true  -> draft (bisa dibatalkan / diajukan batch dari halaman Returns)
+        // asDraft=false -> langsung diajukan, menunggu ACC admin (alur Tracking)
+        transaction.is_return_draft = asDraft ? 1 : 0;
+        transaction.updated_at = DateTime.UtcNow;
+
+        _context.Transactions.Update(transaction);
+        await _context.SaveChangesAsync();
+        return null;
+    }
+
+    public async Task<string?> ForceReturnTransactionAsync(int transactionId, int returnQty, string status, string? reason, int adminId)
+    {
+        // Force return adalah override admin: langsung selesai tanpa approval & tanpa foto.
+        var transaction = await _context.Transactions.Include(t => t.Product).FirstOrDefaultAsync(t => t.id == transactionId);
+        if (transaction == null) return "Transaction not found.";
+        if (transaction.Product == null) return "Associated product not found.";
+
+        if (transaction.type != "OUT" || transaction.status != "APPROVED")
+            return "This transaction is not eligible for return.";
+        if (transaction.request_type == "GIVEAWAY")
+            return "This item was given away and cannot be returned.";
+
+        if (status == "rusak" || status == "hilang")
+        {
+            if (string.IsNullOrWhiteSpace(reason))
+                return "Alasan kerusakan atau kehilangan wajib diisi.";
+        }
+        else
+        {
+            reason = null;
+        }
+
+        var remainingToReturn = (transaction.quantity ?? 0) - (transaction.returned_quantity ?? 0) - (transaction.pending_return_quantity ?? 0);
+        if (returnQty > remainingToReturn)
+            return $"You can only return up to {remainingToReturn} items.";
+        if (returnQty <= 0)
+            return "Jumlah pengembalian tidak valid.";
+
+        transaction.return_photo = "forced-by-admin";
+        transaction.return_status = status;
+        transaction.return_reason = reason;
+
         var strategy = _context.Database.CreateExecutionStrategy();
         return await strategy.ExecuteAsync(async () =>
         {
             using var dbTransaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                var stockBefore = transaction.Product.current_stock;
-                transaction.Product.current_stock += model.return_quantity;
+                var stockBefore = transaction.Product!.current_stock;
+                transaction.Product.current_stock += returnQty;
                 _context.Products.Update(transaction.Product);
 
                 if (transaction.product_variant_id.HasValue)
@@ -309,12 +381,12 @@ public class TransactionService
                     var variant = await _context.ProductVariants.FindAsync(transaction.product_variant_id.Value);
                     if (variant != null)
                     {
-                        variant.stock += model.return_quantity;
+                        variant.stock += returnQty;
                         _context.ProductVariants.Update(variant);
                     }
                 }
 
-                var stockLog = new StockLog
+                _context.StockLogs.Add(new StockLog
                 {
                     transaction_id = transaction.id,
                     product_id = transaction.Product.id,
@@ -322,18 +394,14 @@ public class TransactionService
                     stock_after = transaction.Product.current_stock,
                     created_at = DateTime.UtcNow,
                     updated_at = DateTime.UtcNow
-                };
-                _context.StockLogs.Add(stockLog);
+                });
 
-                transaction.returned_quantity = (transaction.returned_quantity ?? 0) + model.return_quantity;
-                transaction.pending_return_quantity = 0;
-                transaction.is_return_draft = 0;
-                
+                transaction.returned_quantity = (transaction.returned_quantity ?? 0) + returnQty;
+                transaction.approver_id = adminId;
                 if (transaction.returned_quantity >= transaction.quantity)
                 {
-                    transaction.returned_at = DateTime.UtcNow; // Mark fully returned
+                    transaction.returned_at = DateTime.UtcNow;
                 }
-
                 transaction.updated_at = DateTime.UtcNow;
                 _context.Transactions.Update(transaction);
 
@@ -347,24 +415,6 @@ public class TransactionService
                 return "Return failed: " + ex.Message;
             }
         });
-    }
-
-    public async Task<string?> ForceReturnTransactionAsync(int transactionId, int returnQty, string status, string? reason, int adminId)
-    {
-        var model = new ReturnItemViewModel
-        {
-            transaction_id = transactionId,
-            return_quantity = returnQty,
-            return_status = status,
-            return_reason = reason
-        };
-        // We can reuse ReturnItemAsync logic but bypass photo requirements by setting a dummy photo or bypassing it
-        var transaction = await _context.Transactions.Include(t => t.Product).FirstOrDefaultAsync(t => t.id == transactionId);
-        if (transaction == null) return "Transaction not found.";
-        
-        transaction.return_photo = "forced-by-admin"; // dummy
-        
-        return await ReturnItemAsync(model);
     }
 
     public async Task<string?> ConfirmHandoverAsync(
@@ -390,6 +440,9 @@ public class TransactionService
         if (photo == null)
             return "Foto bukti serah terima wajib diunggah.";
 
+        var uploadError = ValidateUploadFile(photo);
+        if (uploadError != null) return uploadError;
+
         string photoPath;
         try
         {
@@ -399,7 +452,7 @@ public class TransactionService
             var filePath = Path.Combine(uploads, fileName);
             using (var fileStream = new FileStream(filePath, FileMode.Create))
             {
-                await photo.OpenReadStream(10 * 1024 * 1024).CopyToAsync(fileStream);
+                await photo.OpenReadStream(MaxUploadBytes).CopyToAsync(fileStream);
             }
             photoPath = "storage/handovers/" + fileName;
         }
@@ -412,7 +465,9 @@ public class TransactionService
         {
             item.handover_photo = photoPath;
             item.handover_notes = notes;
-            item.status = "APPROVED";
+            // Bukti diunggah user -> menunggu verifikasi/approval admin.
+            item.status = "WAITING_ADMIN_HANDOVER";
+            item.rejection_reason = null; // bersihkan alasan penolakan sebelumnya (jika re-upload)
             item.updated_at = DateTime.UtcNow;
             _context.Transactions.Update(item);
         }
