@@ -61,7 +61,9 @@ namespace WMS_UnitedTracors_Blazor.Services
                 sig2Role: "CorpU Dept Head",
                 sig3Title: "Penerima",
                 sig3Name: !string.IsNullOrEmpty(firstItem.applicant_name) ? firstItem.applicant_name : (firstItem.Requester?.name ?? "-"),
-                sig3Role: "Associate CorpU");
+                sig3Role: "Associate CorpU",
+                proofImagePath: ResolveProofImagePath(firstItem.handover_photo, wwwrootPath),
+                proofLabel: "Bukti Serah Terima");
         }
 
         public byte[] GenerateReceipt(List<Transaction> items, string wwwrootPath)
@@ -93,13 +95,28 @@ namespace WMS_UnitedTracors_Blazor.Services
                 sig2Role: "CorpU Dept Head",
                 sig3Title: "Yang Menerima",
                 sig3Name: "Ilona Kirana Saradella",
-                sig3Role: "Admin CorpU");
+                sig3Role: "Admin CorpU",
+                proofImagePath: ResolveProofImagePath(firstItem.return_photo, wwwrootPath),
+                proofLabel: "Bukti Pengembalian");
         }
 
-        private byte[] GenerateDocument(List<Transaction> items, Transaction firstItem, string title, string wwwrootPath, 
+        // Resolve path foto bukti (handover/return) ke path fisik; null jika tidak ada / bukan gambar.
+        private static string? ResolveProofImagePath(string? stored, string wwwrootPath)
+        {
+            if (string.IsNullOrWhiteSpace(stored)) return null;
+            if (stored == "forced-by-admin") return null;
+            var rel = stored.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
+            var full = Path.Combine(wwwrootPath, rel);
+            var ext = Path.GetExtension(full).ToLowerInvariant();
+            if (ext != ".jpg" && ext != ".jpeg" && ext != ".png" && ext != ".webp") return null;
+            return File.Exists(full) ? full : null;
+        }
+
+        private byte[] GenerateDocument(List<Transaction> items, Transaction firstItem, string title, string wwwrootPath,
             string sig1Title, string sig1Name, string sig1Role,
             string sig2Title, string sig2Name, string sig2Role,
-            string sig3Title, string sig3Name, string sig3Role)
+            string sig3Title, string sig3Name, string sig3Role,
+            string? proofImagePath = null, string? proofLabel = null)
         {
             var document = Document.Create(container =>
             {
@@ -204,6 +221,21 @@ namespace WMS_UnitedTracors_Blazor.Services
                                 table.Cell().BorderBottom(1).BorderLeft(1.5f).BorderColor(Colors.Black).Padding(4).Text("");
                             }
                         });
+
+                        // Proof photo (Bukti Serah Terima / Pengembalian), jika ada
+                        if (!string.IsNullOrEmpty(proofImagePath))
+                        {
+                            column.Item().LineHorizontal(1.5f).LineColor(Colors.Black);
+                            column.Item().Padding(8).Row(r =>
+                            {
+                                r.AutoItem().Width(180).Column(c =>
+                                {
+                                    c.Item().Text(proofLabel ?? "Bukti Foto").Bold().FontSize(9);
+                                    c.Item().PaddingTop(4).Width(180).MaxHeight(180).Image(proofImagePath).FitArea();
+                                });
+                                r.RelativeItem();
+                            });
+                        }
 
                         // Foot border before signatures
                         column.Item().LineHorizontal(1.5f).LineColor(Colors.Black);

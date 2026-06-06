@@ -306,6 +306,15 @@
 
 </div>
 
+@* Toast konfirmasi tambah ke keranjang *@
+@if (!string.IsNullOrEmpty(CartToast))
+{
+    <div class="fixed bottom-44 sm:bottom-28 right-8 z-50 bg-[#1a7a30] text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2 max-w-xs">
+        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+        <span class="truncate">@CartToast</span>
+    </div>
+}
+
 @* Floating Cart Button *@
 @if(UserRole == "superadmin" || UserRole == "admin" || UserRole == "staff") {
 <button type="button" @onclick='() => ShowCartModal = true' class="fixed bottom-24 sm:bottom-8 right-8 z-50 flex items-center justify-center w-[3.5rem] h-[3.5rem] bg-[#e8a000] hover:bg-[#d49300] active:scale-[0.95] rounded-full shadow-2xl transition-transform border-4 border-white" title="View Cart">
@@ -564,9 +573,12 @@
                                         <label class="block text-xs font-semibold text-[#5a5855] mb-1">Tipe Transaksi</label>
                                         <select @bind="SelectedRequestType" class="w-full border border-[#e5e3dc] rounded-lg px-3 py-2 text-sm text-[#5a5855] font-semibold bg-white outline-none focus:border-[#e8a000]">
                                             @if (SelectedProduct.is_returnable == 1) {
+                                                @* Barang returnable: hanya untuk dipinjam (tanpa poin) *@
                                                 <option value="BORROW">Pinjam</option>
+                                            } else {
+                                                @* Barang non-returnable: hanya bisa diminta/ambil (pakai poin) *@
+                                                <option value="GIVEAWAY">Minta / Ambil</option>
                                             }
-                                            <option value="GIVEAWAY">Minta / Ambil</option>
                                         </select>
                                     </div>
                                     <div>
@@ -656,6 +668,7 @@
     
     private bool ShowProductModal = false;
     private bool ShowCartModal = false;
+    private string? CartToast;
     private Product? SelectedProduct;
     private int SelectedQuantity = 1;
     private string SelectedRequestType = "BORROW";
@@ -1054,9 +1067,20 @@
                 ExpectedReturnDate = SelectedRequestType == "BORROW" ? SelectedEndDate : null,
                 PickupDate = SelectedRequestType == "GIVEAWAY" ? SelectedPickupDate : null
             });
+            var addedName = SelectedProduct.name;
             CloseProductModal();
-            ShowCartModal = true;
+            // Jangan auto-buka keranjang — biarkan user memilih barang lain dulu,
+            // lalu buka keranjang secara manual. Tampilkan toast singkat sebagai konfirmasi.
+            CartToast = $"\"{addedName}\" ditambahkan ke keranjang.";
+            _ = ClearCartToastAfterDelay();
         }
+    }
+
+    private async Task ClearCartToastAfterDelay()
+    {
+        await Task.Delay(2500);
+        CartToast = null;
+        await InvokeAsync(StateHasChanged);
     }
     
     private void CloseCartModal()

@@ -411,4 +411,17 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
+-- ------------------------------------------------------------
+-- Normalisasi kategori (custom, di luar dump asli):
+--   Merchandise, ATK, Makanan, Facility -> giveaway, 50 poin, TIDAK returnable
+--   Alat Musik, Elektronik, Game        -> hanya dipinjam (returnable), TANPA poin
+-- ------------------------------------------------------------
+UPDATE `products` p JOIN `categories` c ON c.`id` = p.`category_id`
+  SET p.`is_returnable` = 0, p.`value` = 50
+  WHERE c.`name` IN ('Merchandise', 'ATK', 'Makanan', 'Facility');
+
+UPDATE `products` p JOIN `categories` c ON c.`id` = p.`category_id`
+  SET p.`is_returnable` = 1, p.`value` = 0
+  WHERE c.`name` IN ('Alat Musik', 'Elektronik', 'Game');
+
 -- Dump completed on 2026-06-05 11:05:49
