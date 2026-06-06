@@ -80,12 +80,6 @@
             }
             else
             {
-                <div class="flex justify-end mb-4">
-                    <button type="button" @onclick="OpenBatchConfirmModal" disabled="@(Decisions.Count == 0 || IsProcessing)" class="inline-flex items-center gap-2 px-4 py-2 bg-[#1a1a1a] text-white text-xs font-bold rounded-lg shadow-sm hover:bg-[#333] transition disabled:opacity-50">
-                        Process Selected Items (@Decisions.Count)
-                    </button>
-                </div>
-
                 var borrowGroups = GroupedApprovals.Where(g => g.Value.FirstOrDefault()?.request_type == "BORROW").ToList();
                 var giveawayGroups = GroupedApprovals.Where(g => g.Value.FirstOrDefault()?.request_type == "GIVEAWAY").ToList();
 
@@ -114,6 +108,15 @@
                         </div>
                     </div>
                 }
+
+                @* Batch action bar — sticky di bawah agar tidak tertukar dengan "Approve All" per-grup *@
+                <div class="sticky bottom-4 z-20 mt-6 flex justify-end">
+                    <button type="button" @onclick="OpenBatchConfirmModal" disabled="@(Decisions.Count == 0 || IsProcessing)"
+                            class="inline-flex items-center gap-2 px-6 py-3 bg-[#1a1a1a] text-white text-sm font-bold rounded-xl shadow-lg hover:bg-[#333] transition disabled:opacity-40 disabled:shadow-none">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        Process Selected Items (@Decisions.Count)
+                    </button>
+                </div>
             }
         }
         else if (ActiveTab == "handovers")
@@ -137,7 +140,7 @@
                                     <div class="text-xs text-gray-500 mt-1">Pemohon: @(firstItem.applicant_name ?? firstItem.Requester?.name) | @(group.Value.Count) Items</div>
                                 </div>
                                 <div class="flex gap-2">
-                                    <button type="button" @onclick="() => ApproveHandoverBatch(group.Key)" disabled="@IsProcessing" class="px-4 py-2 bg-gray-900 text-white text-xs font-bold rounded-lg shadow-sm hover:bg-gray-800 transition">Approve Handover</button>
+                                    <button type="button" @onclick='() => AskConfirm("Approve Serah Terima", "Setujui bukti serah terima ini? Barang akan tercatat sebagai sedang dipinjam.", () => ApproveHandoverBatch(group.Key), "Ya, Setujui")' disabled="@IsProcessing" class="px-4 py-2 bg-gray-900 text-white text-xs font-bold rounded-lg shadow-sm hover:bg-gray-800 transition">Approve Handover</button>
                                     <button type="button" @onclick="() => OpenHandoverRejectModal(group.Key)" class="px-4 py-2 bg-white border border-red-200 text-red-600 text-xs font-bold rounded-lg hover:bg-red-50 transition">Reject Proof</button>
                                 </div>
                             </div>
@@ -199,7 +202,7 @@
                                     </div>
                                 </div>
                                 <div class="flex gap-2 shrink-0">
-                                    <button type="button" @onclick="() => ApproveReturn(item.id)" disabled="@IsProcessing" class="px-4 py-2 bg-gray-900 text-white text-xs font-bold rounded-lg shadow-sm hover:bg-gray-800 transition disabled:opacity-50">Approve Pengembalian</button>
+                                    <button type="button" @onclick='() => AskConfirm("Approve Pengembalian", "Setujui pengembalian ini? Stok akan dikembalikan dan tindakan ini tidak bisa dibatalkan.", () => ApproveReturn(item.id), "Ya, Setujui")' disabled="@IsProcessing" class="px-4 py-2 bg-gray-900 text-white text-xs font-bold rounded-lg shadow-sm hover:bg-gray-800 transition disabled:opacity-50">Approve Pengembalian</button>
                                     <button type="button" @onclick="() => OpenRejectModal(item.id, true)" class="px-4 py-2 bg-white border border-red-200 text-red-600 text-xs font-bold rounded-lg hover:bg-red-50 transition">Reject</button>
                                 </div>
                             </div>
@@ -265,8 +268,8 @@
                                 <div class="text-xs font-bold">@pr.Division?.name</div>
                             </div>
                             <div class="flex gap-2">
-                                <button @onclick="() => ApproveProfileRequest(pr.id)" class="flex-1 py-2 bg-gray-900 text-white text-xs font-bold rounded-lg hover:bg-gray-800 transition">Approve</button>
-                                <button @onclick="() => RejectProfileRequest(pr.id)" class="flex-1 py-2 bg-white border border-red-200 text-red-600 text-xs font-bold rounded-lg hover:bg-red-50 transition">Reject</button>
+                                <button @onclick='() => AskConfirm("Approve Perubahan Profil", "Setujui perubahan data profil ini? Data user akan diperbarui.", () => ApproveProfileRequest(pr.id), "Ya, Setujui")' class="flex-1 py-2 bg-gray-900 text-white text-xs font-bold rounded-lg hover:bg-gray-800 transition">Approve</button>
+                                <button @onclick='() => AskConfirm("Tolak Perubahan Profil", "Tolak permintaan perubahan profil ini?", () => RejectProfileRequest(pr.id), "Ya, Tolak")' class="flex-1 py-2 bg-white border border-red-200 text-red-600 text-xs font-bold rounded-lg hover:bg-red-50 transition">Reject</button>
                             </div>
                         </div>
                     }
@@ -301,6 +304,38 @@
                     <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 gap-2">
                         <button type="button" @onclick="ProcessBatch" class="inline-flex w-full justify-center rounded-md bg-[#e8a000] px-3 py-2 text-sm font-bold text-[#1a1a1a] shadow-sm hover:bg-[#d49300] sm:w-auto transition">Submit Now</button>
                         <button type="button" @onclick="() => ShowBatchConfirmModal = false" class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto transition">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (ShowApproveAllModal && ApproveAllItems != null)
+{
+    <div class="relative z-50" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 backdrop-blur-md bg-black/20 transition-opacity"></div>
+        <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+            <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                <div class="relative transform overflow-hidden rounded-xl bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg border border-gray-100">
+                    <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                        <div class="sm:flex sm:items-start">
+                            <div class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-amber-50 sm:mx-0 sm:h-10 sm:w-10">
+                                <svg class="h-6 w-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                            </div>
+                            <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
+                                <h3 class="text-base font-semibold leading-6 text-gray-900">Approve Semua Item?</h3>
+                                <div class="mt-2">
+                                    <p class="text-sm text-gray-500">Anda akan <span class="font-bold text-gray-900">menyetujui seluruh @ApproveAllItems.Count item</span> dalam permintaan ini sekaligus. Tindakan ini langsung diproses dan tidak bisa dibatalkan.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 gap-2">
+                        <button type="button" @onclick="ConfirmApproveAll" disabled="@IsProcessing" class="inline-flex w-full justify-center rounded-md bg-[#e8a000] px-3 py-2 text-sm font-bold text-[#1a1a1a] shadow-sm hover:bg-[#d49300] sm:w-auto transition disabled:opacity-50">Ya, Approve Semua</button>
+                        <button type="button" @onclick="() => { ShowApproveAllModal = false; ApproveAllItems = null; }" class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto transition">Batal</button>
                     </div>
                 </div>
             </div>
@@ -386,7 +421,58 @@
     </div>
 }
 
+@if (ShowConfirm)
+{
+    <div class="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" @onclick="CancelConfirm">
+        <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden" @onclick:stopPropagation="true">
+            <div class="p-6 flex items-start gap-4">
+                <div class="w-11 h-11 rounded-full bg-amber-50 flex items-center justify-center shrink-0">
+                    <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                </div>
+                <div>
+                    <h3 class="text-base font-bold text-[#1a1a1a]">@ConfirmTitle</h3>
+                    <p class="text-sm text-[#5a5855] mt-1">@ConfirmMessage</p>
+                </div>
+            </div>
+            <div class="px-6 py-4 bg-[#faf9f5] border-t border-[#e5e3dc] flex justify-end gap-3">
+                <button type="button" @onclick="CancelConfirm" class="px-4 py-2 text-sm font-bold text-gray-600 hover:text-gray-900 bg-white border border-[#e5e3dc] rounded-lg transition">Batal</button>
+                <button type="button" @onclick="RunConfirm" disabled="@IsProcessing" class="px-5 py-2 bg-[#1a1a1a] text-white text-sm font-bold rounded-lg hover:bg-[#333] transition disabled:opacity-50">@ConfirmButtonText</button>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
+    // Reusable konfirmasi "apakah yakin" untuk aksi final.
+    private bool ShowConfirm = false;
+    private string ConfirmTitle = "";
+    private string ConfirmMessage = "";
+    private string ConfirmButtonText = "Ya, Lanjutkan";
+    private Func<Task>? ConfirmCallback;
+
+    private void AskConfirm(string title, string message, Func<Task> callback, string buttonText = "Ya, Lanjutkan")
+    {
+        ConfirmTitle = title;
+        ConfirmMessage = message;
+        ConfirmButtonText = buttonText;
+        ConfirmCallback = callback;
+        ShowConfirm = true;
+    }
+
+    private void CancelConfirm()
+    {
+        ShowConfirm = false;
+        ConfirmCallback = null;
+    }
+
+    private async Task RunConfirm()
+    {
+        var cb = ConfirmCallback;
+        ShowConfirm = false;
+        ConfirmCallback = null;
+        if (cb != null) await cb();
+    }
+
     private RenderFragment RenderGroup(KeyValuePair<string, List<Transaction>> group) => __builder => {
         var firstItem = group.Value.First();
         bool isExpanded = ExpandedGroups.Contains(group.Key);
@@ -417,7 +503,7 @@
                 <div class="flex items-center justify-end w-auto gap-3">
                     @if (UserRole == "manager" || UserRole == "admin" || UserRole == "superadmin")
                     {
-                        <button type="button" @onclick="() => ApproveAllGroup(group.Value)" @onclick:stopPropagation="true" disabled="@IsProcessing" class="px-3 py-1.5 text-xs font-bold text-[#1a1a1a] bg-[#e8a000] rounded-md shadow-sm hover:bg-[#d49300] transition active:scale-[0.98] uppercase tracking-wider disabled:opacity-50">
+                        <button type="button" @onclick="() => OpenApproveAllModal(group.Value)" @onclick:stopPropagation="true" disabled="@IsProcessing" class="px-3 py-1.5 text-xs font-bold text-[#1a1a1a] bg-[#e8a000] rounded-md shadow-sm hover:bg-[#d49300] transition active:scale-[0.98] uppercase tracking-wider disabled:opacity-50">
                             APPROVE ALL
                         </button>
                     }
@@ -772,6 +858,27 @@
     {
         if (Decisions.Count == 0) return;
         ShowBatchConfirmModal = true;
+    }
+
+    // Konfirmasi "Approve All" agar tidak salah pencet.
+    private bool ShowApproveAllModal = false;
+    private List<Transaction>? ApproveAllItems;
+
+    private void OpenApproveAllModal(List<Transaction> items)
+    {
+        ApproveAllItems = items;
+        ShowApproveAllModal = true;
+    }
+
+    private async Task ConfirmApproveAll()
+    {
+        var items = ApproveAllItems;
+        ShowApproveAllModal = false;
+        ApproveAllItems = null;
+        if (items != null)
+        {
+            await ApproveAllGroup(items);
+        }
     }
 
     private bool ShowHandoverRejectModal = false;

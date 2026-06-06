@@ -77,14 +77,18 @@
             }
         });
 
-        // Attach to any element with data-image-popup
+        // Attach to any element with data-image-popup.
+        // Use CAPTURE phase + stopPropagation so this runs BEFORE Blazor's
+        // enhanced-navigation click handler (otherwise the <a href> redirects
+        // to the literal image URL instead of opening the popup).
         document.addEventListener('click', (e) => {
             const trigger = e.target.closest('[data-image-popup]');
             if (trigger) {
                 e.preventDefault();
-                openImageModal(trigger.getAttribute('href') || trigger.src);
+                e.stopPropagation();
+                openImageModal(trigger.getAttribute('href') || trigger.getAttribute('data-image-popup') || trigger.src);
             }
-        });
+        }, true);
 
         // ── Desktop sidebar ──────────────────────────────────
         window.utToggleSidebar = function() {

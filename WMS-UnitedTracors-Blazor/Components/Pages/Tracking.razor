@@ -347,7 +347,7 @@
                                         {
                                             <div class="flex gap-2 shrink-0 w-full sm:w-auto">
                                                 <button type="button" @onclick="() => OpenHandoverModal(borrowItemsOnly)" class="px-3 py-2 bg-white border border-[#e5e3dc] text-[#3a3835] hover:border-[#1a1a1a] text-xs font-bold rounded-lg transition">Ganti Foto</button>
-                                                <button type="button" @onclick="() => SubmitHandoverToAdmin(borrowItemsOnly)" disabled="@IsSubmitting" class="px-4 py-2 bg-[#1a7a30] hover:bg-[#166528] text-white text-xs font-bold rounded-lg shadow-sm transition disabled:opacity-50">Submit ke Admin</button>
+                                                <button type="button" @onclick='() => AskConfirm("Submit Bukti Serah Terima", "Kirim bukti serah terima ke admin untuk diverifikasi? Setelah dikirim Anda tidak bisa menggantinya lagi kecuali ditolak admin.", () => SubmitHandoverToAdmin(borrowItemsOnly), "Ya, Submit")' disabled="@IsSubmitting" class="px-4 py-2 bg-[#1a7a30] hover:bg-[#166528] text-white text-xs font-bold rounded-lg shadow-sm transition disabled:opacity-50">Submit ke Admin</button>
                                             </div>
                                         }
                                     </div>
@@ -433,6 +433,26 @@
                                                                         Kembali Sebagian (@usage.returned_quantity)
                                                                     </span>
                                                                 }
+
+                                                                @if ((usage.pending_return_quantity ?? 0) > 0 && !string.IsNullOrEmpty(usage.return_photo) && usage.return_photo != "forced-by-admin")
+                                                                {
+                                                                    var returnPhotoSrc = ImageHelper.Resolve(usage.return_photo);
+                                                                    <div class="mt-2">
+                                                                        @if (usage.return_photo.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+                                                                        {
+                                                                            <a href="@returnPhotoSrc" target="_blank" class="inline-flex items-center gap-1 text-[10px] font-bold text-[#1a6b8a] hover:underline">
+                                                                                <svg class="w-3.5 h-3.5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                                                                                Lihat PDF Bukti
+                                                                            </a>
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <a href="@returnPhotoSrc" data-image-popup class="inline-block w-14 h-14 rounded border border-[#e5e3dc] overflow-hidden hover:opacity-90 transition cursor-pointer" title="Klik untuk memperbesar bukti">
+                                                                                <img src="@returnPhotoSrc" alt="Bukti Pengembalian" class="w-full h-full object-cover" />
+                                                                            </a>
+                                                                        }
+                                                                    </div>
+                                                                }
                                                             } else {
                                                                 <span class="inline-flex items-center px-2 py-0.5 border border-[#b8e8c0] rounded text-[10px] font-bold bg-[#eef9f0] text-[#1a7a30]">
                                                                     Selesai / Diterima
@@ -487,20 +507,20 @@
                                                         else if (canManageDraft)
                                                         {
                                                             <div class="flex items-center justify-end gap-2 flex-wrap">
-                                                                <button type="button" @onclick="() => SubmitReturnDraftItem(usage.id)" disabled="@IsSubmitting" class="text-[10px] px-2 py-1 bg-[#1a7a30] hover:bg-[#166528] text-white rounded transition font-bold whitespace-nowrap disabled:opacity-50">
+                                                                <button type="button" @onclick='() => AskConfirm("Ajukan Pengembalian", "Ajukan pengembalian ini ke admin untuk disetujui? Setelah diajukan, draft tidak bisa diubah.", () => SubmitReturnDraftItem(usage.id), "Ya, Ajukan")' disabled="@IsSubmitting" class="text-[10px] px-2 py-1 bg-[#1a7a30] hover:bg-[#166528] text-white rounded transition font-bold whitespace-nowrap disabled:opacity-50">
                                                                     Submit
                                                                 </button>
                                                                 <button type="button" @onclick="() => OpenReturnModal(usage, false)" class="text-[10px] px-2 py-1 bg-white border border-[#e5e3dc] rounded hover:border-[#1a1a1a] transition font-bold whitespace-nowrap">
                                                                     Ganti Foto
                                                                 </button>
-                                                                <button type="button" @onclick="() => CancelReturnDraftItem(usage.id)" disabled="@IsSubmitting" class="text-[10px] px-2 py-1 bg-white border border-[#f8c0c0] text-[#d94040] rounded hover:bg-[#fef0f0] transition font-bold whitespace-nowrap disabled:opacity-50">
+                                                                <button type="button" @onclick='() => AskConfirm("Batalkan Draft?", "Draft pengembalian beserta fotonya akan dihapus. Lanjutkan?", () => CancelReturnDraftItem(usage.id), "Ya, Batalkan")' disabled="@IsSubmitting" class="text-[10px] px-2 py-1 bg-white border border-[#f8c0c0] text-[#d94040] rounded hover:bg-[#fef0f0] transition font-bold whitespace-nowrap disabled:opacity-50">
                                                                     Batal
                                                                 </button>
                                                             </div>
                                                         }
                                                         else if (usage.status == "REVISION")
                                                         {
-                                                            <button type="button" @onclick="() => ReviseToCart(usage)" class="px-3 py-1 bg-[#e8a000] hover:bg-[#d49300] text-[#1a1a1a] text-[10px] font-bold rounded shadow-sm transition whitespace-nowrap">
+                                                            <button type="button" @onclick='() => AskConfirm("Revisi Permintaan?", "Item akan dipindahkan ke keranjang untuk diperbaiki dan permintaan lama dihapus. Lanjutkan?", () => ReviseToCart(usage), "Ya, Revisi")' class="px-3 py-1 bg-[#e8a000] hover:bg-[#d49300] text-[#1a1a1a] text-[10px] font-bold rounded shadow-sm transition whitespace-nowrap">
                                                                 Revisi
                                                             </button>
                                                         }
@@ -650,7 +670,58 @@
     </div>
 }
 
+@if (ShowConfirm)
+{
+    <div class="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" @onclick="CancelConfirm">
+        <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden" @onclick:stopPropagation="true">
+            <div class="p-6 flex items-start gap-4">
+                <div class="w-11 h-11 rounded-full bg-amber-50 flex items-center justify-center shrink-0">
+                    <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                </div>
+                <div>
+                    <h3 class="text-base font-bold text-[#1a1a1a]">@ConfirmTitle</h3>
+                    <p class="text-sm text-[#5a5855] mt-1">@ConfirmMessage</p>
+                </div>
+            </div>
+            <div class="px-6 py-4 bg-[#faf9f5] border-t border-[#e5e3dc] flex justify-end gap-3">
+                <button type="button" @onclick="CancelConfirm" class="px-4 py-2 text-sm font-bold text-gray-600 hover:text-gray-900 bg-white border border-[#e5e3dc] rounded-lg transition">Batal</button>
+                <button type="button" @onclick="RunConfirm" disabled="@IsSubmitting" class="px-5 py-2 bg-[#1a1a1a] text-white text-sm font-bold rounded-lg hover:bg-[#333] transition disabled:opacity-50">@ConfirmButtonText</button>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
+    // Reusable konfirmasi "apakah yakin" untuk aksi submit final.
+    private bool ShowConfirm = false;
+    private string ConfirmTitle = "";
+    private string ConfirmMessage = "";
+    private string ConfirmButtonText = "Ya, Lanjutkan";
+    private Func<Task>? ConfirmCallback;
+
+    private void AskConfirm(string title, string message, Func<Task> callback, string buttonText = "Ya, Lanjutkan")
+    {
+        ConfirmTitle = title;
+        ConfirmMessage = message;
+        ConfirmButtonText = buttonText;
+        ConfirmCallback = callback;
+        ShowConfirm = true;
+    }
+
+    private void CancelConfirm()
+    {
+        ShowConfirm = false;
+        ConfirmCallback = null;
+    }
+
+    private async Task RunConfirm()
+    {
+        var cb = ConfirmCallback;
+        ShowConfirm = false;
+        ConfirmCallback = null;
+        if (cb != null) await cb();
+    }
+
     private List<Division> Divisions = new();
     private Dictionary<string, List<Transaction>> GroupedUsages = new();
     private HashSet<string> ExpandedGroupIds = new();
