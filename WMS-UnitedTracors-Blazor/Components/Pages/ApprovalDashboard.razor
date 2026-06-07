@@ -296,7 +296,7 @@
                             <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
                                 <h3 class="text-base font-semibold leading-6 text-gray-900">Submit Decisions</h3>
                                 <div class="mt-2">
-                                    <p class="text-sm text-gray-500">Are you sure you want to submit @Decisions.Count decision(s)? Once submitted, they will be finalized and disappear from this view.</p>
+                                    <p class="text-sm text-gray-500">Are you sure you want to submit @(string.IsNullOrEmpty(GroupToProcess) ? Decisions.Count : (GroupedApprovals?.GetValueOrDefault(GroupToProcess)?.Count(i => Decisions.ContainsKey(i.id)) ?? 0)) decision(s)? Once submitted, they will be finalized and disappear from this view.</p>
                                 </div>
                             </div>
                         </div>
@@ -503,9 +503,19 @@
                 <div class="flex items-center justify-end w-auto gap-3">
                     @if (UserRole == "manager" || UserRole == "admin" || UserRole == "superadmin")
                     {
-                        <button type="button" @onclick="() => OpenApproveAllModal(group.Value)" @onclick:stopPropagation="true" disabled="@IsProcessing" class="px-3 py-1.5 text-xs font-bold text-[#1a1a1a] bg-[#e8a000] rounded-md shadow-sm hover:bg-[#d49300] transition active:scale-[0.98] uppercase tracking-wider disabled:opacity-50">
-                            APPROVE ALL
-                        </button>
+                        var cardDecisionsCount = group.Value.Count(i => Decisions.ContainsKey(i.id));
+                        if (cardDecisionsCount > 0)
+                        {
+                            <button type="button" @onclick="() => OpenGroupConfirmModal(group.Key)" @onclick:stopPropagation="true" disabled="@IsProcessing" class="px-3 py-1.5 text-xs font-bold text-white bg-[#1a1a1a] rounded-md shadow-sm hover:bg-[#333] transition active:scale-[0.98] uppercase tracking-wider disabled:opacity-50">
+                                Process Selected (@cardDecisionsCount)
+                            </button>
+                        }
+                        else
+                        {
+                            <button type="button" @onclick="() => OpenApproveAllModal(group.Value)" @onclick:stopPropagation="true" disabled="@IsProcessing" class="px-3 py-1.5 text-xs font-bold text-[#1a1a1a] bg-[#e8a000] rounded-md shadow-sm hover:bg-[#d49300] transition active:scale-[0.98] uppercase tracking-wider disabled:opacity-50">
+                                APPROVE ALL
+                            </button>
+                        }
                     }
                     <div class="text-gray-400 p-1 hover:text-gray-600 transition shrink-0">
                         <svg class="w-5 h-5 transform transition-transform duration-200 @(isExpanded ? "rotate-180" : "")" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
@@ -854,9 +864,16 @@
     }
 
     private bool ShowBatchConfirmModal = false;
+    private string GroupToProcess = "";
+    private void OpenGroupConfirmModal(string groupId)
+    {
+        GroupToProcess = groupId;
+        ShowBatchConfirmModal = true;
+    }
+
     private void OpenBatchConfirmModal()
     {
-        if (Decisions.Count == 0) return;
+        GroupToProcess = "";
         ShowBatchConfirmModal = true;
     }
 
@@ -972,7 +989,20 @@
         try
         {
             int successCount = 0;
-            foreach (var kvp in Decisions.ToList())
+            List<KeyValuePair<int, string>> itemsToProcess;
+            
+            if (string.IsNullOrEmpty(GroupToProcess))
+            {
+                itemsToProcess = Decisions.ToList();
+            }
+            else
+            {
+                var groupItems = GroupedApprovals?.GetValueOrDefault(GroupToProcess);
+                if (groupItems == null) return;
+                itemsToProcess = Decisions.Where(d => groupItems.Any(i => i.id == d.Key)).ToList();
+            }
+
+            foreach (var kvp in itemsToProcess)
             {
                 var id = kvp.Key;
                 var action = kvp.Value;
