@@ -91,44 +91,24 @@
                     bool isExpanded = ExpandedGroups.Contains(group.Key);
                     var groupId = group.Key;
                     
-                    <div class="bg-white rounded-[1.5rem] shadow-sm border border-[#e5e3dc] overflow-hidden transition-all duration-200">
+                    <div class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden group-card transition-all duration-200">
                         <!-- Header Accordion -->
-                        <div @onclick="() => ToggleGroup(groupId)" class="flex flex-col lg:flex-row lg:items-center justify-between p-5 lg:px-8 cursor-pointer hover:bg-[#faf9f5] transition select-none gap-4">
-                            <div class="flex items-center gap-4 flex-1 min-w-0">
-                                <div class="w-12 h-12 rounded-full @(firstItem.type == "IN" ? "bg-blue-50 border-blue-100 text-blue-600" : "bg-purple-50 border-purple-100 text-purple-600") border flex items-center justify-center shrink-0 shadow-sm">
-                                    @if(firstItem.type == "IN") {
-                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 4v16m0 0l-4-4m4 4l4-4"/></svg>
-                                    } else {
-                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20V4m0 0l-4 4m4-4l4 4"/></svg>
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white cursor-pointer hover:bg-gray-50 transition gap-3" @onclick="() => ToggleGroup(groupId)">
+                            <div class="flex-1 min-w-0">
+                                <div class="text-sm font-bold text-gray-900 flex flex-wrap items-center gap-2">
+                                    <span>Request @firstItem.created_at.ToString("MMM dd, yyyy")</span>
+                                    <span class="px-2 py-0.5 rounded bg-white border border-gray-200 text-xs text-gray-700 font-semibold shrink-0">@items.Count Items</span>
+                                </div>
+                                <div class="text-xs text-gray-500 font-medium mt-1 break-words">
+                                    Submitted by: <span class="text-gray-700 font-semibold">@(firstItem.applicant_name ?? firstItem.Requester?.name ?? "-")</span>
+                                    @if (!string.IsNullOrEmpty(firstItem.event_name))
+                                    {
+                                        <span class="mx-1 text-gray-300">•</span> <span>Event: <span class="text-gray-700 font-semibold">@firstItem.event_name</span></span>
                                     }
                                 </div>
-                                <div class="min-w-0">
-                                    <div class="flex items-center gap-3 mb-1">
-                                        <h3 class="font-syne font-bold text-[#1a1a1a] text-base">@(firstItem.type == "IN" ? "Penambahan Stok" : (string.IsNullOrEmpty(firstItem.event_name) ? "Pengeluaran Barang" : firstItem.event_name))</h3>
-                                        <span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-[#f5f4f0] text-[#8a8780] border border-[#e5e3dc] whitespace-nowrap">@items.Count Items</span>
-                                    </div>
-                                    <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[#8a8880] font-medium">
-                                        <div class="flex items-center gap-1.5">
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                                            @firstItem.created_at.ToString("dd MMM yyyy, HH:mm")
-                                        </div>
-                                        <div class="flex items-center gap-1.5">
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0M12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                                            @(firstItem.Requester?.name ?? "System")
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
-
-                            <div class="flex items-center justify-between lg:justify-end gap-4 shrink-0 border-t lg:border-t-0 pt-3 lg:pt-0 border-gray-100">
-                                @if (firstItem.type == "OUT")
-                                {
-                                    <a href="/api/pdf/receipt/@groupId" target="_blank" @onclick:stopPropagation="true" class="inline-flex items-center gap-1.5 px-4 py-2 bg-white border border-[#e5e3dc] text-gray-700 hover:bg-[#faf9f5] rounded-lg text-xs font-bold transition shadow-sm active:scale-95">
-                                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
-                                        Struk PDF
-                                    </a>
-                                }
-                                <div class="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-[#f0ede5] transition">
+                            <div class="flex items-center justify-end w-auto gap-3">
+                                <div class="text-gray-400 p-1 hover:text-gray-600 transition shrink-0">
                                     <svg class="w-5 h-5 transform transition-transform duration-200 @(isExpanded ? "rotate-180" : "")" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                                 </div>
                             </div>
@@ -137,102 +117,203 @@
                         <!-- Body Content -->
                         @if (isExpanded)
                         {
-                            <div class="border-t border-[#f0ede5] bg-[#faf9f5]">
-                                @if (firstItem.type == "OUT")
-                                {
-                                    <div class="p-4 bg-white border-b border-[#e5e3dc] grid grid-cols-2 sm:grid-cols-4 gap-6 px-8">
-                                        <div>
-                                            <div class="text-[0.62rem] text-[#8a8880] font-bold uppercase tracking-wider mb-1">Nama Pemohon</div>
-                                            <div class="text-sm font-bold text-[#1a1a1a]">@(firstItem.applicant_name ?? "-")</div>
-                                            <div class="text-[10px] text-[#8a8880]">NRP: @(firstItem.applicant_nrp ?? "-")</div>
+                            <div class="border-t border-gray-200">
+                                <div class="p-4 bg-white border-b border-gray-100">
+                                    <h4 class="text-[0.65rem] font-bold uppercase tracking-wider text-gray-400 mb-3">Form Details</h4>
+                                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                        <div class="border-l-4 border-l-[#e8a000] pl-6">
+                                            <div class="text-[0.65rem] text-gray-500 font-bold uppercase tracking-wider mb-1">Applicant</div>
+                                            <div class="text-sm font-medium text-gray-900">@(firstItem.applicant_name ?? firstItem.Requester?.name ?? "-")</div>
+                                            <div class="text-xs text-gray-500">NRP: @(firstItem.applicant_nrp ?? "-")</div>
                                         </div>
-                                        <div>
-                                            <div class="text-[0.62rem] text-[#8a8880] font-bold uppercase tracking-wider mb-1">Divisi</div>
-                                            <div class="text-sm font-bold text-[#1a1a1a]">@(firstItem.Division?.name ?? "-")</div>
+                                        <div class="border-l-4 border-l-[#e8a000] pl-6">
+                                            <div class="text-[0.65rem] text-gray-500 font-bold uppercase tracking-wider mb-1">Event / Program</div>
+                                            <div class="text-sm font-medium text-gray-900">@(firstItem.event_name ?? "-")</div>
+                                            <div class="text-xs text-gray-500">@(firstItem.event_date?.ToString("MMM dd, yyyy") ?? "-")</div>
                                         </div>
-                                        <div>
-                                            <div class="text-[0.62rem] text-[#8a8880] font-bold uppercase tracking-wider mb-1">Event / Keperluan</div>
-                                            <div class="text-sm font-bold text-[#1a1a1a]">@(firstItem.event_name ?? "-")</div>
-                                            <div class="text-[10px] text-[#8a8880]">@(firstItem.event_date?.ToString("dd MMM yyyy") ?? "-")</div>
+                                        <div class="border-l-4 border-l-[#e8a000] pl-6">
+                                            <div class="text-[0.65rem] text-gray-500 font-bold uppercase tracking-wider mb-1">Division</div>
+                                            <div class="text-sm font-medium text-gray-900">@(firstItem.Division?.name ?? "-")</div>
                                         </div>
-                                        <div>
-                                            <div class="text-[0.62rem] text-[#8a8880] font-bold uppercase tracking-wider mb-1">Catatan</div>
-                                            <div class="text-xs text-[#5a5855] italic truncate" title="@firstItem.notes">@(firstItem.notes ?? "-")</div>
+                                        <div class="border-l-4 border-l-[#e8a000] pl-6">
+                                            <div class="text-[0.65rem] text-gray-500 font-bold uppercase tracking-wider mb-1">Total Kredit Keluar</div>
+                                            <div class="text-sm font-bold text-[#e8a000] flex items-center gap-1">
+                                                @{ var totalCredit = items.Where(i => i.request_type == "GIVEAWAY").Sum(i => i.quantity * (i.Product?.value ?? 0)); }
+                                                @if(totalCredit > 0)
+                                                {
+                                                    <svg class="w-4 h-4 text-[#e8a000]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                    @(((double)totalCredit).ToString("N0")) <text>Poin</text>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-gray-400 font-medium">-</span>
+                                                }
+                                            </div>
                                         </div>
                                     </div>
+                                    @if (!string.IsNullOrEmpty(firstItem.notes))
+                                    {
+                                        <div class="mt-4 pt-2 border-t border-gray-50">
+                                            <div class="text-[0.65rem] text-gray-500 font-bold uppercase tracking-wider mb-1">Notes</div>
+                                            <div class="text-sm text-gray-700">@firstItem.notes</div>
+                                        </div>
+                                    }
+                                </div>
+                                
+                                @{
+                                    string barBg = "bg-[#faf9f5]";
+                                    string barBorder = "border-gray-100";
+                                    string barText = "text-[#0086cf]";
+                                    
+                                    if (firstItem.type == "IN") {
+                                        barBg = "bg-gray-50";
+                                        barBorder = "border-gray-200";
+                                        barText = "text-gray-600";
+                                    } else if (firstItem.request_type == "BORROW") {
+                                        barBg = "bg-[#e0f2fe]";
+                                        barBorder = "border-[#bae6fd]";
+                                        barText = "text-[#0284c7]";
+                                    } else if (firstItem.request_type == "GIVEAWAY") {
+                                        barBg = "bg-[#eef9f0]";
+                                        barBorder = "border-[#b8e8c0]";
+                                        barText = "text-[#1a7a30]";
+                                    }
                                 }
+                                <div class="px-6 py-3 @barBg border-b @barBorder flex flex-col sm:flex-row justify-between items-center gap-3">
+                                    <div class="flex items-center gap-2">
+                                        <svg class="w-4 h-4 @barText" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                        <span class="text-xs font-bold @barText uppercase tracking-wider">
+                                            @(firstItem.type == "IN" ? "Transaksi: Stock In" : (firstItem.request_type == "BORROW" ? "Transaksi: Borrowing (Peminjaman)" : "Transaksi: Giveaway (Permintaan)"))
+                                        </span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-[0.65rem] font-bold @barText uppercase tracking-wider mr-2 hidden sm:block">Dokumen PDF:</span>
+                                        
+                                        @if (firstItem.type == "OUT") {
+                                            <a href="/api/pdf/receipt-request/@groupId" target="_blank" @onclick:stopPropagation="true" class="px-3 py-1.5 text-xs text-gray-700 bg-white border border-[#e5e3dc] rounded hover:bg-gray-50 flex items-center gap-1.5 font-semibold transition shadow-sm active:scale-95">
+                                                <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                                                1. Bukti Pengajuan
+                                            </a>
+                                            
+                                            @if (firstItem.status == "WAITING_HANDOVER" || firstItem.status == "WAITING_ADMIN_HANDOVER" || firstItem.status == "APPROVED" || firstItem.status == "REJECTED") {
+                                                <a href="/api/pdf/receipt/@groupId" target="_blank" @onclick:stopPropagation="true" class="px-3 py-1.5 text-xs text-gray-700 bg-white border border-[#e5e3dc] rounded hover:bg-gray-50 flex items-center gap-1.5 font-semibold transition shadow-sm active:scale-95">
+                                                    <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                                    2. Bukti Penyerahan
+                                                </a>
+                                            } else {
+                                                <button class="px-3 py-1.5 text-xs text-gray-400 bg-gray-50 border border-gray-200 rounded flex items-center gap-1.5" disabled>
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                                    2. Bukti Penyerahan
+                                                </button>
+                                            }
+                                            
+                                            @if (firstItem.request_type == "BORROW") {
+                                                if (firstItem.returned_quantity >= firstItem.quantity && firstItem.status == "APPROVED") {
+                                                    <!-- Show valid PDF link for return -->
+                                                    <a href="/api/pdf/return-receipt/@groupId" target="_blank" @onclick:stopPropagation="true" class="px-3 py-1.5 text-xs text-gray-700 bg-white border border-[#e5e3dc] rounded hover:bg-gray-50 flex items-center gap-1.5 font-semibold transition shadow-sm active:scale-95">
+                                                        <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                                        3. Bukti Pengembalian
+                                                    </a>
+                                                } else {
+                                                    <button class="px-3 py-1.5 text-xs text-gray-400 bg-gray-50 border border-gray-200 rounded flex items-center gap-1.5" disabled>
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                                        3. Bukti Pengembalian
+                                                    </button>
+                                                }
+                                            }
+                                        } else {
+                                            <span class="text-[0.65rem] text-gray-400 uppercase">Not Available for Stock In</span>
+                                        }
+                                    </div>
+                                </div>
 
-                                <div class="overflow-x-auto">
+                                <div class="overflow-x-auto bg-white">
                                     <table class="w-full text-left whitespace-nowrap">
-                                        <thead class="text-gray-500 text-[0.62rem] uppercase tracking-wider border-b border-[#e5e3dc] bg-white/50">
+                                        <thead class="text-gray-500 text-[0.65rem] uppercase tracking-wider border-b border-gray-100 bg-white">
                                             <tr>
-                                                <th class="px-6 py-3 font-bold pl-8">Product Details</th>
-                                                <th class="px-4 py-3 font-bold">Qty / Stok</th>
-                                                <th class="px-4 py-3 font-bold">Type</th>
-                                                <th class="px-4 py-3 font-bold">Reviewer</th>
-                                                <th class="px-4 py-3 font-bold">Status</th>
-                                                <th class="px-4 py-3 font-bold text-right pr-8">Return Info</th>
+                                                <th class="px-4 py-3 font-semibold pl-6">Product Details</th>
+                                                <th class="px-4 py-3 font-semibold">Qty / Stok</th>
+                                                <th class="px-4 py-3 font-semibold">Credit</th>
+                                                <th class="px-4 py-3 font-semibold">Type</th>
+                                                <th class="px-4 py-3 font-semibold">Reviewed By</th>
+                                                <th class="px-4 py-3 font-semibold">Processed At</th>
+                                                <th class="px-4 py-3 font-semibold">Status</th>
                                             </tr>
                                         </thead>
-                                        <tbody class="divide-y divide-[#f0ede5]">
+                                        <tbody class="divide-y divide-gray-100">
                                             @foreach (var item in items)
                                             {
-                                                <tr class="bg-white hover:bg-gray-50 transition-colors">
-                                                    <td class="p-4 pl-8">
+                                                <tr class="bg-white hover:bg-gray-50/50 transition">
+                                                    <td class="p-4 pl-6">
                                                         <div class="flex items-center gap-3">
-                                                            <div class="w-10 h-10 rounded border border-[#e5e3dc] overflow-hidden shrink-0 bg-white">
+                                                            <div class="w-9 h-9 rounded border border-gray-200 overflow-hidden flex-shrink-0 bg-white flex items-center justify-center">
                                                                 <img src="@ImageHelper.ResolveProduct(item.Product, "/img/logo.svg")" class="w-full h-full object-cover">
                                                             </div>
                                                             <div>
-                                                                <div class="text-xs font-bold text-[#1a1a1a]">@(item.Product?.name)</div>
-                                                                <code class="text-[9px] text-[#8a8880] bg-[#f5f4f0] px-1.5 py-0.5 rounded">@(item.Product?.sku)</code>
+                                                                <div class="font-bold text-gray-900 text-sm">@(item.Product?.name)</div>
+                                                                <code class="text-[10px] text-gray-500 bg-white border border-gray-100 px-1.5 py-0.5 rounded">@(item.Product?.sku)</code>
                                                             </div>
                                                         </div>
                                                     </td>
                                                     <td class="p-4">
-                                                        <div class="text-sm font-bold text-[#1a1a1a]">@item.quantity</div>
-                                                        <div class="text-[10px] text-[#8a8880]">Stock: @(item.Product?.current_stock)</div>
+                                                        <div class="text-sm font-bold text-gray-900 flex items-center gap-1">
+                                                            @item.quantity
+                                                            <span class="text-[10px] font-normal text-gray-500">Pcs</span>
+                                                        </div>
+                                                        <div class="text-[10px] text-gray-400">Stock: @(item.Product?.current_stock)</div>
+                                                    </td>
+                                                    <td class="p-4">
+                                                        @if (item.request_type == "GIVEAWAY" && item.Product?.value > 0)
+                                                        {
+                                                            <div class="text-sm font-bold text-gray-900 flex items-center gap-1">
+                                                                <svg class="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                                @(((double)(item.quantity * item.Product.value)).ToString("N0"))
+                                                            </div>
+                                                            <div class="text-[10px] text-gray-400">@(((double)item.Product.value).ToString("N0")) per unit</div>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="text-gray-400 font-medium">-</span>
+                                                        }
                                                     </td>
                                                     <td class="p-4">
                                                         @if (item.request_type == "BORROW") {
-                                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#eef9f0] text-[#1a7a30] border border-[#b8e8c0]">BORROW</span>
+                                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-[#eef9f0] text-[#1a7a30] border border-[#b8e8c0]">BORROW</span>
                                                         } else if (item.request_type == "GIVEAWAY") {
-                                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#e0f2fe] text-[#1a6b8a] border border-[#bae6fd]">GIVEAWAY</span>
+                                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-[#e0f2fe] text-[#1a6b8a] border border-[#bae6fd]">GIVEAWAY</span>
                                                         } else {
-                                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-50 text-blue-600 border border-blue-100">STOCK IN</span>
+                                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-600 border border-blue-100">STOCK IN</span>
                                                         }
                                                     </td>
                                                     <td class="p-4">
                                                         @if (item.Approver != null) {
-                                                            <div class="text-xs font-bold text-[#1a1a1a]">@item.Approver.name</div>
-                                                            <div class="text-[9px] text-[#8a8880]">@item.Approver.role</div>
-                                                        } else { <span class="text-gray-300">-</span> }
+                                                            <div class="text-xs font-bold text-gray-900">@item.Approver.name</div>
+                                                            <div class="text-[10px] text-gray-500">@item.Approver.role</div>
+                                                        } else {
+                                                            <span class="text-gray-400">-</span>
+                                                        }
+                                                    </td>
+                                                    <td class="p-4">
+                                                        @if (item.status != "PENDING" && item.status != "PENDING_MANAGER") {
+                                                            <div class="text-xs text-gray-600 font-medium">@(item.updated_at.ToString("dd MMM yyyy"))</div>
+                                                            <div class="text-[10px] text-gray-400">@(item.updated_at.ToString("HH:mm"))</div>
+                                                        } else {
+                                                            <span class="text-gray-400">-</span>
+                                                        }
                                                     </td>
                                                     <td class="p-4">
                                                         @if (item.status == "PENDING" || item.status == "PENDING_MANAGER") {
-                                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-[#fef3c7] text-[#92400e] border border-[#fde68a]">WAITING</span>
+                                                            <span class="inline-flex items-center px-2.5 py-1 rounded text-[10px] font-bold bg-[#fef3c7] text-[#92400e] border border-[#fde68a] uppercase">WAITING ADMIN</span>
                                                         } else if (item.status == "APPROVED") {
-                                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-[#eef9f0] text-[#1a7a30] border border-[#b8e8c0]">APPROVED</span>
+                                                            <span class="inline-flex items-center px-2.5 py-1 rounded text-[10px] font-bold bg-[#eef9f0] text-[#1a7a30] border border-[#b8e8c0] uppercase">APPROVED</span>
                                                         } else if (item.status == "REVISION") {
                                                             <div class="flex flex-col gap-2">
-                                                                <span class="w-max inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-[#e0f2fe] text-[#1a6b8a] border border-[#bae6fd]">REVISION</span>
-                                                                <button @onclick="() => OpenRevisionModal(item)" class="text-[10px] font-bold bg-[#e8a000] text-[#1a1a1a] px-2.5 py-1 rounded shadow-sm hover:bg-[#d49300]">Revise Now</button>
+                                                                <span class="w-max inline-flex items-center px-2.5 py-1 rounded text-[10px] font-bold bg-[#e0f2fe] text-[#1a6b8a] border border-[#bae6fd] uppercase">REVISION</span>
+                                                                <button @onclick="() => OpenRevisionModal(item)" class="text-[10px] font-bold bg-[#e8a000] text-[#1a1a1a] px-2 py-1 rounded shadow-sm hover:bg-[#d49300]">Revise Now</button>
                                                             </div>
                                                         } else {
-                                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-[#fef0f0] text-[#d94040] border border-[#f8c0c0]">REJECTED</span>
+                                                            <span class="inline-flex items-center px-2.5 py-1 rounded text-[10px] font-bold bg-[#fef0f0] text-[#d94040] border border-[#f8c0c0] uppercase">REJECTED</span>
                                                         }
-                                                    </td>
-                                                    <td class="p-4 text-right pr-8">
-                                                        @if (item.request_type == "BORROW" && item.status == "APPROVED")
-                                                        {
-                                                            if (item.returned_quantity >= item.quantity) {
-                                                                <span class="text-[10px] font-bold text-emerald-600">Full Returned</span>
-                                                            } else {
-                                                                <span class="text-[10px] font-bold text-amber-600">Pending Return</span>
-                                                                <div class="text-[9px] text-[#8a8880]">@item.returned_quantity / @item.quantity</div>
-                                                            }
-                                                        }
-                                                        else { <span class="text-gray-300">-</span> }
                                                     </td>
                                                 </tr>
                                             }
