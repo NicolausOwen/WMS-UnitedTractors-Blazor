@@ -19,6 +19,7 @@ public class ProductService
     public async Task<(List<Product> Products, int TotalItems, int TotalPages)> GetProductsAsync(int? category, string? search, int page = 1, int pageSize = 10)
     {
         var query = _context.Products
+            .AsNoTracking()
             .Include(p => p.Category)
             .Include(p => p.Location)
             .Include(p => p.Unit)
