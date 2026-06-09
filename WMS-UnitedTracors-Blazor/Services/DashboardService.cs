@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using UT_WMSDotnet.Data;
 using UT_WMSDotnet.Models;
+using WMS_UnitedTracors_Blazor.Helpers;
 
 namespace WMS_UnitedTracors_Blazor.Services;
 
@@ -39,7 +40,11 @@ public class DashboardService
     public async Task<DashboardData> GetDashboardDataAsync(int? category, string? search = null, int page = 1, int pageSize = 15)
     {
         var widgetTotalItems = await _context.Products.CountAsync();
-        var pendingApprovals = await _context.Transactions.CountAsync(t => t.status == "PENDING");
+        var pendingApprovals = await _context.Transactions.CountAsync(t =>
+            t.status == WorkflowStatuses.Pending ||
+            t.status == WorkflowStatuses.PendingStaffInventory ||
+            t.status == WorkflowStatuses.PendingAdmin ||
+            t.status == WorkflowStatuses.PendingManager);
         var totalStock = await _context.Products.SumAsync(p => (int?)p.current_stock) ?? 0;
         
         var categories = await _context.Categories.OrderBy(c => c.name).ToListAsync();
@@ -82,15 +87,19 @@ public class DashboardService
             TotalItems = catalogTotalItems,
             TotalPages = totalPages,
             LowStockProducts = await _context.Products.Include(p => p.Unit).Where(p => p.current_stock <= 2 && p.current_stock >= 0).OrderBy(p => p.current_stock).Take(10).ToListAsync(),
-            DonutApproved = await _context.Transactions.CountAsync(t => t.status == "APPROVED"),
-            DonutRejected = await _context.Transactions.CountAsync(t => t.status == "REJECTED"),
-            DonutPending = await _context.Transactions.CountAsync(t => t.status == "PENDING" || t.status == "PENDING_MANAGER"),
+            DonutApproved = await _context.Transactions.CountAsync(t => t.status == WorkflowStatuses.Approved || t.status == WorkflowStatuses.Completed),
+            DonutRejected = await _context.Transactions.CountAsync(t => t.status == WorkflowStatuses.Rejected),
+            DonutPending = await _context.Transactions.CountAsync(t =>
+                t.status == WorkflowStatuses.Pending ||
+                t.status == WorkflowStatuses.PendingStaffInventory ||
+                t.status == WorkflowStatuses.PendingAdmin ||
+                t.status == WorkflowStatuses.PendingManager),
             MerchAvailable = await _context.Products.Where(p => p.is_returnable != 1 && p.current_stock > 2).CountAsync(),
             MerchLowStock = await _context.Products.Where(p => p.is_returnable != 1 && p.current_stock > 0 && p.current_stock <= 2).CountAsync(),
             MerchOutOfStock = await _context.Products.Where(p => p.is_returnable != 1 && p.current_stock <= 0).CountAsync(),
-            BorrowOverdue = await _context.Transactions.Where(t => t.request_type == "BORROW" && t.status == "APPROVED" && t.returned_quantity < t.quantity && t.expected_return_date < DateTime.Today).CountAsync(),
+            BorrowOverdue = await _context.Transactions.Where(t => t.request_type == "BORROW" && t.status == WorkflowStatuses.Approved && t.returned_quantity < t.quantity && t.expected_return_date < DateTime.Today).CountAsync(),
             BorrowAvailable = await _context.Products.Where(p => p.is_returnable == 1 && p.current_stock > 0).CountAsync(),
-            BorrowBorrowed = await _context.Transactions.Where(t => t.request_type == "BORROW" && t.status == "APPROVED" && t.returned_quantity < t.quantity).CountAsync()
+            BorrowBorrowed = await _context.Transactions.Where(t => t.request_type == "BORROW" && t.status == WorkflowStatuses.Approved && t.returned_quantity < t.quantity).CountAsync()
         };
 
         return data;
@@ -101,7 +110,7 @@ public class DashboardService
         var activeBorrowsQuery = _context.Transactions
             .Include(t => t.Product)
             .Include(t => t.Requester)
-            .Where(t => t.type == "OUT" && t.status == "APPROVED" && 
+            .Where(t => t.type == "OUT" && t.status == WorkflowStatuses.Approved && 
                         t.Product != null && t.Product.is_returnable == 1 &&
                         (t.quantity - (t.returned_quantity) - t.pending_return_quantity) > 0)
             .AsQueryable();

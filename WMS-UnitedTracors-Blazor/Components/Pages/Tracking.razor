@@ -104,6 +104,7 @@
                     var groupItems = group.Value;
                     var firstItem = groupItems.First();
                     var borrowItemsOnly = groupItems.Where(i => i.request_type == "BORROW").ToList();
+                    var giveawayItemsOnly = groupItems.Where(i => i.request_type == "GIVEAWAY").ToList();
                     var hasBorrow = borrowItemsOnly.Any();
                     var totalItems = hasBorrow ? borrowItemsOnly.Sum(i => i.quantity) : groupItems.Sum(i => i.quantity);
                     var totalReturned = hasBorrow ? borrowItemsOnly.Sum(i => i.returned_quantity) : groupItems.Sum(i => i.returned_quantity);
@@ -119,6 +120,9 @@
                                       && (UserRole == "admin" || UserRole == "superadmin" || firstItem.requester_id == CurrentUserId);
                     // Draft serah terima: status masih WAITING_HANDOVER tapi foto sudah diunggah (belum disubmit ke admin).
                     var hasHandoverDraftPhoto = hasBorrow && borrowItemsOnly.Any(i => i.status == "WAITING_HANDOVER" && !string.IsNullOrEmpty(i.handover_photo));
+                    var canGiveawayHandover = isGiveaway && status == "WAITING_HANDOVER" && (UserRole == "admin" || UserRole == "superadmin");
+                    var hasGiveawayHandoverDraftPhoto = isGiveaway && giveawayItemsOnly.Any(i => i.status == "WAITING_HANDOVER" && !string.IsNullOrEmpty(i.handover_photo));
+                    var canUploadDocumentation = isGiveaway && (status == "WAITING_DOCUMENTATION" || status == "DOCUMENTATION_OVERDUE") && (firstItem.requester_id == CurrentUserId || UserRole == "superadmin");
 
                     var isExpanded = ExpandedGroupIds.Contains(groupId);
 
@@ -138,19 +142,31 @@
                                         <h3 class="font-syne font-bold text-[#1a1a1a] truncate">@(string.IsNullOrEmpty(firstItem.event_name) ? (isGiveaway ? "Request Barang" : "Peminjaman Barang") : firstItem.event_name)</h3>
                                         <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#f5f4f0] text-[#8a8780] border border-[#e5e3dc]">@groupItems.Count Items</span>
                                         @if(isGiveaway) {
-                                            @if(status == "APPROVED") {
+                                            @if(status == "COMPLETED" || status == "APPROVED") {
                                                 <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#eef9f0] text-[#1a7a30] border border-[#b8e8c0]">Selesai</span>
                                             } else if(status == "REJECTED") {
                                                 <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#fef0f0] text-[#d94040] border border-[#f8c0c0]">Ditolak</span>
-                                            } else if(status == "REVISION") {
+                                            } else if(status == "REVISION" || status == "REVISION_BY_STAFF_INVENTORY" || status == "REVISION_BY_ADMIN" || status == "REVISION_BY_MANAGER") {
                                                 <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#fffbeb] text-[#d97706] border border-[#fde68a]">Butuh Revisi</span>
+                                            } else if(status == "PENDING_STAFF_INVENTORY") {
+                                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#fff8e6] text-[#b37a00] border border-[#ffe099]">Menunggu Staff Inventoris</span>
+                                            } else if(status == "PENDING_ADMIN") {
+                                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#fff8e6] text-[#b37a00] border border-[#ffe099]">Menunggu Admin</span>
+                                            } else if(status == "PENDING_MANAGER") {
+                                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#fff8e6] text-[#b37a00] border border-[#ffe099]">Menunggu Manager</span>
+                                            } else if(status == "WAITING_HANDOVER") {
+                                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#e0f2fe] text-[#1a6b8a] border border-[#bae6fd]">Menunggu Serah Terima</span>
+                                            } else if(status == "WAITING_DOCUMENTATION") {
+                                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#e8f5e9] text-[#2e7d32] border border-[#c8e6c9]">Menunggu Dokumentasi User</span>
+                                            } else if(status == "DOCUMENTATION_OVERDUE") {
+                                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#fef0f0] text-[#d94040] border border-[#f8c0c0]">Dokumentasi Overdue</span>
                                             } else {
                                                 <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#fff8e6] text-[#b37a00] border border-[#ffe099]">Sedang Diproses</span>
                                             }
                                         } else {
                                             @if(status == "REJECTED") {
                                                 <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#fef0f0] text-[#d94040] border border-[#f8c0c0]">Ditolak</span>
-                                            } else if(status == "REVISION") {
+                                            } else if(status == "REVISION" || status == "REVISION_BY_ADMIN") {
                                                 <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#fffbeb] text-[#d97706] border border-[#fde68a]">Butuh Revisi</span>
                                             } else if(status == "WAITING_HANDOVER") {
                                                 <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#fff8e6] text-[#b37a00] border border-[#ffe099]">Menunggu Bukti Serah Terima</span>
@@ -219,6 +235,20 @@
                                     <button type="button" @onclick="() => OpenHandoverModal(borrowItemsOnly)" @onclick:stopPropagation="true" class="inline-flex items-center gap-2 px-4 py-2.5 bg-[#e8a000] hover:bg-[#d49300] text-[#1a1a1a] text-sm font-bold rounded-lg shadow-sm transition active:scale-95 cursor-pointer whitespace-nowrap">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
                                         Upload Bukti Serah Terima
+                                    </button>
+                                }
+                                @if (canGiveawayHandover && !hasGiveawayHandoverDraftPhoto)
+                                {
+                                    <button type="button" @onclick="() => OpenHandoverModal(giveawayItemsOnly)" @onclick:stopPropagation="true" class="inline-flex items-center gap-2 px-4 py-2.5 bg-[#e8a000] hover:bg-[#d49300] text-[#1a1a1a] text-sm font-bold rounded-lg shadow-sm transition active:scale-95 cursor-pointer whitespace-nowrap">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                                        Upload Bukti Serah Terima
+                                    </button>
+                                }
+                                @if (canUploadDocumentation)
+                                {
+                                    <button type="button" @onclick="() => OpenDocumentationModal(giveawayItemsOnly)" @onclick:stopPropagation="true" class="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1a7a30] hover:bg-[#166528] text-white text-sm font-bold rounded-lg shadow-sm transition active:scale-95 cursor-pointer whitespace-nowrap">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 16v-8m0 0-3 3m3-3 3 3M5 20h14"/></svg>
+                                        Upload Dokumentasi
                                     </button>
                                 }
                                 @if (groupItems.Any(i => i.returned_quantity > 0 || (i.pending_return_quantity > 0 && i.is_return_draft == 0)))
@@ -339,17 +369,48 @@
                                                     {
                                                         <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#e0f2fe] text-[#1a6b8a] border border-[#bae6fd]">Menunggu Verifikasi Admin</span>
                                                     }
+                                                    else if (status == "WAITING_DOCUMENTATION" || status == "DOCUMENTATION_OVERDUE")
+                                                    {
+                                                        <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#e8f5e9] text-[#2e7d32] border border-[#c8e6c9]">Serah Terima Selesai</span>
+                                                    }
                                                 </div>
                                                 <p class="text-xs text-gray-600 leading-relaxed max-w-xl italic">"@firstItem.handover_notes"</p>
+                                                <p class="text-[11px] text-gray-500 mt-1">Penerima: @(firstItem.handover_recipient_name ?? firstItem.applicant_name ?? "-") | Waktu: @(firstItem.handover_timestamp?.ToString("dd MMM yyyy HH:mm") ?? "-")</p>
                                             </div>
                                         </div>
-                                        @if (canHandover && status == "WAITING_HANDOVER")
+                                        @if ((canHandover || canGiveawayHandover) && status == "WAITING_HANDOVER")
                                         {
                                             <div class="flex gap-2 shrink-0 w-full sm:w-auto">
-                                                <button type="button" @onclick="() => OpenHandoverModal(borrowItemsOnly)" class="px-3 py-2 bg-white border border-[#e5e3dc] text-[#3a3835] hover:border-[#1a1a1a] text-xs font-bold rounded-lg transition">Ganti Foto</button>
-                                                <button type="button" @onclick='() => AskConfirm("Submit Bukti Serah Terima", "Kirim bukti serah terima ke admin untuk diverifikasi? Setelah dikirim Anda tidak bisa menggantinya lagi kecuali ditolak admin.", () => SubmitHandoverToAdmin(borrowItemsOnly), "Ya, Submit")' disabled="@IsSubmitting" class="px-4 py-2 bg-[#1a7a30] hover:bg-[#166528] text-white text-xs font-bold rounded-lg shadow-sm transition disabled:opacity-50">Submit ke Admin</button>
+                                                <button type="button" @onclick="() => OpenHandoverModal(isGiveaway ? giveawayItemsOnly : borrowItemsOnly)" class="px-3 py-2 bg-white border border-[#e5e3dc] text-[#3a3835] hover:border-[#1a1a1a] text-xs font-bold rounded-lg transition">Ganti Foto</button>
+                                                <button type="button" @onclick='() => AskConfirm("Submit Bukti Serah Terima", isGiveaway ? "Selesaikan serah terima giveaway ini? Stok akan dipotong dan sistem akan menunggu dokumentasi dari user." : "Kirim bukti serah terima ke admin untuk diverifikasi? Setelah dikirim Anda tidak bisa menggantinya lagi kecuali ditolak admin.", () => SubmitHandoverToAdmin(isGiveaway ? giveawayItemsOnly : borrowItemsOnly), isGiveaway ? "Ya, Selesaikan" : "Ya, Submit")' disabled="@IsSubmitting" class="px-4 py-2 bg-[#1a7a30] hover:bg-[#166528] text-white text-xs font-bold rounded-lg shadow-sm transition disabled:opacity-50">@(isGiveaway ? "Selesaikan Serah Terima" : "Submit ke Admin")</button>
                                             </div>
                                         }
+                                    </div>
+                                }
+
+                                @if (isGiveaway && !string.IsNullOrEmpty(firstItem.documentation_photo))
+                                {
+                                    var documentationPhotoSrc = ImageHelper.Resolve(firstItem.documentation_photo);
+                                    <div class="p-4 bg-white border-b border-[#e5e3dc] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                        <div class="flex items-start gap-4">
+                                            @if (firstItem.documentation_photo.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+                                            {
+                                                <a href="@documentationPhotoSrc" target="_blank" class="block w-20 h-20 rounded border border-gray-200 overflow-hidden bg-red-50 flex items-center justify-center flex-shrink-0 hover:opacity-95 transition cursor-pointer">
+                                                    <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                                                </a>
+                                            }
+                                            else
+                                            {
+                                                <a href="@documentationPhotoSrc" data-image-popup class="block w-20 h-20 rounded border border-gray-200 overflow-hidden bg-gray-50 flex-shrink-0 hover:opacity-95 transition cursor-pointer">
+                                                    <img src="@documentationPhotoSrc" alt="Dokumentasi User" class="w-full h-full object-cover">
+                                                </a>
+                                            }
+                                            <div>
+                                                <h4 class="text-xs font-bold text-gray-900 tracking-wider uppercase">Dokumentasi User</h4>
+                                                <p class="text-xs text-gray-600 leading-relaxed max-w-xl italic">"@(firstItem.documentation_notes ?? "-")"</p>
+                                                <p class="text-[11px] text-gray-500 mt-1">Diupload: @(firstItem.documentation_uploaded_at?.ToString("dd MMM yyyy HH:mm") ?? "-")</p>
+                                            </div>
+                                        </div>
                                     </div>
                                 }
 
@@ -389,9 +450,13 @@
                                                         <span class="text-xs text-gray-500">@(usage.Product?.Unit?.name ?? "unit")</span>
                                                     </td>
                                                     <td class="px-5 py-3.5 align-middle">
-                                                        @if(usage.status == "PENDING") {
+                                                        @if(usage.status == "PENDING" || usage.status == "PENDING_ADMIN") {
                                                             <span class="inline-flex items-center px-2 py-0.5 border border-[#fde68a] rounded text-[10px] font-bold bg-[#fef3c7] text-[#92400e]">
                                                                 Menunggu Admin
+                                                            </span>
+                                                        } else if (usage.status == "PENDING_STAFF_INVENTORY") {
+                                                            <span class="inline-flex items-center px-2 py-0.5 border border-[#fde68a] rounded text-[10px] font-bold bg-[#fef3c7] text-[#92400e]">
+                                                                Menunggu Staff Inventoris
                                                             </span>
                                                         } else if (usage.status == "PENDING_MANAGER") {
                                                             <span class="inline-flex items-center px-2 py-0.5 border border-[#c4b5fd] rounded text-[10px] font-bold bg-[#ede9fe] text-[#6d28d9]">
@@ -405,7 +470,15 @@
                                                             <span class="inline-flex items-center px-2 py-0.5 border border-[#bae6fd] rounded text-[10px] font-bold bg-[#e0f2fe] text-[#1a6b8a]">
                                                                 Menunggu Verifikasi Admin
                                                             </span>
-                                                        } else if (usage.status == "APPROVED") {
+                                                        } else if (usage.status == "WAITING_DOCUMENTATION") {
+                                                            <span class="inline-flex items-center px-2 py-0.5 border border-[#c8e6c9] rounded text-[10px] font-bold bg-[#e8f5e9] text-[#2e7d32]">
+                                                                Menunggu Dokumentasi User
+                                                            </span>
+                                                        } else if (usage.status == "DOCUMENTATION_OVERDUE") {
+                                                            <span class="inline-flex items-center px-2 py-0.5 border border-[#f8c0c0] rounded text-[10px] font-bold bg-[#fef0f0] text-[#d94040]">
+                                                                Dokumentasi Overdue
+                                                            </span>
+                                                        } else if (usage.status == "APPROVED" || usage.status == "COMPLETED") {
                                                             @if (usage.request_type == "BORROW") {
                                                                 @if (usage.returned_quantity >= usage.quantity) {
                                                                     <span class="inline-flex items-center px-2 py-0.5 border border-[#b8e8c0] rounded text-[10px] font-bold bg-[#eef9f0] text-[#1a7a30]">
@@ -465,7 +538,7 @@
                                                             @if(!string.IsNullOrEmpty(usage.rejection_reason)) {
                                                                 <div class="text-[10px] text-red-600 mt-1.5 italic font-semibold">"@usage.rejection_reason"</div>
                                                             }
-                                                        } else if (usage.status == "REVISION") {
+                                                        } else if (usage.status == "REVISION" || usage.status == "REVISION_BY_STAFF_INVENTORY" || usage.status == "REVISION_BY_ADMIN" || usage.status == "REVISION_BY_MANAGER") {
                                                             <span class="inline-flex items-center px-2 py-0.5 border border-[#fde68a] rounded text-[10px] font-bold bg-[#fffbeb] text-[#d97706]">
                                                                 Butuh Revisi
                                                             </span>
@@ -476,9 +549,10 @@
                                                     </td>
                                                     <td class="px-5 py-3.5 align-middle text-xs text-gray-500 space-y-1">
                                                         @if (!string.IsNullOrEmpty(usage.notes)) { <div><span class="font-bold text-gray-400">User:</span> @usage.notes</div> }
+                                                        @if (!string.IsNullOrEmpty(usage.staff_inventory_notes)) { <div><span class="font-bold text-[#e8a000]">Staff Inv:</span> @usage.staff_inventory_notes</div> }
                                                         @if (!string.IsNullOrEmpty(usage.admin_notes)) { <div><span class="font-bold text-[#e8a000]">Admin:</span> @usage.admin_notes</div> }
                                                         @if (!string.IsNullOrEmpty(usage.manager_notes)) { <div><span class="font-bold text-[#e8a000]">Manager:</span> @usage.manager_notes</div> }
-                                                        @if (string.IsNullOrEmpty(usage.notes) && string.IsNullOrEmpty(usage.admin_notes) && string.IsNullOrEmpty(usage.manager_notes)) { <span>-</span> }
+                                                        @if (string.IsNullOrEmpty(usage.notes) && string.IsNullOrEmpty(usage.staff_inventory_notes) && string.IsNullOrEmpty(usage.admin_notes) && string.IsNullOrEmpty(usage.manager_notes)) { <span>-</span> }
                                                     </td>
                                                     <td class="px-5 py-3.5 align-middle text-right">
                                                         @{
@@ -488,7 +562,8 @@
                                                             var isReturnDraft = usage.status == "APPROVED" && usage.request_type == "BORROW"
                                                                                 && (usage.pending_return_quantity ?? 0) > 0 && usage.is_return_draft == 1;
                                                             var canManageDraft = isReturnDraft && (UserRole == "admin" || UserRole == "superadmin" || usage.requester_id == CurrentUserId);
-                                                            var hasAction = canReturn || canManageDraft || usage.status == "REVISION";
+                                                            var canRevise = usage.status == "REVISION" || usage.status == "REVISION_BY_STAFF_INVENTORY" || usage.status == "REVISION_BY_ADMIN" || usage.status == "REVISION_BY_MANAGER";
+                                                            var hasAction = canReturn || canManageDraft || canRevise;
                                                         }
                                                         @if (canReturn)
                                                         {
@@ -518,7 +593,7 @@
                                                                 </button>
                                                             </div>
                                                         }
-                                                        else if (usage.status == "REVISION")
+                                                        else if (canRevise)
                                                         {
                                                             <button type="button" @onclick='() => AskConfirm("Revisi Permintaan?", "Item akan dipindahkan ke keranjang untuk diperbaiki dan permintaan lama dihapus. Lanjutkan?", () => ReviseToCart(usage), "Ya, Revisi")' class="px-3 py-1 bg-[#e8a000] hover:bg-[#d49300] text-[#1a1a1a] text-[10px] font-bold rounded shadow-sm transition whitespace-nowrap">
                                                                 Revisi
@@ -557,7 +632,7 @@
             <div class="p-6 space-y-4">
                 <div class="p-4 bg-blue-50 text-blue-700 text-xs rounded-lg border border-blue-100 flex items-start gap-3">
                     <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    <p>Foto akan disimpan sebagai <span class="font-bold">draft</span> — Anda masih bisa menggantinya berkali-kali. Setelah yakin benar, klik <span class="font-bold">Submit ke Admin</span> untuk mengirim verifikasi.</p>
+                    <p>@(HandoverRequestType == "GIVEAWAY" ? "Bukti serah terima giveaway akan disimpan sebagai draft. Setelah yakin benar, lanjutkan untuk menyelesaikan serah terima dan mengaktifkan tahap dokumentasi user." : "Foto akan disimpan sebagai draft — Anda masih bisa menggantinya berkali-kali. Setelah yakin benar, klik Submit ke Admin untuk mengirim verifikasi.")</p>
                 </div>
 
                 <div>
@@ -578,6 +653,16 @@
                     <label class="block text-xs font-bold text-[#8a8880] uppercase tracking-wider mb-2">Catatan Tambahan</label>
                     <textarea @bind="HandoverNotes" class="w-full p-3 text-sm bg-white border border-[#e5e3dc] rounded-lg focus:border-[#e8a000] focus:ring-1 focus:ring-[#e8a000] outline-none h-24 transition-shadow" placeholder="Misal: Diserahkan kepada Bapak Budi dari Divisi IT..."></textarea>
                 </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-[#8a8880] uppercase tracking-wider mb-2">Nama Penerima</label>
+                    <input type="text" @bind="HandoverRecipientName" class="w-full p-3 text-sm bg-white border border-[#e5e3dc] rounded-lg focus:border-[#e8a000] focus:ring-1 focus:ring-[#e8a000] outline-none transition-shadow" />
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-[#8a8880] uppercase tracking-wider mb-2">Timestamp Serah Terima</label>
+                    <input type="datetime-local" @bind="HandoverTimestampInput" class="w-full p-3 text-sm bg-white border border-[#e5e3dc] rounded-lg focus:border-[#e8a000] focus:ring-1 focus:ring-[#e8a000] outline-none transition-shadow" />
+                </div>
             </div>
 
             <div class="p-6 border-t border-[#e5e3dc] bg-white flex justify-end gap-3">
@@ -586,7 +671,44 @@
                     @if(IsSubmitting) {
                         <span class="animate-spin inline-block w-4 h-4 border-2 border-[#1a1a1a] border-t-transparent rounded-full"></span>
                     }
-                    Simpan Draft
+                    @(HandoverRequestType == "GIVEAWAY" ? "Simpan Draft Serah Terima" : "Simpan Draft")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@if (IsDocumentationModalOpen)
+{
+    <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" @onclick="CloseDocumentationModal">
+        <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden" @onclick:stopPropagation="true">
+            <div class="p-6 border-b border-[#e5e3dc] flex justify-between items-center bg-[#faf9f5]">
+                <h3 class="font-syne text-lg font-bold text-[#1a1a1a]">Upload Dokumentasi User</h3>
+                <button type="button" @onclick="CloseDocumentationModal" class="text-gray-400 hover:text-gray-600 transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="p-4 bg-amber-50 text-amber-700 text-xs rounded-lg border border-amber-100 flex items-start gap-3">
+                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <p>Upload dokumentasi maksimal H+3 dari tanggal event. Jika melewati batas, status akan ditandai overdue sampai dokumentasi diunggah.</p>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-[#8a8880] uppercase tracking-wider mb-2">Foto/PDF Dokumentasi <span class="text-[#d94040]">*</span></label>
+                    <InputFile OnChange="HandleDocumentationFileSelected" accept="image/jpg,image/jpeg,image/png,image/webp,application/pdf" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-[#f5f4f0] file:text-[#1a1a1a] hover:file:bg-[#e5e3dc] transition cursor-pointer border border-[#e5e3dc] rounded-lg" required />
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-[#8a8880] uppercase tracking-wider mb-2">Catatan Dokumentasi</label>
+                    <textarea @bind="DocumentationNotes" class="w-full p-3 text-sm bg-white border border-[#e5e3dc] rounded-lg focus:border-[#e8a000] focus:ring-1 focus:ring-[#e8a000] outline-none h-24 transition-shadow" placeholder="Catatan singkat dokumentasi..."></textarea>
+                </div>
+            </div>
+            <div class="p-6 border-t border-[#e5e3dc] bg-white flex justify-end gap-3">
+                <button type="button" @onclick="CloseDocumentationModal" class="px-5 py-2.5 text-sm font-bold text-gray-600 hover:text-gray-900 bg-white border border-gray-200 hover:bg-gray-50 rounded-xl transition">Batal</button>
+                <button type="button" @onclick="SubmitDocumentation" disabled="@IsSubmitting" class="px-6 py-2.5 bg-[#1a7a30] hover:bg-[#166528] active:scale-[0.98] text-white text-sm font-bold tracking-wider rounded-xl transition shadow-sm disabled:opacity-50 inline-flex items-center gap-2">
+                    @if(IsSubmitting) {
+                        <span class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
+                    }
+                    Submit Dokumentasi
                 </button>
             </div>
         </div>
@@ -741,9 +863,16 @@
     private bool IsReturnModalOpen = false;
     private bool IsForceReturn = false;
     private bool IsHandoverModalOpen = false;
+    private bool IsDocumentationModalOpen = false;
     private List<int> HandoverTransactionIds = new();
     private string? HandoverNotes;
+    private string HandoverRequestType = "BORROW";
+    private string? HandoverRecipientName;
+    private DateTime? HandoverTimestampInput;
     private Microsoft.AspNetCore.Components.Forms.IBrowserFile? HandoverFile;
+    private List<int> DocumentationTransactionIds = new();
+    private string? DocumentationNotes;
+    private Microsoft.AspNetCore.Components.Forms.IBrowserFile? DocumentationFile;
 
     private bool IsSubmitting = false;
     private Transaction? ReturnTransaction;
@@ -854,7 +983,16 @@
             var firstItem = kvp.Value.First();
             if (firstItem.request_type == "GIVEAWAY")
             {
-                if (firstItem.status == "PENDING" || firstItem.status == "PENDING_MANAGER" || firstItem.status == "REVISION")
+                if (firstItem.status == "PENDING_STAFF_INVENTORY" ||
+                    firstItem.status == "PENDING_ADMIN" ||
+                    firstItem.status == "PENDING_MANAGER" ||
+                    firstItem.status == "REVISION" ||
+                    firstItem.status == "REVISION_BY_STAFF_INVENTORY" ||
+                    firstItem.status == "REVISION_BY_ADMIN" ||
+                    firstItem.status == "REVISION_BY_MANAGER" ||
+                    firstItem.status == "WAITING_HANDOVER" ||
+                    firstItem.status == "WAITING_DOCUMENTATION" ||
+                    firstItem.status == "DOCUMENTATION_OVERDUE")
                 {
                     ExpandedGroupIds.Add(kvp.Key);
                 }
@@ -863,7 +1001,7 @@
             {
                 var totalItems = kvp.Value.Sum(i => i.quantity);
                 var totalReturned = kvp.Value.Sum(i => i.returned_quantity);
-                if (firstItem.status == "PENDING" || firstItem.status == "REVISION" || totalReturned < totalItems)
+                if (firstItem.status == "PENDING" || firstItem.status == "REVISION" || firstItem.status == "REVISION_BY_ADMIN" || totalReturned < totalItems)
                 {
                     ExpandedGroupIds.Add(kvp.Key);
                 }
@@ -929,14 +1067,17 @@
         SelectedFile = e.File;
     }
 
-    private void OpenHandoverModal(List<Transaction> borrowItems)
+    private void OpenHandoverModal(List<Transaction> items)
     {
-        // Hanya item draft (WAITING_HANDOVER) yang bisa diunggah/diganti fotonya.
-        HandoverTransactionIds = borrowItems
+        HandoverTransactionIds = items
             .Where(i => i.status == "WAITING_HANDOVER")
             .Select(i => i.id)
             .ToList();
-        HandoverNotes = borrowItems.FirstOrDefault(i => i.status == "WAITING_HANDOVER" && !string.IsNullOrEmpty(i.handover_notes))?.handover_notes;
+        var firstPending = items.FirstOrDefault(i => i.status == "WAITING_HANDOVER");
+        HandoverNotes = items.FirstOrDefault(i => i.status == "WAITING_HANDOVER" && !string.IsNullOrEmpty(i.handover_notes))?.handover_notes;
+        HandoverRecipientName = firstPending?.handover_recipient_name ?? firstPending?.applicant_name;
+        HandoverTimestampInput = firstPending?.handover_timestamp ?? DateTime.Now;
+        HandoverRequestType = firstPending?.request_type ?? "BORROW";
         HandoverFile = null;
         ModalError = null;
         IsHandoverModalOpen = true;
@@ -948,6 +1089,9 @@
         HandoverTransactionIds = new();
         HandoverFile = null;
         HandoverNotes = null;
+        HandoverRecipientName = null;
+        HandoverTimestampInput = null;
+        HandoverRequestType = "BORROW";
     }
 
     private void HandleHandoverFileSelected(Microsoft.AspNetCore.Components.Forms.InputFileChangeEventArgs e)
@@ -984,11 +1128,86 @@
 
         try
         {
-            var err = await TransactionService.ConfirmHandoverAsync(HandoverTransactionIds, HandoverFile, HandoverNotes);
+            var handoverTimestamp = HandoverTimestampInput;
+
+            var err = await TransactionService.ConfirmHandoverAsync(HandoverTransactionIds, HandoverFile, HandoverNotes, HandoverRecipientName, handoverTimestamp);
             if (err == null)
             {
-                SuccessMessage = "Draft bukti serah terima tersimpan. Periksa lalu klik 'Submit ke Admin' untuk mengirim.";
+                SuccessMessage = HandoverRequestType == "GIVEAWAY"
+                    ? "Draft serah terima giveaway tersimpan. Lanjutkan untuk menyelesaikan serah terima."
+                    : "Draft bukti serah terima tersimpan. Periksa lalu klik 'Submit ke Admin' untuk mengirim.";
                 CloseHandoverModal();
+                await LoadData();
+            }
+            else
+            {
+                ErrorMessage = err;
+            }
+        }
+        finally
+        {
+            IsSubmitting = false;
+        }
+    }
+
+    private void OpenDocumentationModal(List<Transaction> items)
+    {
+        DocumentationTransactionIds = items
+            .Where(i => i.status == "WAITING_DOCUMENTATION" || i.status == "DOCUMENTATION_OVERDUE")
+            .Select(i => i.id)
+            .ToList();
+        DocumentationNotes = items.FirstOrDefault(i => i.status == "WAITING_DOCUMENTATION" || i.status == "DOCUMENTATION_OVERDUE")?.documentation_notes;
+        DocumentationFile = null;
+        ModalError = null;
+        IsDocumentationModalOpen = true;
+    }
+
+    private void CloseDocumentationModal()
+    {
+        IsDocumentationModalOpen = false;
+        DocumentationTransactionIds = new();
+        DocumentationNotes = null;
+        DocumentationFile = null;
+    }
+
+    private void HandleDocumentationFileSelected(Microsoft.AspNetCore.Components.Forms.InputFileChangeEventArgs e)
+    {
+        ModalError = null;
+        var err = ValidateUpload(e.File);
+        if (err != null)
+        {
+            ModalError = err;
+            DocumentationFile = null;
+            return;
+        }
+        DocumentationFile = e.File;
+    }
+
+    private async Task SubmitDocumentation()
+    {
+        if (DocumentationFile == null)
+        {
+            ModalError = "Foto/PDF dokumentasi wajib diunggah.";
+            return;
+        }
+
+        var validationError = ValidateUpload(DocumentationFile);
+        if (validationError != null)
+        {
+            ModalError = validationError;
+            return;
+        }
+
+        IsSubmitting = true;
+        ErrorMessage = null;
+        SuccessMessage = null;
+        try
+        {
+            var err = await TransactionService.SubmitGiveawayDocumentationAsync(DocumentationTransactionIds, DocumentationFile, DocumentationNotes);
+            if (err == null)
+            {
+                SuccessMessage = "Dokumentasi giveaway berhasil diunggah.";
+                CloseDocumentationModal();
                 await LoadData();
             }
             else
@@ -1016,7 +1235,9 @@
             var err = await TransactionService.SubmitHandoverAsync(ids);
             if (err == null)
             {
-                SuccessMessage = "Bukti serah terima dikirim. Menunggu verifikasi admin.";
+                SuccessMessage = borrowItems.FirstOrDefault()?.request_type == "GIVEAWAY"
+                    ? "Serah terima giveaway selesai. Sistem sekarang menunggu dokumentasi user."
+                    : "Bukti serah terima dikirim. Menunggu verifikasi admin.";
                 await LoadData();
             }
             else
@@ -1196,23 +1417,56 @@
 
         if (firstItem.request_type == "GIVEAWAY")
         {
-            if (firstItem.status == "PENDING") {
+            if (firstItem.status == "PENDING_STAFF_INVENTORY") {
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "ACTIVE" });
+                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "PENDING" });
+                steps.Add(new TrackingStep { Name = "Approval Manager", Status = "PENDING" });
+                steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "PENDING" });
+                steps.Add(new TrackingStep { Name = "Dokumentasi User", Status = "PENDING" });
+            } else if (firstItem.status == "PENDING_ADMIN") {
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE" });
                 steps.Add(new TrackingStep { Name = "Approval Admin", Status = "ACTIVE" });
+                steps.Add(new TrackingStep { Name = "Approval Manager", Status = "PENDING" });
                 steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "PENDING" });
-            } else if (firstItem.status == "REVISION") {
-                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "WARNING" });
-                steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "PENDING" });
-            } else if (firstItem.status == "PENDING_MANAGER") { 
+                steps.Add(new TrackingStep { Name = "Dokumentasi User", Status = "PENDING" });
+            } else if (firstItem.status == "PENDING_MANAGER") {
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE" });
                 steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE" });
+                steps.Add(new TrackingStep { Name = "Approval Manager", Status = "ACTIVE" });
                 steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "PENDING" });
-            } else if (firstItem.status == "WAITING_HANDOVER" || firstItem.status == "WAITING_ADMIN_HANDOVER") {
+                steps.Add(new TrackingStep { Name = "Dokumentasi User", Status = "PENDING" });
+            } else if (firstItem.status == "REVISION" || firstItem.status == "REVISION_BY_STAFF_INVENTORY" || firstItem.status == "REVISION_BY_ADMIN" || firstItem.status == "REVISION_BY_MANAGER") {
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = firstItem.status == "REVISION_BY_STAFF_INVENTORY" ? "WARNING" : "DONE" });
+                steps.Add(new TrackingStep { Name = "Approval Admin", Status = firstItem.status == "REVISION_BY_ADMIN" ? "WARNING" : "PENDING" });
+                steps.Add(new TrackingStep { Name = "Approval Manager", Status = firstItem.status == "REVISION_BY_MANAGER" ? "WARNING" : "PENDING" });
+                steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "PENDING" });
+                steps.Add(new TrackingStep { Name = "Dokumentasi User", Status = "PENDING" });
+            } else if (firstItem.status == "WAITING_HANDOVER") {
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE" });
                 steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE" });
+                steps.Add(new TrackingStep { Name = "Approval Manager", Status = "DONE" });
                 steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "ACTIVE" });
-            } else if (firstItem.status == "APPROVED") {
+                steps.Add(new TrackingStep { Name = "Dokumentasi User", Status = "PENDING" });
+            } else if (firstItem.status == "WAITING_DOCUMENTATION") {
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE" });
                 steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE" });
+                steps.Add(new TrackingStep { Name = "Approval Manager", Status = "DONE" });
                 steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "DONE" });
+                steps.Add(new TrackingStep { Name = "Dokumentasi User", Status = "ACTIVE" });
+            } else if (firstItem.status == "DOCUMENTATION_OVERDUE") {
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE" });
+                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE" });
+                steps.Add(new TrackingStep { Name = "Approval Manager", Status = "DONE" });
+                steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "DONE" });
+                steps.Add(new TrackingStep { Name = "Dokumentasi User", Status = "WARNING" });
+            } else if (firstItem.status == "COMPLETED" || firstItem.status == "APPROVED") {
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE" });
+                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE" });
+                steps.Add(new TrackingStep { Name = "Approval Manager", Status = "DONE" });
+                steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "DONE" });
+                steps.Add(new TrackingStep { Name = "Dokumentasi User", Status = "DONE" });
             } else if (firstItem.status == "REJECTED") {
-                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "WARNING" });
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "WARNING" });
             }
         }
         else // BORROW

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using UT_WMSDotnet.Data;
 using UT_WMSDotnet.Models;
+using WMS_UnitedTracors_Blazor.Helpers;
 
 namespace WMS_UnitedTracors_Blazor.Services;
 
@@ -86,9 +87,9 @@ public class ReportService
 
         return new Dictionary<string, ReportSummaryDto>
         {
-            { "peminjaman", new ReportSummaryDto { Count = peminjaman.Count, TotalQty = peminjaman.Select(x => x.quantity ?? 0).Sum(), Approved = peminjaman.Count(x => x.status == "APPROVED"), Pending = peminjaman.Count(x => x.status == "PENDING") } },
-            { "request_barang", new ReportSummaryDto { Count = requestBarang.Count, TotalQty = requestBarang.Select(x => x.quantity ?? 0).Sum(), Approved = requestBarang.Count(x => x.status == "APPROVED"), Pending = requestBarang.Count(x => x.status == "PENDING") } },
-            { "adjust_barang", new ReportSummaryDto { Count = adjustBarang.Count, TotalQty = adjustBarang.Select(x => x.quantity ?? 0).Sum(), Approved = adjustBarang.Count(x => x.status == "APPROVED"), Pending = adjustBarang.Count(x => x.status == "PENDING") } }
+            { "peminjaman", new ReportSummaryDto { Count = peminjaman.Count, TotalQty = peminjaman.Select(x => x.quantity ?? 0).Sum(), Approved = peminjaman.Count(x => x.status == WorkflowStatuses.Approved || x.status == WorkflowStatuses.Completed), Pending = peminjaman.Count(x => WorkflowStatuses.IsLegacyPending(x.status)) } },
+            { "request_barang", new ReportSummaryDto { Count = requestBarang.Count, TotalQty = requestBarang.Select(x => x.quantity ?? 0).Sum(), Approved = requestBarang.Count(x => x.status == WorkflowStatuses.Approved || x.status == WorkflowStatuses.Completed), Pending = requestBarang.Count(x => WorkflowStatuses.IsGiveawayApprovalPending(x.status)) } },
+            { "adjust_barang", new ReportSummaryDto { Count = adjustBarang.Count, TotalQty = adjustBarang.Select(x => x.quantity ?? 0).Sum(), Approved = adjustBarang.Count(x => x.status == WorkflowStatuses.Approved || x.status == WorkflowStatuses.Completed), Pending = adjustBarang.Count(x => WorkflowStatuses.IsLegacyPending(x.status)) } }
         };
     }
 
@@ -117,10 +118,10 @@ public class ReportService
         
         var summary = new ExecutiveSummaryDto();
         
-        summary.TotalBorrowed = await _context.Transactions.Where(t => t.type == "OUT" && t.request_type == "BORROW" && t.status == "APPROVED").SumAsync(t => (int?)t.quantity) ?? 0;
-        summary.TotalReturned = await _context.Transactions.Where(t => t.type == "OUT" && t.request_type == "BORROW" && t.status == "APPROVED").SumAsync(t => (int?)t.returned_quantity) ?? 0;
-        summary.TotalItemsOut = await _context.Transactions.Where(t => t.type == "OUT" && t.status == "APPROVED").SumAsync(t => (int?)t.quantity) ?? 0;
-        summary.PendingReturns = await _context.Transactions.Where(t => t.status == "APPROVED" && t.pending_return_quantity > 0).CountAsync();
+        summary.TotalBorrowed = await _context.Transactions.Where(t => t.type == "OUT" && t.request_type == "BORROW" && t.status == WorkflowStatuses.Approved).SumAsync(t => (int?)t.quantity) ?? 0;
+        summary.TotalReturned = await _context.Transactions.Where(t => t.type == "OUT" && t.request_type == "BORROW" && t.status == WorkflowStatuses.Approved).SumAsync(t => (int?)t.returned_quantity) ?? 0;
+        summary.TotalItemsOut = await _context.Transactions.Where(t => t.type == "OUT" && (t.status == WorkflowStatuses.Approved || t.status == WorkflowStatuses.Completed)).SumAsync(t => (int?)t.quantity) ?? 0;
+        summary.PendingReturns = await _context.Transactions.Where(t => t.status == WorkflowStatuses.Approved && t.pending_return_quantity > 0).CountAsync();
         summary.MasihDipinjam = summary.TotalBorrowed - summary.TotalReturned;
         
         var recentTransactions = await _context.Transactions
@@ -137,13 +138,13 @@ public class ReportService
         var startOfElevenMonthsAgo = new DateTime(elevenMonthsAgo.Year, elevenMonthsAgo.Month, 1);
 
         var peminjamanDataRaw = await _context.Transactions
-            .Where(t => t.type == "OUT" && t.request_type == "BORROW" && t.status == "APPROVED" && t.created_at >= startOfElevenMonthsAgo)
+            .Where(t => t.type == "OUT" && t.request_type == "BORROW" && t.status == WorkflowStatuses.Approved && t.created_at >= startOfElevenMonthsAgo)
             .GroupBy(t => new { t.created_at.Year, t.created_at.Month })
             .Select(g => new { g.Key.Year, g.Key.Month, Total = g.Sum(x => x.quantity) })
             .ToListAsync();
 
         var barangKeluarDataRaw = await _context.Transactions
-            .Where(t => t.type == "OUT" && t.status == "APPROVED" && t.created_at >= startOfElevenMonthsAgo)
+            .Where(t => t.type == "OUT" && (t.status == WorkflowStatuses.Approved || t.status == WorkflowStatuses.Completed) && t.created_at >= startOfElevenMonthsAgo)
             .GroupBy(t => new { t.created_at.Year, t.created_at.Month })
             .Select(g => new { g.Key.Year, g.Key.Month, Total = g.Sum(x => x.quantity) })
             .ToListAsync();

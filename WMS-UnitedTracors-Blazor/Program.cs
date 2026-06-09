@@ -216,7 +216,9 @@ if (app.Environment.IsDevelopment() ||
                 ('20260527063537_AddProductDescriptionAndVariants', '9.0.0'),
                 ('20260604021546_AddTransactionsTable', '9.0.0'),
                 ('20260605013419_AddHandoverFields', '9.0.0'),
-                ('20260608062936_UpdateDatabase', '9.0.0');
+                ('20260608062936_UpdateDatabase', '9.0.0'),
+                ('20260608081019_AddAdminRoles', '9.0.0'),
+                ('20260609063238_FixTransactionStatusColumn', '9.0.0');
             ");
         }
         catch (Exception) {}

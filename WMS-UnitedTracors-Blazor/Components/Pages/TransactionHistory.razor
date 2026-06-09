@@ -302,11 +302,11 @@
                                                         }
                                                     </td>
                                                     <td class="p-4">
-                                                        @if (item.status == "PENDING" || item.status == "PENDING_MANAGER") {
-                                                            <span class="inline-flex items-center px-2.5 py-1 rounded text-[10px] font-bold bg-[#fef3c7] text-[#92400e] border border-[#fde68a] uppercase">WAITING ADMIN</span>
-                                                        } else if (item.status == "APPROVED") {
-                                                            <span class="inline-flex items-center px-2.5 py-1 rounded text-[10px] font-bold bg-[#eef9f0] text-[#1a7a30] border border-[#b8e8c0] uppercase">APPROVED</span>
-                                                        } else if (item.status == "REVISION") {
+                                                        @if (item.status == "PENDING" || item.status == "PENDING_STAFF_INVENTORY" || item.status == "PENDING_ADMIN" || item.status == "PENDING_MANAGER") {
+                                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-[#fef3c7] text-[#92400e] border border-[#fde68a]">WAITING</span>
+                                                        } else if (item.status == "APPROVED" || item.status == "COMPLETED") {
+                                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-[#eef9f0] text-[#1a7a30] border border-[#b8e8c0]">APPROVED</span>
+                                                        } else if (item.status == "REVISION" || item.status == "REVISION_BY_STAFF_INVENTORY" || item.status == "REVISION_BY_ADMIN" || item.status == "REVISION_BY_MANAGER") {
                                                             <div class="flex flex-col gap-2">
                                                                 <span class="w-max inline-flex items-center px-2.5 py-1 rounded text-[10px] font-bold bg-[#e0f2fe] text-[#1a6b8a] border border-[#bae6fd] uppercase">REVISION</span>
                                                                 <button @onclick="() => OpenRevisionModal(item)" class="text-[10px] font-bold bg-[#e8a000] text-[#1a1a1a] px-2 py-1 rounded shadow-sm hover:bg-[#d49300]">Revise Now</button>

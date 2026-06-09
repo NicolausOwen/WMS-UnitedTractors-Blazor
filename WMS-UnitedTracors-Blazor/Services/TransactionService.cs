@@ -4,6 +4,7 @@ using System.Text;
 using UT_WMSDotnet.Data;
 using UT_WMSDotnet.Models;
 using UT_WMSDotnet.ViewModels;
+using WMS_UnitedTracors_Blazor.Helpers;
 
 namespace WMS_UnitedTracors_Blazor.Services;
 
@@ -58,7 +59,7 @@ public class TransactionService
         if (model.type == "OUT")
         {
             if (string.IsNullOrEmpty(model.event_name) || !model.event_date.HasValue || 
-                string.IsNullOrEmpty(model.applicant_name) || !model.division_id.HasValue)
+                string.IsNullOrEmpty(model.applicant_name) || !model.division_id.HasValue || model.division_id.Value <= 0)
             {
                 return "Detail event, pemohon, dan divisi wajib diisi untuk transaksi OUT.";
             }
@@ -158,7 +159,9 @@ public class TransactionService
                     type = model.type,
                     request_type = model.type == "OUT" ? reqType : "BORROW",
                     quantity = item.quantity,
-                    status = "PENDING",
+                    status = model.type == "OUT" && reqType == "GIVEAWAY"
+                        ? WorkflowStatuses.PendingStaffInventory
+                        : WorkflowStatuses.Pending,
                     requester_id = currentUserId,
                     notes = model.notes,
                     applicant_name = model.applicant_name,
@@ -201,7 +204,14 @@ public class TransactionService
             .Include(t => t.Requester)
             .Include(t => t.Approver)
             .Include(t => t.Division)
-            .Where(t => t.status == "REJECTED" || t.status == "APPROVED")
+            .Where(t =>
+                t.status == WorkflowStatuses.Rejected ||
+                t.status == WorkflowStatuses.Approved ||
+                t.status == WorkflowStatuses.Completed ||
+                t.status == WorkflowStatuses.Revision ||
+                t.status == WorkflowStatuses.RevisionByStaffInventory ||
+                t.status == WorkflowStatuses.RevisionByAdmin ||
+                t.status == WorkflowStatuses.RevisionByManager)
             .AsQueryable();
 
         if (userRole == "staff")
@@ -422,7 +432,9 @@ public class TransactionService
     public async Task<string?> ConfirmHandoverAsync(
         List<int> transactionIds,
         Microsoft.AspNetCore.Components.Forms.IBrowserFile? photo,
-        string? notes)
+        string? notes,
+        string? recipientName = null,
+        DateTime? handoverTimestamp = null)
     {
         if (transactionIds == null || !transactionIds.Any())
             return "Tidak ada item yang menunggu serah terima.";
@@ -433,7 +445,9 @@ public class TransactionService
 
         // Hanya item yang masih menunggu bukti (draft) yang bisa diunggah/diganti.
         var pending = transactions
-            .Where(t => t.request_type == "BORROW" && t.status == "WAITING_HANDOVER")
+            .Where(t =>
+                t.status == WorkflowStatuses.WaitingHandover &&
+                (t.request_type == "BORROW" || t.request_type == "GIVEAWAY"))
             .ToList();
 
         if (!pending.Any())
@@ -465,10 +479,10 @@ public class TransactionService
 
         foreach (var item in pending)
         {
-            // Disimpan sebagai DRAFT: status tetap WAITING_HANDOVER sampai user klik Submit.
-            // Bisa diunggah ulang berkali-kali sebelum benar-benar disubmit ke admin.
             item.handover_photo = photoPath;
             item.handover_notes = notes;
+            item.handover_recipient_name = string.IsNullOrWhiteSpace(recipientName) ? (item.applicant_name ?? item.Requester?.name) : recipientName;
+            item.handover_timestamp = handoverTimestamp ?? DateTime.Now;
             item.rejection_reason = null; // bersihkan alasan penolakan sebelumnya (jika re-upload)
             item.updated_at = DateTime.UtcNow;
             _context.Transactions.Update(item);
@@ -478,14 +492,14 @@ public class TransactionService
         return null;
     }
 
-    /// <summary>Submit draft serah terima ke admin: WAITING_HANDOVER (dengan foto) -> WAITING_ADMIN_HANDOVER.</summary>
     public async Task<string?> SubmitHandoverAsync(List<int> transactionIds)
     {
         if (transactionIds == null || !transactionIds.Any())
             return "Tidak ada item serah terima.";
 
         var pending = await _context.Transactions
-            .Where(t => transactionIds.Contains(t.id) && t.request_type == "BORROW" && t.status == "WAITING_HANDOVER")
+            .Include(t => t.Product)
+            .Where(t => transactionIds.Contains(t.id) && t.status == WorkflowStatuses.WaitingHandover)
             .ToListAsync();
 
         if (!pending.Any())
@@ -494,9 +508,101 @@ public class TransactionService
         if (pending.Any(t => string.IsNullOrEmpty(t.handover_photo)))
             return "Unggah bukti serah terima terlebih dahulu sebelum submit.";
 
-        foreach (var item in pending)
+        var strategy = _context.Database.CreateExecutionStrategy();
+        return await strategy.ExecuteAsync(async () =>
         {
-            item.status = "WAITING_ADMIN_HANDOVER"; // dikirim ke admin untuk verifikasi
+            using var dbTransaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                foreach (var item in pending)
+                {
+                    if (item.request_type == "BORROW")
+                    {
+                        item.status = WorkflowStatuses.WaitingAdminHandover;
+                    }
+                    else if (item.request_type == "GIVEAWAY")
+                    {
+                        if (item.Product == null) return "Produk giveaway tidak ditemukan.";
+                        if (item.Product.current_stock < (item.quantity ?? 0))
+                            return $"Stok tidak mencukupi untuk produk {item.Product.name}.";
+
+                        var stockBefore = item.Product.current_stock;
+                        item.Product.current_stock -= item.quantity ?? 0;
+                        _context.Products.Update(item.Product);
+
+                        _context.StockLogs.Add(new StockLog
+                        {
+                            transaction_id = item.id,
+                            product_id = item.Product.id,
+                            stock_before = stockBefore,
+                            stock_after = item.Product.current_stock,
+                            created_at = DateTime.UtcNow,
+                            updated_at = DateTime.UtcNow
+                        });
+
+                        item.status = WorkflowStatuses.WaitingDocumentation;
+                    }
+
+                    item.updated_at = DateTime.UtcNow;
+                    _context.Transactions.Update(item);
+                }
+
+                await _context.SaveChangesAsync();
+                await dbTransaction.CommitAsync();
+                return (string?)null;
+            }
+            catch (Exception ex)
+            {
+                await dbTransaction.RollbackAsync();
+                return "Gagal submit serah terima: " + ex.Message;
+            }
+        });
+    }
+
+    public async Task<string?> SubmitGiveawayDocumentationAsync(
+        List<int> transactionIds,
+        Microsoft.AspNetCore.Components.Forms.IBrowserFile? photo,
+        string? notes)
+    {
+        if (transactionIds == null || !transactionIds.Any())
+            return "Tidak ada item dokumentasi.";
+
+        var transactions = await _context.Transactions
+            .Where(t => transactionIds.Contains(t.id) && t.request_type == "GIVEAWAY" &&
+                        (t.status == WorkflowStatuses.WaitingDocumentation || t.status == WorkflowStatuses.DocumentationOverdue))
+            .ToListAsync();
+
+        if (!transactions.Any())
+            return "Tidak ada giveaway yang menunggu dokumentasi.";
+
+        if (photo == null)
+            return "Foto dokumentasi wajib diunggah.";
+
+        var uploadError = ValidateUploadFile(photo);
+        if (uploadError != null) return uploadError;
+
+        string photoPath;
+        try
+        {
+            var uploads = Path.Combine(_env.WebRootPath, "storage", "documentation");
+            if (!Directory.Exists(uploads)) Directory.CreateDirectory(uploads);
+            var fileName = Guid.NewGuid().ToString() + Path.GetExtension(photo.Name);
+            var filePath = Path.Combine(uploads, fileName);
+            using var fileStream = new FileStream(filePath, FileMode.Create);
+            await photo.OpenReadStream(MaxUploadBytes).CopyToAsync(fileStream);
+            photoPath = "storage/documentation/" + fileName;
+        }
+        catch (Exception ex)
+        {
+            return "Gagal mengunggah dokumentasi: " + ex.Message;
+        }
+
+        foreach (var item in transactions)
+        {
+            item.documentation_photo = photoPath;
+            item.documentation_notes = notes;
+            item.documentation_uploaded_at = DateTime.UtcNow;
+            item.status = WorkflowStatuses.Completed;
             item.updated_at = DateTime.UtcNow;
             _context.Transactions.Update(item);
         }
@@ -545,7 +651,7 @@ public class TransactionService
     public async Task<string?> SubmitReturnBatchAsync(string groupId)
     {
         var transactions = await _context.Transactions
-            .Where(t => t.status == "APPROVED" && t.type == "OUT" && t.request_type == "BORROW" &&
+            .Where(t => t.status == WorkflowStatuses.Approved && t.type == "OUT" && t.request_type == "BORROW" &&
                         t.pending_return_quantity > 0 && t.is_return_draft == 1)
             .ToListAsync();
 
@@ -569,7 +675,7 @@ public class TransactionService
     public async Task<string?> UpdateRevisionAsync(int id, TransactionRequestViewModel model)
     {
         var transaction = await _context.Transactions.Include(t => t.Product).Include(t => t.Requester).FirstOrDefaultAsync(t => t.id == id);
-        if (transaction == null || transaction.status != "REVISION") return "Request is not in revision state.";
+        if (transaction == null || !WorkflowStatuses.IsRevision(transaction.status)) return "Request is not in revision state.";
 
         int newQty = model.quantity ?? transaction.quantity ?? 0;
         string newRequestType = model.request_type ?? transaction.request_type ?? "BORROW";
@@ -605,8 +711,10 @@ public class TransactionService
         transaction.division_id = model.division_id ?? transaction.division_id;
         transaction.documentation_link = model.documentation_link;
         transaction.notes = model.notes;
-        transaction.status = "PENDING";
+        transaction.status = GetResubmittedStatus(transaction);
         transaction.updated_at = DateTime.UtcNow;
+        transaction.rejection_reason = null;
+        transaction.last_revision_stage = null;
 
         if (newRequestType == "BORROW")
         {
@@ -628,7 +736,7 @@ public class TransactionService
     public async Task<string?> CancelRevisionAsync(int id)
     {
         var transaction = await _context.Transactions.Include(t => t.Product).Include(t => t.Requester).FirstOrDefaultAsync(t => t.id == id);
-        if (transaction == null || transaction.status != "REVISION") return "Request is not in revision state.";
+        if (transaction == null || !WorkflowStatuses.IsRevision(transaction.status)) return "Request is not in revision state.";
 
         var product = transaction.Product;
         var requester = transaction.Requester;
@@ -643,7 +751,7 @@ public class TransactionService
             }
         }
 
-        transaction.status = "REJECTED";
+        transaction.status = WorkflowStatuses.Rejected;
         transaction.rejection_reason = "Cancelled by requester";
         transaction.updated_at = DateTime.UtcNow;
 
@@ -658,6 +766,45 @@ public class TransactionService
         using var md5 = MD5.Create();
         var hashBytes = md5.ComputeHash(Encoding.UTF8.GetBytes(raw));
         return BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
+    }
+
+    public async Task<int> MarkGiveawayDocumentationOverdueAsync()
+    {
+        var now = DateTime.Today;
+        var transactions = await _context.Transactions
+            .Where(t =>
+                t.request_type == "GIVEAWAY" &&
+                t.status == WorkflowStatuses.WaitingDocumentation &&
+                t.event_date.HasValue &&
+                t.event_date.Value.Date.AddDays(3) < now)
+            .ToListAsync();
+
+        if (!transactions.Any()) return 0;
+
+        foreach (var item in transactions)
+        {
+            item.status = WorkflowStatuses.DocumentationOverdue;
+            item.updated_at = DateTime.UtcNow;
+        }
+
+        await _context.SaveChangesAsync();
+        return transactions.Count;
+    }
+
+    private static string GetResubmittedStatus(Transaction transaction)
+    {
+        if (transaction.request_type == "GIVEAWAY")
+        {
+            return transaction.last_revision_stage switch
+            {
+                "STAFF_INVENTORY" => WorkflowStatuses.PendingStaffInventory,
+                "ADMIN" => WorkflowStatuses.PendingAdmin,
+                "MANAGER" => WorkflowStatuses.PendingManager,
+                _ => WorkflowStatuses.PendingStaffInventory
+            };
+        }
+
+        return WorkflowStatuses.Pending;
     }
 
     public async Task<string?> DeleteTransactionAsync(int id)

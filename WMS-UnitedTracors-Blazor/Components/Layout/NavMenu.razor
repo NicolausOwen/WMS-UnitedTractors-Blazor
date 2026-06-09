@@ -45,10 +45,13 @@
                 <span class="ut-link-text">Tracking</span>
             </NavLink>
 
-            <NavLink href="Approval" class="ut-nav-link flex items-center gap-2.5 px-4 py-2.5 text-[#8a8780] hover:text-white hover:bg-[#222222] hover:border-l-[rgba(232,160,0,0.4)] no-underline text-[0.8rem] font-medium border-l-[2.5px] border-l-transparent relative whitespace-nowrap cursor-pointer" activeClass="active text-[#e8a000] bg-[rgba(232,160,0,0.08)] border-l-[#e8a000] font-semibold" data-label="Approvals">
-                <svg class="w-[17px] h-[17px] stroke-current fill-none stroke-[1.8] stroke-linecap-round stroke-linejoin-round flex-shrink-0" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
-                <span class="ut-link-text">Approvals</span>
-            </NavLink>
+            @if (navRole == "superadmin" || navRole == "manager" || navRole == "admin")
+            {
+                <NavLink href="Approval" class="ut-nav-link flex items-center gap-2.5 px-4 py-2.5 text-[#8a8780] hover:text-white hover:bg-[#222222] hover:border-l-[rgba(232,160,0,0.4)] no-underline text-[0.8rem] font-medium border-l-[2.5px] border-l-transparent relative whitespace-nowrap cursor-pointer" activeClass="active text-[#e8a000] bg-[rgba(232,160,0,0.08)] border-l-[#e8a000] font-semibold" data-label="Approvals">
+                    <svg class="w-[17px] h-[17px] stroke-current fill-none stroke-[1.8] stroke-linecap-round stroke-linejoin-round flex-shrink-0" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+                    <span class="ut-link-text">Approvals</span>
+                </NavLink>
+            }
 
             <NavLink href="TransactionHistory" class="ut-nav-link flex items-center gap-2.5 px-4 py-2.5 text-[#8a8780] hover:text-white hover:bg-[#222222] hover:border-l-[rgba(232,160,0,0.4)] no-underline text-[0.8rem] font-medium border-l-[2.5px] border-l-transparent relative whitespace-nowrap cursor-pointer" activeClass="active text-[#e8a000] bg-[rgba(232,160,0,0.08)] border-l-[#e8a000] font-semibold" data-label="History">
                 <svg class="w-[17px] h-[17px] stroke-current fill-none stroke-[1.8] stroke-linecap-round stroke-linejoin-round flex-shrink-0" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>

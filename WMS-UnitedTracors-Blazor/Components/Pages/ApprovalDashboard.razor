@@ -397,11 +397,19 @@
                             <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left w-full">
                                 <h3 class="text-base font-semibold leading-6 text-gray-900" id="modal-title">@(IsRejectingReturn ? "Tolak Pengembalian" : "Reject Request")</h3>
                                     <div class="mt-2">
-                                        <p class="text-sm text-gray-500 mb-4">@(IsRejectingReturn ? "Berikan alasan penolakan pengembalian ini. Barang akan dikembalikan ke status pinjam untuk diajukan ulang." : "Please provide a reason for rejecting this request. This will be recorded and visible to the requester.")</p>
+                                        <p class="text-sm text-gray-500 mb-4">@(IsRejectingReturn ? "Berikan alasan penolakan pengembalian ini. Barang akan dikembalikan ke status pinjam untuk diajukan ulang." : "Masukkan catatan untuk reject atau revisi. Catatan ini akan terlihat oleh pemohon.")</p>
                                         <textarea @bind="RejectReason" @bind:event="oninput" @onkeypress="() => RejectionError = false" class="w-full rounded-md border shadow-sm sm:text-sm @(RejectionError ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:border-red-500 focus:ring-red-500")" rows="3" placeholder="Enter rejection reason here..."></textarea>
                                         @if (RejectionError)
                                         {
                                             <p class="mt-1 text-xs text-red-600">A reason is required to reject this request.</p>
+                                        }
+                                        @if (!IsRejectingReturn && RejectItemId > 0)
+                                        {
+                                            <div class="mt-4">
+                                                <label class="block text-xs font-semibold text-gray-700 mb-1">Qty revisi opsional</label>
+                                                <input type="number" min="1" @bind="RejectRevisedQuantity" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-amber-500 focus:ring-amber-500" />
+                                                <p class="mt-1 text-[11px] text-gray-500">Isi jika ingin mengusulkan jumlah baru untuk item ini.</p>
+                                            </div>
                                         }
                                     </div>
                             </div>
@@ -630,10 +638,7 @@
                                             }
                                         </td>
                                         <td class="p-4">
-                                            @if (item.status == "PENDING" || item.status == "PENDING_MANAGER")
-                                            {
-                                                <span class="inline-flex items-center px-2 py-0.5 border border-[#fde68a] rounded-md text-[0.65rem] font-bold bg-[#fef3c7] text-[#92400e] uppercase tracking-wider">WAITING ADMIN</span>
-                                            }
+                                            <span class="@GetApprovalStatusClass(item.status)">@GetApprovalStatusLabel(item.status)</span>
                                         </td>
                                         @if (UserRole == "manager" || UserRole == "admin" || UserRole == "superadmin")
                                         {
@@ -690,6 +695,7 @@
     
     private Dictionary<int, string> Decisions = new();
     private Dictionary<int, string> Reasons = new();
+    private Dictionary<int, int?> RevisedQuantities = new();
     private Dictionary<int, string> ReturnDecisions = new();
     private Dictionary<int, string> ReturnReasons = new();
 
@@ -745,6 +751,7 @@
     private bool ShowRejectModal = false;
     private int RejectItemId = 0;
     private string RejectReason = "";
+    private int? RejectRevisedQuantity;
     private bool IsRejectingReturn = false;
     private bool RejectionError = false;
 
@@ -753,6 +760,9 @@
         RejectItemId = id;
         IsRejectingReturn = isReturn;
         RejectReason = "";
+        RejectRevisedQuantity = GroupedApprovals?
+            .SelectMany(g => g.Value)
+            .FirstOrDefault(t => t.id == id)?.quantity;
         RejectionError = false;
         ShowRejectModal = true;
     }
@@ -762,6 +772,7 @@
         ShowRejectModal = false;
         RejectItemId = 0;
         IsRejectingReturn = false;
+        RejectRevisedQuantity = null;
         RejectionError = false;
     }
 
@@ -807,6 +818,10 @@
         {
             Decisions[RejectItemId] = decision;
             Reasons[RejectItemId] = RejectReason;
+            if (decision == "REVISE")
+            {
+                RevisedQuantities[RejectItemId] = RejectRevisedQuantity;
+            }
         }
         CloseRejectModal();
     }
@@ -845,6 +860,7 @@
         {
             if (Decisions.ContainsKey(id)) Decisions.Remove(id);
             if (Reasons.ContainsKey(id)) Reasons.Remove(id);
+            if (RevisedQuantities.ContainsKey(id)) RevisedQuantities.Remove(id);
         }
     }
 
@@ -1017,7 +1033,7 @@
                 string? err = null;
                 if (action == "APPROVE") err = await ApprovalService.ApproveAsync(id, reason, CurrentUserId, UserRole);
                 else if (action == "REJECT") err = await ApprovalService.RejectAsync(id, reason, CurrentUserId, UserRole);
-                else if (action == "REVISE") err = await ApprovalService.RequestRevisionAsync(id, reason, CurrentUserId, UserRole);
+                else if (action == "REVISE") err = await ApprovalService.RequestRevisionAsync(id, reason, CurrentUserId, UserRole, RevisedQuantities.GetValueOrDefault(id));
 
                 if (err != null) ErrorMessage += $"Item {id}: {err} | ";
                 else successCount++;
@@ -1171,4 +1187,17 @@
             IsProcessing = false;
         }
     }
+
+    private static string GetApprovalStatusLabel(string? status) =>
+        status switch
+        {
+            "PENDING_STAFF_INVENTORY" => "WAITING STAFF INVENTORY",
+            "PENDING_ADMIN" => "WAITING ADMIN",
+            "PENDING_MANAGER" => "WAITING MANAGER",
+            "PENDING" => "WAITING ADMIN",
+            _ => status ?? "-"
+        };
+
+    private static string GetApprovalStatusClass(string? status) =>
+        "inline-flex items-center px-2 py-0.5 border border-[#fde68a] rounded-md text-[0.65rem] font-bold bg-[#fef3c7] text-[#92400e] uppercase tracking-wider";
 }
