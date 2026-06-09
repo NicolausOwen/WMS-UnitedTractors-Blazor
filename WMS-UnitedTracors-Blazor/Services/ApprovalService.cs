@@ -32,7 +32,7 @@ public class ApprovalService
             isGlobalAdmin = userRole == "superadmin" || userAdminRoles.Any(uar => uar.CategoryId == null);
             if (!isGlobalAdmin)
             {
-                allowedCategoryIds = userAdminRoles.Where(uar => uar.CategoryId != null).Select(uar => uar.CategoryId.Value).ToList();
+                allowedCategoryIds = userAdminRoles.Where(uar => uar.CategoryId != null).Select(uar => uar.CategoryId!.Value).ToList();
             }
         }
 

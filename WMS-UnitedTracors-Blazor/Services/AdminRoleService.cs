@@ -99,15 +99,15 @@ public class AdminRoleService
         return await _context.UserAdminRoles
             .Where(uar => uar.AdminRoleId == roleId)
             .Include(uar => uar.User)
-            .ThenInclude(u => u.Division)
+            .ThenInclude(u => u!.Division)
             .Include(uar => uar.Category)
             .Select(uar => new UserAssignmentDto
             {
-                Id = uar.User.id,
-                Name = uar.User.name,
-                Email = uar.User.email,
-                Nrp = uar.User.nrp,
-                DivisionName = uar.User.Division != null ? uar.User.Division.name : null,
+                Id = uar.User!.id,
+                Name = uar.User!.name,
+                Email = uar.User!.email,
+                Nrp = uar.User!.nrp,
+                DivisionName = uar.User!.Division != null ? uar.User.Division.name : null,
                 CategoryId = uar.CategoryId,
                 CategoryName = uar.Category != null ? uar.Category.name : null
             })

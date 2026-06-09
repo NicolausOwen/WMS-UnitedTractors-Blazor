@@ -167,7 +167,7 @@ public class ReportService
         {
             var query = _context.Transactions
                 .Include(t => t.Product)
-                .ThenInclude(p => p.Unit)
+                .ThenInclude(p => p!.Unit)
                 .Include(t => t.Approver)
                 .Include(t => t.Requester)
                 .Include(t => t.Division)

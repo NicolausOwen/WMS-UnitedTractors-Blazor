@@ -213,28 +213,41 @@
                                 </div>
                             </div>
 
-                            @* Product Image *@
+                            @* Product Images *@
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1.5">Product Image</label>
-                                <div class="flex items-center gap-3">
-                                @if (product != null && !string.IsNullOrEmpty(product.image) && !Model.remove_image)
-                                {
-                                    <div class="relative w-20 h-20 rounded-lg border border-gray-200 overflow-hidden bg-gray-50 shrink-0">
-                                        <img src="@ImageHelper.Resolve(product.image)" class="w-full h-full object-cover" alt="@product.name">
-                                        <button type="button" @onclick="() => Model.remove_image = true" class="absolute top-0.5 right-0.5 w-5 h-5 bg-gray-900/70 text-white rounded-full flex items-center justify-center text-xs hover:bg-gray-900 transition">
-                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                                        </button>
-                                    </div>
-                                }
-                                    @if (imagePreviewUrl != null)
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">Product Images</label>
+                                <div class="space-y-4">
+                                    @if (existingImages.Any())
                                     {
-                                        <div class="w-20 h-20 rounded-lg border border-gray-200 overflow-hidden bg-gray-50 shrink-0">
-                                            <img src="@imagePreviewUrl" class="w-full h-full object-cover" alt="Preview">
+                                        <div class="flex flex-wrap gap-3">
+                                            @foreach (var img in existingImages)
+                                            {
+                                                <div class="relative w-20 h-20 rounded-lg border border-gray-200 overflow-hidden bg-gray-50 shrink-0">
+                                                    <img src="@ImageHelper.Resolve(img)" class="w-full h-full object-cover" alt="Product Image">
+                                                    <button type="button" @onclick="() => RemoveExistingImage(img)" class="absolute top-0.5 right-0.5 w-5 h-5 bg-gray-900/70 text-white rounded-full flex items-center justify-center text-xs hover:bg-gray-900 transition">
+                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                                    </button>
+                                                </div>
+                                            }
                                         </div>
                                     }
-                                    <div class="flex-1">
-                                        <InputFile OnChange="HandleImageSelected" accept="image/jpg,image/jpeg,image/png,image/webp" class="block w-full text-sm text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 transition cursor-pointer" />
-                                        <p class="text-xs text-gray-400 mt-1">Upload main product image here. JPG, PNG or WebP. Max 2MB.</p>
+
+                                    <div class="flex items-center gap-3">
+                                        @if (imagePreviews.Any())
+                                        {
+                                            <div class="flex flex-wrap gap-2">
+                                                @foreach (var prev in imagePreviews)
+                                                {
+                                                    <div class="w-20 h-20 rounded-lg border border-gray-200 overflow-hidden bg-gray-50 shrink-0">
+                                                        <img src="@prev" class="w-full h-full object-cover" alt="New Preview">
+                                                    </div>
+                                                }
+                                            </div>
+                                        }
+                                        <div class="flex-1">
+                                            <InputFile OnChange="HandleImageSelected" multiple accept="image/jpg,image/jpeg,image/png,image/webp" class="block w-full text-sm text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 transition cursor-pointer" />
+                                            <p class="text-xs text-gray-400 mt-1">Upload one or multiple new product images. JPG, PNG or WebP. Max 10MB each.</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -351,8 +364,9 @@
     private bool IsLoading = true;
     private bool ProductNotFound = false;
 
-    private Microsoft.AspNetCore.Components.Forms.IBrowserFile? selectedImage;
-    private string? imagePreviewUrl;
+    private IReadOnlyList<Microsoft.AspNetCore.Components.Forms.IBrowserFile>? selectedImages;
+    private List<string> imagePreviews = new();
+    private List<string> existingImages = new();
     private Microsoft.AspNetCore.Components.Forms.IBrowserFile? selectedPositionImage;
     private string? positionPreviewUrl;
 
@@ -415,6 +429,16 @@
                 stock = v.stock,
                 existing_image = v.image
             }).ToList() ?? new List<ProductVariantViewModel>();
+            
+            if (!string.IsNullOrEmpty(product.images))
+            {
+                try { existingImages = System.Text.Json.JsonSerializer.Deserialize<List<string>>(product.images) ?? new List<string>(); }
+                catch { existingImages = new List<string>(); }
+            }
+            else if (!string.IsNullOrEmpty(product.image))
+            {
+                existingImages.Add(product.image);
+            }
         }
         
         IsLoading = false;
@@ -459,18 +483,22 @@
         ErrorMessage = null;
         StateHasChanged();
 
-        if (selectedImage != null)
+        if (selectedImages != null && selectedImages.Any())
         {
-            var format = "image/jpeg";
-            var compressedImage = await selectedImage.RequestImageFileAsync(format, 1024, 1024);
-            var ms = new System.IO.MemoryStream();
-            await compressedImage.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024).CopyToAsync(ms);
-            ms.Position = 0;
-            Model.image = new Microsoft.AspNetCore.Http.FormFile(ms, 0, compressedImage.Size, "image", selectedImage.Name)
+            Model.new_images.Clear();
+            foreach (var imgFile in selectedImages)
             {
-                Headers = new Microsoft.AspNetCore.Http.HeaderDictionary(),
-                ContentType = format
-            };
+                var format = "image/jpeg";
+                var compressedImage = await imgFile.RequestImageFileAsync(format, 1024, 1024);
+                var ms = new System.IO.MemoryStream();
+                await compressedImage.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024).CopyToAsync(ms);
+                ms.Position = 0;
+                Model.new_images.Add(new Microsoft.AspNetCore.Http.FormFile(ms, 0, compressedImage.Size, "new_images", imgFile.Name)
+                {
+                    Headers = new Microsoft.AspNetCore.Http.HeaderDictionary(),
+                    ContentType = format
+                });
+            }
         }
 
         if (selectedPositionImage != null)
@@ -504,12 +532,22 @@
 
     private async Task HandleImageSelected(Microsoft.AspNetCore.Components.Forms.InputFileChangeEventArgs e)
     {
-        selectedImage = e.File;
-        var format = "image/jpeg";
-        var resizedImageFile = await e.File.RequestImageFileAsync(format, 400, 400);
-        using var ms = new System.IO.MemoryStream();
-        await resizedImageFile.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024).CopyToAsync(ms);
-        imagePreviewUrl = $"data:{format};base64,{Convert.ToBase64String(ms.ToArray())}";
+        selectedImages = e.GetMultipleFiles(10);
+        imagePreviews.Clear();
+        foreach (var file in selectedImages)
+        {
+            var format = "image/jpeg";
+            var resizedImageFile = await file.RequestImageFileAsync(format, 400, 400);
+            using var ms = new System.IO.MemoryStream();
+            await resizedImageFile.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024).CopyToAsync(ms);
+            imagePreviews.Add($"data:{format};base64,{Convert.ToBase64String(ms.ToArray())}");
+        }
+    }
+
+    private void RemoveExistingImage(string imagePath)
+    {
+        existingImages.Remove(imagePath);
+        Model.removed_images.Add(imagePath);
     }
 
     private async Task HandlePositionImageSelected(Microsoft.AspNetCore.Components.Forms.InputFileChangeEventArgs e)

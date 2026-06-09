@@ -168,11 +168,22 @@
                     </div>
                 </div>
 
-                @* Product Image *@
+                @* Product Images *@
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Product Image</label>
-                    <InputFile OnChange="HandleImageSelected" accept="image/jpg,image/jpeg,image/png,image/webp" class="block w-full text-sm text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 transition cursor-pointer" />
-                    <p class="text-xs text-gray-400 mt-1">Upload main product image here. JPG, PNG or WebP. Max 2MB.</p>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Product Images</label>
+                    <InputFile OnChange="HandleImageSelected" multiple accept="image/jpg,image/jpeg,image/png,image/webp" class="block w-full text-sm text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 transition cursor-pointer" />
+                    <p class="text-xs text-gray-400 mt-1">Upload one or multiple product images. JPG, PNG or WebP. Max 10MB each.</p>
+                    @if (imagePreviews.Any())
+                    {
+                        <div class="mt-3 flex flex-wrap gap-2">
+                            @foreach (var prev in imagePreviews)
+                            {
+                                <div class="w-16 h-16 rounded border border-gray-200 overflow-hidden">
+                                    <img src="@prev" class="w-full h-full object-cover" />
+                                </div>
+                            }
+                        </div>
+                    }
                 </div>
 
                 @* Stock Info *@
@@ -271,7 +282,8 @@
     private string? ErrorMessage;
     private bool IsSubmitting;
 
-    private Microsoft.AspNetCore.Components.Forms.IBrowserFile? selectedImage;
+    private IReadOnlyList<Microsoft.AspNetCore.Components.Forms.IBrowserFile>? selectedImages;
+    private List<string> imagePreviews = new();
     private Microsoft.AspNetCore.Components.Forms.IBrowserFile? selectedPositionImage;
 
     protected override async Task OnInitializedAsync()
@@ -306,9 +318,18 @@
         }
     }
 
-    private void HandleImageSelected(Microsoft.AspNetCore.Components.Forms.InputFileChangeEventArgs e)
+    private async Task HandleImageSelected(Microsoft.AspNetCore.Components.Forms.InputFileChangeEventArgs e)
     {
-        selectedImage = e.File;
+        selectedImages = e.GetMultipleFiles(10);
+        imagePreviews.Clear();
+        foreach (var file in selectedImages)
+        {
+            var format = "image/png";
+            var resizedImageFile = await file.RequestImageFileAsync(format, 100, 100);
+            var buffer = new byte[resizedImageFile.Size];
+            await resizedImageFile.OpenReadStream().ReadAsync(buffer);
+            imagePreviews.Add($"data:{format};base64,{Convert.ToBase64String(buffer)}");
+        }
     }
 
     private void HandlePositionImageSelected(Microsoft.AspNetCore.Components.Forms.InputFileChangeEventArgs e)
@@ -350,18 +371,22 @@
         ErrorMessage = null;
         StateHasChanged();
 
-        if (selectedImage != null)
+        if (selectedImages != null && selectedImages.Any())
         {
-            var format = "image/jpeg";
-            var compressedImage = await selectedImage.RequestImageFileAsync(format, 1024, 1024);
-            var ms = new System.IO.MemoryStream();
-            await compressedImage.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024).CopyToAsync(ms);
-            ms.Position = 0;
-            Model.image = new Microsoft.AspNetCore.Http.FormFile(ms, 0, compressedImage.Size, "image", selectedImage.Name)
+            Model.images.Clear();
+            foreach (var imgFile in selectedImages)
             {
-                Headers = new Microsoft.AspNetCore.Http.HeaderDictionary(),
-                ContentType = format
-            };
+                var format = "image/jpeg";
+                var compressedImage = await imgFile.RequestImageFileAsync(format, 1024, 1024);
+                var ms = new System.IO.MemoryStream();
+                await compressedImage.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024).CopyToAsync(ms);
+                ms.Position = 0;
+                Model.images.Add(new Microsoft.AspNetCore.Http.FormFile(ms, 0, compressedImage.Size, "images", imgFile.Name)
+                {
+                    Headers = new Microsoft.AspNetCore.Http.HeaderDictionary(),
+                    ContentType = format
+                });
+            }
         }
 
         if (selectedPositionImage != null)

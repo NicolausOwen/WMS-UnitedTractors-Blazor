@@ -38,6 +38,9 @@ public class ProductUpdateViewModel
     public IFormFile? image { get; set; }
     public bool remove_image { get; set; }
 
+    public List<IFormFile> new_images { get; set; } = new();
+    public List<string> removed_images { get; set; } = new();
+
     public IFormFile? position_image { get; set; }
     public bool remove_position_image { get; set; }
 

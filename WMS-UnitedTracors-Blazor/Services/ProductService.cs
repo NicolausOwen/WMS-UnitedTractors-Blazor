@@ -72,19 +72,40 @@ public class ProductService
             await _context.SaveChangesAsync();
         }
 
-        string? imagePath = null;
-        if (model.image != null && model.image.Length > 0)
+        var imagePaths = new List<string>();
+        if (model.images != null && model.images.Count > 0)
         {
-            var fileName = Guid.NewGuid().ToString() + Path.GetExtension(model.image.FileName);
-            var path = Path.Combine(_env.WebRootPath, "images", "products");
-            if (!Directory.Exists(path)) Directory.CreateDirectory(path);
+            var dirPath = Path.Combine(_env.WebRootPath, "images", "products");
+            if (!Directory.Exists(dirPath)) Directory.CreateDirectory(dirPath);
 
-            using (var stream = new FileStream(Path.Combine(path, fileName), FileMode.Create))
+            foreach (var imgFile in model.images)
+            {
+                if (imgFile.Length > 0)
+                {
+                    var fileName = Guid.NewGuid().ToString() + Path.GetExtension(imgFile.FileName);
+                    var filePath = Path.Combine(dirPath, fileName);
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await imgFile.CopyToAsync(stream);
+                    }
+                    imagePaths.Add("/images/products/" + fileName);
+                }
+            }
+        }
+        else if (model.image != null && model.image.Length > 0)
+        {
+            var dirPath = Path.Combine(_env.WebRootPath, "images", "products");
+            if (!Directory.Exists(dirPath)) Directory.CreateDirectory(dirPath);
+            var fileName = Guid.NewGuid().ToString() + Path.GetExtension(model.image.FileName);
+            using (var stream = new FileStream(Path.Combine(dirPath, fileName), FileMode.Create))
             {
                 await model.image.CopyToAsync(stream);
             }
-            imagePath = "images/products/" + fileName;
+            imagePaths.Add("/images/products/" + fileName);
         }
+
+        string? primaryImage = imagePaths.FirstOrDefault();
+        string? imagesJson = imagePaths.Count > 0 ? System.Text.Json.JsonSerializer.Serialize(imagePaths) : null;
 
         string? positionImagePath = null;
         if (model.position_image != null && model.position_image.Length > 0)
@@ -113,7 +134,8 @@ public class ProductService
             current_stock = model.initial_stock ?? 0,
             description = model.description,
             transaction_type = string.IsNullOrWhiteSpace(model.transaction_type) ? null : model.transaction_type,
-            image = imagePath,
+            image = primaryImage,
+            images = imagesJson,
             position_image = positionImagePath,
             created_at = DateTime.UtcNow,
             updated_at = DateTime.UtcNow
@@ -194,33 +216,50 @@ public class ProductService
             await _context.SaveChangesAsync();
         }
 
-        if (model.remove_image)
+        List<string> currentImages = new List<string>();
+        if (!string.IsNullOrEmpty(product.images))
         {
-            if (!string.IsNullOrEmpty(product.image))
-            {
-                var path = Path.Combine(_env.WebRootPath, product.image);
-                if (System.IO.File.Exists(path)) System.IO.File.Delete(path);
-            }
-            product.image = null;
+            try { currentImages = System.Text.Json.JsonSerializer.Deserialize<List<string>>(product.images) ?? new List<string>(); }
+            catch { /* ignore */ }
         }
-        else if (model.image != null && model.image.Length > 0)
+        else if (!string.IsNullOrEmpty(product.image))
         {
-            if (!string.IsNullOrEmpty(product.image))
-            {
-                var path = Path.Combine(_env.WebRootPath, product.image);
-                if (System.IO.File.Exists(path)) System.IO.File.Delete(path);
-            }
+            currentImages.Add(product.image);
+        }
 
-            var fileName = Guid.NewGuid().ToString() + Path.GetExtension(model.image.FileName);
+        if (model.removed_images != null && model.removed_images.Count > 0)
+        {
+            foreach (var remPath in model.removed_images)
+            {
+                var cleanPath = remPath.TrimStart('/');
+                var pPath = Path.Combine(_env.WebRootPath, cleanPath);
+                if (System.IO.File.Exists(pPath)) System.IO.File.Delete(pPath);
+                currentImages.Remove(remPath);
+            }
+        }
+
+        if (model.new_images != null && model.new_images.Count > 0)
+        {
             var dirPath = Path.Combine(_env.WebRootPath, "images", "products");
             if (!Directory.Exists(dirPath)) Directory.CreateDirectory(dirPath);
 
-            using (var stream = new FileStream(Path.Combine(dirPath, fileName), FileMode.Create))
+            foreach (var imgFile in model.new_images)
             {
-                await model.image.CopyToAsync(stream);
+                if (imgFile.Length > 0)
+                {
+                    var fileName = Guid.NewGuid().ToString() + Path.GetExtension(imgFile.FileName);
+                    var filePath = Path.Combine(dirPath, fileName);
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await imgFile.CopyToAsync(stream);
+                    }
+                    currentImages.Add("/images/products/" + fileName);
+                }
             }
-            product.image = "images/products/" + fileName;
         }
+
+        product.images = currentImages.Count > 0 ? System.Text.Json.JsonSerializer.Serialize(currentImages) : null;
+        product.image = currentImages.FirstOrDefault();
 
         if (model.remove_position_image)
         {
@@ -268,7 +307,7 @@ public class ProductService
 
         // Update Variants
         var existingVariants = product.ProductVariants.ToList();
-        var incomingVariantIds = model.variants.Where(v => v.id.HasValue).Select(v => v.id.Value).ToList();
+        var incomingVariantIds = model.variants.Where(v => v.id.HasValue).Select(v => v.id!.Value).ToList();
 
         // 1. Delete variants not in the incoming list
         var variantsToDelete = existingVariants.Where(v => !incomingVariantIds.Contains(v.id)).ToList();
