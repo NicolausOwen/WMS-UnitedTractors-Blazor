@@ -461,25 +461,29 @@
 
         if (selectedImage != null)
         {
+            var format = "image/jpeg";
+            var compressedImage = await selectedImage.RequestImageFileAsync(format, 1024, 1024);
             var ms = new System.IO.MemoryStream();
-            await selectedImage.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024).CopyToAsync(ms);
+            await compressedImage.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024).CopyToAsync(ms);
             ms.Position = 0;
-            Model.image = new Microsoft.AspNetCore.Http.FormFile(ms, 0, selectedImage.Size, "image", selectedImage.Name)
+            Model.image = new Microsoft.AspNetCore.Http.FormFile(ms, 0, compressedImage.Size, "image", selectedImage.Name)
             {
                 Headers = new Microsoft.AspNetCore.Http.HeaderDictionary(),
-                ContentType = selectedImage.ContentType
+                ContentType = format
             };
         }
 
         if (selectedPositionImage != null)
         {
+            var format = "image/jpeg";
+            var compressedImage = await selectedPositionImage.RequestImageFileAsync(format, 1024, 1024);
             var ms = new System.IO.MemoryStream();
-            await selectedPositionImage.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024).CopyToAsync(ms);
+            await compressedImage.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024).CopyToAsync(ms);
             ms.Position = 0;
-            Model.position_image = new Microsoft.AspNetCore.Http.FormFile(ms, 0, selectedPositionImage.Size, "position_image", selectedPositionImage.Name)
+            Model.position_image = new Microsoft.AspNetCore.Http.FormFile(ms, 0, compressedImage.Size, "position_image", selectedPositionImage.Name)
             {
                 Headers = new Microsoft.AspNetCore.Http.HeaderDictionary(),
-                ContentType = selectedPositionImage.ContentType
+                ContentType = format
             };
         }
 
@@ -501,21 +505,21 @@
     private async Task HandleImageSelected(Microsoft.AspNetCore.Components.Forms.InputFileChangeEventArgs e)
     {
         selectedImage = e.File;
-        var format = "image/png";
+        var format = "image/jpeg";
         var resizedImageFile = await e.File.RequestImageFileAsync(format, 400, 400);
-        var buffer = new byte[resizedImageFile.Size];
-        await resizedImageFile.OpenReadStream().ReadAsync(buffer);
-        imagePreviewUrl = $"data:{format};base64,{Convert.ToBase64String(buffer)}";
+        using var ms = new System.IO.MemoryStream();
+        await resizedImageFile.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024).CopyToAsync(ms);
+        imagePreviewUrl = $"data:{format};base64,{Convert.ToBase64String(ms.ToArray())}";
     }
 
     private async Task HandlePositionImageSelected(Microsoft.AspNetCore.Components.Forms.InputFileChangeEventArgs e)
     {
         selectedPositionImage = e.File;
-        var format = "image/png";
+        var format = "image/jpeg";
         var resizedImageFile = await e.File.RequestImageFileAsync(format, 400, 400);
-        var buffer = new byte[resizedImageFile.Size];
-        await resizedImageFile.OpenReadStream().ReadAsync(buffer);
-        positionPreviewUrl = $"data:{format};base64,{Convert.ToBase64String(buffer)}";
+        using var ms = new System.IO.MemoryStream();
+        await resizedImageFile.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024).CopyToAsync(ms);
+        positionPreviewUrl = $"data:{format};base64,{Convert.ToBase64String(ms.ToArray())}";
     }
 
     private void AddVariant()
@@ -530,12 +534,14 @@
 
     private async Task HandleVariantImageSelected(Microsoft.AspNetCore.Components.Forms.InputFileChangeEventArgs e, ProductVariantViewModel variant)
     {
-        variant.image = e.File;
-        var format = "image/png";
-        var resizedImageFile = await e.File.RequestImageFileAsync(format, 100, 100);
-        var buffer = new byte[resizedImageFile.Size];
-        await resizedImageFile.OpenReadStream().ReadAsync(buffer);
-        variant.image_preview_url = $"data:{format};base64,{Convert.ToBase64String(buffer)}";
+        var format = "image/jpeg";
+        var resizedForUpload = await e.File.RequestImageFileAsync(format, 1024, 1024);
+        variant.image = resizedForUpload;
+        
+        var resizedForPreview = await e.File.RequestImageFileAsync(format, 100, 100);
+        using var ms = new System.IO.MemoryStream();
+        await resizedForPreview.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024).CopyToAsync(ms);
+        variant.image_preview_url = $"data:{format};base64,{Convert.ToBase64String(ms.ToArray())}";
     }
 
     private void NavigateBack()
