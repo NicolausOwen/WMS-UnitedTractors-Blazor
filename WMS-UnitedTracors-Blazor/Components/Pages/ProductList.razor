@@ -125,18 +125,14 @@
                                 <tr class="hover:bg-gray-50/50 transition">
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="flex items-center gap-3">
-                                            @if (!string.IsNullOrEmpty(product.image) || !string.IsNullOrEmpty(product.images))
+                                            @{
+                                                var allImages = GetProductImages(product);
+                                                var firstImg = allImages.FirstOrDefault();
+                                            }
+                                            @if (!string.IsNullOrEmpty(firstImg))
                                             {
-                                                List<string> allImages = new List<string>();
-                                                if (!string.IsNullOrEmpty(product.images)) {
-                                                    try { allImages = System.Text.Json.JsonSerializer.Deserialize<List<string>>(product.images) ?? new List<string>(); } catch {}
-                                                }
-                                                if (!allImages.Any() && !string.IsNullOrEmpty(product.image)) {
-                                                    allImages.Add(product.image);
-                                                }
-                                                var firstImg = ImageHelper.Resolve(product.image ?? allImages.FirstOrDefault());
-                                                <div class="shrink-0 cursor-pointer" @onclick="() => OpenImageModal(firstImg, product.name, allImages)">
-                                                    <img src="@firstImg" alt="@product.name" class="w-12 h-12 rounded-lg object-cover border border-gray-100 hover:ring-2 ring-gray-900 transition">
+                                                <div class="shrink-0 cursor-pointer" @onclick="() => OpenImageModal(ImageHelper.Resolve(firstImg), product.name, allImages)">
+                                                    <img src="@ImageHelper.Resolve(firstImg)" alt="@product.name" class="w-12 h-12 rounded-lg object-cover border border-gray-100 hover:ring-2 ring-gray-900 transition">
                                                 </div>
                                             }
                                             else
@@ -274,18 +270,14 @@
                         <div class="p-4 flex flex-col gap-3 hover:bg-gray-50/50 transition">
                             <div class="flex items-start justify-between gap-3">
                                 <div class="flex items-center gap-3 min-w-0">
-                                    @if (!string.IsNullOrEmpty(product.image) || !string.IsNullOrEmpty(product.images))
+                                    @{
+                                        var allImages = GetProductImages(product);
+                                        var firstImg = allImages.FirstOrDefault();
+                                    }
+                                    @if (!string.IsNullOrEmpty(firstImg))
                                     {
-                                        List<string> allImages = new List<string>();
-                                        if (!string.IsNullOrEmpty(product.images)) {
-                                            try { allImages = System.Text.Json.JsonSerializer.Deserialize<List<string>>(product.images) ?? new List<string>(); } catch {}
-                                        }
-                                        if (!allImages.Any() && !string.IsNullOrEmpty(product.image)) {
-                                            allImages.Add(product.image);
-                                        }
-                                        var firstImg = ImageHelper.Resolve(product.image ?? allImages.FirstOrDefault());
-                                        <div class="shrink-0 cursor-pointer" @onclick="() => OpenImageModal(firstImg, product.name, allImages)">
-                                            <img src="@firstImg" alt="@product.name" class="w-12 h-12 rounded-lg object-cover border border-gray-100 hover:ring-2 ring-gray-900 transition">
+                                        <div class="shrink-0 cursor-pointer" @onclick="() => OpenImageModal(ImageHelper.Resolve(firstImg), product.name, allImages)">
+                                            <img src="@ImageHelper.Resolve(firstImg)" alt="@product.name" class="w-12 h-12 rounded-lg object-cover border border-gray-100 hover:ring-2 ring-gray-900 transition">
                                         </div>
                                     }
                                     else
@@ -463,9 +455,45 @@
         ModalAdditionalImages.Clear();
     }
 
+    private Dictionary<string, string> _barcodeCache = new();
+    private Dictionary<int, List<string>> _productImagesCache = new();
+
+    private List<string> GetProductImages(Product product)
+    {
+        if (_productImagesCache.TryGetValue(product.id, out var cachedImages))
+        {
+            return cachedImages;
+        }
+
+        List<string> allImages = new List<string>();
+        if (!string.IsNullOrEmpty(product.images))
+        {
+            try
+            {
+                allImages = System.Text.Json.JsonSerializer.Deserialize<List<string>>(product.images) ?? new List<string>();
+            }
+            catch { }
+        }
+        
+        if (!allImages.Any() && !string.IsNullOrEmpty(product.image))
+        {
+            allImages.Add(product.image);
+        }
+
+        _productImagesCache[product.id] = allImages;
+        return allImages;
+    }
+
     private string GetBarcodeImage(string? sku, string? type)
     {
         if (string.IsNullOrEmpty(sku)) return string.Empty;
+        
+        string cacheKey = $"{sku}_{type}";
+        if (_barcodeCache.TryGetValue(cacheKey, out var cachedImage))
+        {
+            return cachedImage;
+        }
+
         try
         {
             var barcodeType = NetBarcode.Type.Code128;
@@ -473,14 +501,18 @@
             else if (type == "TYPE_EAN_13") barcodeType = NetBarcode.Type.EAN13;
             
             var barcode = new NetBarcode.Barcode(sku, barcodeType);
-            return $"data:image/png;base64,{barcode.GetBase64Image()}";
+            string base64Image = $"data:image/png;base64,{barcode.GetBase64Image()}";
+            _barcodeCache[cacheKey] = base64Image;
+            return base64Image;
         }
         catch
         {
             try 
             {
                 var barcode = new NetBarcode.Barcode(sku, NetBarcode.Type.Code128);
-                return $"data:image/png;base64,{barcode.GetBase64Image()}";
+                string base64Image = $"data:image/png;base64,{barcode.GetBase64Image()}";
+                _barcodeCache[cacheKey] = base64Image;
+                return base64Image;
             } 
             catch 
             {
