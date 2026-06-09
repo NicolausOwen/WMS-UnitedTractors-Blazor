@@ -29,6 +29,8 @@ public class ProductCreateViewModel
     public int? location_id { get; set; }
 
     public IFormFile? image { get; set; }
+    
+    public List<IFormFile> images { get; set; } = new();
 
     public IFormFile? position_image { get; set; }
 

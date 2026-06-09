@@ -183,7 +183,7 @@ else
     protected override async Task OnInitializedAsync()
     {
         var targetTx = await DbContext.Transactions
-            .Include(t => t.Product).ThenInclude(p => p.Unit)
+            .Include(t => t.Product).ThenInclude(p => p!.Unit)
             .Include(t => t.Requester)
             .Include(t => t.Approver)
             .Include(t => t.Division)
@@ -196,7 +196,7 @@ else
             var endRange = startRange.AddMinutes(1);
 
             Items = await DbContext.Transactions
-                .Include(t => t.Product).ThenInclude(p => p.Unit)
+                .Include(t => t.Product).ThenInclude(p => p!.Unit)
                 .Where(t => t.requester_id == targetTx.requester_id &&
                             t.applicant_name == targetTx.applicant_name &&
                             t.created_at >= startRange && t.created_at < endRange)

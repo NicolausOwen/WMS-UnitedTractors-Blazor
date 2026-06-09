@@ -26,8 +26,8 @@ public class TrackingService
         string? userRole)
     {
         var query = _context.Transactions
-            .Include(t => t.Product).ThenInclude(p => p.Category)
-            .Include(t => t.Product).ThenInclude(p => p.Unit)
+            .Include(t => t.Product).ThenInclude(p => p!.Category)
+            .Include(t => t.Product).ThenInclude(p => p!.Unit)
             .Include(t => t.ProductVariant)
             .Include(t => t.Requester)
             .Include(t => t.Approver)
@@ -70,7 +70,7 @@ public class TrackingService
             bool isGlobalAdmin = userRole == "superadmin" || userAdminRoles.Any(uar => uar.CategoryId == null);
             if (!isGlobalAdmin)
             {
-                var allowedCategoryIds = userAdminRoles.Where(uar => uar.CategoryId != null).Select(uar => uar.CategoryId.Value).ToList();
+                var allowedCategoryIds = userAdminRoles.Where(uar => uar.CategoryId != null).Select(uar => uar.CategoryId!.Value).ToList();
                 query = query.Where(t => t.Product != null && t.Product.category_id != null && allowedCategoryIds.Contains(t.Product.category_id.Value));
             }
         }

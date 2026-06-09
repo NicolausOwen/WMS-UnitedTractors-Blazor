@@ -834,7 +834,7 @@ public class TransactionService
     {
         var allTransactions = await _context.Transactions
             .Include(t => t.Product)
-            .ThenInclude(p => p.Unit)
+            .ThenInclude(p => p!.Unit)
             .Include(t => t.Requester)
             .Include(t => t.Approver)
             .Include(t => t.Division)

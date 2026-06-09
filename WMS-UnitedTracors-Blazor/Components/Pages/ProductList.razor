@@ -7,6 +7,7 @@
 @inject AuthenticationStateProvider AuthStateProvider
 @inject IJSRuntime JSRuntime
 @rendermode InteractiveServer
+@implements IDisposable
 
 <PageTitle>Products</PageTitle>
 
@@ -70,7 +71,7 @@
                         <p class="text-sm text-gray-500 mt-0.5">Manage your warehouse inventory</p>
                     </div>
                     <div class="relative w-full sm:w-64">
-                        <input type="text" @bind="SearchQuery" @bind:event="oninput" @onkeyup="HandleSearch" placeholder="Search products or SKU..." 
+                        <input type="text" value="@SearchQuery" @oninput="OnSearchInput" placeholder="Search products or SKU..." 
                             class="w-full pl-9 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-gray-900 focus:border-gray-900 transition placeholder:text-gray-400">
                         <svg class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                     </div>
@@ -124,10 +125,14 @@
                                 <tr class="hover:bg-gray-50/50 transition">
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="flex items-center gap-3">
-                                            @if (!string.IsNullOrEmpty(product.image))
+                                            @{
+                                                var allImages = GetProductImages(product);
+                                                var firstImg = allImages.FirstOrDefault();
+                                            }
+                                            @if (!string.IsNullOrEmpty(firstImg))
                                             {
-                                                <div class="shrink-0 cursor-pointer" @onclick="() => OpenImageModal(ImageHelper.Resolve(product.image), product.name)">
-                                                    <img src="@ImageHelper.Resolve(product.image)" alt="@product.name" class="w-12 h-12 rounded-lg object-cover border border-gray-100 hover:ring-2 ring-gray-900 transition">
+                                                <div class="shrink-0 cursor-pointer" @onclick="() => OpenImageModal(ImageHelper.Resolve(firstImg), product.name, allImages)">
+                                                    <img src="@ImageHelper.Resolve(firstImg)" alt="@product.name" class="w-12 h-12 rounded-lg object-cover border border-gray-100 hover:ring-2 ring-gray-900 transition">
                                                 </div>
                                             }
                                             else
@@ -265,10 +270,14 @@
                         <div class="p-4 flex flex-col gap-3 hover:bg-gray-50/50 transition">
                             <div class="flex items-start justify-between gap-3">
                                 <div class="flex items-center gap-3 min-w-0">
-                                    @if (!string.IsNullOrEmpty(product.image))
+                                    @{
+                                        var allImages = GetProductImages(product);
+                                        var firstImg = allImages.FirstOrDefault();
+                                    }
+                                    @if (!string.IsNullOrEmpty(firstImg))
                                     {
-                                        <div class="shrink-0 cursor-pointer" @onclick="() => OpenImageModal(ImageHelper.Resolve(product.image), product.name)">
-                                            <img src="@ImageHelper.Resolve(product.image)" alt="@product.name" class="w-12 h-12 rounded-lg object-cover border border-gray-100 hover:ring-2 ring-gray-900 transition">
+                                        <div class="shrink-0 cursor-pointer" @onclick="() => OpenImageModal(ImageHelper.Resolve(firstImg), product.name, allImages)">
+                                            <img src="@ImageHelper.Resolve(firstImg)" alt="@product.name" class="w-12 h-12 rounded-lg object-cover border border-gray-100 hover:ring-2 ring-gray-900 transition">
                                         </div>
                                     }
                                     else
@@ -383,8 +392,21 @@
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
-            <div class="flex-1 overflow-auto flex items-center justify-center p-4 bg-gray-50/50 rounded-b-lg min-h-[300px]">
-                <img src="@ModalImageUrl" alt="@ModalImageTitle" class="max-w-full max-h-[70vh] object-contain rounded-lg shadow-sm">
+            <div class="flex-1 overflow-auto flex flex-col items-center justify-center p-4 bg-gray-50/50 rounded-b-lg min-h-[300px]">
+                <img src="@ModalImageUrl" alt="@ModalImageTitle" class="max-w-full max-h-[70vh] object-contain rounded-lg shadow-sm transition-all">
+                @if (ModalAdditionalImages.Count > 1)
+                {
+                    <div class="mt-4 flex gap-2 overflow-x-auto max-w-full pb-2 px-2">
+                        @foreach (var img in ModalAdditionalImages)
+                        {
+                            var resolvedImg = img.StartsWith("data:") ? img : ImageHelper.Resolve(img);
+                            <div class="w-16 h-16 shrink-0 cursor-pointer rounded-lg border-2 overflow-hidden transition-all @(ModalImageUrl == resolvedImg ? "border-[#e8a000] opacity-100" : "border-transparent opacity-60 hover:opacity-100")"
+                                 @onclick="() => ModalImageUrl = resolvedImg">
+                                <img src="@resolvedImg" class="w-full h-full object-cover" />
+                            </div>
+                        }
+                    </div>
+                }
             </div>
         </div>
     </div>
@@ -409,10 +431,19 @@
     private string? ModalImageUrl;
     private string? ModalImageTitle;
 
-    private void OpenImageModal(string imageUrl, string title)
+    private List<string> ModalAdditionalImages = new();
+
+    private void OpenImageModal(string imageUrl, string title, List<string>? additionalImages = null)
     {
         ModalImageUrl = imageUrl;
         ModalImageTitle = title;
+        ModalAdditionalImages = additionalImages ?? new List<string>();
+        if (!ModalAdditionalImages.Contains(imageUrl) && !string.IsNullOrEmpty(imageUrl) && !imageUrl.StartsWith("data:"))
+        {
+            // Note: We avoid inserting data: URIs to the additional list to prevent huge base64 strings in loop, 
+            // but if it's a normal URL we ensure the main image is in the carousel.
+            ModalAdditionalImages.Insert(0, imageUrl);
+        }
         ShowImageModal = true;
     }
 
@@ -421,11 +452,48 @@
         ShowImageModal = false;
         ModalImageUrl = null;
         ModalImageTitle = null;
+        ModalAdditionalImages.Clear();
+    }
+
+    private Dictionary<string, string> _barcodeCache = new();
+    private Dictionary<int, List<string>> _productImagesCache = new();
+
+    private List<string> GetProductImages(Product product)
+    {
+        if (_productImagesCache.TryGetValue(product.id, out var cachedImages))
+        {
+            return cachedImages;
+        }
+
+        List<string> allImages = new List<string>();
+        if (!string.IsNullOrEmpty(product.images))
+        {
+            try
+            {
+                allImages = System.Text.Json.JsonSerializer.Deserialize<List<string>>(product.images) ?? new List<string>();
+            }
+            catch { }
+        }
+        
+        if (!allImages.Any() && !string.IsNullOrEmpty(product.image))
+        {
+            allImages.Add(product.image);
+        }
+
+        _productImagesCache[product.id] = allImages;
+        return allImages;
     }
 
     private string GetBarcodeImage(string? sku, string? type)
     {
         if (string.IsNullOrEmpty(sku)) return string.Empty;
+        
+        string cacheKey = $"{sku}_{type}";
+        if (_barcodeCache.TryGetValue(cacheKey, out var cachedImage))
+        {
+            return cachedImage;
+        }
+
         try
         {
             var barcodeType = NetBarcode.Type.Code128;
@@ -433,14 +501,18 @@
             else if (type == "TYPE_EAN_13") barcodeType = NetBarcode.Type.EAN13;
             
             var barcode = new NetBarcode.Barcode(sku, barcodeType);
-            return $"data:image/png;base64,{barcode.GetBase64Image()}";
+            string base64Image = $"data:image/png;base64,{barcode.GetBase64Image()}";
+            _barcodeCache[cacheKey] = base64Image;
+            return base64Image;
         }
         catch
         {
             try 
             {
                 var barcode = new NetBarcode.Barcode(sku, NetBarcode.Type.Code128);
-                return $"data:image/png;base64,{barcode.GetBase64Image()}";
+                string base64Image = $"data:image/png;base64,{barcode.GetBase64Image()}";
+                _barcodeCache[cacheKey] = base64Image;
+                return base64Image;
             } 
             catch 
             {
@@ -453,8 +525,21 @@
     [SupplyParameterFromQuery(Name = "success")]
     public string? SuccessParam { get; set; }
 
+    private System.Timers.Timer? _searchTimer;
+
     protected override async Task OnInitializedAsync()
     {
+        _searchTimer = new System.Timers.Timer(400);
+        _searchTimer.Elapsed += async (s, e) =>
+        {
+            await InvokeAsync(async () =>
+            {
+                await LoadProducts(1);
+                StateHasChanged();
+            });
+        };
+        _searchTimer.AutoReset = false;
+
         if (SuccessParam == "created")
         {
             SuccessMessage = "Product added successfully.";
@@ -475,13 +560,32 @@
         await LoadProducts(1);
     }
 
+    private bool _isFetching = false;
+    private bool _needsFetch = false;
+
     private async Task LoadProducts(int page)
     {
         CurrentPage = page;
-        var result = await ProductService.GetProductsAsync(SelectedCategoryId, SearchQuery, CurrentPage, PageSize);
-        Products = result.Products;
-        TotalItems = result.TotalItems;
-        TotalPages = result.TotalPages;
+        _needsFetch = true;
+        
+        if (_isFetching) return;
+        _isFetching = true;
+
+        try
+        {
+            while (_needsFetch)
+            {
+                _needsFetch = false;
+                var result = await ProductService.GetProductsAsync(SelectedCategoryId, SearchQuery, CurrentPage, PageSize);
+                Products = result.Products;
+                TotalItems = result.TotalItems;
+                TotalPages = result.TotalPages;
+            }
+        }
+        finally
+        {
+            _isFetching = false;
+        }
     }
 
     private async Task FilterByCategory(int? categoryId)
@@ -499,12 +603,16 @@
         });
     }
 
-    private async Task HandleSearch(KeyboardEventArgs e)
+    private void OnSearchInput(ChangeEventArgs e)
     {
-        if (e.Key == "Enter")
-        {
-            await LoadProducts(1);
-        }
+        SearchQuery = e.Value?.ToString() ?? "";
+        _searchTimer?.Stop();
+        _searchTimer?.Start();
+    }
+
+    public void Dispose()
+    {
+        _searchTimer?.Dispose();
     }
 
     private async Task DeleteProduct(int id)
