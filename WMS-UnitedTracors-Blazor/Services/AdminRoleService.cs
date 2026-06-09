@@ -100,13 +100,16 @@ public class AdminRoleService
             .Where(uar => uar.AdminRoleId == roleId)
             .Include(uar => uar.User)
             .ThenInclude(u => u.Division)
+            .Include(uar => uar.Category)
             .Select(uar => new UserAssignmentDto
             {
                 Id = uar.User.id,
                 Name = uar.User.name,
                 Email = uar.User.email,
                 Nrp = uar.User.nrp,
-                DivisionName = uar.User.Division != null ? uar.User.Division.name : null
+                DivisionName = uar.User.Division != null ? uar.User.Division.name : null,
+                CategoryId = uar.CategoryId,
+                CategoryName = uar.Category != null ? uar.Category.name : null
             })
             .ToListAsync();
     }
@@ -194,29 +197,51 @@ public class AdminRoleService
         return null;
     }
 
-    public async Task<string?> AssignUserToRoleAsync(Guid roleId, int userId, string createdBy)
+    public async Task<string?> AssignUserToRoleAsync(Guid roleId, int userId, List<int>? categoryIds, string createdBy)
     {
-        var isAssigned = await _context.UserAdminRoles.AnyAsync(uar => uar.AdminRoleId == roleId && uar.UserId == userId);
-        if (isAssigned) return "User sudah terasosiasi dengan Role ini.";
-
-        var mapping = new UserAdminRole
+        if (categoryIds == null || !categoryIds.Any())
         {
-            Id = Guid.NewGuid(),
-            AdminRoleId = roleId,
-            UserId = userId,
-            CreatedAt = DateTime.UtcNow,
-            CreatedBy = createdBy
-        };
+            var isAssigned = await _context.UserAdminRoles.AnyAsync(uar => uar.AdminRoleId == roleId && uar.UserId == userId && uar.CategoryId == null);
+            if (isAssigned) return "User sudah terasosiasi dengan Akses Global di Role ini.";
 
-        _context.UserAdminRoles.Add(mapping);
+            _context.UserAdminRoles.Add(new UserAdminRole
+            {
+                Id = Guid.NewGuid(),
+                AdminRoleId = roleId,
+                UserId = userId,
+                CategoryId = null,
+                CreatedAt = DateTime.UtcNow,
+                CreatedBy = createdBy
+            });
+        }
+        else
+        {
+            foreach (var catId in categoryIds)
+            {
+                var isAssigned = await _context.UserAdminRoles.AnyAsync(uar => uar.AdminRoleId == roleId && uar.UserId == userId && uar.CategoryId == catId);
+                if (!isAssigned)
+                {
+                    _context.UserAdminRoles.Add(new UserAdminRole
+                    {
+                        Id = Guid.NewGuid(),
+                        AdminRoleId = roleId,
+                        UserId = userId,
+                        CategoryId = catId,
+                        CreatedAt = DateTime.UtcNow,
+                        CreatedBy = createdBy
+                    });
+                }
+            }
+        }
+
         await _context.SaveChangesAsync();
         return null;
     }
 
-    public async Task<string?> RemoveUserFromRoleAsync(Guid roleId, int userId)
+    public async Task<string?> RemoveUserFromRoleAsync(Guid roleId, int userId, int? categoryId)
     {
-        var mapping = await _context.UserAdminRoles.FirstOrDefaultAsync(uar => uar.AdminRoleId == roleId && uar.UserId == userId);
-        if (mapping == null) return "User tidak terasosiasi dengan Role ini.";
+        var mapping = await _context.UserAdminRoles.FirstOrDefaultAsync(uar => uar.AdminRoleId == roleId && uar.UserId == userId && uar.CategoryId == categoryId);
+        if (mapping == null) return "User tidak terasosiasi dengan Role dan Kategori ini.";
 
         _context.UserAdminRoles.Remove(mapping);
         await _context.SaveChangesAsync();

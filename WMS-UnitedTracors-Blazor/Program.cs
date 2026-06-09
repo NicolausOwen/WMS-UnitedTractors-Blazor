@@ -356,14 +356,14 @@ adminRolesGroup.MapDelete("/{id:guid}", async (Guid id, WMS_UnitedTracors_Blazor
 adminRolesGroup.MapPost("/{id:guid}/assign", async (Guid id, [Microsoft.AspNetCore.Mvc.FromBody] int userId, HttpContext context, WMS_UnitedTracors_Blazor.Services.AdminRoleService service) =>
 {
     var username = context.User.Identity?.Name ?? "System";
-    var error = await service.AssignUserToRoleAsync(id, userId, username);
+    var error = await service.AssignUserToRoleAsync(id, userId, null, username);
     if (error != null) return Results.BadRequest(error);
     return Results.Ok("User berhasil ditambahkan ke role.");
 });
 
 adminRolesGroup.MapDelete("/{id:guid}/assign/{userId:int}", async (Guid id, int userId, WMS_UnitedTracors_Blazor.Services.AdminRoleService service) =>
 {
-    var error = await service.RemoveUserFromRoleAsync(id, userId);
+    var error = await service.RemoveUserFromRoleAsync(id, userId, null);
     if (error != null) return Results.BadRequest(error);
     return Results.Ok("User berhasil dihapus dari role.");
 });

@@ -126,7 +126,7 @@
                                         <div class="flex items-center gap-3">
                                             @if (!string.IsNullOrEmpty(product.image))
                                             {
-                                                <div class="shrink-0">
+                                                <div class="shrink-0 cursor-pointer" @onclick="() => OpenImageModal(ImageHelper.Resolve(product.image), product.name)">
                                                     <img src="@ImageHelper.Resolve(product.image)" alt="@product.name" class="w-12 h-12 rounded-lg object-cover border border-gray-100 hover:ring-2 ring-gray-900 transition">
                                                 </div>
                                             }
@@ -142,11 +142,24 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="px-6 py-4">
-                                        <code class="text-xs font-medium text-gray-700 bg-gray-100 px-2 py-1 rounded">@product.sku</code>
-                                        <div class="mt-2 text-[10px] text-gray-400">
-                                            @product.barcode_type
-                                        </div>
+                                    <td class="px-3 py-2.5">
+                                        @{
+                                            var barcodeImg = GetBarcodeImage(product.sku, product.barcode_type);
+                                        }
+                                        @if (!string.IsNullOrEmpty(barcodeImg))
+                                        {
+                                            <div class="inline-block bg-white p-1 border border-gray-100 rounded cursor-pointer hover:ring-2 ring-gray-900 transition" @onclick="() => OpenImageModal(barcodeImg, product.sku)">
+                                                <img src="@barcodeImg" alt="@product.sku" class="h-8 object-contain" />
+                                            </div>
+                                            <div class="mt-1 text-[10px] text-gray-500 font-mono text-center max-w-[120px]">@product.sku</div>
+                                        }
+                                        else
+                                        {
+                                            <code class="text-xs font-medium text-gray-700 bg-gray-100 px-2 py-1 rounded">@product.sku</code>
+                                            <div class="mt-2 text-[10px] text-gray-400">
+                                                @product.barcode_type
+                                            </div>
+                                        }
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         @if (product.Category != null)
@@ -158,7 +171,7 @@
                                             <span class="text-xs text-gray-400">--</span>
                                         }
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
+                                    <td class="px-3 py-2.5 whitespace-nowrap">
                                         @if (product.Location != null)
                                         {
                                             <div class="text-xs text-gray-900 font-medium">@product.Location.name</div>
@@ -170,7 +183,7 @@
                                         @if (!string.IsNullOrEmpty(product.position_image))
                                         {
                                             <div class="mt-1.5 flex items-center gap-1.5">
-                                                <div class="block w-10 h-10 rounded border border-gray-200 overflow-hidden shrink-0 hover:ring-2 ring-gray-900 transition">
+                                                <div class="block w-10 h-10 rounded border border-gray-200 overflow-hidden shrink-0 hover:ring-2 ring-gray-900 transition cursor-pointer" @onclick='() => OpenImageModal(ImageHelper.Resolve(product.position_image), "Position View: " + (product.Location?.name ?? ""))'>
                                                     <img src="@ImageHelper.Resolve(product.position_image)" alt="Position" class="w-full h-full object-cover">
                                                 </div>
                                                 <span class="text-[10px] text-gray-400">Position View</span>
@@ -254,7 +267,9 @@
                                 <div class="flex items-center gap-3 min-w-0">
                                     @if (!string.IsNullOrEmpty(product.image))
                                     {
-                                        <img src="@ImageHelper.Resolve(product.image)" alt="@product.name" class="w-12 h-12 rounded-lg object-cover border border-gray-100 shrink-0">
+                                        <div class="shrink-0 cursor-pointer" @onclick="() => OpenImageModal(ImageHelper.Resolve(product.image), product.name)">
+                                            <img src="@ImageHelper.Resolve(product.image)" alt="@product.name" class="w-12 h-12 rounded-lg object-cover border border-gray-100 hover:ring-2 ring-gray-900 transition">
+                                        </div>
                                     }
                                     else
                                     {
@@ -277,7 +292,20 @@
                             <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs border-t border-b border-gray-100/70 py-2.5 bg-gray-50/50 px-3 rounded-lg text-left">
                                 <div>
                                     <span class="text-[10px] text-gray-400 font-semibold uppercase tracking-wider block mb-0.5">SKU / Barcode</span>
-                                    <code class="text-xs font-bold text-gray-700 bg-gray-200/60 px-1.5 py-0.5 rounded">@product.sku</code>
+                                    @{
+                                        var barcodeImgMob = GetBarcodeImage(product.sku, product.barcode_type);
+                                    }
+                                    @if (!string.IsNullOrEmpty(barcodeImgMob))
+                                    {
+                                        <div class="inline-block bg-white p-1 border border-gray-100 rounded cursor-pointer hover:ring-2 ring-gray-900 transition" @onclick="() => OpenImageModal(barcodeImgMob, product.sku)">
+                                            <img src="@barcodeImgMob" alt="@product.sku" class="h-6 object-contain" />
+                                        </div>
+                                        <div class="mt-0.5 text-[9px] text-gray-500 font-mono">@product.sku</div>
+                                    }
+                                    else
+                                    {
+                                        <code class="text-xs font-bold text-gray-700 bg-gray-200/60 px-1.5 py-0.5 rounded">@product.sku</code>
+                                    }
                                 </div>
                                 <div>
                                     <span class="text-[10px] text-gray-400 font-semibold uppercase tracking-wider block mb-0.5">Category</span>
@@ -345,6 +373,23 @@
     </div>
 </div>
 
+@if (ShowImageModal)
+{
+    <div class="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm transition-opacity duration-300" @onclick="CloseImageModal">
+        <div class="relative w-full max-w-4xl max-h-[90vh] bg-white rounded-xl shadow-2xl p-2 flex flex-col" @onclick:stopPropagation>
+            <div class="flex justify-between items-center px-4 py-2 border-b border-gray-100 mb-2 shrink-0">
+                <h3 class="font-bold text-gray-900 truncate pr-4">@ModalImageTitle</h3>
+                <button @onclick="CloseImageModal" class="text-gray-500 hover:text-gray-900 transition bg-gray-100 hover:bg-gray-200 rounded-lg p-1.5 shrink-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="flex-1 overflow-auto flex items-center justify-center p-4 bg-gray-50/50 rounded-b-lg min-h-[300px]">
+                <img src="@ModalImageUrl" alt="@ModalImageTitle" class="max-w-full max-h-[70vh] object-contain rounded-lg shadow-sm">
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     private List<Product>? Products;
     private List<CategoryDto>? Categories;
@@ -359,6 +404,50 @@
     private string? SuccessMessage;
     private string? ErrorMessage;
     private bool IsAdmin = false;
+
+    private bool ShowImageModal = false;
+    private string? ModalImageUrl;
+    private string? ModalImageTitle;
+
+    private void OpenImageModal(string imageUrl, string title)
+    {
+        ModalImageUrl = imageUrl;
+        ModalImageTitle = title;
+        ShowImageModal = true;
+    }
+
+    private void CloseImageModal()
+    {
+        ShowImageModal = false;
+        ModalImageUrl = null;
+        ModalImageTitle = null;
+    }
+
+    private string GetBarcodeImage(string? sku, string? type)
+    {
+        if (string.IsNullOrEmpty(sku)) return string.Empty;
+        try
+        {
+            var barcodeType = NetBarcode.Type.Code128;
+            if (type == "TYPE_CODE_39") barcodeType = NetBarcode.Type.Code39;
+            else if (type == "TYPE_EAN_13") barcodeType = NetBarcode.Type.EAN13;
+            
+            var barcode = new NetBarcode.Barcode(sku, barcodeType);
+            return $"data:image/png;base64,{barcode.GetBase64Image()}";
+        }
+        catch
+        {
+            try 
+            {
+                var barcode = new NetBarcode.Barcode(sku, NetBarcode.Type.Code128);
+                return $"data:image/png;base64,{barcode.GetBase64Image()}";
+            } 
+            catch 
+            {
+                return string.Empty;
+            }
+        }
+    }
 
     [Parameter]
     [SupplyParameterFromQuery(Name = "success")]

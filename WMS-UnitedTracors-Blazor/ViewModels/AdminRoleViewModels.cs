@@ -37,4 +37,6 @@ public class UserAssignmentDto
     public string? Nrp { get; set; }
     public string Email { get; set; } = string.Empty;
     public string? DivisionName { get; set; }
+    public int? CategoryId { get; set; }
+    public string? CategoryName { get; set; }
 }

@@ -412,3 +412,39 @@ UNLOCK TABLES;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
 -- Dump completed on 2026-06-05 11:05:49
+
+-- ----------------------------
+-- Table structure for admin_roles
+-- ----------------------------
+DROP TABLE IF EXISTS `admin_roles`;
+CREATE TABLE `admin_roles`  (
+  `Id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `RoleName` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `Description` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
+  `IsActive` tinyint(1) NOT NULL,
+  `CreatedAt` datetime(6) NOT NULL,
+  `CreatedBy` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
+  `UpdatedAt` datetime(6) NOT NULL,
+  `UpdatedBy` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
+  PRIMARY KEY (`Id`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Table structure for user_admin_roles
+-- ----------------------------
+DROP TABLE IF EXISTS `user_admin_roles`;
+CREATE TABLE `user_admin_roles`  (
+  `Id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `UserId` int NOT NULL,
+  `AdminRoleId` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `CategoryId` bigint unsigned DEFAULT NULL,
+  `CreatedAt` datetime(6) NOT NULL,
+  `CreatedBy` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
+  PRIMARY KEY (`Id`) USING BTREE,
+  INDEX `IX_user_admin_roles_AdminRoleId`(`AdminRoleId`) USING BTREE,
+  INDEX `IX_user_admin_roles_UserId`(`UserId`) USING BTREE,
+  INDEX `IX_user_admin_roles_CategoryId`(`CategoryId`) USING BTREE,
+  CONSTRAINT `FK_user_admin_roles_admin_roles_AdminRoleId` FOREIGN KEY (`AdminRoleId`) REFERENCES `admin_roles` (`Id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT `FK_user_admin_roles_users_UserId` FOREIGN KEY (`UserId`) REFERENCES `users` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT `FK_user_admin_roles_categories_CategoryId` FOREIGN KEY (`CategoryId`) REFERENCES `categories` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;

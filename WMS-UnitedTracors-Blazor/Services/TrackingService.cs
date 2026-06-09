@@ -46,6 +46,16 @@ public class TrackingService
         {
             query = query.Where(t => t.request_type == "GIVEAWAY");
         }
+        else if (userRole == "admin" || userRole == "superadmin")
+        {
+            var userAdminRoles = await _context.UserAdminRoles.Where(uar => uar.UserId == currentUserId).ToListAsync();
+            bool isGlobalAdmin = userRole == "superadmin" || userAdminRoles.Any(uar => uar.CategoryId == null);
+            if (!isGlobalAdmin)
+            {
+                var allowedCategoryIds = userAdminRoles.Where(uar => uar.CategoryId != null).Select(uar => uar.CategoryId.Value).ToList();
+                query = query.Where(t => t.Product != null && t.Product.category_id != null && allowedCategoryIds.Contains(t.Product.category_id.Value));
+            }
+        }
 
         if (divisionId.HasValue)
         {
