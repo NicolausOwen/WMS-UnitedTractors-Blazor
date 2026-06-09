@@ -23,6 +23,19 @@ public class ApprovalService
             .OrderByDescending(t => t.created_at)
             .AsQueryable();
 
+        List<int>? allowedCategoryIds = null;
+        bool isGlobalAdmin = true;
+
+        if (userRole == "admin" || userRole == "superadmin")
+        {
+            var userAdminRoles = await _context.UserAdminRoles.Where(uar => uar.UserId == currentUserId).ToListAsync();
+            isGlobalAdmin = userRole == "superadmin" || userAdminRoles.Any(uar => uar.CategoryId == null);
+            if (!isGlobalAdmin)
+            {
+                allowedCategoryIds = userAdminRoles.Where(uar => uar.CategoryId != null).Select(uar => uar.CategoryId.Value).ToList();
+            }
+        }
+
         if (userRole == "staff")
         {
             query = query.Where(t => t.requester_id == currentUserId);
@@ -34,6 +47,10 @@ public class ApprovalService
         else if (userRole == "admin" || userRole == "superadmin")
         {
             query = query.Where(t => t.status == "PENDING");
+            if (!isGlobalAdmin && allowedCategoryIds != null)
+            {
+                query = query.Where(t => t.Product != null && t.Product.category_id != null && allowedCategoryIds.Contains(t.Product.category_id.Value));
+            }
         }
 
         var transactions = await query.ToListAsync();
@@ -47,12 +64,19 @@ public class ApprovalService
 
         if (userRole == "admin" || userRole == "superadmin")
         {
-            pendingReturns = await _context.Transactions
+            var returnsQuery = _context.Transactions
                 .Include(t => t.Product)
                 .Include(t => t.Requester)
                 .Include(t => t.Division)
                 .Include(t => t.Approver)
-                .Where(t => t.status == "APPROVED" && t.pending_return_quantity > 0 && t.is_return_draft == 0)
+                .Where(t => t.status == "APPROVED" && t.pending_return_quantity > 0 && t.is_return_draft == 0);
+
+            if (!isGlobalAdmin && allowedCategoryIds != null)
+            {
+                returnsQuery = returnsQuery.Where(t => t.Product != null && t.Product.category_id != null && allowedCategoryIds.Contains(t.Product.category_id.Value));
+            }
+
+            pendingReturns = await returnsQuery
                 .OrderByDescending(t => t.updated_at)
                 .ToListAsync();
 
@@ -63,11 +87,18 @@ public class ApprovalService
                 .OrderByDescending(pr => pr.created_at)
                 .ToListAsync();
 
-            var handoversQuery = await _context.Transactions
+            var handoversQ = _context.Transactions
                 .Include(t => t.Product)
                 .Include(t => t.Requester)
                 .Include(t => t.Division)
-                .Where(t => t.status == "WAITING_ADMIN_HANDOVER" && t.type == "OUT" && (t.request_type == "GIVEAWAY" || t.request_type == "BORROW"))
+                .Where(t => t.status == "WAITING_ADMIN_HANDOVER" && t.type == "OUT" && (t.request_type == "GIVEAWAY" || t.request_type == "BORROW"));
+
+            if (!isGlobalAdmin && allowedCategoryIds != null)
+            {
+                handoversQ = handoversQ.Where(t => t.Product != null && t.Product.category_id != null && allowedCategoryIds.Contains(t.Product.category_id.Value));
+            }
+
+            var handoversQuery = await handoversQ
                 .OrderByDescending(t => t.updated_at)
                 .ToListAsync();
 

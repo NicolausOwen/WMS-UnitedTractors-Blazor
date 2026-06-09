@@ -43,4 +43,6 @@ public class User
     public DateTime created_at { get; set; } = DateTime.UtcNow;
 
     public DateTime updated_at { get; set; } = DateTime.UtcNow;
+
+    public virtual ICollection<UserAdminRole> UserAdminRoles { get; set; } = new List<UserAdminRole>();
 }

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using UT_WMSDotnet.Data;
 
@@ -11,9 +12,11 @@ using UT_WMSDotnet.Data;
 namespace ut_wms_asp.net.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260608081019_AddAdminRoles")]
+    partial class AddAdminRoles
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -593,9 +596,6 @@ namespace ut_wms_asp.net.Migrations
                     b.Property<Guid>("AdminRoleId")
                         .HasColumnType("char(36)");
 
-                    b.Property<int?>("CategoryId")
-                        .HasColumnType("int");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
@@ -609,8 +609,6 @@ namespace ut_wms_asp.net.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AdminRoleId");
-
-                    b.HasIndex("CategoryId");
 
                     b.HasIndex("UserId");
 
@@ -747,11 +745,6 @@ namespace ut_wms_asp.net.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("UT_WMSDotnet.Models.Category", "Category")
-                        .WithMany()
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("UT_WMSDotnet.Models.User", "User")
                         .WithMany("UserAdminRoles")
                         .HasForeignKey("UserId")
@@ -759,8 +752,6 @@ namespace ut_wms_asp.net.Migrations
                         .IsRequired();
 
                     b.Navigation("AdminRole");
-
-                    b.Navigation("Category");
 
                     b.Navigation("User");
                 });

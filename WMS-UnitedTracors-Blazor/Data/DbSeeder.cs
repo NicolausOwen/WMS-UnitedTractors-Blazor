@@ -24,7 +24,7 @@ public class DbSeeder
         await SeedDivisionsAsync();
         await SeedUnitsAsync();
         await SeedDefaultUsersAsync();
-       
+        await SeedDefaultAdminRolesAsync();
     }
 
     private async Task ExecuteSqlDumpAsync()
@@ -128,6 +128,30 @@ public class DbSeeder
                 u.nrp = new Random().Next(10000000, 99999999).ToString();
                 u.division_id = divisionId;
                 _context.Set<User>().Add(u);
+            }
+        }
+        await _context.SaveChangesAsync();
+    }
+
+    private async Task SeedDefaultAdminRolesAsync()
+    {
+        var roles = new[] { "PIC Studio", "Team Leader Infrastructure", "Manager", "Staff Inventoris" };
+        foreach (var roleName in roles)
+        {
+            var exists = await _context.AdminRoles.AnyAsync(r => r.RoleName == roleName);
+            if (!exists)
+            {
+                _context.AdminRoles.Add(new AdminRole
+                {
+                    Id = Guid.NewGuid(),
+                    RoleName = roleName,
+                    Description = $"Default role for {roleName}",
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedBy = "System",
+                    UpdatedAt = DateTime.UtcNow,
+                    UpdatedBy = "System"
+                });
             }
         }
         await _context.SaveChangesAsync();

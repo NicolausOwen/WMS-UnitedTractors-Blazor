@@ -6,6 +6,8 @@ using Microsoft.EntityFrameworkCore;
 using UT_WMSDotnet.Data;
 using WMS_UnitedTracors_Blazor.Components;
 
+// Trigger watch restart
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -29,6 +31,7 @@ builder.Services.AddScoped<WMS_UnitedTracors_Blazor.Services.ReportService>();
 builder.Services.AddScoped<WMS_UnitedTracors_Blazor.Services.TrackingService>();
 builder.Services.AddScoped<WMS_UnitedTracors_Blazor.Services.PdfReportService>();
 builder.Services.AddScoped<WMS_UnitedTracors_Blazor.Services.PdfReceiptService>();
+builder.Services.AddScoped<WMS_UnitedTracors_Blazor.Services.AdminRoleService>();
 
 // Database setup
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -197,6 +200,27 @@ if (app.Environment.IsDevelopment() ||
     {
         var context = services.GetRequiredService<ApplicationDbContext>();
 
+        // Temporary Migration History Fix for pre-existing tables
+        try
+        {
+            await context.Database.ExecuteSqlRawAsync(@"
+                CREATE TABLE IF NOT EXISTS `__EFMigrationsHistory` (
+                    `MigrationId` varchar(150) CHARACTER SET utf8mb4 NOT NULL,
+                    `ProductVersion` varchar(32) CHARACTER SET utf8mb4 NOT NULL,
+                    CONSTRAINT `PK___EFMigrationsHistory` PRIMARY KEY (`MigrationId`)
+                ) CHARACTER SET=utf8mb4;
+            ");
+            await context.Database.ExecuteSqlRawAsync(@"
+                INSERT IGNORE INTO `__EFMigrationsHistory` (`MigrationId`, `ProductVersion`) VALUES 
+                ('20260522095935_SyncWithSqlDump', '9.0.0'),
+                ('20260527063537_AddProductDescriptionAndVariants', '9.0.0'),
+                ('20260604021546_AddTransactionsTable', '9.0.0'),
+                ('20260605013419_AddHandoverFields', '9.0.0'),
+                ('20260608062936_UpdateDatabase', '9.0.0');
+            ");
+        }
+        catch (Exception) {}
+
         await context.Database.MigrateAsync();
 
         var seeder = new UT_WMSDotnet.Data.DbSeeder(
@@ -285,6 +309,63 @@ app.MapGet("/api/pdf/receipt-return/{groupId}", async (string groupId, WMS_Unite
     
     var pdfBytes = pdfService.GenerateReturnReceipt(transactions, env.WebRootPath);
     return Results.File(pdfBytes, "application/pdf", $"Return_Receipt_{DateTime.Now:yyyyMMdd_HHmmss}.pdf");
+});
+
+// =======================
+// Admin Roles API
+// =======================
+var adminRolesGroup = app.MapGroup("/api/admin-roles");
+
+adminRolesGroup.MapGet("/", async (string? search, string? sortColumn, bool? sortDescending, int? page, int? pageSize, WMS_UnitedTracors_Blazor.Services.AdminRoleService service) =>
+{
+    var (roles, totalItems, totalPages) = await service.GetAdminRolesAsync(search, sortColumn ?? "RoleName", sortDescending ?? false, page ?? 1, pageSize ?? 10);
+    return Results.Ok(new { roles, totalItems, totalPages });
+});
+
+adminRolesGroup.MapGet("/{id:guid}", async (Guid id, WMS_UnitedTracors_Blazor.Services.AdminRoleService service) =>
+{
+    var role = await service.GetAdminRoleByIdAsync(id);
+    if (role == null) return Results.NotFound("Role tidak ditemukan.");
+    var assignedUsers = await service.GetAssignedUsersAsync(id);
+    return Results.Ok(new { role, assignedUsers });
+});
+
+adminRolesGroup.MapPost("/", async (UT_WMSDotnet.ViewModels.AdminRoleViewModel model, HttpContext context, WMS_UnitedTracors_Blazor.Services.AdminRoleService service) =>
+{
+    var username = context.User.Identity?.Name ?? "System";
+    var error = await service.CreateAdminRoleAsync(model, username);
+    if (error != null) return Results.BadRequest(error);
+    return Results.Ok("Role berhasil ditambahkan.");
+});
+
+adminRolesGroup.MapPut("/{id:guid}", async (Guid id, UT_WMSDotnet.ViewModels.AdminRoleViewModel model, HttpContext context, WMS_UnitedTracors_Blazor.Services.AdminRoleService service) =>
+{
+    var username = context.User.Identity?.Name ?? "System";
+    var error = await service.UpdateAdminRoleAsync(id, model, username);
+    if (error != null) return Results.BadRequest(error);
+    return Results.Ok("Role berhasil diupdate.");
+});
+
+adminRolesGroup.MapDelete("/{id:guid}", async (Guid id, WMS_UnitedTracors_Blazor.Services.AdminRoleService service) =>
+{
+    var error = await service.DeleteAdminRoleAsync(id);
+    if (error != null) return Results.BadRequest(error);
+    return Results.Ok("Role berhasil dihapus.");
+});
+
+adminRolesGroup.MapPost("/{id:guid}/assign", async (Guid id, [Microsoft.AspNetCore.Mvc.FromBody] int userId, HttpContext context, WMS_UnitedTracors_Blazor.Services.AdminRoleService service) =>
+{
+    var username = context.User.Identity?.Name ?? "System";
+    var error = await service.AssignUserToRoleAsync(id, userId, null, username);
+    if (error != null) return Results.BadRequest(error);
+    return Results.Ok("User berhasil ditambahkan ke role.");
+});
+
+adminRolesGroup.MapDelete("/{id:guid}/assign/{userId:int}", async (Guid id, int userId, WMS_UnitedTracors_Blazor.Services.AdminRoleService service) =>
+{
+    var error = await service.RemoveUserFromRoleAsync(id, userId, null);
+    if (error != null) return Results.BadRequest(error);
+    return Results.Ok("User berhasil dihapus dari role.");
 });
 
 // =======================
