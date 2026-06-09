@@ -19,6 +19,8 @@ public class ApplicationDbContext : DbContext
     public DbSet<ProductVariant> ProductVariants { get; set; }
     public DbSet<ProfileRequest> ProfileRequests { get; set; }
     public DbSet<User> Users { get; set; }
+    public DbSet<AdminRole> AdminRoles { get; set; }
+    public DbSet<UserAdminRole> UserAdminRoles { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -40,6 +42,8 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<ProductVariant>().ToTable("product_variants");
         modelBuilder.Entity<ProfileRequest>().ToTable("profile_requests");
         modelBuilder.Entity<User>().ToTable("users");
+        modelBuilder.Entity<AdminRole>().ToTable("admin_roles");
+        modelBuilder.Entity<UserAdminRole>().ToTable("user_admin_roles");
 
         // Additional constraints based on models
         modelBuilder.Entity<Transaction>()
@@ -70,6 +74,18 @@ public class ApplicationDbContext : DbContext
             .HasOne(pr => pr.User)
             .WithMany()
             .HasForeignKey(pr => pr.user_id)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<UserAdminRole>()
+            .HasOne(uar => uar.User)
+            .WithMany(u => u.UserAdminRoles)
+            .HasForeignKey(uar => uar.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<UserAdminRole>()
+            .HasOne(uar => uar.AdminRole)
+            .WithMany(ar => ar.UserAdminRoles)
+            .HasForeignKey(uar => uar.AdminRoleId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

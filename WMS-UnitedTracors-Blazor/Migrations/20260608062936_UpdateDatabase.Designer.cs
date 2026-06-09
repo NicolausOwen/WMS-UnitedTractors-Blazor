@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using UT_WMSDotnet.Data;
 
@@ -11,9 +12,11 @@ using UT_WMSDotnet.Data;
 namespace ut_wms_asp.net.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260608062936_UpdateDatabase")]
+    partial class UpdateDatabase
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,43 +24,6 @@ namespace ut_wms_asp.net.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
-
-            modelBuilder.Entity("UT_WMSDotnet.Models.AdminRole", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("char(36)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("CreatedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("varchar(500)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<string>("RoleName")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("varchar(255)");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("admin_roles", (string)null);
-                });
 
             modelBuilder.Entity("UT_WMSDotnet.Models.Category", b =>
                 {
@@ -584,34 +550,6 @@ namespace ut_wms_asp.net.Migrations
                     b.ToTable("users", (string)null);
                 });
 
-            modelBuilder.Entity("UT_WMSDotnet.Models.UserAdminRole", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("char(36)");
-
-                    b.Property<Guid>("AdminRoleId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("CreatedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AdminRoleId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("user_admin_roles", (string)null);
-                });
-
             modelBuilder.Entity("UT_WMSDotnet.Models.Product", b =>
                 {
                     b.HasOne("UT_WMSDotnet.Models.Category", "Category")
@@ -734,30 +672,6 @@ namespace ut_wms_asp.net.Migrations
                     b.Navigation("Division");
                 });
 
-            modelBuilder.Entity("UT_WMSDotnet.Models.UserAdminRole", b =>
-                {
-                    b.HasOne("UT_WMSDotnet.Models.AdminRole", "AdminRole")
-                        .WithMany("UserAdminRoles")
-                        .HasForeignKey("AdminRoleId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("UT_WMSDotnet.Models.User", "User")
-                        .WithMany("UserAdminRoles")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("AdminRole");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("UT_WMSDotnet.Models.AdminRole", b =>
-                {
-                    b.Navigation("UserAdminRoles");
-                });
-
             modelBuilder.Entity("UT_WMSDotnet.Models.Category", b =>
                 {
                     b.Navigation("Products");
@@ -790,11 +704,6 @@ namespace ut_wms_asp.net.Migrations
             modelBuilder.Entity("UT_WMSDotnet.Models.Unit", b =>
                 {
                     b.Navigation("Products");
-                });
-
-            modelBuilder.Entity("UT_WMSDotnet.Models.User", b =>
-                {
-                    b.Navigation("UserAdminRoles");
                 });
 #pragma warning restore 612, 618
         }
