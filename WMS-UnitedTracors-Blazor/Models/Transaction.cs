@@ -48,6 +48,19 @@ public class Transaction
     [Column(TypeName = "text")]
     public string? handover_notes { get; set; }
 
+    [StringLength(255)]
+    public string? handover_recipient_name { get; set; }
+
+    public DateTime? handover_timestamp { get; set; }
+
+    [StringLength(255)]
+    public string? documentation_photo { get; set; }
+
+    [Column(TypeName = "text")]
+    public string? documentation_notes { get; set; }
+
+    public DateTime? documentation_uploaded_at { get; set; }
+
     [StringLength(50)]
     public string? return_status { get; set; }
 
@@ -76,6 +89,12 @@ public class Transaction
 
     [StringLength(500)]
     public string? manager_notes { get; set; }
+
+    [StringLength(500)]
+    public string? staff_inventory_notes { get; set; }
+
+    [StringLength(50)]
+    public string? last_revision_stage { get; set; }
 
     public int requester_id { get; set; }
 

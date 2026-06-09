@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using UT_WMSDotnet.Data;
 using UT_WMSDotnet.Models;
+using WMS_UnitedTracors_Blazor.Helpers;
 
 namespace WMS_UnitedTracors_Blazor.Services;
 
@@ -33,10 +34,27 @@ public class TrackingService
             .Include(t => t.Division)
             .Where(t => t.type == "OUT");
 
-        query = query.Where(t => 
-            (t.request_type == "GIVEAWAY" && (t.status == "PENDING" || t.status == "PENDING_MANAGER" || t.status == "REVISION")) ||
-            (t.request_type == "BORROW" && (t.status == "PENDING" || t.status == "REVISION" || t.status == "WAITING_HANDOVER" || t.status == "WAITING_ADMIN_HANDOVER" || (t.status == "APPROVED" && (t.returned_quantity == null || t.returned_quantity < t.quantity))))
-        );
+        query = query.Where(t =>
+            (t.request_type == "GIVEAWAY" && (
+                t.status == WorkflowStatuses.PendingStaffInventory ||
+                t.status == WorkflowStatuses.PendingAdmin ||
+                t.status == WorkflowStatuses.PendingManager ||
+                t.status == WorkflowStatuses.Revision ||
+                t.status == WorkflowStatuses.RevisionByStaffInventory ||
+                t.status == WorkflowStatuses.RevisionByAdmin ||
+                t.status == WorkflowStatuses.RevisionByManager ||
+                t.status == WorkflowStatuses.WaitingHandover ||
+                t.status == WorkflowStatuses.WaitingDocumentation ||
+                t.status == WorkflowStatuses.DocumentationOverdue
+            )) ||
+            (t.request_type == "BORROW" && (
+                t.status == WorkflowStatuses.Pending ||
+                t.status == WorkflowStatuses.Revision ||
+                t.status == WorkflowStatuses.RevisionByAdmin ||
+                t.status == WorkflowStatuses.WaitingHandover ||
+                t.status == WorkflowStatuses.WaitingAdminHandover ||
+                (t.status == WorkflowStatuses.Approved && (t.returned_quantity == null || t.returned_quantity < t.quantity))
+            )));
 
         if (userRole == "staff")
         {
@@ -71,6 +89,25 @@ public class TrackingService
         {
             var dateToInclusive = dateTo.Value.Date.AddDays(1);
             query = query.Where(t => t.updated_at < dateToInclusive);
+        }
+
+        var overdueItems = await _context.Transactions
+            .Where(t =>
+                t.request_type == "GIVEAWAY" &&
+                t.status == WorkflowStatuses.WaitingDocumentation &&
+                t.event_date.HasValue &&
+                t.event_date.Value.Date.AddDays(3) < DateTime.Today)
+            .ToListAsync();
+
+        if (overdueItems.Any())
+        {
+            foreach (var item in overdueItems)
+            {
+                item.status = WorkflowStatuses.DocumentationOverdue;
+                item.updated_at = DateTime.UtcNow;
+            }
+
+            await _context.SaveChangesAsync();
         }
 
         var allUsages = await query.OrderByDescending(t => t.updated_at).ToListAsync();

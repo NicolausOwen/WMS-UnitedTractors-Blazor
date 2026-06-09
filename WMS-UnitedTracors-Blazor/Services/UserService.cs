@@ -57,7 +57,7 @@ public class UserService
             email = model.email,
             password = BCrypt.Net.BCrypt.HashPassword(model.password),
             role = model.role,
-            division_id = model.division_id ?? 0,
+            division_id = (model.division_id.HasValue && model.division_id.Value > 0) ? model.division_id : null,
             poin = model.poin ?? 0,
             created_at = DateTime.UtcNow,
             updated_at = DateTime.UtcNow
@@ -89,7 +89,7 @@ public class UserService
         user.nrp = model.nrp;
         user.email = model.email;
         user.role = model.role;
-        user.division_id = model.division_id ?? 0;
+        user.division_id = (model.division_id.HasValue && model.division_id.Value > 0) ? model.division_id : null;
         user.poin = model.poin ?? 0;
         
         if (!string.IsNullOrEmpty(model.password))
