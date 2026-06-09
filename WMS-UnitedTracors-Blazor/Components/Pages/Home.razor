@@ -35,15 +35,18 @@
             <p class="text-[0.6rem] sm:text-[0.65rem] font-bold tracking-[0.12em] uppercase text-[#8a8880] mb-1.5">Total Stock</p>
             <p class="font-sans text-2xl sm:text-4xl font-bold text-[#1a1a1a] leading-none">@TotalStock</p>
         </div>
-        <div class="bg-white border border-[#e5e3dc] hover:border-[#e8a000] border-l-4 border-l-[#e8a000] rounded-r-[10px] rounded-l-[4px] p-4 sm:p-5 sm:px-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-[1px]">
-            <p class="text-[0.6rem] sm:text-[0.65rem] font-bold tracking-[0.12em] uppercase text-[#8a8880] mb-1.5">Pending Approval</p>
-            <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-                <p class="font-sans text-2xl sm:text-4xl font-bold text-[#1a1a1a] leading-none">@PendingApprovals</p>
-                @if (PendingApprovals > 0) {
-                    <span class="inline-flex items-center w-max px-[0.45rem] py-[0.1rem] bg-[#fef3c7] border border-[#fde68a] text-[#92400e] text-[0.55rem] sm:text-[0.62rem] font-bold rounded-[4px] tracking-[0.04em] mt-1 sm:mt-0">Needs review</span>
-                }
+        @if (UserRole == "superadmin" || UserRole == "manager" || UserRole == "admin")
+        {
+            <div class="bg-white border border-[#e5e3dc] hover:border-[#e8a000] border-l-4 border-l-[#e8a000] rounded-r-[10px] rounded-l-[4px] p-4 sm:p-5 sm:px-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-[1px]">
+                <p class="text-[0.6rem] sm:text-[0.65rem] font-bold tracking-[0.12em] uppercase text-[#8a8880] mb-1.5">Pending Approval</p>
+                <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                    <p class="font-sans text-2xl sm:text-4xl font-bold text-[#1a1a1a] leading-none">@PendingApprovals</p>
+                    @if (PendingApprovals > 0) {
+                        <span class="inline-flex items-center w-max px-[0.45rem] py-[0.1rem] bg-[#fef3c7] border border-[#fde68a] text-[#92400e] text-[0.55rem] sm:text-[0.62rem] font-bold rounded-[4px] tracking-[0.04em] mt-1 sm:mt-0">Needs review</span>
+                    }
+                </div>
             </div>
-        </div>
+        }
         <div class="bg-white border border-[#e5e3dc] hover:border-[#d94040] border-l-4 border-l-[#d94040] rounded-r-[10px] rounded-l-[4px] p-4 sm:p-5 sm:px-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-[1px] flex items-start justify-between">
             <div>
                 <p class="text-[0.6rem] sm:text-[0.65rem] font-bold tracking-[0.12em] uppercase text-[#8a8880] mb-1.5">Overdue Return</p>
