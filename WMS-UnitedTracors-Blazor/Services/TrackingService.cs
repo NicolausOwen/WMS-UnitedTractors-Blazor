@@ -25,7 +25,7 @@ public class TrackingService
         int currentUserId, 
         string? userRole)
     {
-        var query = _context.Transactions
+        var baseQuery = _context.Transactions
             .Include(t => t.Product).ThenInclude(p => p!.Category)
             .Include(t => t.Product).ThenInclude(p => p!.Unit)
             .Include(t => t.ProductVariant)
@@ -34,7 +34,8 @@ public class TrackingService
             .Include(t => t.Division)
             .Where(t => t.type == "OUT");
 
-        query = query.Where(t =>
+        // Active statuses shown to approvers/admins (in-progress work)
+        var activeStatusFilter = baseQuery.Where(t =>
             (t.request_type == "GIVEAWAY" && (
                 t.status == WorkflowStatuses.PendingStaffInventory ||
                 t.status == WorkflowStatuses.PendingAdmin ||
@@ -55,11 +56,12 @@ public class TrackingService
                 t.status == WorkflowStatuses.RevisionByStaffInventory ||
                 t.status == WorkflowStatuses.RevisionByAdmin ||
                 t.status == WorkflowStatuses.WaitingHandover ||
+                t.status == WorkflowStatuses.WaitingHandoverConfirm ||
                 t.status == WorkflowStatuses.WaitingAdminHandover ||
                 (t.status == WorkflowStatuses.Approved && (t.returned_quantity == null || t.returned_quantity < t.quantity))
             )));
 
-        // Scope tracking berdasarkan permission (bukan role string), agar role custom tetap benar.
+        // Resolve permissions
         var actor = await _context.Users.FindAsync(currentUserId);
         var actorRole = actor != null ? await _context.AdminRoles.FirstOrDefaultAsync(r => r.RoleName == actor.role && r.IsActive) : null;
         var perms = Permissions.Resolve(actor?.role, actorRole?.Permissions);
@@ -69,19 +71,23 @@ public class TrackingService
                                   perms.Contains(Permissions.ApprovalHandover) || perms.Contains(Permissions.ApprovalReturn) ||
                                   perms.Contains(Permissions.ProductsManage);
 
+        IQueryable<Transaction> query;
+
         if (!canManageOrApprove && perms.Contains(Permissions.ApprovalManager))
         {
-            // Manager (hanya approval manager) -> lihat giveaway saja.
-            query = query.Where(t => t.request_type == "GIVEAWAY");
+            // Manager (only manager approval) -> giveaway in active states only.
+            query = activeStatusFilter.Where(t => t.request_type == "GIVEAWAY");
         }
         else if (!canManageOrApprove)
         {
-            // Pemohon biasa -> hanya request miliknya sendiri.
-            query = query.Where(t => t.requester_id == currentUserId);
+            // Regular user -> ALL of their own requests (active + full history).
+            // This ensures the user can always track every request they ever made.
+            query = baseQuery.Where(t => t.requester_id == currentUserId);
         }
         else
         {
-            // Approver/Admin -> semua, dengan scope kategori (jika admin per-kategori).
+            // Approver/Admin -> active in-progress items, scoped by category.
+            query = activeStatusFilter;
             var userAdminRoles = await _context.UserAdminRoles.Where(uar => uar.UserId == currentUserId).ToListAsync();
             bool isGlobalAdmin = isSuperAdmin || userAdminRoles.Any(uar => uar.CategoryId == null);
             if (!isGlobalAdmin)
@@ -94,6 +100,11 @@ public class TrackingService
         if (divisionId.HasValue)
         {
             query = query.Where(t => t.division_id == divisionId.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(productSearch))
+        {
+            query = query.Where(t => t.Product != null && t.Product.name.Contains(productSearch));
         }
 
         if (dateFrom.HasValue)

@@ -112,12 +112,18 @@
                     var isGiveaway = !hasBorrow;
                     var status = firstItem.status;
 
-                    var isHandoverPending = hasBorrow && borrowItemsOnly.Any(i => i.status == "WAITING_HANDOVER" || i.status == "WAITING_ADMIN_HANDOVER");
+                    var isHandoverPending = hasBorrow && borrowItemsOnly.Any(i => i.status == "WAITING_HANDOVER" || i.status == "WAITING_ADMIN_HANDOVER" || i.status == "WAITING_HANDOVER_CONFIRM");
                     var isWaitingAdminHandover = hasBorrow && borrowItemsOnly.Any(i => i.status == "WAITING_ADMIN_HANDOVER");
                     var handoverDone = hasBorrow && borrowItemsOnly.Any(i => i.status == "APPROVED" && !string.IsNullOrEmpty(i.handover_photo));
                     // Tombol upload hanya saat menunggu bukti dari user (WAITING_HANDOVER), bukan saat menunggu verifikasi admin.
                     var canHandover = hasBorrow && borrowItemsOnly.Any(i => i.status == "WAITING_HANDOVER")
                                       && firstItem.requester_id == CurrentUserId;
+                    // User needs to confirm receipt when SI uploaded the proof (WAITING_HANDOVER_CONFIRM)
+                    // handover_uploaded_by may be "SI" or null (if SI didn't explicitly set it)
+                    // TrackingService already ensures regular users only see their own requests
+                    var isWaitingUserConfirm = hasBorrow && borrowItemsOnly.Any(i =>
+                        i.status == "WAITING_HANDOVER_CONFIRM" &&
+                        (i.handover_uploaded_by == "SI" || string.IsNullOrEmpty(i.handover_uploaded_by)));
                     // Draft serah terima: status masih WAITING_HANDOVER tapi foto sudah diunggah (belum disubmit ke admin).
                     var hasHandoverDraftPhoto = hasBorrow && borrowItemsOnly.Any(i => i.status == "WAITING_HANDOVER" && !string.IsNullOrEmpty(i.handover_photo));
                     var canGiveawayHandover = false;
@@ -174,6 +180,8 @@
                                                 <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#fff8e6] text-[#b37a00] border border-[#ffe099]">Menunggu Admin</span>
                                             } else if(status == "WAITING_HANDOVER") {
                                                 <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#fff8e6] text-[#b37a00] border border-[#ffe099]">Menunggu Bukti Serah Terima</span>
+                                            } else if(status == "WAITING_HANDOVER_CONFIRM") {
+                                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#fce7f3] text-[#be185d] border border-[#fbcfe8] animate-pulse">⚠ Konfirmasi Penerimaan</span>
                                             } else if(status == "WAITING_ADMIN_HANDOVER") {
                                                 <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#e0f2fe] text-[#1a6b8a] border border-[#bae6fd]">Menunggu Verifikasi Admin</span>
                                             } else if(allReturned) {
@@ -247,6 +255,24 @@
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
                                         Upload Bukti Serah Terima
                                     </button>
+                                }
+                                @if (isWaitingUserConfirm)
+                                {
+                                    <div class="flex items-center gap-2" @onclick:stopPropagation="true">
+                                        <button type="button"
+                                            @onclick='() => AskConfirm("Konfirmasi Penerimaan Barang", "Apakah kamu sudah menerima barang dari Staff Inventoris? Konfirmasi ini akan meneruskan ke approval akhir.", () => ConfirmHandoverReceiptByUser(borrowItemsOnly, true), "Ya, Sudah Terima")'
+                                            disabled="@IsSubmitting"
+                                            style="display:inline-flex;align-items:center;gap:8px;padding:10px 16px;background:#7c3aed;color:#fff;font-size:0.8rem;font-weight:700;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.15);border:none;cursor:pointer;white-space:nowrap;">
+                                            <svg style="width:16px;height:16px;flex-shrink:0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                            Konfirmasi Penerimaan
+                                        </button>
+                                        <button type="button"
+                                            @onclick='() => AskConfirm("Tolak Serah Terima", "Kamu menolak penerimaan barang? Permintaan akan dikembalikan ke Staff Inventoris.", () => ConfirmHandoverReceiptByUser(borrowItemsOnly, false), "Ya, Tolak")'
+                                            disabled="@IsSubmitting"
+                                            style="display:inline-flex;align-items:center;padding:8px 12px;background:#fff;border:1.5px solid #fca5a5;color:#dc2626;font-size:0.75rem;font-weight:700;border-radius:8px;cursor:pointer;">
+                                            Tolak
+                                        </button>
+                                    </div>
                                 }
                                 @if (canUploadDocumentation)
                                 {
@@ -1008,7 +1034,18 @@
             {
                 var totalItems = kvp.Value.Sum(i => i.quantity);
                 var totalReturned = kvp.Value.Sum(i => i.returned_quantity);
-                if (firstItem.status == "PENDING" || firstItem.status == "REVISION" || firstItem.status == "REVISION_BY_ADMIN" || totalReturned < totalItems)
+                var borrowStatus = firstItem.status;
+                // Auto-expand any active/action-required BORROW group
+                if (borrowStatus == "PENDING" ||
+                    borrowStatus == "PENDING_STAFF_INVENTORY" ||
+                    borrowStatus == "PENDING_ADMIN" ||
+                    borrowStatus == "REVISION" ||
+                    borrowStatus == "REVISION_BY_STAFF_INVENTORY" ||
+                    borrowStatus == "REVISION_BY_ADMIN" ||
+                    borrowStatus == "WAITING_HANDOVER" ||
+                    borrowStatus == "WAITING_HANDOVER_CONFIRM" ||
+                    borrowStatus == "WAITING_ADMIN_HANDOVER" ||
+                    totalReturned < totalItems)
                 {
                     ExpandedGroupIds.Add(kvp.Key);
                 }

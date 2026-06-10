@@ -647,7 +647,9 @@ public class TransactionService
         if (!isApproved && string.IsNullOrWhiteSpace(rejectionReason)) return "Alasan penolakan wajib diisi.";
 
         var query = await _context.Transactions
-            .Where(t => t.status == WorkflowStatuses.WaitingHandoverConfirm && t.handover_uploaded_by == "SI" && t.type == "OUT" && t.request_type == "BORROW")
+            .Where(t => t.status == WorkflowStatuses.WaitingHandoverConfirm &&
+                        (t.handover_uploaded_by == "SI" || t.handover_uploaded_by == null) &&
+                        t.type == "OUT" && t.request_type == "BORROW")
             .ToListAsync();
 
         var matched = query.Where(t => t.group_id == groupId).ToList();
