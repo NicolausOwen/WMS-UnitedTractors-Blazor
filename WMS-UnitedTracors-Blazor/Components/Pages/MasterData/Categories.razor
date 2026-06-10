@@ -45,6 +45,7 @@
                 <div class="px-6 py-5">
                     <form @onsubmit="SaveCategory" class="flex flex-col sm:flex-row gap-3">
                         <div class="flex-1">
+                            <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Name <span class="text-red-500">*</span></label>
                             <input type="text" @bind="Model.name" required placeholder="Category name"
                                    class="block w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
                         </div>
@@ -56,6 +57,7 @@
                             Add Category
                         </button>
                     </form>
+                    <p class="text-xs text-gray-500 mt-2">* Wajib diisi</p>
                 </div>
             </div>
         }
@@ -126,9 +128,10 @@
                                 {
                                     <tr class="@(isEditing ? "" : "hidden") bg-[#faf9f5]">
                                         <td class="px-6 py-4" colspan="5">
+                                            <p class="text-xs text-gray-500 mb-3">* Wajib diisi</p>
                                             <form @onsubmit="() => UpdateCategory(category.Id)" class="flex flex-col sm:flex-row gap-3 items-end">
                                                 <div class="flex-1 w-full">
-                                                    <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Name</label>
+                                                    <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Name <span class="text-red-500">*</span></label>
                                                     <input type="text" @bind="EditModel.name" required
                                                            class="block w-full px-3 py-1.5 text-xs bg-white border border-[#e5e3dc] focus:border-[#e8a000] focus:ring-0 rounded-lg outline-none text-[#1a1a1a] transition-all duration-150">
                                                 </div>
@@ -200,9 +203,10 @@
                         else
                         {
                             <div class="p-5 bg-[#faf9f5] border border-[#e5e3dc] rounded-xl shadow-sm">
+                                <p class="text-xs text-gray-500 mb-3">* Wajib diisi</p>
                                 <form @onsubmit="() => UpdateCategory(category.Id)" class="space-y-4">
                                     <div>
-                                        <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1">Name</label>
+                                        <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1">Name <span class="text-red-500">*</span></label>
                                         <input type="text" @bind="EditModel.name" required
                                                class="block w-full px-3 py-2 text-xs bg-white border border-[#e5e3dc] focus:border-[#e8a000] focus:ring-0 rounded-lg outline-none text-[#1a1a1a] transition-all duration-150">
                                     </div>

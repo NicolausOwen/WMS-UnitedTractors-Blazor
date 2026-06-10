@@ -27,6 +27,11 @@ public class CartService
 
     public event Action? OnChange;
 
+    public string? EventName { get; set; }
+    public DateTime? EventDate { get; set; }
+    public string? Notes { get; set; }
+    public string? DocumentationLink { get; set; }
+
     public void AddToCart(CartItem item)
     {
         var existing = _items.FirstOrDefault(i => i.Sku == item.Sku && i.RequestType == item.RequestType);
@@ -57,6 +62,10 @@ public class CartService
     public void ClearCart()
     {
         _items.Clear();
+        EventName = null;
+        EventDate = null;
+        Notes = null;
+        DocumentationLink = null;
         NotifyStateChanged();
     }
 

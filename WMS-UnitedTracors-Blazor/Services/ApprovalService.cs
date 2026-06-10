@@ -286,10 +286,15 @@ public class ApprovalService
 
     public async Task<string?> RequestRevisionAsync(int id, string revisionReason, int currentUserId, string? userRole)
     {
-        return await RequestRevisionAsync(id, revisionReason, currentUserId, userRole, null);
+        return await RequestRevisionAsync(id, revisionReason, currentUserId, userRole, null, null);
     }
 
     public async Task<string?> RequestRevisionAsync(int id, string revisionReason, int currentUserId, string? userRole, int? revisedQuantity)
+    {
+        return await RequestRevisionAsync(id, revisionReason, currentUserId, userRole, revisedQuantity, null);
+    }
+
+    public async Task<string?> RequestRevisionAsync(int id, string revisionReason, int currentUserId, string? userRole, int? revisedQuantity, DateTime? revisedPickupDate)
     {
         var transaction = await _context.Transactions
             .Include(t => t.Product)
@@ -321,7 +326,30 @@ public class ApprovalService
                 _context.Users.Update(transaction.Requester);
             }
 
+            if (!transaction.original_quantity.HasValue)
+            {
+                transaction.original_quantity = transaction.quantity;
+            }
+
             transaction.quantity = revisedQuantity.Value;
+        }
+
+        if (transaction.request_type == "GIVEAWAY" && revisedPickupDate.HasValue)
+        {
+            var pickupDate = revisedPickupDate.Value.Date;
+
+            if (pickupDate < DateTime.Today)
+                return "Tanggal pengambilan revisi tidak boleh sebelum hari ini.";
+
+            if (transaction.event_date.HasValue && transaction.event_date.Value.Date < pickupDate)
+                return "Tanggal event tidak boleh lebih kecil dari tanggal pengambilan revisi.";
+
+            if (!transaction.original_pickup_date.HasValue)
+            {
+                transaction.original_pickup_date = transaction.pickup_date;
+            }
+
+            transaction.pickup_date = pickupDate;
         }
 
         var stageBefore = transaction.status;
@@ -587,4 +615,45 @@ public class ApprovalService
             default: t.admin_notes = notes; break; // PendingAdmin / legacy Pending
         }
     }
+
+    public async Task<string?> ApproveHandoverItemAsync(int transactionId, int currentUserId, string? userRole)
+    {
+        var perms = await ResolvePermsAsync(currentUserId);
+        if (!perms.Contains(Permissions.ApprovalHandover)) return "Unauthorized action.";
+
+        var transaction = await _context.Transactions
+            .Include(t => t.Product)
+            .FirstOrDefaultAsync(t => t.id == transactionId && t.status == WorkflowStatuses.WaitingAdminHandover && t.type == "OUT" && t.request_type == "BORROW");
+
+        if (transaction == null) return "Transaksi serah terima tidak ditemukan atau tidak sedang menunggu verifikasi.";
+
+        transaction.status = WorkflowStatuses.Approved;
+        transaction.approver_id = currentUserId;
+        transaction.updated_at = DateTime.UtcNow;
+        _context.Transactions.Update(transaction);
+
+        await _context.SaveChangesAsync();
+        return null;
+    }
+
+    public async Task<string?> RejectHandoverItemAsync(int transactionId, string rejectionReason, int currentUserId, string? userRole)
+    {
+        var perms = await ResolvePermsAsync(currentUserId);
+        if (!perms.Contains(Permissions.ApprovalHandover)) return "Unauthorized action.";
+        if (string.IsNullOrWhiteSpace(rejectionReason)) return "Rejection reason is required.";
+
+        var transaction = await _context.Transactions
+            .FirstOrDefaultAsync(t => t.id == transactionId && t.status == WorkflowStatuses.WaitingAdminHandover && t.type == "OUT" && t.request_type == "BORROW");
+
+        if (transaction == null) return "Transaksi serah terima tidak ditemukan atau tidak sedang menunggu verifikasi.";
+
+        transaction.status = WorkflowStatuses.WaitingHandover;
+        transaction.rejection_reason = rejectionReason;
+        transaction.updated_at = DateTime.UtcNow;
+        _context.Transactions.Update(transaction);
+
+        await _context.SaveChangesAsync();
+        return null;
+    }
 }
+

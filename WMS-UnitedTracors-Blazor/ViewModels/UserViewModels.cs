@@ -17,7 +17,8 @@ public class UserCreateViewModel
     public string email { get; set; } = string.Empty;
 
     [Range(0, int.MaxValue, ErrorMessage = "Poin tidak boleh negatif.")]
-    public int? poin { get; set; }
+    public int? poin { get; set; } = 0;
+
 
     [Required(ErrorMessage = "Password wajib diisi.")]
     [StringLength(255, MinimumLength = 8, ErrorMessage = "Password minimal 8 karakter.")]

@@ -32,6 +32,8 @@ public class Transaction
     public string? request_type { get; set; }
 
     public int? quantity { get; set; } = 0;
+
+    public int? original_quantity { get; set; }
  
     public int? returned_quantity { get; set; } = 0;
  
@@ -128,6 +130,9 @@ public class Transaction
 
     [Column(TypeName = "date")]
     public DateTime? pickup_date { get; set; }
+
+    [Column(TypeName = "date")]
+    public DateTime? original_pickup_date { get; set; }
 
     [StringLength(255)]
     public string? event_name { get; set; }
