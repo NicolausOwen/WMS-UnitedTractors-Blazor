@@ -458,7 +458,7 @@
                 .Select(g => new VariantGroupUI
                 {
                     ColorName = g.Key,
-                    ExistingImage = g.FirstOrDefault()?.existing_image,
+                    ExistingImage = g.FirstOrDefault(v => !string.IsNullOrEmpty(v.existing_image))?.existing_image,
                     Sizes = g.Select(v => new VariantSizeUI
                     {
                         Id = v.id,
