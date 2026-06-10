@@ -1256,9 +1256,15 @@
                     return;
                 }
 
-                if (item.ExpectedReturnDate <= item.BorrowStartDate)
+                if (item.BorrowStartDate.Value.Date < DateTime.Today)
                 {
-                    ErrorMessage = $"Tanggal kembali harus lebih besar dari tanggal pinjam untuk item: {item.Name}.";
+                    ErrorMessage = $"Tanggal pengambilan tidak boleh di masa lalu untuk item: {item.Name}.";
+                    return;
+                }
+
+                if (item.ExpectedReturnDate.Value.Date <= item.BorrowStartDate.Value.Date)
+                {
+                    ErrorMessage = $"Tanggal pengembalian tidak boleh sebelum atau sama dengan tanggal pengambilan untuk item: {item.Name}.";
                     return;
                 }
             }
