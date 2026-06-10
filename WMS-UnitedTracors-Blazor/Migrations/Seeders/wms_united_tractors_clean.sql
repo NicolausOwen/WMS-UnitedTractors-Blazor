@@ -5,27 +5,28 @@
 -- =============================================================
 
 -- Drop tables in reverse dependency order (dependents first)
-IF OBJECT_ID('stock_logs',           'U') IS NOT NULL DROP TABLE [stock_logs];
-IF OBJECT_ID('transactions',         'U') IS NOT NULL DROP TABLE [transactions];
-IF OBJECT_ID('profile_requests',     'U') IS NOT NULL DROP TABLE [profile_requests];
-IF OBJECT_ID('product_variants',     'U') IS NOT NULL DROP TABLE [product_variants];
-IF OBJECT_ID('products',             'U') IS NOT NULL DROP TABLE [products];
-IF OBJECT_ID('users',                'U') IS NOT NULL DROP TABLE [users];
-IF OBJECT_ID('__efmigrationshistory','U') IS NOT NULL DROP TABLE [__efmigrationshistory];
-IF OBJECT_ID('categories',           'U') IS NOT NULL DROP TABLE [categories];
-IF OBJECT_ID('divisions',            'U') IS NOT NULL DROP TABLE [divisions];
-IF OBJECT_ID('locations',            'U') IS NOT NULL DROP TABLE [locations];
-IF OBJECT_ID('units',                'U') IS NOT NULL DROP TABLE [units];
-GO
+DROP TABLE IF EXISTS `user_admin_roles`;
+DROP TABLE IF EXISTS `admin_roles`;
+DROP TABLE IF EXISTS `stock_logs`;
+DROP TABLE IF EXISTS `transactions`;
+DROP TABLE IF EXISTS `profile_requests`;
+DROP TABLE IF EXISTS `product_variants`;
+DROP TABLE IF EXISTS `products`;
+DROP TABLE IF EXISTS `users`;
+DROP TABLE IF EXISTS `__efmigrationshistory`;
+DROP TABLE IF EXISTS `categories`;
+DROP TABLE IF EXISTS `divisions`;
+DROP TABLE IF EXISTS `locations`;
+DROP TABLE IF EXISTS `units`;
 
 -- =============================================================
 -- TABLE: __efmigrationshistory
 -- =============================================================
 
-CREATE TABLE [__efmigrationshistory] (
-  [MigrationId]    nvarchar(150) NOT NULL,
-  [ProductVersion] nvarchar(32)  NOT NULL,
-  CONSTRAINT [PK___efmigrationshistory] PRIMARY KEY ([MigrationId])
+CREATE TABLE `__efmigrationshistory` (
+  `MigrationId`    VARCHAR(150) NOT NULL,
+  `ProductVersion` VARCHAR(32)  NOT NULL,
+  CONSTRAINT `PK___efmigrationshistory` PRIMARY KEY (`MigrationId`)
 );
 
 -- (no seed data)
@@ -34,17 +35,17 @@ CREATE TABLE [__efmigrationshistory] (
 -- TABLE: categories
 -- =============================================================
 
-CREATE TABLE [categories] (
-  [id]          bigint        NOT NULL IDENTITY(1,1),
-  [name]        nvarchar(255) NOT NULL,
-  [description] nvarchar(255) NULL,
-  [created_at]  datetime2     NULL,
-  [updated_at]  datetime2     NULL,
-  CONSTRAINT [PK_categories] PRIMARY KEY ([id])
+CREATE TABLE `categories` (
+  `id`          bigint        NOT NULL AUTO_INCREMENT,
+  `name`        VARCHAR(255) NOT NULL,
+  `description` VARCHAR(255) NULL,
+  `created_at`  DATETIME     NULL,
+  `updated_at`  DATETIME     NULL,
+  CONSTRAINT `PK_categories` PRIMARY KEY (`id`)
 );
 
-SET IDENTITY_INSERT [categories] ON;
-INSERT INTO [categories] ([id],[name],[description],[created_at],[updated_at]) VALUES
+
+INSERT INTO `categories` (`id`,`name`,`description`,`created_at`,`updated_at`) VALUES
   (1, 'Makanan',    NULL, '2026-05-11 12:17:24', '2026-05-11 12:17:24'),
   (3, 'Game',       NULL, '2026-05-11 13:40:10', '2026-05-11 13:40:10'),
   (4, 'Facility',   NULL, '2026-05-11 13:40:10', '2026-05-11 13:40:10'),
@@ -52,23 +53,23 @@ INSERT INTO [categories] ([id],[name],[description],[created_at],[updated_at]) V
   (6, 'Merchandise',NULL, '2026-05-11 13:40:10', '2026-05-11 13:40:10'),
   (8, 'Alat Musik', NULL, '2026-05-11 13:40:11', '2026-05-11 13:40:11'),
   (9, 'Elektronik', NULL, '2026-05-11 13:40:11', '2026-05-11 13:40:11');
-SET IDENTITY_INSERT [categories] OFF;
+
 
 -- =============================================================
 -- TABLE: divisions
 -- =============================================================
 
-CREATE TABLE [divisions] (
-  [id]          bigint        NOT NULL IDENTITY(1,1),
-  [name]        nvarchar(255) NOT NULL,
-  [description] nvarchar(255) NULL,
-  [created_at]  datetime2     NULL,
-  [updated_at]  datetime2     NULL,
-  CONSTRAINT [PK_divisions] PRIMARY KEY ([id])
+CREATE TABLE `divisions` (
+  `id`          bigint        NOT NULL AUTO_INCREMENT,
+  `name`        VARCHAR(255) NOT NULL,
+  `description` VARCHAR(255) NULL,
+  `created_at`  DATETIME     NULL,
+  `updated_at`  DATETIME     NULL,
+  CONSTRAINT `PK_divisions` PRIMARY KEY (`id`)
 );
 
-SET IDENTITY_INSERT [divisions] ON;
-INSERT INTO [divisions] ([id],[name],[description],[created_at],[updated_at]) VALUES
+
+INSERT INTO `divisions` (`id`,`name`,`description`,`created_at`,`updated_at`) VALUES
   ( 1,'CCS', NULL,'2026-05-26 09:46:46','2026-05-26 09:46:46'),
   ( 2,'CFA', NULL,'2026-05-26 09:46:46','2026-05-26 09:46:46'),
   ( 3,'CHCU',NULL,'2026-05-26 09:46:46','2026-05-26 09:46:46'),
@@ -83,23 +84,23 @@ INSERT INTO [divisions] ([id],[name],[description],[created_at],[updated_at]) VA
   (12,'SVC', NULL,'2026-05-26 09:46:46','2026-05-26 09:46:46'),
   (13,'TMO', NULL,'2026-05-26 09:46:46','2026-05-26 09:46:46'),
   (14,'TSO', NULL,'2026-05-26 09:46:46','2026-05-26 09:46:46');
-SET IDENTITY_INSERT [divisions] OFF;
+
 
 -- =============================================================
 -- TABLE: locations
 -- =============================================================
 
-CREATE TABLE [locations] (
-  [id]          bigint        NOT NULL IDENTITY(1,1),
-  [name]        nvarchar(255) NOT NULL,
-  [description] nvarchar(255) NULL,
-  [created_at]  datetime2     NULL,
-  [updated_at]  datetime2     NULL,
-  CONSTRAINT [PK_locations] PRIMARY KEY ([id])
+CREATE TABLE `locations` (
+  `id`          bigint        NOT NULL AUTO_INCREMENT,
+  `name`        VARCHAR(255) NOT NULL,
+  `description` VARCHAR(255) NULL,
+  `created_at`  DATETIME     NULL,
+  `updated_at`  DATETIME     NULL,
+  CONSTRAINT `PK_locations` PRIMARY KEY (`id`)
 );
 
-SET IDENTITY_INSERT [locations] ON;
-INSERT INTO [locations] ([id],[name],[description],[created_at],[updated_at]) VALUES
+
+INSERT INTO `locations` (`id`,`name`,`description`,`created_at`,`updated_at`) VALUES
   ( 1,'Gudang',      'Gudang lt 1','2026-05-11 12:57:18','2026-05-11 12:57:18'),
   ( 2,'Storage Room',NULL,         '2026-05-11 13:40:10','2026-05-11 13:40:10'),
   ( 3,'ATK',         NULL,         '2026-05-11 13:40:10','2026-05-11 13:40:10'),
@@ -111,23 +112,23 @@ INSERT INTO [locations] ([id],[name],[description],[created_at],[updated_at]) VA
   ( 9,'7.1.11.2',    NULL,         '2026-05-11 13:40:11','2026-05-11 13:40:11'),
   (10,'7.1.11.3',    NULL,         '2026-05-11 13:40:11','2026-05-11 13:40:11'),
   (11,'7.1.11.5',    NULL,         '2026-05-11 13:40:11','2026-05-11 13:40:11');
-SET IDENTITY_INSERT [locations] OFF;
+
 
 -- =============================================================
 -- TABLE: units
 -- =============================================================
 
-CREATE TABLE [units] (
-  [id]         bigint        NOT NULL IDENTITY(1,1),
-  [name]       nvarchar(255) NOT NULL,
-  [created_at] datetime2     NULL,
-  [updated_at] datetime2     NULL,
-  CONSTRAINT [PK_units]      PRIMARY KEY ([id]),
-  CONSTRAINT [UQ_units_name] UNIQUE      ([name])
+CREATE TABLE `units` (
+  `id`         bigint        NOT NULL AUTO_INCREMENT,
+  `name`       VARCHAR(255) NOT NULL,
+  `created_at` DATETIME     NULL,
+  `updated_at` DATETIME     NULL,
+  CONSTRAINT `PK_units`      PRIMARY KEY (`id`),
+  CONSTRAINT `UQ_units_name` UNIQUE      (`name`)
 );
 
-SET IDENTITY_INSERT [units] ON;
-INSERT INTO [units] ([id],[name],[created_at],[updated_at]) VALUES
+
+INSERT INTO `units` (`id`,`name`,`created_at`,`updated_at`) VALUES
   ( 1,'Mix (4 Bungkus Kecil, 1 Pack Besar, 3 Roll Bekas)','2026-05-26 09:46:41','2026-05-26 09:46:41'),
   ( 2,'Pack Jaring',                                       '2026-05-26 09:46:41','2026-05-26 09:46:41'),
   ( 3,'Pcs',                                               '2026-05-26 09:46:41','2026-05-26 09:46:41'),
@@ -161,7 +162,7 @@ INSERT INTO [units] ([id],[name],[created_at],[updated_at]) VALUES
   (31,'kg',                                                '2026-05-26 09:46:46','2026-05-26 09:46:46'),
   (32,'liter',                                             '2026-05-26 09:46:46','2026-05-26 09:46:46'),
   (33,'meter',                                             '2026-05-26 09:46:46','2026-05-26 09:46:46');
-SET IDENTITY_INSERT [units] OFF;
+
 
 -- =============================================================
 -- TABLE: products
@@ -171,116 +172,116 @@ SET IDENTITY_INSERT [units] OFF;
 --        created_at, updated_at
 -- =============================================================
 
-CREATE TABLE [products] (
-  [id]               bigint         NOT NULL IDENTITY(1,1),
-  [sku]              nvarchar(255)  NOT NULL,
-  [barcode_type]     nvarchar(255)  NOT NULL DEFAULT 'TYPE_CODE_128',
-  [name]             nvarchar(255)  NOT NULL,
-  [description]      nvarchar(max)  NULL,
-  [transaction_type] nvarchar(7)    NULL,
-  [value]            decimal(10,2)  NULL,
-  [image]            nvarchar(255)  NULL,
-  [images]           nvarchar(max)  NULL,
-  [category_id]      bigint         NULL,
-  [location_id]      bigint         NULL,
-  [position_image]   nvarchar(255)  NULL,
-  [current_stock]    int            NOT NULL DEFAULT 0,
-  [initial_stock]    int            NOT NULL DEFAULT 0,
-  [unit_id]          bigint         NULL,
-  [is_returnable]    bit            NOT NULL DEFAULT 1,
-  [min_stock]        int            NOT NULL DEFAULT 0,
-  [created_at]       datetime2      NULL,
-  [updated_at]       datetime2      NULL,
-  CONSTRAINT [PK_products]                    PRIMARY KEY ([id]),
-  CONSTRAINT [UQ_products_sku]                UNIQUE      ([sku]),
-  CONSTRAINT [CK_products_transaction_type]   CHECK       ([transaction_type] IN ('BORROW','REQUEST')),
-  CONSTRAINT [FK_products_category_id]        FOREIGN KEY ([category_id]) REFERENCES [categories] ([id]),
-  CONSTRAINT [FK_products_location_id]        FOREIGN KEY ([location_id]) REFERENCES [locations]  ([id]),
-  CONSTRAINT [FK_products_unit_id]            FOREIGN KEY ([unit_id])     REFERENCES [units]      ([id])
+CREATE TABLE `products` (
+  `id`               bigint         NOT NULL AUTO_INCREMENT,
+  `sku`              VARCHAR(255)  NOT NULL,
+  `barcode_type`     VARCHAR(255)  NOT NULL DEFAULT 'TYPE_CODE_128',
+  `name`             VARCHAR(255)  NOT NULL,
+  `description`      TEXT  NULL,
+  `transaction_type` VARCHAR(7)    NULL,
+  `value`            decimal(10,2)  NULL,
+  `image`            VARCHAR(255)  NULL,
+  `images`           TEXT  NULL,
+  `category_id`      bigint         NULL,
+  `location_id`      bigint         NULL,
+  `position_image`   VARCHAR(255)  NULL,
+  `current_stock`    int            NOT NULL DEFAULT 0,
+  `initial_stock`    int            NOT NULL DEFAULT 0,
+  `unit_id`          bigint         NULL,
+  `is_returnable`    TINYINT(1)            NOT NULL DEFAULT 1,
+  `min_stock`        int            NOT NULL DEFAULT 0,
+  `created_at`       DATETIME      NULL,
+  `updated_at`       DATETIME      NULL,
+  CONSTRAINT `PK_products`                    PRIMARY KEY (`id`),
+  CONSTRAINT `UQ_products_sku`                UNIQUE      (`sku`),
+  CONSTRAINT `CK_products_transaction_type`   CHECK       (`transaction_type` IN ('BORROW','REQUEST')),
+  CONSTRAINT `FK_products_category_id`        FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`),
+  CONSTRAINT `FK_products_location_id`        FOREIGN KEY (`location_id`) REFERENCES `locations`  (`id`),
+  CONSTRAINT `FK_products_unit_id`            FOREIGN KEY (`unit_id`)     REFERENCES `units`      (`id`)
 );
 
-CREATE INDEX [IX_products_category_id] ON [products] ([category_id]);
-CREATE INDEX [IX_products_location_id] ON [products] ([location_id]);
-CREATE INDEX [IX_products_unit_id]     ON [products] ([unit_id]);
+CREATE INDEX `IX_products_category_id` ON `products` (`category_id`);
+CREATE INDEX `IX_products_location_id` ON `products` (`location_id`);
+CREATE INDEX `IX_products_unit_id`     ON `products` (`unit_id`);
 
-SET IDENTITY_INSERT [products] ON;
-INSERT INTO [products] ([id],[sku],[barcode_type],[name],[description],[transaction_type],[value],[image],[images],[category_id],[location_id],[position_image],[current_stock],[initial_stock],[unit_id],[is_returnable],[min_stock],[created_at],[updated_at]) VALUES
-  (1,'GME-260511-0001','TYPE_CODE_128','Stick Ice Cream',NULL,NULL,50.00,NULL,NULL,3,1,NULL,8,8,1,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (2,'GME-260511-0002','TYPE_CODE_128','Bola kecil',NULL,NULL,50.00,'/images/products/YFSOpvscJWF42hEyefx3qENxb8tM9DwDByqjx2gU.jpg','["/images/products/YFSOpvscJWF42hEyefx3qENxb8tM9DwDByqjx2gU.jpg"]',3,1,NULL,1,1,2,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (3,'GME-260511-0003','TYPE_CODE_128','Caping',NULL,NULL,50.00,'/images/products/1CQOEPfy6r9zrGCCfMR22bzSI6uBeQbCZKryYqWc.jpg','["/images/products/1CQOEPfy6r9zrGCCfMR22bzSI6uBeQbCZKryYqWc.jpg"]',3,1,NULL,6,6,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (4,'GME-260511-0004','TYPE_CODE_128','Pompa Balon',NULL,NULL,50.00,NULL,NULL,3,1,NULL,6,6,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (5,'GME-260511-0005','TYPE_CODE_128','Keranjang Sampah',NULL,NULL,50.00,'/images/products/RSanEEGxn7ucC5TiFyBRGTirmVjgHlCBxAx6zkjM.jpg','["/images/products/RSanEEGxn7ucC5TiFyBRGTirmVjgHlCBxAx6zkjM.jpg"]',3,1,NULL,12,12,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (6,'FCY-260511-0001','TYPE_CODE_128','Kain Hitam',NULL,NULL,50.00,NULL,NULL,4,1,NULL,1,1,4,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (7,'GME-260511-0006','TYPE_CODE_128','Sumpit',NULL,NULL,50.00,'/images/products/v4u7gSNCAueE1hczAsWFQ90tdJMq1cH9CcwcWzXF.jpg','["/images/products/v4u7gSNCAueE1hczAsWFQ90tdJMq1cH9CcwcWzXF.jpg"]',3,1,NULL,343,343,5,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (8,'GME-260511-0007','TYPE_CODE_128','Bola Tenis',NULL,NULL,50.00,'/images/products/I46Pb7zcrKaf6sxggvhKPY9iaOXP3EVbMnlJpSuw.jpg','["/images/products/I46Pb7zcrKaf6sxggvhKPY9iaOXP3EVbMnlJpSuw.jpg"]',3,1,NULL,42,42,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+
+INSERT INTO `products` (`id`,`sku`,`barcode_type`,`name`,`description`,`transaction_type`,`value`,`image`,`images`,`category_id`,`location_id`,`position_image`,`current_stock`,`initial_stock`,`unit_id`,`is_returnable`,`min_stock`,`created_at`,`updated_at`) VALUES
+  (1,'GME-260511-0001','TYPE_CODE_128','Stick Ice Cream',NULL,NULL,50.00,'images/products/97af8e4c-7d24-4a79-8359-fbfee5781bbc.jpg',NULL,3,1,NULL,8,8,1,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (2,'GME-260511-0002','TYPE_CODE_128','Bola kecil',NULL,NULL,50.00,'/images/products/YFSOpvscJWF42hEyefx3qENxb8tM9DwDByqjx2gU.jpg','[\"/images/products/YFSOpvscJWF42hEyefx3qENxb8tM9DwDByqjx2gU.jpg\"]',3,1,NULL,1,1,2,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (3,'GME-260511-0003','TYPE_CODE_128','Caping',NULL,NULL,50.00,'/images/products/1CQOEPfy6r9zrGCCfMR22bzSI6uBeQbCZKryYqWc.jpg','[\"/images/products/1CQOEPfy6r9zrGCCfMR22bzSI6uBeQbCZKryYqWc.jpg\"]',3,1,NULL,6,6,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (4,'GME-260511-0004','TYPE_CODE_128','Pompa Balon',NULL,NULL,50.00,'images/products/416d7a73-1f37-4670-a291-41fa5faff681.jpg',NULL,3,1,NULL,6,6,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (5,'GME-260511-0005','TYPE_CODE_128','Keranjang Sampah',NULL,NULL,50.00,'/images/products/RSanEEGxn7ucC5TiFyBRGTirmVjgHlCBxAx6zkjM.jpg','[\"/images/products/RSanEEGxn7ucC5TiFyBRGTirmVjgHlCBxAx6zkjM.jpg\"]',3,1,NULL,12,12,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (6,'FCY-260511-0001','TYPE_CODE_128','Kain Hitam',NULL,NULL,50.00,'images/products/1dd3acf0-c756-40d1-82f6-c82b56884652.jpg',NULL,4,1,NULL,1,1,4,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (7,'GME-260511-0006','TYPE_CODE_128','Sumpit',NULL,NULL,50.00,'/images/products/v4u7gSNCAueE1hczAsWFQ90tdJMq1cH9CcwcWzXF.jpg','[\"/images/products/v4u7gSNCAueE1hczAsWFQ90tdJMq1cH9CcwcWzXF.jpg\"]',3,1,NULL,343,343,5,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (8,'GME-260511-0007','TYPE_CODE_128','Bola Tenis',NULL,NULL,50.00,'/images/products/I46Pb7zcrKaf6sxggvhKPY9iaOXP3EVbMnlJpSuw.jpg','[\"/images/products/I46Pb7zcrKaf6sxggvhKPY9iaOXP3EVbMnlJpSuw.jpg\"]',3,1,NULL,42,42,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (9,'FCY-260511-0002','TYPE_CODE_128','Masker Hitam',NULL,NULL,50.00,NULL,NULL,4,2,NULL,20,20,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (10,'GME-260511-0008','TYPE_CODE_128','Bola Pingpong',NULL,NULL,50.00,'/images/products/OYINvaOUZVzJO6Qif8XhPQuqenY83juAsGdmQKSR.jpg','["/images/products/OYINvaOUZVzJO6Qif8XhPQuqenY83juAsGdmQKSR.jpg"]',3,1,NULL,49,49,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (10,'GME-260511-0008','TYPE_CODE_128','Bola Pingpong',NULL,NULL,50.00,'/images/products/OYINvaOUZVzJO6Qif8XhPQuqenY83juAsGdmQKSR.jpg','[\"/images/products/OYINvaOUZVzJO6Qif8XhPQuqenY83juAsGdmQKSR.jpg\"]',3,1,NULL,49,49,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (11,'GME-260511-0009','TYPE_CODE_128','Bola Golf',NULL,NULL,50.00,NULL,NULL,3,1,NULL,12,12,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (12,'GME-260511-0010','TYPE_CODE_128','Bola Kelereng',NULL,NULL,50.00,NULL,NULL,3,1,NULL,45,45,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (13,'MKN-260511-0001','TYPE_CODE_128','Tepung Maizena exp Nov 2026',NULL,NULL,50.00,NULL,NULL,1,2,NULL,6,6,6,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (14,'MKN-260511-0002','TYPE_CODE_128','Tepung Roti exp 27 Nov 2026',NULL,NULL,50.00,NULL,NULL,1,2,NULL,6,6,6,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (15,'MKN-260511-0003','TYPE_CODE_128','Santan exp April 2027',NULL,NULL,50.00,NULL,NULL,1,2,NULL,10,10,6,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (16,'FCY-260511-0003','TYPE_CODE_128','Tissue',NULL,NULL,50.00,NULL,NULL,4,2,NULL,5,5,7,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (17,'MKN-260511-0004','TYPE_CODE_128','Gula exp 2027',NULL,NULL,50.00,NULL,NULL,1,2,NULL,5,5,6,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (18,'MKN-260511-0005','TYPE_CODE_128','Gula halus rose brand exp nov 27',NULL,NULL,50.00,NULL,NULL,1,2,NULL,1,1,7,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (19,'MKN-260511-0006','TYPE_CODE_128','Blue Band',NULL,NULL,50.00,NULL,NULL,1,2,NULL,6,6,6,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (13,'MKN-260511-0001','TYPE_CODE_128','Tepung Maizena exp Nov 2026',NULL,NULL,50.00,'/images/products/fe1be027-140b-46f2-938b-3f9ddcbaab31.png','[\"/images/products/fe1be027-140b-46f2-938b-3f9ddcbaab31.png\"]',1,2,NULL,6,6,6,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (14,'MKN-260511-0002','TYPE_CODE_128','Tepung Roti exp 27 Nov 2026',NULL,NULL,50.00,'/images/products/6b7c71c3-7f64-47c9-81fc-76504f42ffa6.png','[\"/images/products/6b7c71c3-7f64-47c9-81fc-76504f42ffa6.png\"]',1,2,NULL,6,6,6,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (15,'MKN-260511-0003','TYPE_CODE_128','Santan exp April 2027',NULL,NULL,50.00,'/images/products/930e7a72-53c6-4e3f-83e4-2519085201ad.png','[\"/images/products/930e7a72-53c6-4e3f-83e4-2519085201ad.png\"]',1,2,NULL,10,10,6,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (16,'FCY-260511-0003','TYPE_CODE_128','Tissue',NULL,NULL,50.00,'/images/products/4b916ea2-06c8-4526-912c-9ddedc46460d.png','[\"/images/products/4b916ea2-06c8-4526-912c-9ddedc46460d.png\"]',4,2,NULL,5,5,7,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (17,'MKN-260511-0004','TYPE_CODE_128','Gula exp 2027',NULL,NULL,50.00,'/images/products/df3340e3-d01b-4777-979a-4a1c61983d07.png','[\"/images/products/df3340e3-d01b-4777-979a-4a1c61983d07.png\"]',1,2,NULL,5,5,6,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (18,'MKN-260511-0005','TYPE_CODE_128','Gula halus rose brand exp nov 27',NULL,NULL,50.00,'/images/products/77fcb040-6ce8-4c50-92dd-e96870fde9d8.png','[\"/images/products/77fcb040-6ce8-4c50-92dd-e96870fde9d8.png\"]',1,2,NULL,1,1,7,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (19,'MKN-260511-0006','TYPE_CODE_128','Blue Band',NULL,NULL,50.00,'/images/products/82bcff1c-2bb3-4322-927e-cb9ad6c5f234.png','[\"/images/products/82bcff1c-2bb3-4322-927e-cb9ad6c5f234.png\"]',1,2,NULL,6,6,6,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (20,'MKN-260511-0007','TYPE_CODE_128','Dancow exp Maret 2027',NULL,NULL,50.00,NULL,NULL,1,2,NULL,8,8,8,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (21,'MKN-260511-0008','TYPE_CODE_128','Frisian flag Exp Agustus 2026',NULL,NULL,50.00,NULL,NULL,1,2,NULL,18,18,8,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (21,'MKN-260511-0008','TYPE_CODE_128','Frisian flag Exp Agustus 2026',NULL,NULL,50.00,'/images/products/6c1c9b27-9735-46d3-95b6-f9e7d8081d72.png','[\"/images/products/6c1c9b27-9735-46d3-95b6-f9e7d8081d72.png\"]',1,2,NULL,18,18,8,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (22,'MKN-260511-0009','TYPE_CODE_128','Ladaku Exp 2029',NULL,NULL,50.00,NULL,NULL,1,2,NULL,15,15,9,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (23,'MKN-260511-0010','TYPE_CODE_128','Fermipan Exp 2027',NULL,NULL,50.00,NULL,NULL,1,2,NULL,2,2,10,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (24,'MKN-260511-0011','TYPE_CODE_128','Pemanis buatan',NULL,NULL,50.00,NULL,NULL,1,2,NULL,1,1,8,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (25,'GME-260511-0011','TYPE_CODE_128','Ember Merah',NULL,NULL,50.00,'/images/products/DeOEcX3iAyaQXZ6GcoyTDhaggRpWemmck6yI0fyd.jpg','["/images/products/DeOEcX3iAyaQXZ6GcoyTDhaggRpWemmck6yI0fyd.jpg"]',3,1,NULL,1,1,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (23,'MKN-260511-0010','TYPE_CODE_128','Fermipan Exp 2027',NULL,NULL,50.00,'/images/products/44368330-3f22-4f9a-963d-c5b6545a4bdf.png','[\"/images/products/44368330-3f22-4f9a-963d-c5b6545a4bdf.png\"]',1,2,NULL,2,2,10,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (24,'MKN-260511-0011','TYPE_CODE_128','Pemanis buatan',NULL,NULL,50.00,'/images/products/97d80166-579d-415d-be6e-a1668b6307c7.png','[\"/images/products/97d80166-579d-415d-be6e-a1668b6307c7.png\"]',1,2,NULL,1,1,8,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (25,'GME-260511-0011','TYPE_CODE_128','Ember Merah',NULL,NULL,50.00,'/images/products/DeOEcX3iAyaQXZ6GcoyTDhaggRpWemmck6yI0fyd.jpg','[\"/images/products/DeOEcX3iAyaQXZ6GcoyTDhaggRpWemmck6yI0fyd.jpg\"]',3,1,NULL,1,1,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (26,'GME-260511-0012','TYPE_CODE_128','Mission Impossible (Permainan Bambu Biru Merah)',NULL,NULL,50.00,NULL,NULL,3,1,NULL,48,48,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (27,'GME-260511-0013','TYPE_CODE_128','The Master of Risk',NULL,NULL,50.00,'/images/products/VMaADTsap8BDLFkiq3rt7zs96Xt30DirwaCTdTcJ.jpg','["/images/products/VMaADTsap8BDLFkiq3rt7zs96Xt30DirwaCTdTcJ.jpg"]',3,1,NULL,1,1,7,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (28,'GME-260511-0014','TYPE_CODE_128','Spot The Difference',NULL,NULL,50.00,'/images/products/mJz9HRN3g518TBtMh0GMpbRInuoHbSv3Edxr6TAz.jpg','["/images/products/mJz9HRN3g518TBtMh0GMpbRInuoHbSv3Edxr6TAz.jpg"]',3,1,NULL,60,60,11,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (29,'GME-260511-0015','TYPE_CODE_128','Puzzle taplak',NULL,NULL,50.00,NULL,NULL,3,1,NULL,32,32,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (30,'GME-260511-0016','TYPE_CODE_128','Cash drawer',NULL,NULL,50.00,NULL,NULL,3,1,NULL,1,1,12,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (31,'GME-260511-0017','TYPE_CODE_128','Labble Scrabble (Board Only)',NULL,NULL,50.00,'/images/products/KqoOmKGaMsQEVdKoFb2jyPi8NtUU3YJp8PyHZNfd.jpg','["/images/products/KqoOmKGaMsQEVdKoFb2jyPi8NtUU3YJp8PyHZNfd.jpg","/images/products/P7FcFBkJEehWvJP6DrtvXDw7bH7xxqz2Y0Ss2Cn6.jpg"]',3,1,NULL,1,1,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (32,'GME-260511-0018','TYPE_CODE_128','Lego besar Hijau',NULL,NULL,50.00,'/images/products/Ph9VYHzVGJQGy0lQe5vXGTYm5Bc2IY5Su9nmXi8i.jpg','["/images/products/Ph9VYHzVGJQGy0lQe5vXGTYm5Bc2IY5Su9nmXi8i.jpg"]',3,1,NULL,13,13,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (33,'GME-260511-0019','TYPE_CODE_128','Lego kecil',NULL,NULL,50.00,'/images/products/9NRUks55CKuWbu7bM9VcirvmlM5RHNq0hJYg3lYd.jpg','["/images/products/9NRUks55CKuWbu7bM9VcirvmlM5RHNq0hJYg3lYd.jpg"]',3,1,NULL,1,1,10,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (34,'MKN-260511-0012','TYPE_CODE_128','Minyak exp des 27',NULL,NULL,50.00,NULL,NULL,1,2,NULL,6,6,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (35,'MKN-260511-0013','TYPE_CODE_128','Tepung Terigu exp mei 27',NULL,NULL,50.00,NULL,NULL,1,2,NULL,2,2,6,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (36,'MKN-260511-0014','TYPE_CODE_128','Tepung terigu',NULL,NULL,50.00,NULL,NULL,1,2,NULL,3,3,13,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (37,'MKN-260511-0015','TYPE_CODE_128','Tepung Tapioka exp des 27',NULL,NULL,50.00,NULL,NULL,1,2,NULL,2,2,6,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (38,'GME-260511-0020','TYPE_CODE_128','Lost in Paris',NULL,NULL,50.00,'/images/products/dKyXIzIEVGatN0CR7pOQ9FDGV67z5QEnN1yXTjzb.jpg','["/images/products/dKyXIzIEVGatN0CR7pOQ9FDGV67z5QEnN1yXTjzb.jpg"]',3,1,NULL,1,1,7,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (39,'GME-260511-0021','TYPE_CODE_128','Tusuk sate',NULL,NULL,50.00,NULL,NULL,3,1,NULL,1,1,7,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (40,'GME-260511-0022','TYPE_CODE_128','Kuas',NULL,NULL,50.00,NULL,NULL,3,1,NULL,23,23,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (41,'GME-260511-0023','TYPE_CODE_128','Set kuas',NULL,NULL,50.00,NULL,NULL,3,1,NULL,4,4,14,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (42,'GME-260511-0024','TYPE_CODE_128','Chess Set Game',NULL,NULL,50.00,'/images/products/rov1rStN5CVYIyLvilFDUJuNzU3BTuTUkPHrBFfC.jpg','["/images/products/rov1rStN5CVYIyLvilFDUJuNzU3BTuTUkPHrBFfC.jpg","/images/products/H2KmMHGFz3dQ79KQtonWAbUYorNANgjejeVDF072.jpg"]',3,1,NULL,1,1,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (43,'GME-260511-0025','TYPE_CODE_128','Monopoli',NULL,NULL,50.00,NULL,NULL,3,1,NULL,5,5,7,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (27,'GME-260511-0013','TYPE_CODE_128','The Master of Risk',NULL,NULL,50.00,'/images/products/VMaADTsap8BDLFkiq3rt7zs96Xt30DirwaCTdTcJ.jpg','[\"/images/products/VMaADTsap8BDLFkiq3rt7zs96Xt30DirwaCTdTcJ.jpg\"]',3,1,NULL,1,1,7,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (28,'GME-260511-0014','TYPE_CODE_128','Spot The Difference',NULL,NULL,50.00,'/images/products/mJz9HRN3g518TBtMh0GMpbRInuoHbSv3Edxr6TAz.jpg','[\"/images/products/mJz9HRN3g518TBtMh0GMpbRInuoHbSv3Edxr6TAz.jpg\"]',3,1,NULL,60,60,11,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (29,'GME-260511-0015','TYPE_CODE_128','Puzzle taplak',NULL,NULL,50.00,'images/products/cc4f6869-d783-4cc9-ad0a-d7a053050dda.jpg',NULL,3,1,NULL,32,32,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (30,'GME-260511-0016','TYPE_CODE_128','Cash drawer',NULL,NULL,50.00,'/images/products/30879695-01c0-4d5a-bfa5-d9683d6384fc.png','[\"/images/products/30879695-01c0-4d5a-bfa5-d9683d6384fc.png\"]',3,1,NULL,1,1,12,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (31,'GME-260511-0017','TYPE_CODE_128','Labble Scrabble (Board Only)',NULL,NULL,50.00,'/images/products/KqoOmKGaMsQEVdKoFb2jyPi8NtUU3YJp8PyHZNfd.jpg','[\"/images/products/KqoOmKGaMsQEVdKoFb2jyPi8NtUU3YJp8PyHZNfd.jpg\", \"/images/products/P7FcFBkJEehWvJP6DrtvXDw7bH7xxqz2Y0Ss2Cn6.jpg\"]',3,1,NULL,1,1,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (32,'GME-260511-0018','TYPE_CODE_128','Lego besar Hijau',NULL,NULL,50.00,'/images/products/Ph9VYHzVGJQGy0lQe5vXGTYm5Bc2IY5Su9nmXi8i.jpg','[\"/images/products/Ph9VYHzVGJQGy0lQe5vXGTYm5Bc2IY5Su9nmXi8i.jpg\"]',3,1,NULL,13,13,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (33,'GME-260511-0019','TYPE_CODE_128','Lego kecil',NULL,NULL,50.00,'/images/products/9NRUks55CKuWbu7bM9VcirvmlM5RHNq0hJYg3lYd.jpg','[\"/images/products/9NRUks55CKuWbu7bM9VcirvmlM5RHNq0hJYg3lYd.jpg\"]',3,1,NULL,1,1,10,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (34,'MKN-260511-0012','TYPE_CODE_128','Minyak exp des 27',NULL,NULL,50.00,'/images/products/6cf2a55a-a34d-4992-8eda-da0cc2744cae.png','[\"/images/products/6cf2a55a-a34d-4992-8eda-da0cc2744cae.png\"]',1,2,NULL,6,6,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (35,'MKN-260511-0013','TYPE_CODE_128','Tepung Terigu exp mei 27',NULL,NULL,50.00,'/images/products/f72f42e6-5094-4bd9-bf69-cf3a84a5406f.png','[\"/images/products/f72f42e6-5094-4bd9-bf69-cf3a84a5406f.png\"]',1,2,NULL,2,2,6,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (36,'MKN-260511-0014','TYPE_CODE_128','Tepung terigu',NULL,NULL,50.00,'/images/products/485606bf-554e-49d2-aef9-2e280effc972.png','[\"/images/products/485606bf-554e-49d2-aef9-2e280effc972.png\"]',1,2,NULL,3,3,13,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (37,'MKN-260511-0015','TYPE_CODE_128','Tepung Tapioka exp des 27',NULL,NULL,50.00,'/images/products/7bd1adef-0402-48a1-a4f7-29007f690f58.png','[\"/images/products/7bd1adef-0402-48a1-a4f7-29007f690f58.png\"]',1,2,NULL,2,2,6,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (38,'GME-260511-0020','TYPE_CODE_128','Lost in Paris',NULL,NULL,50.00,'/images/products/dKyXIzIEVGatN0CR7pOQ9FDGV67z5QEnN1yXTjzb.jpg','[\"/images/products/dKyXIzIEVGatN0CR7pOQ9FDGV67z5QEnN1yXTjzb.jpg\"]',3,1,NULL,1,1,7,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (39,'GME-260511-0021','TYPE_CODE_128','Tusuk sate',NULL,NULL,50.00,'images/products/86564e04-428a-4234-b300-d8ffe0f2317c.jpg',NULL,3,1,NULL,1,1,7,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (40,'GME-260511-0022','TYPE_CODE_128','Kuas',NULL,NULL,50.00,'images/products/93940702-d699-4d45-8197-b56bd4e70fd4.jpg',NULL,3,1,NULL,23,23,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (41,'GME-260511-0023','TYPE_CODE_128','Set kuas',NULL,NULL,50.00,'images/products/6273b228-35ae-4e45-b79c-9af2e7eb10f2.jpg',NULL,3,1,NULL,4,4,14,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (42,'GME-260511-0024','TYPE_CODE_128','Chess Set Game',NULL,NULL,50.00,'/images/products/rov1rStN5CVYIyLvilFDUJuNzU3BTuTUkPHrBFfC.jpg','[\"/images/products/rov1rStN5CVYIyLvilFDUJuNzU3BTuTUkPHrBFfC.jpg\", \"/images/products/H2KmMHGFz3dQ79KQtonWAbUYorNANgjejeVDF072.jpg\"]',3,1,NULL,1,1,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (43,'GME-260511-0025','TYPE_CODE_128','Monopoli',NULL,NULL,50.00,'images/products/7f81bd75-ef9e-42a3-b4db-0da832fae0f2.jpg',NULL,3,1,NULL,5,5,7,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (44,'ATK-260511-0001','TYPE_CODE_128','Receipt Printer',NULL,NULL,50.00,NULL,NULL,5,3,NULL,1,1,12,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (45,'FCY-260511-0004','TYPE_CODE_128','Tali tambang plastik',NULL,NULL,50.00,NULL,NULL,4,1,NULL,9,9,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (45,'FCY-260511-0004','TYPE_CODE_128','Tali tambang plastik',NULL,NULL,50.00,'images/products/f99d3dc9-e56a-4c7a-b5df-4da5ec4febf6.jpg',NULL,4,1,NULL,9,9,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (46,'GME-260511-0026','TYPE_CODE_128','Games Matras Nomor',NULL,NULL,50.00,NULL,NULL,3,1,NULL,25,25,11,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (47,'FCY-260511-0005','TYPE_CODE_128','Tali rapia',NULL,NULL,50.00,NULL,NULL,4,2,NULL,3,3,12,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (48,'FCY-260511-0006','TYPE_CODE_128','Jas ujan',NULL,NULL,50.00,NULL,NULL,4,1,NULL,8,8,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (49,'GME-260511-0027','TYPE_CODE_128','Sedotan warna warni',NULL,NULL,50.00,NULL,NULL,3,1,NULL,22,22,15,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (50,'GME-260511-0028','TYPE_CODE_128','Bel warna warni',NULL,NULL,50.00,NULL,NULL,3,1,NULL,42,41,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (51,'FCY-260511-0007','TYPE_CODE_128','Hanger',NULL,NULL,50.00,'/images/products/34JWNSADVpxAkZED6eCtCh3MkVgej2vrDt0VrBs6.jpg','["/images/products/34JWNSADVpxAkZED6eCtCh3MkVgej2vrDt0VrBs6.jpg"]',4,2,NULL,18,12,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (53,'GME-260511-0029','TYPE_CODE_128','Balon Supporter',NULL,NULL,50.00,NULL,NULL,3,1,NULL,6,6,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (54,'GME-260511-0030','TYPE_CODE_128','Karung',NULL,NULL,50.00,NULL,NULL,3,1,NULL,1,1,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (47,'FCY-260511-0005','TYPE_CODE_128','Tali rapia',NULL,NULL,50.00,'/images/products/a99f60ca-5db8-41fd-b828-909402f4fa5c.png','[\"/images/products/a99f60ca-5db8-41fd-b828-909402f4fa5c.png\"]',4,2,NULL,3,3,12,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (48,'FCY-260511-0006','TYPE_CODE_128','Jas ujan',NULL,NULL,50.00,'images/products/5e548021-b3dc-4c2c-8f63-ae518a02d857.jpg',NULL,4,1,NULL,8,8,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (49,'GME-260511-0027','TYPE_CODE_128','Sedotan warna warni',NULL,NULL,50.00,'images/products/88ae0e1d-7225-4448-9b85-0309bad950ce.jpg',NULL,3,1,NULL,22,22,15,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (50,'GME-260511-0028','TYPE_CODE_128','Bel warna warni',NULL,NULL,50.00,'images/products/235368be-3f89-43a9-9326-08e9679488d2.png',NULL,3,1,NULL,42,41,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (51,'FCY-260511-0007','TYPE_CODE_128','Hanger',NULL,NULL,50.00,'/images/products/34JWNSADVpxAkZED6eCtCh3MkVgej2vrDt0VrBs6.jpg','[\"/images/products/34JWNSADVpxAkZED6eCtCh3MkVgej2vrDt0VrBs6.jpg\"]',4,2,NULL,18,12,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (53,'GME-260511-0029','TYPE_CODE_128','Balon Supporter',NULL,NULL,50.00,'/images/products/85782708-263a-4dc0-892e-51bac6ed5f19.png','[\"/images/products/85782708-263a-4dc0-892e-51bac6ed5f19.png\"]',3,1,NULL,6,6,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (54,'GME-260511-0030','TYPE_CODE_128','Karung',NULL,NULL,50.00,'images/products/9f77b090-0b5c-4c3c-bb9c-c2cdf3d02117.jpg',NULL,3,1,NULL,1,1,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (55,'FCY-260511-0008','TYPE_CODE_128','Tempat tissue',NULL,NULL,50.00,NULL,NULL,4,NULL,NULL,2,2,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (56,'MHE-260511-0001','TYPE_CODE_128','Tumblr corpu',NULL,NULL,50.00,NULL,NULL,6,2,NULL,7,7,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (57,'MHE-260511-0002','TYPE_CODE_128','Tumblr IF',NULL,NULL,50.00,NULL,NULL,6,2,NULL,5,5,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (58,'GME-260511-0031','TYPE_CODE_128','Dangerous Crossing',NULL,NULL,50.00,'/images/products/sq0oAPx9GWcK7CmWgpJMYJJdUA4SGAnLsgVYoiL7.jpg','["/images/products/sq0oAPx9GWcK7CmWgpJMYJJdUA4SGAnLsgVYoiL7.jpg"]',3,1,NULL,1,1,7,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (59,'GME-260511-0032','TYPE_CODE_128','Trompet',NULL,NULL,50.00,NULL,NULL,3,1,NULL,2,2,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (60,'FCY-260511-0009','TYPE_CODE_128','Sarung Tangan',NULL,NULL,50.00,NULL,NULL,4,1,NULL,24,24,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (61,'GME-260511-0033','TYPE_CODE_128','Matras Puzzle Angry Bird',NULL,NULL,50.00,NULL,NULL,3,1,NULL,16,16,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (62,'GME-260511-0034','TYPE_CODE_128','Matras Puzzle Huruf',NULL,NULL,50.00,NULL,NULL,3,1,NULL,21,21,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (56,'MHE-260511-0001','TYPE_CODE_128','Tumblr corpu',NULL,NULL,50.00,'/images/products/076002ca-0b80-443c-bebc-4d49fbc0c5a7.png','[\"/images/products/076002ca-0b80-443c-bebc-4d49fbc0c5a7.png\"]',6,2,NULL,7,7,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (57,'MHE-260511-0002','TYPE_CODE_128','Tumblr IF',NULL,NULL,50.00,'/images/products/0e4ea1e1-6b40-418c-a1a4-f0246cd67927.png','[\"/images/products/0e4ea1e1-6b40-418c-a1a4-f0246cd67927.png\"]',6,2,NULL,5,5,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (58,'GME-260511-0031','TYPE_CODE_128','Dangerous Crossing',NULL,NULL,50.00,'/images/products/sq0oAPx9GWcK7CmWgpJMYJJdUA4SGAnLsgVYoiL7.jpg','[\"/images/products/sq0oAPx9GWcK7CmWgpJMYJJdUA4SGAnLsgVYoiL7.jpg\"]',3,1,NULL,1,1,7,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (59,'GME-260511-0032','TYPE_CODE_128','Trompet',NULL,NULL,50.00,'images/products/2d66993a-f836-4cbf-94f7-4d16ef467d08.jpg',NULL,3,1,NULL,2,2,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (60,'FCY-260511-0009','TYPE_CODE_128','Sarung Tangan',NULL,NULL,50.00,'images/products/d7d0afd6-4028-41ed-b71f-3a33be0acc95.jpg',NULL,4,1,NULL,24,24,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (61,'GME-260511-0033','TYPE_CODE_128','Matras Puzzle Angry Bird',NULL,NULL,50.00,'images/products/d58de4c1-8b23-4cc0-a6de-a5ba5146d9cd.jpg',NULL,3,1,NULL,16,16,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (62,'GME-260511-0034','TYPE_CODE_128','Matras Puzzle Huruf',NULL,NULL,50.00,'images/products/34117537-c7ce-4265-813c-9e38e7cf1113.jpg',NULL,3,1,NULL,21,21,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (63,'UT-260512-0063','TYPE_CODE_128','Tas Hitam',NULL,NULL,50.00,NULL,NULL,NULL,4,NULL,26,26,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (64,'UT-260512-0064','TYPE_CODE_128','Tas Hijau',NULL,NULL,50.00,NULL,NULL,NULL,4,NULL,1,1,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (67,'MHE-260511-0003','TYPE_CODE_128','Topi Bucket',NULL,NULL,50.00,NULL,NULL,6,4,NULL,9,9,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (68,'MHE-260511-0004','TYPE_CODE_128','Cargo Rip Stop',NULL,NULL,50.00,NULL,NULL,6,4,NULL,6,6,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (69,'MHE-260511-0005','TYPE_CODE_128','Cap Coklat',NULL,NULL,50.00,NULL,NULL,6,4,NULL,4,4,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (72,'MSK-260511-0001','TYPE_CODE_128','Angklung',NULL,NULL,50.00,'/images/products/MWqEgmHj0SIsEYzmpGwTCQwvZx0DmPZgpULgFihO.jpg','["/images/products/MWqEgmHj0SIsEYzmpGwTCQwvZx0DmPZgpULgFihO.jpg"]',8,2,NULL,5,5,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (72,'MSK-260511-0001','TYPE_CODE_128','Angklung',NULL,NULL,50.00,'/images/products/MWqEgmHj0SIsEYzmpGwTCQwvZx0DmPZgpULgFihO.jpg','[\"/images/products/MWqEgmHj0SIsEYzmpGwTCQwvZx0DmPZgpULgFihO.jpg\"]',8,2,NULL,5,5,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (75,'FCY-260511-0010','TYPE_CODE_128','Piagam Generasi Muda 2015',NULL,NULL,50.00,NULL,NULL,4,1,NULL,1,1,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (76,'FCY-260511-0011','TYPE_CODE_128','Photo Frame',NULL,NULL,50.00,NULL,NULL,4,1,NULL,1,1,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (76,'FCY-260511-0011','TYPE_CODE_128','Photo Frame',NULL,NULL,50.00,'/images/products/7e4ce4db-a96b-4e0d-88f7-887070e7f294.png','[\"/images/products/7e4ce4db-a96b-4e0d-88f7-887070e7f294.png\"]',4,1,NULL,1,1,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (77,'FCY-260511-0012','TYPE_CODE_128','Piagam Instruktur Terbaik 2009',NULL,NULL,50.00,NULL,NULL,4,1,NULL,1,1,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (78,'FCY-260511-0013','TYPE_CODE_128','Piagam Instruktur Terbaik 2010',NULL,NULL,50.00,NULL,NULL,4,1,NULL,1,1,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (79,'FCY-260511-0014','TYPE_CODE_128','Skor Pelanggaran Tata Tertib',NULL,NULL,50.00,NULL,NULL,4,1,NULL,1,1,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (79,'FCY-260511-0014','TYPE_CODE_128','Skor Pelanggaran Tata Tertib',NULL,NULL,50.00,'/images/products/80977e71-155a-424f-bde1-c90cc1a6b445.png','[\"/images/products/80977e71-155a-424f-bde1-c90cc1a6b445.png\"]',4,1,NULL,1,1,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (80,'FCY-260511-0015','TYPE_CODE_128','Piagam Mektel 2012',NULL,NULL,50.00,NULL,NULL,4,1,NULL,1,1,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (81,'FCY-260511-0016','TYPE_CODE_128','Piagam Mektel 2013',NULL,NULL,50.00,NULL,NULL,4,1,NULL,2,2,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (82,'FCY-260511-0017','TYPE_CODE_128','Struktur Task Force 2011',NULL,NULL,50.00,NULL,NULL,4,1,NULL,1,1,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (83,'FCY-260511-0018','TYPE_CODE_128','Photo Frame Kosong Hitam',NULL,NULL,50.00,NULL,NULL,4,1,NULL,1,1,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (82,'FCY-260511-0017','TYPE_CODE_128','Struktur Task Force 2011',NULL,NULL,50.00,'/images/products/d50b94cf-4b91-464e-b512-54625f50ea7a.png','[\"/images/products/d50b94cf-4b91-464e-b512-54625f50ea7a.png\"]',4,1,NULL,1,1,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (83,'FCY-260511-0018','TYPE_CODE_128','Photo Frame Kosong Hitam',NULL,NULL,50.00,'/images/products/f7217a92-c24c-4a63-9e37-88a11b07c299.png','[\"/images/products/f7217a92-c24c-4a63-9e37-88a11b07c299.png\"]',4,1,NULL,1,1,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (84,'FCY-260511-0019','TYPE_CODE_128','Kain Terpal',NULL,NULL,50.00,NULL,NULL,4,NULL,NULL,1,1,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (85,'MHE-260511-0006','TYPE_CODE_128','Pulpen Corpu',NULL,NULL,50.00,NULL,NULL,6,3,NULL,7,7,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (86,'ATK-260511-0002','TYPE_CODE_128','Label Dot Orange',NULL,NULL,50.00,NULL,NULL,5,NULL,NULL,1,1,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
@@ -294,65 +295,65 @@ INSERT INTO [products] ([id],[sku],[barcode_type],[name],[description],[transact
   (94,'GME-260511-0042','TYPE_CODE_128','Game Bambu Size 2 Biru',NULL,NULL,50.00,NULL,NULL,3,1,NULL,16,16,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (95,'GME-260511-0043','TYPE_CODE_128','Game Bambu Size 3 Biru',NULL,NULL,50.00,NULL,NULL,3,1,NULL,9,9,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (96,'GME-260511-0044','TYPE_CODE_128','Game Bambu Size 4 Biru',NULL,NULL,50.00,NULL,NULL,3,1,NULL,8,8,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (97,'FCY-260511-0020','TYPE_CODE_128','Sertifikat PU 2017 with Frame',NULL,NULL,50.00,'/images/products/ziBLRils3QsuPxLkAC98Fs3eHlg5bClL7FXjXsV5.jpg','["/images/products/ziBLRils3QsuPxLkAC98Fs3eHlg5bClL7FXjXsV5.jpg"]',4,1,NULL,9,9,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (97,'FCY-260511-0020','TYPE_CODE_128','Sertifikat PU 2017 with Frame',NULL,NULL,50.00,'images/products/2987bd3c-361b-49fc-9f52-51645cbc3d73.jpg','[\"/images/products/ziBLRils3QsuPxLkAC98Fs3eHlg5bClL7FXjXsV5.jpg\"]',4,1,NULL,9,9,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (98,'FCY-260511-0021','TYPE_CODE_128','Miniatur Tiang Kecil',NULL,NULL,50.00,NULL,NULL,4,NULL,NULL,1,1,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (99,'FCY-260511-0022','TYPE_CODE_128','Slayer Hijau',NULL,NULL,50.00,NULL,NULL,4,NULL,NULL,1,1,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (100,'ATK-260511-0003','TYPE_CODE_128','Notebook Corpu',NULL,NULL,50.00,NULL,NULL,5,NULL,NULL,1,1,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (101,'FCY-260511-0023','TYPE_CODE_128','Bingkai',NULL,NULL,50.00,NULL,NULL,4,NULL,NULL,37,4,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (105,'FCY-260511-0024','TYPE_CODE_128','Kompor Listrik',NULL,NULL,50.00,NULL,NULL,4,NULL,NULL,1,1,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (106,'FCY-260511-0025','TYPE_CODE_128','Papan Jalan Biru + HVS',NULL,NULL,50.00,NULL,NULL,4,NULL,NULL,1,1,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (107,'FCY-260511-0026','TYPE_CODE_128','Frame Foto Kecil Putih',NULL,NULL,50.00,NULL,NULL,4,NULL,NULL,8,8,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (107,'FCY-260511-0026','TYPE_CODE_128','Frame Foto Kecil Putih',NULL,NULL,50.00,'images/products/f5ab8456-30f5-4cf7-b9eb-c5494c366253.jpg',NULL,4,NULL,NULL,8,8,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (110,'FCY-260511-0027','TYPE_CODE_128','Berkas Kegiatan PU (1 Bundle)',NULL,NULL,50.00,NULL,NULL,4,NULL,NULL,1,1,16,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (111,'FCY-260511-0028','TYPE_CODE_128','Karikatur Kampus Merdeka',NULL,NULL,50.00,NULL,NULL,4,1,NULL,2,2,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (112,'FCY-260511-0029','TYPE_CODE_128','Sertifikat sponsor',NULL,NULL,50.00,NULL,NULL,4,1,NULL,1,1,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (114,'FCY-260511-0030','TYPE_CODE_128','Karikatur Best Prime Mover PUDP 2021',NULL,NULL,50.00,NULL,NULL,4,1,NULL,3,3,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (115,'GME-260511-0045','TYPE_CODE_128','How do you see it (Game)',NULL,NULL,50.00,NULL,NULL,3,1,NULL,2,2,7,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (116,'GME-260511-0046','TYPE_CODE_128','Paradigm (Game)',NULL,NULL,50.00,NULL,NULL,3,1,NULL,6,6,7,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (117,'GME-260511-0047','TYPE_CODE_128','SBS Challenge (Game)',NULL,NULL,50.00,NULL,NULL,3,1,NULL,1,1,7,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (118,'GME-260511-0048','TYPE_CODE_128','Productivity game',NULL,NULL,50.00,NULL,NULL,3,1,NULL,1,1,7,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (111,'FCY-260511-0028','TYPE_CODE_128','Karikatur Kampus Merdeka',NULL,NULL,50.00,'/images/products/ac461a9d-8df9-43d2-bedb-18060e46e33f.png','[\"/images/products/ac461a9d-8df9-43d2-bedb-18060e46e33f.png\"]',4,1,NULL,2,2,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (112,'FCY-260511-0029','TYPE_CODE_128','Sertifikat sponsor',NULL,NULL,50.00,'/images/products/fd3138a1-ee58-4226-b0b9-69393050300e.png','[\"/images/products/fd3138a1-ee58-4226-b0b9-69393050300e.png\"]',4,1,NULL,1,1,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (114,'FCY-260511-0030','TYPE_CODE_128','Karikatur Best Prime Mover PUDP 2021',NULL,NULL,50.00,'/images/products/9f2228c1-1bee-471b-83c1-1cdd48461f7c.png','[\"/images/products/9f2228c1-1bee-471b-83c1-1cdd48461f7c.png\"]',4,1,NULL,3,3,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (115,'GME-260511-0045','TYPE_CODE_128','How do you see it (Game)',NULL,NULL,50.00,'images/products/1011778b-875d-41e2-b09d-62da06614f42.jpg',NULL,3,1,NULL,2,2,7,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (116,'GME-260511-0046','TYPE_CODE_128','Paradigm (Game)',NULL,NULL,50.00,'images/products/f63a80a9-aebf-4e29-a6eb-ffea065bc559.jpg',NULL,3,1,NULL,6,6,7,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (117,'GME-260511-0047','TYPE_CODE_128','SBS Challenge (Game)',NULL,NULL,50.00,'images/products/ad8d1a15-20ff-4a76-9fe8-5f47477125d6.jpg',NULL,3,1,NULL,1,1,7,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (118,'GME-260511-0048','TYPE_CODE_128','Productivity game',NULL,NULL,50.00,'/images/products/01da93be-a520-48ef-855a-00ba36881ab6.jpg','[\"/images/products/01da93be-a520-48ef-855a-00ba36881ab6.jpg\", \"/images/products/c8c647f2-4c17-4094-a240-276745c21ff7.jpg\"]',3,1,NULL,1,1,7,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (119,'GME-260511-0049','TYPE_CODE_128','Guidance game',NULL,NULL,50.00,NULL,NULL,3,1,NULL,2,2,17,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (120,'FCY-260511-0031','TYPE_CODE_128','Time Keeper',NULL,NULL,50.00,NULL,NULL,4,1,NULL,1,1,7,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (121,'GME-260511-0050','TYPE_CODE_128','Find a match game',NULL,NULL,50.00,'/images/products/2bXVoSfOvfCbc4iccQD9xSDddPP9xJjlveVbhXfJ.jpg','["/images/products/2bXVoSfOvfCbc4iccQD9xSDddPP9xJjlveVbhXfJ.jpg"]',3,1,NULL,2,2,7,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (122,'GME-260511-0051','TYPE_CODE_128','Communicating for performance (Game)',NULL,NULL,50.00,NULL,NULL,3,1,NULL,1,1,14,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (123,'GME-260511-0052','TYPE_CODE_128','Party pooper',NULL,NULL,50.00,NULL,NULL,3,1,NULL,1,1,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (124,'GME-260511-0053','TYPE_CODE_128','Airport Controller (Game)',NULL,NULL,50.00,NULL,NULL,3,1,NULL,0,1,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (125,'GME-260511-0054','TYPE_CODE_128','Puzzle balok',NULL,NULL,50.00,NULL,NULL,3,1,NULL,2,2,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (126,'GME-260511-0055','TYPE_CODE_128','Category game',NULL,NULL,50.00,NULL,NULL,3,1,NULL,7,7,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (127,'GME-260511-0056','TYPE_CODE_128','Colaboration game',NULL,NULL,50.00,NULL,NULL,3,1,NULL,6,6,14,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (128,'GME-260511-0057','TYPE_CODE_128','Kartu cinta Indonesia',NULL,NULL,50.00,NULL,NULL,3,1,NULL,1,1,7,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (129,'GME-260511-0058','TYPE_CODE_128','Puzzle jalan',NULL,NULL,50.00,NULL,NULL,3,1,NULL,6,6,18,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (130,'GME-260511-0059','TYPE_CODE_128','Balon',NULL,NULL,50.00,NULL,NULL,3,1,NULL,4,4,19,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (120,'FCY-260511-0031','TYPE_CODE_128','Time Keeper',NULL,NULL,50.00,'images/products/050aaba3-3805-4539-8f71-6ab4235b483d.jpg',NULL,4,1,NULL,1,1,7,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (121,'GME-260511-0050','TYPE_CODE_128','Find a match game',NULL,NULL,50.00,'/images/products/2bXVoSfOvfCbc4iccQD9xSDddPP9xJjlveVbhXfJ.jpg','[\"/images/products/2bXVoSfOvfCbc4iccQD9xSDddPP9xJjlveVbhXfJ.jpg\"]',3,1,NULL,2,2,7,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (122,'GME-260511-0051','TYPE_CODE_128','Communicating for performance (Game)',NULL,NULL,50.00,'/images/products/a1ff7e68-a806-436c-8dec-bc4a4ff5c396.png','[\"/images/products/a1ff7e68-a806-436c-8dec-bc4a4ff5c396.png\"]',3,1,NULL,1,1,14,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (123,'GME-260511-0052','TYPE_CODE_128','Party pooper',NULL,NULL,50.00,'images/products/f514ced3-a6af-4f70-8fd9-59bc8979d5a1.png',NULL,3,1,NULL,1,1,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (124,'GME-260511-0053','TYPE_CODE_128','Airport Controller (Game)',NULL,NULL,50.00,'/images/products/7ab31872-88df-494d-9a69-02f4623978b9.png','[\"/images/products/7ab31872-88df-494d-9a69-02f4623978b9.png\"]',3,1,NULL,0,1,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (125,'GME-260511-0054','TYPE_CODE_128','Puzzle balok',NULL,NULL,50.00,'images/products/76771ffc-3bde-4a01-b5b2-423b2c9e83e1.jpg',NULL,3,1,NULL,2,2,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (126,'GME-260511-0055','TYPE_CODE_128','Category game',NULL,NULL,50.00,'images/products/eb0840bb-164d-4362-8289-9ad412db08db.jpg',NULL,3,1,NULL,7,7,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (127,'GME-260511-0056','TYPE_CODE_128','Colaboration game',NULL,NULL,50.00,'images/products/1eac8e33-6839-4331-8989-4461b07568fc.jpg',NULL,3,1,NULL,6,6,14,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (128,'GME-260511-0057','TYPE_CODE_128','Kartu cinta Indonesia',NULL,NULL,50.00,'images/products/1dd80f77-1b7e-4336-9cc3-eb3e26532df6.jpg',NULL,3,1,NULL,1,1,7,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (129,'GME-260511-0058','TYPE_CODE_128','Puzzle jalan',NULL,NULL,50.00,'images/products/7bc7dd23-01ce-4f30-b1e5-b2eecb65add7.jpg',NULL,3,1,NULL,6,6,18,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (130,'GME-260511-0059','TYPE_CODE_128','Balon',NULL,NULL,50.00,'images/products/b4af5cc4-83f8-483c-bc40-fb916b72c2ba.jpg',NULL,3,1,NULL,4,4,19,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (131,'GME-260511-0060','TYPE_CODE_128','The dangerous crossing',NULL,NULL,50.00,NULL,NULL,3,1,NULL,7,7,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (132,'GME-260511-0061','TYPE_CODE_128','Lets play music (Game)',NULL,NULL,50.00,NULL,NULL,3,1,NULL,1,1,14,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (133,'GME-260511-0062','TYPE_CODE_128','Stack them up (Game)',NULL,NULL,50.00,NULL,NULL,3,1,NULL,6,6,14,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (134,'GME-260511-0063','TYPE_CODE_128','Ethics game',NULL,NULL,50.00,NULL,NULL,3,1,NULL,1,1,20,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (135,'GME-260511-0064','TYPE_CODE_128','Ketapel',NULL,NULL,50.00,NULL,NULL,3,1,NULL,6,6,20,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (132,'GME-260511-0061','TYPE_CODE_128','Lets play music (Game)',NULL,NULL,50.00,'images/products/439ecc23-f0a8-48ba-80df-9a2bbe1f71cf.jpg',NULL,3,1,NULL,1,1,14,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (133,'GME-260511-0062','TYPE_CODE_128','Stack them up (Game)',NULL,NULL,50.00,'images/products/3ad12342-7caf-4699-bd7b-1f1a04d3fd86.jpg',NULL,3,1,NULL,6,6,14,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (134,'GME-260511-0063','TYPE_CODE_128','Ethics game',NULL,NULL,50.00,'images/products/9f2ae981-0060-4093-9ff3-9b1ec9a378cd.jpg',NULL,3,1,NULL,1,1,20,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (135,'GME-260511-0064','TYPE_CODE_128','Ketapel',NULL,NULL,50.00,'images/products/3568eebc-0b01-4684-bfdc-31f842fc36a3.jpg',NULL,3,1,NULL,6,6,20,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (136,'GME-260511-0065','TYPE_CODE_128','Keyboard game',NULL,NULL,50.00,NULL,NULL,3,1,NULL,1,1,20,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (137,'GME-260511-0066','TYPE_CODE_128','Out of my way (Game)',NULL,NULL,50.00,NULL,NULL,3,1,NULL,1,1,14,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (137,'GME-260511-0066','TYPE_CODE_128','Out of my way (Game)',NULL,NULL,50.00,'/images/products/563a1720-8e1f-4653-a3dd-0f4a933485af.png','[\"/images/products/563a1720-8e1f-4653-a3dd-0f4a933485af.png\"]',3,1,NULL,1,1,14,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (138,'GME-260511-0067','TYPE_CODE_128','Uno jenga',NULL,NULL,50.00,NULL,NULL,3,1,NULL,1,1,7,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (139,'GME-260511-0068','TYPE_CODE_128','Jawaban devide es impera',NULL,NULL,50.00,NULL,NULL,3,1,NULL,1,1,7,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (140,'GME-260511-0069','TYPE_CODE_128','Uang mainan',NULL,NULL,50.00,NULL,NULL,3,1,NULL,6,6,20,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (140,'GME-260511-0069','TYPE_CODE_128','Uang mainan',NULL,NULL,50.00,'images/products/3d82539d-3a3a-47bb-b6ac-7b9c295a134f.jpg',NULL,3,1,NULL,6,6,20,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (141,'GME-260511-0070','TYPE_CODE_128','Papan challenge ombak',NULL,NULL,50.00,NULL,NULL,3,1,NULL,1,1,7,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (142,'GME-260511-0071','TYPE_CODE_128','Devide et impera (Game)',NULL,NULL,50.00,'/images/products/michcKQcwIVglbgwVwZhuNqrxBwE5xuqOsw2w0aR.jpg','["/images/products/michcKQcwIVglbgwVwZhuNqrxBwE5xuqOsw2w0aR.jpg"]',3,1,NULL,23,23,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (143,'GME-260511-0072','TYPE_CODE_128','Who grows what (Game)',NULL,NULL,50.00,NULL,NULL,3,1,NULL,2,2,7,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (144,'GME-260511-0073','TYPE_CODE_128','Botol kaca',NULL,NULL,50.00,NULL,NULL,3,1,NULL,3,3,20,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (145,'GME-260511-0074','TYPE_CODE_128','Human Leap',NULL,NULL,50.00,NULL,NULL,3,1,NULL,1,1,17,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (142,'GME-260511-0071','TYPE_CODE_128','Devide et impera (Game)',NULL,NULL,50.00,'/images/products/michcKQcwIVglbgwVwZhuNqrxBwE5xuqOsw2w0aR.jpg','[\"/images/products/michcKQcwIVglbgwVwZhuNqrxBwE5xuqOsw2w0aR.jpg\"]',3,1,NULL,23,23,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (143,'GME-260511-0072','TYPE_CODE_128','Who grows what (Game)',NULL,NULL,50.00,'images/products/256582ed-db3a-4915-aa2a-94c0aff24ca3.jpg',NULL,3,1,NULL,2,2,7,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (144,'GME-260511-0073','TYPE_CODE_128','Botol kaca',NULL,NULL,50.00,'/images/products/fe08cf14-db20-40bb-b47f-a09acf0d1a61.png','[\"/images/products/fe08cf14-db20-40bb-b47f-a09acf0d1a61.png\"]',3,1,NULL,3,3,20,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (145,'GME-260511-0074','TYPE_CODE_128','Human Leap',NULL,NULL,50.00,'images/products/3110ff19-9f63-4d50-947f-e33733cd7e07.jpg',NULL,3,1,NULL,1,1,17,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (146,'GME-260511-0075','TYPE_CODE_128','Ceforo challenge (Game)',NULL,NULL,50.00,NULL,NULL,3,1,NULL,1,1,7,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (147,'GME-260511-0076','TYPE_CODE_128','Puzzle tetris',NULL,NULL,50.00,'/images/products/2tMW75ykRWWoV6B2q4PMTu5OP8qayScb27cOLU6t.jpg','["/images/products/2tMW75ykRWWoV6B2q4PMTu5OP8qayScb27cOLU6t.jpg"]',3,1,NULL,1,1,7,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (147,'GME-260511-0076','TYPE_CODE_128','Puzzle tetris',NULL,NULL,50.00,'/images/products/2tMW75ykRWWoV6B2q4PMTu5OP8qayScb27cOLU6t.jpg','[\"/images/products/2tMW75ykRWWoV6B2q4PMTu5OP8qayScb27cOLU6t.jpg\"]',3,1,NULL,1,1,7,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (148,'MSK-260511-0002','TYPE_CODE_128','Tamborin kerincing',NULL,NULL,50.00,NULL,NULL,8,1,NULL,1,1,20,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (149,'GME-260511-0077','TYPE_CODE_128','Mainboard',NULL,NULL,50.00,'/images/products/YKS0CHs1cJeX0FsrVaQFMvZCYLP0OAirscXlLsS9.jpg','["/images/products/YKS0CHs1cJeX0FsrVaQFMvZCYLP0OAirscXlLsS9.jpg"]',3,1,NULL,1,1,20,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (150,'MSK-260511-0003','TYPE_CODE_128','Drum kecil',NULL,NULL,50.00,'/images/products/46kxifQTL6QWtn1VPw3NYR45Rw81CzwqOSqK78bH.jpg','["/images/products/46kxifQTL6QWtn1VPw3NYR45Rw81CzwqOSqK78bH.jpg"]',8,1,NULL,2,2,20,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (149,'GME-260511-0077','TYPE_CODE_128','Mainboard',NULL,NULL,50.00,'/images/products/YKS0CHs1cJeX0FsrVaQFMvZCYLP0OAirscXlLsS9.jpg','[\"/images/products/YKS0CHs1cJeX0FsrVaQFMvZCYLP0OAirscXlLsS9.jpg\"]',3,1,NULL,1,1,20,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (150,'MSK-260511-0003','TYPE_CODE_128','Drum kecil',NULL,NULL,50.00,'/images/products/46kxifQTL6QWtn1VPw3NYR45Rw81CzwqOSqK78bH.jpg','[\"/images/products/46kxifQTL6QWtn1VPw3NYR45Rw81CzwqOSqK78bH.jpg\"]',8,1,NULL,2,2,20,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (151,'MSK-260511-0004','TYPE_CODE_128','Stick drum',NULL,NULL,50.00,NULL,NULL,8,1,NULL,7,7,20,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (152,'ETK-260511-0001','TYPE_CODE_128','Cable manager',NULL,NULL,50.00,NULL,NULL,9,1,NULL,4,4,20,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (153,'ETK-260511-0002','TYPE_CODE_128','Kabel gulungan',NULL,NULL,50.00,NULL,NULL,9,1,NULL,3,3,20,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (154,'FCY-260511-0032','TYPE_CODE_128','Kawat gulungan',NULL,NULL,50.00,NULL,NULL,4,1,NULL,1,1,20,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (155,'FCY-260511-0033','TYPE_CODE_128','Akrilik papan - nama ruangan',NULL,NULL,50.00,NULL,NULL,4,1,NULL,5,5,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (152,'ETK-260511-0001','TYPE_CODE_128','Cable manager',NULL,NULL,50.00,'images/products/e3680bde-7ed5-4508-85cb-48c5e564b993.jpg',NULL,9,1,NULL,4,4,20,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (153,'ETK-260511-0002','TYPE_CODE_128','Kabel gulungan',NULL,NULL,50.00,'images/products/8d67307c-ed6a-42ce-a1fa-ab8ce3436f79.jpg',NULL,9,1,NULL,3,3,20,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (154,'FCY-260511-0032','TYPE_CODE_128','Kawat gulungan',NULL,NULL,50.00,'images/products/c038ecc7-79f8-4b06-af07-7b9567fbba3e.jpg',NULL,4,1,NULL,1,1,20,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (155,'FCY-260511-0033','TYPE_CODE_128','Akrilik papan - nama ruangan',NULL,NULL,50.00,'images/products/61e678cd-3425-4f2e-8303-d3aa448cfd97.jpg',NULL,4,1,NULL,5,5,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (156,'FCY-260511-0034','TYPE_CODE_128','Silinder paralon',NULL,NULL,50.00,NULL,NULL,4,1,NULL,40,40,20,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (157,'FCY-260511-0035','TYPE_CODE_128','Pipa & paralon',NULL,NULL,50.00,NULL,NULL,4,1,NULL,1,1,14,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (158,'FCY-260511-0036','TYPE_CODE_128','Canvas',NULL,NULL,50.00,NULL,NULL,4,1,NULL,1,1,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (158,'FCY-260511-0036','TYPE_CODE_128','Canvas',NULL,NULL,50.00,'images/products/50118487-ee9a-4ba7-b89b-79fc8e125b22.jpg',NULL,4,1,NULL,1,1,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (159,'FCY-260511-0037','TYPE_CODE_128','Penghargaan Astra Virtual Playday',NULL,NULL,50.00,NULL,NULL,4,1,NULL,1,1,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (160,'FCY-260511-0038','TYPE_CODE_128','Penghargaan Astra Toll Road',NULL,NULL,50.00,NULL,NULL,4,1,NULL,1,1,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (161,'GME-260511-0078','TYPE_CODE_128','Games Pie Face Showdown',NULL,NULL,50.00,'/images/products/l4uh3qAaLxoqKJ0IVh3JNArVT4vWbVePnrzt2hoU.jpg','["/images/products/l4uh3qAaLxoqKJ0IVh3JNArVT4vWbVePnrzt2hoU.jpg"]',3,1,NULL,1,1,14,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (161,'GME-260511-0078','TYPE_CODE_128','Games Pie Face Showdown',NULL,NULL,50.00,'/images/products/l4uh3qAaLxoqKJ0IVh3JNArVT4vWbVePnrzt2hoU.jpg','[\"/images/products/l4uh3qAaLxoqKJ0IVh3JNArVT4vWbVePnrzt2hoU.jpg\"]',3,1,NULL,1,1,14,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (162,'FCY-260511-0039','TYPE_CODE_128','Remote Projector Epson',NULL,NULL,50.00,NULL,NULL,4,NULL,NULL,5,5,20,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (163,'FCY-260511-0040','TYPE_CODE_128','Remote Perfume Dispenser',NULL,NULL,50.00,NULL,NULL,4,NULL,NULL,1,1,20,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (164,'ETK-260511-0003','TYPE_CODE_128','Commscope Port Unshuttered (LAN Port)',NULL,NULL,50.00,NULL,NULL,9,NULL,NULL,5,5,20,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
@@ -365,52 +366,52 @@ INSERT INTO [products] ([id],[sku],[barcode_type],[name],[description],[transact
   (171,'FCY-260511-0044','TYPE_CODE_128','Rangka X-Banner',NULL,NULL,50.00,NULL,NULL,4,NULL,NULL,2,2,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (172,'FCY-260511-0045','TYPE_CODE_128','Raket Tennis Yonex',NULL,NULL,50.00,NULL,NULL,4,NULL,NULL,1,1,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (173,'FCY-260511-0046','TYPE_CODE_128','Life Vest',NULL,NULL,50.00,NULL,NULL,4,NULL,NULL,2,2,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (174,'FCY-260511-0047','TYPE_CODE_128','Plakat BPK Penabur Jakarta',NULL,NULL,50.00,NULL,NULL,4,NULL,NULL,1,1,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (174,'FCY-260511-0047','TYPE_CODE_128','Plakat BPK Penabur Jakarta',NULL,NULL,50.00,'/images/products/7dbf8e00-115f-4551-b785-2103ec487dd4.png','[\"/images/products/7dbf8e00-115f-4551-b785-2103ec487dd4.png\"]',4,NULL,NULL,1,1,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (175,'FCY-260511-0048','TYPE_CODE_128','QCC Dashboard',NULL,NULL,50.00,NULL,NULL,4,NULL,NULL,5,5,21,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (176,'MHE-260511-0007','TYPE_CODE_128','Gelang Corpu',NULL,NULL,50.00,NULL,NULL,6,2,NULL,279,30,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (180,'FCY-260511-0049','TYPE_CODE_128','Gelas Plastik',NULL,NULL,50.00,NULL,NULL,4,1,NULL,69,2,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (183,'FCY-260511-0050','TYPE_CODE_128','Cup',NULL,NULL,50.00,NULL,NULL,4,1,NULL,98,20,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (185,'FCY-260511-0051','TYPE_CODE_128','Benang',NULL,NULL,50.00,NULL,NULL,4,1,NULL,11,5,22,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (187,'FCY-260511-0052','TYPE_CODE_128','Tali tambang putih',NULL,NULL,50.00,NULL,NULL,4,1,NULL,5,5,22,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (188,'FCY-260511-0053','TYPE_CODE_128','Pita Dekorasi',NULL,NULL,50.00,NULL,NULL,4,1,NULL,4,4,22,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (189,'FCY-260511-0054','TYPE_CODE_128','Kancing',NULL,NULL,50.00,NULL,NULL,4,1,NULL,5,1,23,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (176,'MHE-260511-0007','TYPE_CODE_128','Gelang Corpu',NULL,NULL,50.00,'/images/products/c3957bc5-bb05-437e-a306-644ddb6e6e9f.png','[\"/images/products/c3957bc5-bb05-437e-a306-644ddb6e6e9f.png\"]',6,2,NULL,279,30,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (180,'FCY-260511-0049','TYPE_CODE_128','Gelas Plastik',NULL,NULL,50.00,'images/products/8ed36c09-c097-4531-b0b4-1f2063e6eab9.jpg',NULL,4,1,NULL,69,2,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (183,'FCY-260511-0050','TYPE_CODE_128','Cup',NULL,NULL,50.00,'images/products/c93cdbea-7efc-419b-94af-08568b686284.jpg',NULL,4,1,NULL,98,20,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (185,'FCY-260511-0051','TYPE_CODE_128','Benang',NULL,NULL,50.00,'images/products/69104e83-cc7c-4b65-8aa2-fcab70d7f67a.jpg',NULL,4,1,NULL,11,5,22,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (187,'FCY-260511-0052','TYPE_CODE_128','Tali tambang putih',NULL,NULL,50.00,'images/products/787a6bb4-9846-44cd-a40e-e8f5419df25c.jpg',NULL,4,1,NULL,5,5,22,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (188,'FCY-260511-0053','TYPE_CODE_128','Pita Dekorasi',NULL,NULL,50.00,'images/products/4e742f1c-18dd-41ef-aff0-bd1153d46c44.jpg',NULL,4,1,NULL,4,4,22,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (189,'FCY-260511-0054','TYPE_CODE_128','Kancing',NULL,NULL,50.00,'images/products/a0aed741-cb88-4473-af12-a518ebc94d58.jpg',NULL,4,1,NULL,5,1,23,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (193,'FCY-260511-0055','TYPE_CODE_128','Jarum benang',NULL,NULL,50.00,NULL,NULL,4,1,NULL,1,1,14,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (194,'GME-260511-0080','TYPE_CODE_128','Hulahop warna besar',NULL,NULL,50.00,NULL,NULL,3,1,NULL,23,23,24,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (195,'GME-260511-0081','TYPE_CODE_128','Lilin malam',NULL,NULL,50.00,NULL,NULL,3,1,NULL,5,5,25,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (196,'FCY-260511-0056','TYPE_CODE_128','Karet',NULL,NULL,50.00,NULL,NULL,4,1,NULL,1,1,19,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (194,'GME-260511-0080','TYPE_CODE_128','Hulahop warna besar',NULL,NULL,50.00,'images/products/5ac6e8cc-cc8d-4078-a092-4b18c28366d2.jpg',NULL,3,1,NULL,23,23,24,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (195,'GME-260511-0081','TYPE_CODE_128','Lilin malam',NULL,NULL,50.00,'images/products/a918aae2-24fb-4084-8e24-506bcc980c7b.jpg',NULL,3,1,NULL,5,5,25,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (196,'FCY-260511-0056','TYPE_CODE_128','Karet',NULL,NULL,50.00,'images/products/3940831c-7e35-4e61-9176-b068f0b01de7.jpg',NULL,4,1,NULL,1,1,19,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (197,'MHE-260511-0008','TYPE_CODE_128','Jas Hitam Laki-laki',NULL,NULL,50.00,NULL,NULL,6,NULL,NULL,5,2,26,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (200,'MHE-260511-0009','TYPE_CODE_128','Kipas Handheld AHEMCEKECE',NULL,NULL,50.00,NULL,NULL,6,NULL,NULL,4,4,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (201,'MHE-260511-0010','TYPE_CODE_128','Totebag AHEMCEKECE',NULL,NULL,50.00,NULL,NULL,6,NULL,NULL,2,2,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (202,'GME-260511-0082','TYPE_CODE_128','Chips Karambol',NULL,NULL,50.00,'/images/products/pMsTfBV4xfTgq8Zh7zL7814bPpAVQywXxf4Ahfqz.jpg','["/images/products/pMsTfBV4xfTgq8Zh7zL7814bPpAVQywXxf4Ahfqz.jpg"]',3,1,NULL,42,42,10,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (203,'GME-260511-0083','TYPE_CODE_128','Holahoop Kecil',NULL,NULL,50.00,'/images/products/EE27aXrspLuCkBgAKjgLfO0vxTkRSTEgimM1QsaF.jpg','["/images/products/EE27aXrspLuCkBgAKjgLfO0vxTkRSTEgimM1QsaF.jpg"]',3,1,NULL,1,1,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (204,'FCY-260511-0057','TYPE_CODE_128','Cooking Gas Can',NULL,NULL,50.00,NULL,NULL,4,1,NULL,4,4,27,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (202,'GME-260511-0082','TYPE_CODE_128','Chips Karambol',NULL,NULL,50.00,'/images/products/pMsTfBV4xfTgq8Zh7zL7814bPpAVQywXxf4Ahfqz.jpg','[\"/images/products/pMsTfBV4xfTgq8Zh7zL7814bPpAVQywXxf4Ahfqz.jpg\"]',3,1,NULL,42,42,10,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (203,'GME-260511-0083','TYPE_CODE_128','Holahoop Kecil',NULL,NULL,50.00,'/images/products/EE27aXrspLuCkBgAKjgLfO0vxTkRSTEgimM1QsaF.jpg','[\"/images/products/EE27aXrspLuCkBgAKjgLfO0vxTkRSTEgimM1QsaF.jpg\"]',3,1,NULL,1,1,3,1,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (204,'FCY-260511-0057','TYPE_CODE_128','Cooking Gas Can',NULL,NULL,50.00,'/images/products/1a337488-01cf-4f3c-b69f-e25b648c9609.png','[\"/images/products/1a337488-01cf-4f3c-b69f-e25b648c9609.png\"]',4,1,NULL,4,4,27,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (205,'MHE-260511-0011','TYPE_CODE_128','Lanyard UTSMART Merah + Biru',NULL,NULL,50.00,NULL,NULL,6,4,NULL,90,97,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (208,'MHE-260511-0012','TYPE_CODE_128','Package UT Virtual Gathering - Kaos, Tumblr, Masket Mulut',NULL,NULL,50.00,NULL,NULL,6,4,NULL,6,6,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (210,'MHE-260511-0013','TYPE_CODE_128','Tas Reven',NULL,NULL,50.00,'/images/products/Yt3zw1dAU8nAXLh4arGdQG9eAgvc77VFT1OOcqcs.jpg','["/images/products/Yt3zw1dAU8nAXLh4arGdQG9eAgvc77VFT1OOcqcs.jpg"]',6,4,NULL,8,4,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (213,'MHE-260511-0014','TYPE_CODE_128','Sweater UT',NULL,NULL,50.00,'/images/products/4dO3o7jk4h8AAwTE0MtqVAsBATECRbalrBA9vF61.jpg','["/images/products/4dO3o7jk4h8AAwTE0MtqVAsBATECRbalrBA9vF61.jpg","/images/products/zu0s7nya2ZS6oRpT35YHIBCXM4Z50vFp4n0Xinol.jpg"]',6,4,NULL,113,7,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (228,'MHE-260511-0015','TYPE_CODE_128','Tumbler UT Smart',NULL,NULL,50.00,'/images/products/PvqIubSfSp7ootvD480EtqKrPw71BtY4kch5sYHE.jpg','["/images/products/PvqIubSfSp7ootvD480EtqKrPw71BtY4kch5sYHE.jpg"]',6,4,NULL,66,73,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (229,'MHE-260511-0016','TYPE_CODE_128','Tumbler Plastik UT Smart',NULL,NULL,50.00,'/images/products/ymVgSipIGBtEA6XLhpQMFbYbhITtaCCCw9xN0PTz.jpg','["/images/products/ymVgSipIGBtEA6XLhpQMFbYbhITtaCCCw9xN0PTz.jpg"]',6,4,NULL,367,181,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (210,'MHE-260511-0013','TYPE_CODE_128','Tas Reven',NULL,NULL,50.00,'/images/products/Yt3zw1dAU8nAXLh4arGdQG9eAgvc77VFT1OOcqcs.jpg','[\"/images/products/Yt3zw1dAU8nAXLh4arGdQG9eAgvc77VFT1OOcqcs.jpg\"]',6,4,NULL,8,4,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (213,'MHE-260511-0014','TYPE_CODE_128','Sweater UT',NULL,NULL,50.00,'/images/products/4dO3o7jk4h8AAwTE0MtqVAsBATECRbalrBA9vF61.jpg','[\"/images/products/4dO3o7jk4h8AAwTE0MtqVAsBATECRbalrBA9vF61.jpg\", \"/images/products/zu0s7nya2ZS6oRpT35YHIBCXM4Z50vFp4n0Xinol.jpg\"]',6,4,NULL,113,7,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (228,'MHE-260511-0015','TYPE_CODE_128','Tumbler UT Smart',NULL,NULL,50.00,'/images/products/PvqIubSfSp7ootvD480EtqKrPw71BtY4kch5sYHE.jpg','[\"/images/products/PvqIubSfSp7ootvD480EtqKrPw71BtY4kch5sYHE.jpg\"]',6,4,NULL,66,73,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (229,'MHE-260511-0016','TYPE_CODE_128','Tumbler Plastik UT Smart',NULL,NULL,50.00,'/images/products/ymVgSipIGBtEA6XLhpQMFbYbhITtaCCCw9xN0PTz.jpg','[\"/images/products/ymVgSipIGBtEA6XLhpQMFbYbhITtaCCCw9xN0PTz.jpg\"]',6,4,NULL,367,181,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (231,'MHE-260511-0017','TYPE_CODE_128','Box Packaging Sweater UNTR',NULL,NULL,50.00,NULL,NULL,6,4,NULL,26,25,14,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (232,'MHE-260511-0018','TYPE_CODE_128','Keranjang Anyaman',NULL,NULL,50.00,NULL,NULL,6,4,NULL,7,7,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (233,'MHE-260511-0019','TYPE_CODE_128','Stiker UT Smart Kuning Panjang',NULL,NULL,50.00,NULL,NULL,6,4,NULL,34,34,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (234,'FCY-260511-0058','TYPE_CODE_128','Good Detectors',NULL,NULL,50.00,'/images/products/RU1FW4EPxjCEI5QO3jjE6JyibUEGFErBlfyb0us6.jpg','["/images/products/RU1FW4EPxjCEI5QO3jjE6JyibUEGFErBlfyb0us6.jpg","/images/products/VrD5WCm5a1C63yGbfF2u6QYwVMJ87kqYXVQ6YFWJ.jpg","/images/products/5KvD4rwbFP1OQkbAw87a7KyDChgJblBpin6koDw2.jpg","/images/products/cRBAWsnGT2MNbL9D8TtzCj6rCFW4eWstFXHB58AE.jpg"]',4,4,NULL,3,3,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (234,'FCY-260511-0058','TYPE_CODE_128','Good Detectors',NULL,NULL,50.00,'/images/products/RU1FW4EPxjCEI5QO3jjE6JyibUEGFErBlfyb0us6.jpg','[\"/images/products/RU1FW4EPxjCEI5QO3jjE6JyibUEGFErBlfyb0us6.jpg\", \"/images/products/VrD5WCm5a1C63yGbfF2u6QYwVMJ87kqYXVQ6YFWJ.jpg\", \"/images/products/5KvD4rwbFP1OQkbAw87a7KyDChgJblBpin6koDw2.jpg\", \"/images/products/cRBAWsnGT2MNbL9D8TtzCj6rCFW4eWstFXHB58AE.jpg\"]',4,4,NULL,3,3,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (240,'MHE-260511-0020','TYPE_CODE_128','Rompi PU 2025',NULL,NULL,50.00,NULL,NULL,6,4,NULL,14,14,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (241,'MHE-260511-0021','TYPE_CODE_128','Jersey UT',NULL,NULL,50.00,'/images/products/9w4qRI6MNgZ0kKxO1paGfJmby70g7MNAIdJIIwK3.jpg','["/images/products/9w4qRI6MNgZ0kKxO1paGfJmby70g7MNAIdJIIwK3.jpg"]',6,4,NULL,205,5,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (241,'MHE-260511-0021','TYPE_CODE_128','Jersey UT',NULL,NULL,50.00,'/images/products/9w4qRI6MNgZ0kKxO1paGfJmby70g7MNAIdJIIwK3.jpg','[\"/images/products/9w4qRI6MNgZ0kKxO1paGfJmby70g7MNAIdJIIwK3.jpg\"]',6,4,NULL,205,5,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (253,'MHE-260511-0022','TYPE_CODE_128','ID Card',NULL,NULL,50.00,NULL,NULL,6,4,NULL,768,68,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (257,'MHE-260511-0023','TYPE_CODE_128','ID Card Batik Tali',NULL,NULL,50.00,NULL,NULL,6,4,NULL,159,97,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (263,'MHE-260511-0024','TYPE_CODE_128','ID Card Holder',NULL,NULL,50.00,NULL,NULL,6,4,NULL,563,508,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (265,'MHE-260511-0025','TYPE_CODE_128','Giftset Mentor AFLP - Dus',NULL,NULL,50.00,'/images/products/I9Q9a6IrwVGxsjh08PojcleWsXcAlQvbRwy3Q03F.jpg','["/images/products/I9Q9a6IrwVGxsjh08PojcleWsXcAlQvbRwy3Q03F.jpg","/images/products/eKNJtyYmrbsZEOlGieWl2WjZ3Xsm3e9sw9S9eDit.jpg","/images/products/VPAzUeOZNA3LXbh4LP0SocPWhTjch58eXuA9pDuc.jpg"]',6,4,NULL,155,18,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (265,'MHE-260511-0025','TYPE_CODE_128','Giftset Mentor AFLP - Dus',NULL,NULL,50.00,'/images/products/I9Q9a6IrwVGxsjh08PojcleWsXcAlQvbRwy3Q03F.jpg','[\"/images/products/I9Q9a6IrwVGxsjh08PojcleWsXcAlQvbRwy3Q03F.jpg\", \"/images/products/eKNJtyYmrbsZEOlGieWl2WjZ3Xsm3e9sw9S9eDit.jpg\", \"/images/products/VPAzUeOZNA3LXbh4LP0SocPWhTjch58eXuA9pDuc.jpg\"]',6,4,NULL,155,18,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (272,'MHE-260511-0026','TYPE_CODE_128','Buku Batubara Indonesia',NULL,NULL,50.00,NULL,NULL,6,4,NULL,7,7,29,0,0,'2026-05-11 13:46:24','2026-05-26 09:46:52'),
   (273,'MHE-260511-0027','TYPE_CODE_128','Gift Box AFLP 2025 - Dus',NULL,NULL,50.00,NULL,NULL,6,4,NULL,94,21,3,0,0,'2026-05-11 13:46:24','2026-05-26 09:46:52'),
-  (278,'MHE-260511-0028','TYPE_CODE_128','Giftbox AALP Sleeve Laptop Sovlo',NULL,NULL,50.00,'/images/products/6xEFpX4Y9W4gThatgZoaB9iEvgJaj58HQ2ajxsCH.jpg','["/images/products/6xEFpX4Y9W4gThatgZoaB9iEvgJaj58HQ2ajxsCH.jpg","/images/products/qV6RD5vJOL1yRCpJ6skoMK4lx6ySu56crAdK299V.jpg"]',6,4,NULL,10,10,3,0,0,'2026-05-11 13:46:24','2026-05-26 09:46:52'),
+  (278,'MHE-260511-0028','TYPE_CODE_128','Giftbox AALP Sleeve Laptop Sovlo',NULL,NULL,50.00,'/images/products/6xEFpX4Y9W4gThatgZoaB9iEvgJaj58HQ2ajxsCH.jpg','[\"/images/products/6xEFpX4Y9W4gThatgZoaB9iEvgJaj58HQ2ajxsCH.jpg\", \"/images/products/qV6RD5vJOL1yRCpJ6skoMK4lx6ySu56crAdK299V.jpg\"]',6,4,NULL,10,10,3,0,0,'2026-05-11 13:46:24','2026-05-26 09:46:52'),
   (279,'MHE-260511-0029','TYPE_CODE_128','Giftbox besar AALP (kosong)',NULL,NULL,50.00,NULL,NULL,6,4,NULL,7,7,3,0,0,'2026-05-11 13:46:24','2026-05-26 09:46:52'),
-  (280,'MHE-260511-0030','TYPE_CODE_128','Giftbox Notebook PB + Pen - Dus',NULL,NULL,50.00,'/images/products/4gh6SKqTHq0jMUACqEhesrJDbYCLfx1mKTJi2sIL.jpg','["/images/products/4gh6SKqTHq0jMUACqEhesrJDbYCLfx1mKTJi2sIL.jpg","/images/products/uYzWlEszPscVilHlhvRmVbyprK2biIbHEXsfQLzi.jpg","/images/products/lSXEMDYu7I5uYf26aTcoLnKHadhzIax0AvjW5V6b.jpg","/images/products/chh4TkdWhWhbhWTX8OrrBmKIuYD0fodTuVOstxcp.jpg"]',6,4,NULL,35,20,3,0,0,'2026-05-11 13:46:24','2026-05-26 09:46:52'),
-  (282,'MHE-260511-0031','TYPE_CODE_128','Merch Assessor - PB Baseus',NULL,NULL,50.00,'/images/products/aS09T1ym2S5miKgmLkTj7R263Jt6Wyfn7tbLQMlf.jpg','["/images/products/aS09T1ym2S5miKgmLkTj7R263Jt6Wyfn7tbLQMlf.jpg"]',6,4,NULL,5,5,3,0,0,'2026-05-11 13:46:24','2026-05-26 09:46:52'),
-  (283,'MHE-260511-0032','TYPE_CODE_128','Merch Assessor - TWS Baseus',NULL,NULL,50.00,'/images/products/MSeFMzMm2Z1f01p0RgN3ew2Fe5UgIDQQJZ1hOKqX.jpg','["/images/products/MSeFMzMm2Z1f01p0RgN3ew2Fe5UgIDQQJZ1hOKqX.jpg"]',6,4,NULL,20,10,3,0,0,'2026-05-11 13:46:24','2026-05-26 09:46:52'),
+  (280,'MHE-260511-0030','TYPE_CODE_128','Giftbox Notebook PB + Pen - Dus',NULL,NULL,50.00,'/images/products/4gh6SKqTHq0jMUACqEhesrJDbYCLfx1mKTJi2sIL.jpg','[\"/images/products/4gh6SKqTHq0jMUACqEhesrJDbYCLfx1mKTJi2sIL.jpg\", \"/images/products/uYzWlEszPscVilHlhvRmVbyprK2biIbHEXsfQLzi.jpg\", \"/images/products/lSXEMDYu7I5uYf26aTcoLnKHadhzIax0AvjW5V6b.jpg\", \"/images/products/chh4TkdWhWhbhWTX8OrrBmKIuYD0fodTuVOstxcp.jpg\"]',6,4,NULL,35,20,3,0,0,'2026-05-11 13:46:24','2026-05-26 09:46:52'),
+  (282,'MHE-260511-0031','TYPE_CODE_128','Merch Assessor - PB Baseus',NULL,NULL,50.00,'/images/products/aS09T1ym2S5miKgmLkTj7R263Jt6Wyfn7tbLQMlf.jpg','[\"/images/products/aS09T1ym2S5miKgmLkTj7R263Jt6Wyfn7tbLQMlf.jpg\"]',6,4,NULL,5,5,3,0,0,'2026-05-11 13:46:24','2026-05-26 09:46:52'),
+  (283,'MHE-260511-0032','TYPE_CODE_128','Merch Assessor - TWS Baseus',NULL,NULL,50.00,'/images/products/MSeFMzMm2Z1f01p0RgN3ew2Fe5UgIDQQJZ1hOKqX.jpg','[\"/images/products/MSeFMzMm2Z1f01p0RgN3ew2Fe5UgIDQQJZ1hOKqX.jpg\"]',6,4,NULL,20,10,3,0,0,'2026-05-11 13:46:24','2026-05-26 09:46:52'),
   (285,'FCY-260511-0059','TYPE_CODE_128','Amplop Bubble',NULL,NULL,50.00,NULL,NULL,4,4,NULL,20,20,3,0,0,'2026-05-11 13:46:24','2026-05-26 09:46:52'),
   (286,'ETK-260511-0005','TYPE_CODE_128','NS Accessories 18 in 1',NULL,NULL,50.00,NULL,NULL,9,6,NULL,1,1,14,1,0,'2026-05-11 13:46:24','2026-05-26 09:46:52'),
   (287,'ETK-260511-0006','TYPE_CODE_128','NS Accesssories Ringfit Adventure',NULL,NULL,50.00,NULL,NULL,9,6,NULL,1,1,14,1,0,'2026-05-11 13:46:24','2026-05-26 09:46:52'),
-  (288,'ETK-260511-0007','TYPE_CODE_128','Kaset Game Nintendo',NULL,NULL,50.00,NULL,NULL,9,6,NULL,3,3,3,1,0,'2026-05-11 13:46:24','2026-05-26 09:46:52'),
+  (288,'ETK-260511-0007','TYPE_CODE_128','Kaset Game Nintendo',NULL,NULL,50.00,'images/products/782c4ac5-0ce5-4991-a486-db0e56a8a0bd.png','[\"images/products/782c4ac5-0ce5-4991-a486-db0e56a8a0bd.png\"]',9,6,NULL,3,3,3,1,0,'2026-05-11 13:46:24','2026-05-26 09:46:52'),
   (289,'GME-260511-0084','TYPE_CODE_128','Board Game Penguin',NULL,NULL,50.00,NULL,NULL,3,6,NULL,2,2,14,1,0,'2026-05-11 13:46:24','2026-05-26 09:46:52'),
   (290,'GME-260511-0085','TYPE_CODE_128','Klask - Board Game',NULL,NULL,50.00,NULL,NULL,3,7,NULL,1,1,14,1,0,'2026-05-11 13:46:24','2026-05-26 09:46:52'),
   (291,'GME-260511-0086','TYPE_CODE_128','Board Game',NULL,NULL,50.00,NULL,NULL,3,7,NULL,2,1,14,1,0,'2026-05-11 13:46:24','2026-05-26 09:46:52'),
@@ -434,37 +435,37 @@ INSERT INTO [products] ([id],[sku],[barcode_type],[name],[description],[transact
   (310,'ETK-260511-0017','TYPE_CODE_128','Godox Minimaster',NULL,NULL,50.00,NULL,NULL,9,7,NULL,2,2,3,1,0,'2026-05-11 13:46:24','2026-05-26 09:46:52'),
   (311,'ETK-260511-0018','TYPE_CODE_128','Studio Flash (Godox)',NULL,NULL,50.00,NULL,NULL,9,7,NULL,1,1,3,1,0,'2026-05-11 13:46:24','2026-05-26 09:46:52'),
   (312,'ETK-260511-0019','TYPE_CODE_128','Alctron Audio Interface',NULL,NULL,50.00,NULL,NULL,9,8,NULL,2,2,3,1,0,'2026-05-11 13:46:24','2026-05-26 09:46:52'),
-  (400,'MHE-260511-0033','TYPE_CODE_128','Baju Polo',NULL,NULL,50.00,'/images/products/aObBuQFVHxEkNi17CtlIu3mnPT49HOnmBNMD8OFX.jpg','["/images/products/aObBuQFVHxEkNi17CtlIu3mnPT49HOnmBNMD8OFX.jpg","/images/products/ceuQ2P6dcE8Ro4Sd97ulhldhS8i7ub5Cv4m06sWb.jpg"]',6,4,NULL,16,1,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (400,'MHE-260511-0033','TYPE_CODE_128','Baju Polo',NULL,NULL,50.00,'/images/products/aObBuQFVHxEkNi17CtlIu3mnPT49HOnmBNMD8OFX.jpg','[\"/images/products/aObBuQFVHxEkNi17CtlIu3mnPT49HOnmBNMD8OFX.jpg\", \"/images/products/ceuQ2P6dcE8Ro4Sd97ulhldhS8i7ub5Cv4m06sWb.jpg\"]',6,4,NULL,16,1,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (410,'MHE-260511-0034','TYPE_CODE_128','Celana Training',NULL,NULL,50.00,NULL,NULL,6,4,NULL,2,1,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (413,'MHE-260511-0035','TYPE_CODE_128','Kemeja UT',NULL,NULL,50.00,'/images/products/HZpVxqrwZZOE9xef7B8aYouG1q7N4Lt0XzEq33LK.jpg','["/images/products/HZpVxqrwZZOE9xef7B8aYouG1q7N4Lt0XzEq33LK.jpg"]',6,4,NULL,110,5,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (413,'MHE-260511-0035','TYPE_CODE_128','Kemeja UT',NULL,NULL,50.00,'/images/products/HZpVxqrwZZOE9xef7B8aYouG1q7N4Lt0XzEq33LK.jpg','[\"/images/products/HZpVxqrwZZOE9xef7B8aYouG1q7N4Lt0XzEq33LK.jpg\"]',6,4,NULL,110,5,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (415,'MHE-260511-0036','TYPE_CODE_128','Kaos UT',NULL,NULL,50.00,NULL,NULL,6,4,NULL,17,3,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
-  (429,'MHE-260511-0037','TYPE_CODE_128','Merch Assessment - Tumbler Corkcilcke',NULL,NULL,50.00,'/images/products/8jZaNApx2sjjOOF4A6sJCBwn54J1HvdX5CiqAtm1.jpg','["/images/products/8jZaNApx2sjjOOF4A6sJCBwn54J1HvdX5CiqAtm1.jpg"]',6,4,NULL,4,2,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (429,'MHE-260511-0037','TYPE_CODE_128','Merch Assessment - Tumbler Corkcilcke',NULL,NULL,50.00,'/images/products/8jZaNApx2sjjOOF4A6sJCBwn54J1HvdX5CiqAtm1.jpg','[\"/images/products/8jZaNApx2sjjOOF4A6sJCBwn54J1HvdX5CiqAtm1.jpg\"]',6,4,NULL,4,2,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
   (431,'MHE-260511-0038','TYPE_CODE_128','RACER',NULL,NULL,50.00,NULL,NULL,6,4,NULL,86,12,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52');
-SET IDENTITY_INSERT [products] OFF;
+
 
 -- =============================================================
 -- TABLE: product_variants
 -- =============================================================
 
-CREATE TABLE [product_variants] (
-  [id]         bigint        NOT NULL IDENTITY(1,1),
-  [product_id] bigint        NOT NULL,
-  [sku]        nvarchar(255) NULL,
-  [color]      nvarchar(255) NULL,
-  [size]       nvarchar(255) NULL,
-  [image]      nvarchar(255) NULL,
-  [stock]      int           NOT NULL DEFAULT 0,
-  [created_at] datetime2     NULL,
-  [updated_at] datetime2     NULL,
-  CONSTRAINT [PK_product_variants]        PRIMARY KEY ([id]),
-  CONSTRAINT [UQ_product_variants_sku]    UNIQUE      ([sku]),
-  CONSTRAINT [FK_product_variants_product_id] FOREIGN KEY ([product_id]) REFERENCES [products] ([id])
+CREATE TABLE `product_variants` (
+  `id`         bigint        NOT NULL AUTO_INCREMENT,
+  `product_id` bigint        NOT NULL,
+  `sku`        VARCHAR(255) NULL,
+  `color`      VARCHAR(255) NULL,
+  `size`       VARCHAR(255) NULL,
+  `image`      VARCHAR(255) NULL,
+  `stock`      int           NOT NULL DEFAULT 0,
+  `created_at` DATETIME     NULL,
+  `updated_at` DATETIME     NULL,
+  CONSTRAINT `PK_product_variants`        PRIMARY KEY (`id`),
+  CONSTRAINT `UQ_product_variants_sku`    UNIQUE      (`sku`),
+  CONSTRAINT `FK_product_variants_product_id` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`)
 );
 
-CREATE INDEX [IX_product_variants_product_id] ON [product_variants] ([product_id]);
+CREATE INDEX `IX_product_variants_product_id` ON `product_variants` (`product_id`);
 
-SET IDENTITY_INSERT [product_variants] ON;
-INSERT INTO [product_variants] ([id],[product_id],[sku],[color],[size],[image],[stock],[created_at],[updated_at]) VALUES
+
+INSERT INTO `product_variants` (`id`,`product_id`,`sku`,`color`,`size`,`image`,`stock`,`created_at`,`updated_at`) VALUES
   (1,  197,'MHE-260511-0008-V01',NULL,'XL',NULL,2,'2026-05-26 09:46:46','2026-05-26 09:46:51'),
   (2,  197,'MHE-260511-0008-V02',NULL,'L',NULL,1,'2026-05-26 09:46:46','2026-05-26 09:46:51'),
   (3,  197,'MHE-260511-0008-V03',NULL,'M',NULL,2,'2026-05-26 09:46:46','2026-05-26 09:46:51'),
@@ -591,63 +592,63 @@ INSERT INTO [product_variants] ([id],[product_id],[sku],[color],[size],[image],[
   (124,180,'FCY-260511-0049-V01','Standard/Default',NULL,NULL,2,'2026-05-26 09:46:49','2026-05-26 09:46:51'),
   (125,180,'FCY-260511-0049-V02','warna warni',NULL,NULL,14,'2026-05-26 09:46:49','2026-05-26 09:46:51'),
   (126,180,'FCY-260511-0049-V03','bening',NULL,NULL,53,'2026-05-26 09:46:49','2026-05-26 09:46:51');
-SET IDENTITY_INSERT [product_variants] OFF;
+
 
 -- =============================================================
 -- TABLE: users
 -- =============================================================
 
-CREATE TABLE [users] (
-  [id]                bigint        NOT NULL IDENTITY(1,1),
-  [name]              nvarchar(255) NOT NULL,
-  [nrp]               nvarchar(255) NULL,
-  [email]             nvarchar(255) NOT NULL,
-  [poin]              int           NOT NULL DEFAULT 0,
-  [email_verified_at] datetime2     NULL,
-  [password]          nvarchar(255) NOT NULL,
-  [role]              nvarchar(10)  NULL DEFAULT 'staff',
-  [division_id]       bigint        NULL,
-  [remember_token]    nvarchar(100) NULL,
-  [created_at]        datetime2     NULL,
-  [updated_at]        datetime2     NULL,
-  CONSTRAINT [PK_users]                PRIMARY KEY ([id]),
-  CONSTRAINT [UQ_users_email]          UNIQUE      ([email]),
-  CONSTRAINT [UQ_users_nrp]            UNIQUE      ([nrp]),
-  CONSTRAINT [CK_users_role]           CHECK       ([role] IN ('superadmin','admin','manager','staff')),
-  CONSTRAINT [FK_users_division_id]    FOREIGN KEY ([division_id]) REFERENCES [divisions] ([id])
+CREATE TABLE `users` (
+  `id`                bigint        NOT NULL AUTO_INCREMENT,
+  `name`              VARCHAR(255) NOT NULL,
+  `nrp`               VARCHAR(255) NULL,
+  `email`             VARCHAR(255) NOT NULL,
+  `poin`              int           NOT NULL DEFAULT 0,
+  `email_verified_at` DATETIME     NULL,
+  `password`          VARCHAR(255) NOT NULL,
+  `role`              VARCHAR(10)  NULL DEFAULT 'staff',
+  `division_id`       bigint        NULL,
+  `remember_token`    VARCHAR(100) NULL,
+  `created_at`        DATETIME     NULL,
+  `updated_at`        DATETIME     NULL,
+  CONSTRAINT `PK_users`                PRIMARY KEY (`id`),
+  CONSTRAINT `UQ_users_email`          UNIQUE      (`email`),
+  CONSTRAINT `UQ_users_nrp`            UNIQUE      (`nrp`),
+  CONSTRAINT `CK_users_role`           CHECK       (`role` IN ('superadmin','admin','manager','staff')),
+  CONSTRAINT `FK_users_division_id`    FOREIGN KEY (`division_id`) REFERENCES `divisions` (`id`)
 );
 
-CREATE INDEX [IX_users_division_id] ON [users] ([division_id]);
+CREATE INDEX `IX_users_division_id` ON `users` (`division_id`);
 
-SET IDENTITY_INSERT [users] ON;
-INSERT INTO [users] ([id],[name],[nrp],[email],[poin],[email_verified_at],[password],[role],[division_id],[remember_token],[created_at],[updated_at]) VALUES
+
+INSERT INTO `users` (`id`,`name`,`nrp`,`email`,`poin`,`email_verified_at`,`password`,`role`,`division_id`,`remember_token`,`created_at`,`updated_at`) VALUES
   (1,'Admin User',        '73216958','admin@wms.com',     1000,'2026-05-11 11:30:04','$2y$12$6frRu6KhnRFsPL8sXW7ls.4QQk9rtkvkgxoFYp/tqp9/5zZHcEE.m','admin',      3,'tupohEJ7W6UHk61RcHxSCWsrMtF71Ut35MCUqFMMNMf3zv6Ykmtieo1jPEV6','2026-05-11 11:30:04','2026-05-26 09:46:53'),
   (2,'Manager User',      '44920801','manager@wms.com',   1000,'2026-05-11 11:30:04','$2y$12$JCmEGC2gvkTljXwVWKizbuxsCoVxVOHmIdAtS7KwohAJAa7IeGuGK', 'manager',    3,'qxl2W9eeqk',                                                   '2026-05-11 11:30:04','2026-05-26 09:46:53'),
   (3,'Staff User',        '44727320','staff@wms.com',     1000,'2026-05-11 11:30:05','$2y$12$n6yveeCHq3V/57rF7HbMyOAzuCa7WIXOkkQkBjkxT0B77Vaoa1Oy.','staff',      3,'ljf4NYEGgb',                                                   '2026-05-11 11:30:05','2026-05-26 09:46:53'),
   (4,'Super Administrator','35610885','superadmin@wms.com', 450,NULL,                '$2y$12$X2dRJ8Lk7hvYkgFj1MdVUe3QlpWWMxIs3PaSJV0M4oUuXz4H5rBS.','superadmin', 3,NULL,                                                           '2026-05-26 09:46:53','2026-05-26 09:46:53');
-SET IDENTITY_INSERT [users] OFF;
+
 
 -- =============================================================
 -- TABLE: profile_requests
 -- =============================================================
 
-CREATE TABLE [profile_requests] (
-  [id]          bigint        NOT NULL IDENTITY(1,1),
-  [user_id]     bigint        NOT NULL,
-  [name]        nvarchar(255) NOT NULL,
-  [nrp]         nvarchar(255) NOT NULL,
-  [email]       nvarchar(255) NOT NULL,
-  [division_id] bigint        NULL,
-  [status]      nvarchar(50)  NOT NULL DEFAULT 'PENDING',
-  [created_at]  datetime2     NULL,
-  [updated_at]  datetime2     NULL,
-  CONSTRAINT [PK_profile_requests]              PRIMARY KEY ([id]),
-  CONSTRAINT [FK_profile_requests_user_id]      FOREIGN KEY ([user_id])     REFERENCES [users]     ([id]),
-  CONSTRAINT [FK_profile_requests_division_id]  FOREIGN KEY ([division_id]) REFERENCES [divisions] ([id])
+CREATE TABLE `profile_requests` (
+  `id`          bigint        NOT NULL AUTO_INCREMENT,
+  `user_id`     bigint        NOT NULL,
+  `name`        VARCHAR(255) NOT NULL,
+  `nrp`         VARCHAR(255) NOT NULL,
+  `email`       VARCHAR(255) NOT NULL,
+  `division_id` bigint        NULL,
+  `status`      VARCHAR(50)  NOT NULL DEFAULT 'PENDING',
+  `created_at`  DATETIME     NULL,
+  `updated_at`  DATETIME     NULL,
+  CONSTRAINT `PK_profile_requests`              PRIMARY KEY (`id`),
+  CONSTRAINT `FK_profile_requests_user_id`      FOREIGN KEY (`user_id`)     REFERENCES `users`     (`id`),
+  CONSTRAINT `FK_profile_requests_division_id`  FOREIGN KEY (`division_id`) REFERENCES `divisions` (`id`)
 );
 
-CREATE INDEX [IX_profile_requests_user_id]     ON [profile_requests] ([user_id]);
-CREATE INDEX [IX_profile_requests_division_id] ON [profile_requests] ([division_id]);
+CREATE INDEX `IX_profile_requests_user_id`     ON `profile_requests` (`user_id`);
+CREATE INDEX `IX_profile_requests_division_id` ON `profile_requests` (`division_id`);
 
 -- (no seed data)
 
@@ -655,107 +656,114 @@ CREATE INDEX [IX_profile_requests_division_id] ON [profile_requests] ([division_
 -- TABLE: transactions
 -- =============================================================
 
-CREATE TABLE [transactions] (
-  [id]                     bigint        NOT NULL IDENTITY(1,1),
-  [product_id]             bigint        NOT NULL,
-  [product_variant_id]     bigint        NULL,
-  [type]                   nvarchar(3)   NOT NULL,
-  [request_type]           nvarchar(8)   NOT NULL DEFAULT 'BORROW',
-  [quantity]               int           NOT NULL,
-  [returned_quantity]      int           NOT NULL DEFAULT 0,
-  [pending_return_quantity]int           NOT NULL DEFAULT 0,
-  [returned_at]            datetime2     NULL,
-  [return_photo]           nvarchar(255) NULL,
-  [handover_photo]         nvarchar(255) NULL,
-  [handover_notes]         nvarchar(max) NULL,
-  [return_status]          nvarchar(255) NULL,
-  [return_reason]          nvarchar(max) NULL,
-  [is_return_draft]        bit           NOT NULL DEFAULT 0,
-  [return_condition]       nvarchar(6)   NULL,
-  [status]                 nvarchar(25)  NOT NULL DEFAULT 'PENDING',
-  [rejection_reason]       nvarchar(max) NULL,
-  [admin_notes]            nvarchar(max) NULL,
-  [manager_notes]          nvarchar(max) NULL,
-  [return_rejection_reason]nvarchar(max) NULL,
-  [requester_id]           bigint        NOT NULL,
-  [approver_id]            bigint        NULL,
-  [notes]                  nvarchar(max) NULL,
-  [used_by]                nvarchar(255) NULL,
-  [division_id]            bigint        NULL,
-  [created_at]             datetime2     NULL,
-  [updated_at]             datetime2     NULL,
-  [applicant_name]         nvarchar(255) NULL,
-  [applicant_nrp]          nvarchar(255) NULL,
-  [borrow_duration_days]   int           NULL,
-  [borrow_start_date]      date          NULL,
-  [pickup_date]            date          NULL,
-  [expected_return_date]   date          NULL,
-  [event_name]             nvarchar(255) NULL,
-  [event_date]             date          NULL,
-  [documentation_link]     nvarchar(255) NULL,
-  CONSTRAINT [PK_transactions]                       PRIMARY KEY ([id]),
-  CONSTRAINT [CK_transactions_type]                  CHECK       ([type]             IN ('IN','OUT')),
-  CONSTRAINT [CK_transactions_request_type]          CHECK       ([request_type]     IN ('BORROW','GIVEAWAY')),
-  CONSTRAINT [CK_transactions_return_condition]      CHECK       ([return_condition]  IN ('BAIK','RUSAK','HILANG')),
-  CONSTRAINT [CK_transactions_status]                CHECK       ([status]           IN ('PENDING','PENDING_MANAGER','WAITING_HANDOVER','WAITING_ADMIN_HANDOVER','APPROVED','REJECTED','REVISION')),
-  CONSTRAINT [FK_transactions_product_id]            FOREIGN KEY ([product_id])         REFERENCES [products]         ([id]),
-  CONSTRAINT [FK_transactions_product_variant_id]    FOREIGN KEY ([product_variant_id]) REFERENCES [product_variants] ([id]),
-  CONSTRAINT [FK_transactions_requester_id]          FOREIGN KEY ([requester_id])       REFERENCES [users]            ([id]),
-  CONSTRAINT [FK_transactions_approver_id]           FOREIGN KEY ([approver_id])        REFERENCES [users]            ([id]),
-  CONSTRAINT [FK_transactions_division_id]           FOREIGN KEY ([division_id])        REFERENCES [divisions]        ([id])
+CREATE TABLE `transactions` (
+  `id`                     bigint        NOT NULL AUTO_INCREMENT,
+  `product_id`             bigint        NOT NULL,
+  `product_variant_id`     bigint        NULL,
+  `type`                   VARCHAR(3)   NOT NULL,
+  `request_type`           VARCHAR(8)   NOT NULL DEFAULT 'BORROW',
+  `quantity`               int           NOT NULL,
+  `returned_quantity`      int           NOT NULL DEFAULT 0,
+  `pending_return_quantity`int           NOT NULL DEFAULT 0,
+  `returned_at`            DATETIME     NULL,
+  `return_photo`           VARCHAR(255) NULL,
+  `handover_photo`         VARCHAR(255) NULL,
+  `handover_notes`         TEXT NULL,
+  `handover_recipient_name`VARCHAR(255) NULL,
+  `handover_timestamp`     DATETIME     NULL,
+  `documentation_photo`    VARCHAR(255) NULL,
+  `documentation_notes`    TEXT NULL,
+  `documentation_uploaded_at` DATETIME  NULL,
+  `return_status`          VARCHAR(255) NULL,
+  `return_reason`          TEXT NULL,
+  `is_return_draft`        TINYINT(1)           NOT NULL DEFAULT 0,
+  `return_condition`       VARCHAR(6)   NULL,
+  `status`                 VARCHAR(25)  NOT NULL DEFAULT 'PENDING',
+  `rejection_reason`       TEXT NULL,
+  `admin_notes`            TEXT NULL,
+  `manager_notes`          TEXT NULL,
+  `staff_inventory_notes`  TEXT NULL,
+  `last_revision_stage`    VARCHAR(50)  NULL,
+  `return_rejection_reason`TEXT NULL,
+  `requester_id`           bigint        NOT NULL,
+  `approver_id`            bigint        NULL,
+  `notes`                  TEXT NULL,
+  `used_by`                VARCHAR(255) NULL,
+  `division_id`            bigint        NULL,
+  `created_at`             DATETIME     NULL,
+  `updated_at`             DATETIME     NULL,
+  `applicant_name`         VARCHAR(255) NULL,
+  `applicant_nrp`          VARCHAR(255) NULL,
+  `borrow_duration_days`   int           NULL,
+  `borrow_start_date`      date          NULL,
+  `pickup_date`            date          NULL,
+  `expected_return_date`   date          NULL,
+  `event_name`             VARCHAR(255) NULL,
+  `event_date`             date          NULL,
+  `documentation_link`     VARCHAR(255) NULL,
+  CONSTRAINT `PK_transactions`                       PRIMARY KEY (`id`),
+  CONSTRAINT `CK_transactions_type`                  CHECK       (`type`             IN ('IN','OUT')),
+  CONSTRAINT `CK_transactions_request_type`          CHECK       (`request_type`     IN ('BORROW','GIVEAWAY')),
+  CONSTRAINT `CK_transactions_return_condition`      CHECK       (`return_condition`  IN ('BAIK','RUSAK','HILANG')),
+  CONSTRAINT `CK_transactions_status`                CHECK       (`status`           IN ('PENDING','PENDING_MANAGER','WAITING_HANDOVER','WAITING_ADMIN_HANDOVER','APPROVED','REJECTED','REVISION')),
+  CONSTRAINT `FK_transactions_product_id`            FOREIGN KEY (`product_id`)         REFERENCES `products`         (`id`),
+  CONSTRAINT `FK_transactions_product_variant_id`    FOREIGN KEY (`product_variant_id`) REFERENCES `product_variants` (`id`),
+  CONSTRAINT `FK_transactions_requester_id`          FOREIGN KEY (`requester_id`)       REFERENCES `users`            (`id`),
+  CONSTRAINT `FK_transactions_approver_id`           FOREIGN KEY (`approver_id`)        REFERENCES `users`            (`id`),
+  CONSTRAINT `FK_transactions_division_id`           FOREIGN KEY (`division_id`)        REFERENCES `divisions`        (`id`)
 );
 
-CREATE INDEX [IX_transactions_product_id]         ON [transactions] ([product_id]);
-CREATE INDEX [IX_transactions_requester_id]       ON [transactions] ([requester_id]);
-CREATE INDEX [IX_transactions_approver_id]        ON [transactions] ([approver_id]);
-CREATE INDEX [IX_transactions_division_id]        ON [transactions] ([division_id]);
-CREATE INDEX [IX_transactions_product_variant_id] ON [transactions] ([product_variant_id]);
+CREATE INDEX `IX_transactions_product_id`         ON `transactions` (`product_id`);
+CREATE INDEX `IX_transactions_requester_id`       ON `transactions` (`requester_id`);
+CREATE INDEX `IX_transactions_approver_id`        ON `transactions` (`approver_id`);
+CREATE INDEX `IX_transactions_division_id`        ON `transactions` (`division_id`);
+CREATE INDEX `IX_transactions_product_variant_id` ON `transactions` (`product_variant_id`);
 
-SET IDENTITY_INSERT [transactions] ON;
-INSERT INTO [transactions] ([id],[product_id],[product_variant_id],[type],[request_type],[quantity],[returned_quantity],[pending_return_quantity],[returned_at],[return_photo],[handover_photo],[handover_notes],[return_status],[return_reason],[is_return_draft],[return_condition],[status],[rejection_reason],[admin_notes],[manager_notes],[return_rejection_reason],[requester_id],[approver_id],[notes],[used_by],[division_id],[created_at],[updated_at],[applicant_name],[applicant_nrp],[borrow_duration_days],[borrow_start_date],[pickup_date],[expected_return_date],[event_name],[event_date],[documentation_link]) VALUES
-  (1, 1,  NULL,'IN','BORROW', 5,0,0,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,'APPROVED',NULL,NULL,NULL,NULL,1,1,NULL,NULL,NULL,'2026-05-11 12:16:11','2026-05-11 12:16:20',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
-  (2, 2,  NULL,'IN','BORROW',50,0,0,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,'APPROVED',NULL,NULL,NULL,NULL,1,1,NULL,NULL,NULL,'2026-05-11 12:19:00','2026-05-11 12:20:54',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
-  (3, 2,  NULL,'IN','BORROW',10,0,0,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,'APPROVED',NULL,NULL,NULL,NULL,1,1,NULL,NULL,NULL,'2026-05-11 12:20:13','2026-05-11 12:21:00',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
-  (4, 2,  NULL,'IN','BORROW', 3,0,0,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,'APPROVED',NULL,NULL,NULL,NULL,1,1,NULL,NULL,NULL,'2026-05-11 12:20:41','2026-05-11 12:20:57',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
-  (5, 294,NULL,'OUT','BORROW',1,1,0,'2026-06-04 01:09:38','images/return/48e38a67-f012-4238-870d-7320c7e2b043.jpg',NULL,NULL,'baik',NULL,0,NULL,'APPROVED',NULL,'halo boleh ya',NULL,NULL,3,4,'ok','Staff User',3,'2026-06-02 01:10:48','2026-06-04 01:09:38','Staff User','44939834',NULL,'2026-06-11',NULL,'2026-06-11','Testing event','2026-06-16',NULL),
-  (6, 50, NULL,'OUT','BORROW',1,1,0,'2026-06-04 01:20:18','images/return/06ccdaca-6200-4016-9933-4973629acf8b.jpeg',NULL,NULL,'baik',NULL,0,NULL,'APPROVED',NULL,NULL,NULL,NULL,3,4,'oko','Staff User',3,'2026-06-02 01:23:02','2026-06-04 01:20:18','Staff User','44939834',NULL,'2026-06-16',NULL,'2026-06-16','Testing event','2026-06-16',NULL),
-  (7, 152,NULL,'OUT','BORROW',1,0,0,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,'PENDING_MANAGER',NULL,NULL,NULL,NULL,3,NULL,'ok','Staff User',3,'2026-06-02 01:37:30','2026-06-02 01:55:55','Staff User','44939834',NULL,'2026-06-02',NULL,'2026-06-02','Testing event','2026-06-02',NULL),
-  (8, 231,NULL,'OUT','BORROW',1,1,0,'2026-06-04 01:20:13','images/return/4f5ce0b3-d253-4863-ab05-14355afe9b59.jpg',NULL,NULL,'baik',NULL,0,NULL,'APPROVED',NULL,NULL,NULL,NULL,3,1,'ok','Staff User',3,'2026-06-02 01:49:16','2026-06-04 01:20:13','Staff User','44939834',NULL,'2026-06-02',NULL,'2026-06-02','Testing event','2026-06-02',NULL),
-  (9, 400,NULL,'OUT','GIVEAWAY',1,0,0,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,'APPROVED',NULL,NULL,NULL,NULL,3,1,'ok','Staff User',3,'2026-06-02 01:59:40','2026-06-02 02:00:10','Staff User','44939834',NULL,NULL,NULL,NULL,'Testing event','2026-06-02',NULL),
-  (10,400,NULL,'OUT','GIVEAWAY',1,0,0,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,'APPROVED',NULL,NULL,NULL,NULL,3,2,NULL,'Staff User',3,'2026-06-03 07:32:02','2026-06-03 07:49:02','Staff User','44939834',NULL,NULL,NULL,NULL,'testing','2026-06-04',NULL),
-  (11,294,NULL,'OUT','BORROW',1,1,0,'2026-06-03 07:58:04','returns/jKCEN7viU0YJiSSP0h7KTcxRm9d4uJX7fUaH4ylR.jpg',NULL,NULL,'baik',NULL,0,NULL,'APPROVED',NULL,NULL,NULL,NULL,3,4,NULL,'Staff User',3,'2026-06-03 07:32:02','2026-06-03 07:58:04','Staff User','44939834',NULL,'2026-06-03',NULL,'2026-06-05','testing','2026-06-04',NULL),
-  (12,72, NULL,'OUT','BORROW',1,1,0,'2026-06-04 01:09:20','images/return/5d2d84b7-b14f-405c-9cda-f3d4b7aeab36.jpg',NULL,NULL,'baik',NULL,0,NULL,'APPROVED',NULL,'bolehhhh',NULL,NULL,4,4,'lklm','Super Administrator',3,'2026-06-04 00:40:37','2026-06-04 01:09:20','Super Administrator','35610885',1,'2026-06-04',NULL,'2026-06-05','cghgjgjk','2026-06-04',NULL),
-  (13,72, NULL,'OUT','BORROW',2,2,0,'2026-06-04 00:48:09','forced-by-admin',NULL,NULL,'baik',NULL,0,NULL,'APPROVED',NULL,'',NULL,NULL,4,4,'pinjem ya','Super Administrator',3,'2026-06-04 00:47:06','2026-06-04 00:48:09','Super Administrator','35610885',1,'2026-06-04',NULL,'2026-06-05','minjam','2026-06-04',NULL),
-  (14,400,37, 'OUT','GIVEAWAY',1,0,0,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,'REJECTED','ga cukup rek','ok','ga cukup rek',NULL,4,2,'yyyyy','Super Administrator',3,'2026-06-04 00:48:32','2026-06-04 00:54:19','Super Administrator','35610885',0,NULL,'2026-06-04',NULL,'iujknkkjjnn','2026-06-04',NULL),
-  (15,400,44, 'OUT','GIVEAWAY',3,0,0,'2026-06-04 01:08:52',NULL,NULL,NULL,NULL,NULL,0,NULL,'APPROVED',NULL,NULL,'Ya boleh kok',NULL,4,2,'Mau bos boleh ga?','Super Administrator',3,'2026-06-04 01:08:13','2026-06-04 01:08:52','Super Administrator','35610885',0,NULL,'2026-06-04',NULL,'Mau','2026-06-04',NULL),
-  (17,400,38, 'OUT','GIVEAWAY',1,0,0,'2026-06-04 01:58:23',NULL,NULL,NULL,NULL,NULL,0,NULL,'APPROVED',NULL,NULL,NULL,NULL,4,2,NULL,'Super Administrator',3,'2026-06-04 01:51:29','2026-06-04 01:58:23','Super Administrator','35610885',0,NULL,'2026-06-04',NULL,'asdadsad','2026-06-04',NULL),
-  (18,400,40, 'OUT','GIVEAWAY',1,0,0,'2026-06-04 02:08:15',NULL,NULL,NULL,NULL,NULL,0,NULL,'APPROVED',NULL,NULL,NULL,NULL,4,4,'asas','Super Administrator',3,'2026-06-04 02:05:07','2026-06-04 02:08:15','Super Administrator','35610885',0,NULL,'2026-06-04',NULL,'ASAASA','2026-06-04',NULL),
-  (19,400,45, 'OUT','GIVEAWAY',1,0,0,'2026-06-04 17:35:56',NULL,NULL,NULL,NULL,NULL,0,NULL,'APPROVED',NULL,'',NULL,NULL,4,4,NULL,'Super Administrator',3,'2026-06-04 17:35:47','2026-06-04 17:35:56','Super Administrator','35610885',0,NULL,'2026-06-05',NULL,'Yup','2026-06-06',NULL),
-  (20,124,NULL,'OUT','BORROW',1,0,0,NULL,NULL,'images/handover/172e34c7-20cb-4385-b2d9-55192ed41b7f.jpg',NULL,NULL,NULL,0,NULL,'APPROVED',NULL,'',NULL,NULL,4,4,'yaya','Super Administrator',3,'2026-06-04 18:59:02','2026-06-04 19:00:04','Super Administrator','35610885',1,'2026-06-05',NULL,'2026-06-06','Program','2026-06-06',NULL);
-SET IDENTITY_INSERT [transactions] OFF;
+
+INSERT INTO `transactions` (`id`,`product_id`,`product_variant_id`,`type`,`request_type`,`quantity`,`returned_quantity`,`pending_return_quantity`,`returned_at`,`return_photo`,`handover_photo`,`handover_notes`,`handover_recipient_name`,`handover_timestamp`,`documentation_photo`,`documentation_notes`,`documentation_uploaded_at`,`return_status`,`return_reason`,`is_return_draft`,`return_condition`,`status`,`rejection_reason`,`admin_notes`,`manager_notes`,`staff_inventory_notes`,`last_revision_stage`,`return_rejection_reason`,`requester_id`,`approver_id`,`notes`,`used_by`,`division_id`,`created_at`,`updated_at`,`applicant_name`,`applicant_nrp`,`borrow_duration_days`,`borrow_start_date`,`pickup_date`,`expected_return_date`,`event_name`,`event_date`,`documentation_link`) VALUES
+  (1,1,NULL,'IN','BORROW',5,0,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,'APPROVED',NULL,NULL,NULL,NULL,NULL,NULL,1,1,NULL,NULL,NULL,'2026-05-11 12:16:11','2026-05-11 12:16:20',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+  (2,2,NULL,'IN','BORROW',50,0,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,'APPROVED',NULL,NULL,NULL,NULL,NULL,NULL,1,1,NULL,NULL,NULL,'2026-05-11 12:19:00','2026-05-11 12:20:54',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+  (3,2,NULL,'IN','BORROW',10,0,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,'APPROVED',NULL,NULL,NULL,NULL,NULL,NULL,1,1,NULL,NULL,NULL,'2026-05-11 12:20:13','2026-05-11 12:21:00',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+  (4,2,NULL,'IN','BORROW',3,0,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,'APPROVED',NULL,NULL,NULL,NULL,NULL,NULL,1,1,NULL,NULL,NULL,'2026-05-11 12:20:41','2026-05-11 12:20:57',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+  (5,294,NULL,'OUT','BORROW',1,1,0,'2026-06-04 01:09:38','images/return/48e38a67-f012-4238-870d-7320c7e2b043.jpg',NULL,NULL,NULL,NULL,NULL,NULL,NULL,'baik',NULL,0,NULL,'APPROVED',NULL,'halo boleh ya',NULL,NULL,NULL,NULL,3,4,'ok','Staff User',3,'2026-06-02 01:10:48','2026-06-04 01:09:38','Staff User','44939834',NULL,'2026-06-11',NULL,'2026-06-11','Testing event','2026-06-16',NULL),
+  (6,50,NULL,'OUT','BORROW',1,1,0,'2026-06-04 01:20:18','images/return/06ccdaca-6200-4016-9933-4973629acf8b.jpeg',NULL,NULL,NULL,NULL,NULL,NULL,NULL,'baik',NULL,0,NULL,'APPROVED',NULL,NULL,NULL,NULL,NULL,NULL,3,4,'oko','Staff User',3,'2026-06-02 01:23:02','2026-06-04 01:20:18','Staff User','44939834',NULL,'2026-06-16',NULL,'2026-06-16','Testing event','2026-06-16',NULL),
+  (7,152,NULL,'OUT','BORROW',1,0,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,'PENDING_MANAGER',NULL,NULL,NULL,NULL,NULL,NULL,3,NULL,'ok','Staff User',3,'2026-06-02 01:37:30','2026-06-02 01:55:55','Staff User','44939834',NULL,'2026-06-02',NULL,'2026-06-02','Testing event','2026-06-02',NULL),
+  (8,231,NULL,'OUT','BORROW',1,1,0,'2026-06-04 01:20:13','images/return/4f5ce0b3-d253-4863-ab05-14355afe9b59.jpg',NULL,NULL,NULL,NULL,NULL,NULL,NULL,'baik',NULL,0,NULL,'APPROVED',NULL,NULL,NULL,NULL,NULL,NULL,3,1,'ok','Staff User',3,'2026-06-02 01:49:16','2026-06-04 01:20:13','Staff User','44939834',NULL,'2026-06-02',NULL,'2026-06-02','Testing event','2026-06-02',NULL),
+  (9,400,NULL,'OUT','GIVEAWAY',1,0,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,'APPROVED',NULL,NULL,NULL,NULL,NULL,NULL,3,1,'ok','Staff User',3,'2026-06-02 01:59:40','2026-06-02 02:00:10','Staff User','44939834',NULL,NULL,NULL,NULL,'Testing event','2026-06-02',NULL),
+  (10,400,NULL,'OUT','GIVEAWAY',1,0,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,'APPROVED',NULL,NULL,NULL,NULL,NULL,NULL,3,2,NULL,'Staff User',3,'2026-06-03 07:32:02','2026-06-03 07:49:02','Staff User','44939834',NULL,NULL,NULL,NULL,'testing','2026-06-04',NULL),
+  (11,294,NULL,'OUT','BORROW',1,1,0,'2026-06-03 07:58:04','returns/jKCEN7viU0YJiSSP0h7KTcxRm9d4uJX7fUaH4ylR.jpg',NULL,NULL,NULL,NULL,NULL,NULL,NULL,'baik',NULL,0,NULL,'APPROVED',NULL,NULL,NULL,NULL,NULL,NULL,3,4,NULL,'Staff User',3,'2026-06-03 07:32:02','2026-06-03 07:58:04','Staff User','44939834',NULL,'2026-06-03',NULL,'2026-06-05','testing','2026-06-04',NULL),
+  (12,72,NULL,'OUT','BORROW',1,1,0,'2026-06-04 01:09:20','images/return/5d2d84b7-b14f-405c-9cda-f3d4b7aeab36.jpg',NULL,NULL,NULL,NULL,NULL,NULL,NULL,'baik',NULL,0,NULL,'APPROVED',NULL,'bolehhhh',NULL,NULL,NULL,NULL,4,4,'lklm','Super Administrator',3,'2026-06-04 00:40:37','2026-06-04 01:09:20','Super Administrator','35610885',1,'2026-06-04',NULL,'2026-06-05','cghgjgjk','2026-06-04',NULL),
+  (13,72,NULL,'OUT','BORROW',2,2,0,'2026-06-04 00:48:09','forced-by-admin',NULL,NULL,NULL,NULL,NULL,NULL,NULL,'baik',NULL,0,NULL,'APPROVED',NULL,'',NULL,NULL,NULL,NULL,4,4,'pinjem ya','Super Administrator',3,'2026-06-04 00:47:06','2026-06-04 00:48:09','Super Administrator','35610885',1,'2026-06-04',NULL,'2026-06-05','minjam','2026-06-04',NULL),
+  (14,400,37,'OUT','GIVEAWAY',1,0,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,'REJECTED','ga cukup rek','ok','ga cukup rek',NULL,NULL,NULL,4,2,'yyyyy','Super Administrator',3,'2026-06-04 00:48:32','2026-06-04 00:54:19','Super Administrator','35610885',0,NULL,'2026-06-04',NULL,'iujknkkjjnn','2026-06-04',NULL),
+  (15,400,44,'OUT','GIVEAWAY',3,0,0,'2026-06-04 01:08:52',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,'APPROVED',NULL,NULL,'Ya boleh kok',NULL,NULL,NULL,4,2,'Mau bos boleh ga?','Super Administrator',3,'2026-06-04 01:08:13','2026-06-04 01:08:52','Super Administrator','35610885',0,NULL,'2026-06-04',NULL,'Mau','2026-06-04',NULL),
+  (17,400,38,'OUT','GIVEAWAY',1,0,0,'2026-06-04 01:58:23',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,'APPROVED',NULL,NULL,NULL,NULL,NULL,NULL,4,2,NULL,'Super Administrator',3,'2026-06-04 01:51:29','2026-06-04 01:58:23','Super Administrator','35610885',0,NULL,'2026-06-04',NULL,'asdadsad','2026-06-04',NULL),
+  (18,400,40,'OUT','GIVEAWAY',1,0,0,'2026-06-04 02:08:15',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,'APPROVED',NULL,NULL,NULL,NULL,NULL,NULL,4,4,'asas','Super Administrator',3,'2026-06-04 02:05:07','2026-06-04 02:08:15','Super Administrator','35610885',0,NULL,'2026-06-04',NULL,'ASAASA','2026-06-04',NULL),
+  (19,400,45,'OUT','GIVEAWAY',1,0,0,'2026-06-04 17:35:56',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,'APPROVED',NULL,'',NULL,NULL,NULL,NULL,4,4,NULL,'Super Administrator',3,'2026-06-04 17:35:47','2026-06-04 17:35:56','Super Administrator','35610885',0,NULL,'2026-06-05',NULL,'Yup','2026-06-06',NULL),
+  (20,124,NULL,'OUT','BORROW',1,0,0,NULL,NULL,'images/handover/172e34c7-20cb-4385-b2d9-55192ed41b7f.jpg',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,'APPROVED',NULL,'',NULL,NULL,NULL,NULL,4,4,'yaya','Super Administrator',3,'2026-06-04 18:59:02','2026-06-04 19:00:04','Super Administrator','35610885',1,'2026-06-05',NULL,'2026-06-06','Program','2026-06-06',NULL);
+
 
 -- =============================================================
 -- TABLE: stock_logs
 -- =============================================================
 
-CREATE TABLE [stock_logs] (
-  [id]             bigint    NOT NULL IDENTITY(1,1),
-  [transaction_id] bigint    NOT NULL,
-  [product_id]     bigint    NOT NULL,
-  [stock_before]   int       NOT NULL,
-  [stock_after]    int       NOT NULL,
-  [created_at]     datetime2 NULL,
-  [updated_at]     datetime2 NULL,
-  CONSTRAINT [PK_stock_logs]                  PRIMARY KEY ([id]),
-  CONSTRAINT [FK_stock_logs_transaction_id]   FOREIGN KEY ([transaction_id]) REFERENCES [transactions] ([id]),
-  CONSTRAINT [FK_stock_logs_product_id]       FOREIGN KEY ([product_id])     REFERENCES [products]     ([id])
+CREATE TABLE `stock_logs` (
+  `id`             bigint    NOT NULL AUTO_INCREMENT,
+  `transaction_id` bigint    NOT NULL,
+  `product_id`     bigint    NOT NULL,
+  `stock_before`   int       NOT NULL,
+  `stock_after`    int       NOT NULL,
+  `created_at`     DATETIME NULL,
+  `updated_at`     DATETIME NULL,
+  CONSTRAINT `PK_stock_logs`                  PRIMARY KEY (`id`),
+  CONSTRAINT `FK_stock_logs_transaction_id`   FOREIGN KEY (`transaction_id`) REFERENCES `transactions` (`id`),
+  CONSTRAINT `FK_stock_logs_product_id`       FOREIGN KEY (`product_id`)     REFERENCES `products`     (`id`)
 );
 
-CREATE INDEX [IX_stock_logs_transaction_id] ON [stock_logs] ([transaction_id]);
-CREATE INDEX [IX_stock_logs_product_id]     ON [stock_logs] ([product_id]);
+CREATE INDEX `IX_stock_logs_transaction_id` ON `stock_logs` (`transaction_id`);
+CREATE INDEX `IX_stock_logs_product_id`     ON `stock_logs` (`product_id`);
 
-SET IDENTITY_INSERT [stock_logs] ON;
-INSERT INTO [stock_logs] ([id],[transaction_id],[product_id],[stock_before],[stock_after],[created_at],[updated_at]) VALUES
+
+INSERT INTO `stock_logs` (`id`,`transaction_id`,`product_id`,`stock_before`,`stock_after`,`created_at`,`updated_at`) VALUES
   ( 1, 5, 294, 2, 1,'2026-06-04 00:35:39','2026-06-04 00:35:39'),
   ( 2,12,  72, 5, 4,'2026-06-04 00:40:48','2026-06-04 00:40:48'),
   ( 3,13,  72, 4, 2,'2026-06-04 00:47:59','2026-06-04 00:47:59'),
@@ -772,7 +780,7 @@ INSERT INTO [stock_logs] ([id],[transaction_id],[product_id],[stock_before],[sto
   (15,18, 400,18,17,'2026-06-04 02:08:15','2026-06-04 02:08:15'),
   (16,19, 400,17,16,'2026-06-04 17:35:56','2026-06-04 17:35:56'),
   (17,20, 124, 1, 0,'2026-06-04 18:59:29','2026-06-04 18:59:29');
-SET IDENTITY_INSERT [stock_logs] OFF;
+
 
 -- =============================================================
 -- Normalisasi produk berdasarkan kategori
@@ -780,14 +788,54 @@ SET IDENTITY_INSERT [stock_logs] OFF;
 --   Alat Musik, Elektronik, Game        → pinjam, value=0, is_returnable=1
 -- =============================================================
 
-UPDATE p SET p.[is_returnable] = 0, p.[value] = 50
-FROM [products] p
-JOIN [categories] c ON c.[id] = p.[category_id]
-WHERE c.[name] IN ('Merchandise','ATK','Makanan','Facility');
+UPDATE `products` p
+JOIN `categories` c ON c.`id` = p.`category_id`
+SET p.`is_returnable` = 0, p.`value` = 50
+WHERE c.`name` IN ('Merchandise','ATK','Makanan','Facility');
 
-UPDATE p SET p.[is_returnable] = 1, p.[value] = 0
-FROM [products] p
-JOIN [categories] c ON c.[id] = p.[category_id]
-WHERE c.[name] IN ('Alat Musik','Elektronik','Game');
+UPDATE `products` p
+JOIN `categories` c ON c.`id` = p.`category_id`
+SET p.`is_returnable` = 1, p.`value` = 0
+WHERE c.`name` IN ('Alat Musik','Elektronik','Game');
 
 -- =============================================================
+
+
+-- =============================================================
+-- TABLE: admin_roles and user_admin_roles
+-- =============================================================
+
+CREATE TABLE `admin_roles` (
+  `Id` char(36) COLLATE ascii_general_ci NOT NULL,
+  `RoleName` varchar(255) CHARACTER SET utf8mb4 NOT NULL,
+  `Description` varchar(500) CHARACTER SET utf8mb4 NULL,
+  `IsActive` tinyint(1) NOT NULL,
+  `CreatedAt` datetime(6) NOT NULL,
+  `CreatedBy` varchar(100) CHARACTER SET utf8mb4 NULL,
+  `UpdatedAt` datetime(6) NOT NULL,
+  `UpdatedBy` varchar(100) CHARACTER SET utf8mb4 NULL,
+  CONSTRAINT `PK_admin_roles` PRIMARY KEY (`Id`)
+) CHARACTER SET=utf8mb4;
+
+INSERT INTO `admin_roles` (`Id`, `RoleName`, `Description`, `IsActive`, `CreatedAt`, `CreatedBy`, `UpdatedAt`, `UpdatedBy`) VALUES
+('063e920c-626c-4fa8-a8b9-35900bb7b7b7', 'Staff Inventoris', 'Default role for Staff Inventoris', 1, '2026-06-09 03:57:53.286081', 'System', '2026-06-09 03:57:53.286081', 'System'),
+('6969448e-153b-43fc-8be0-1dda5927a8a1', 'Team Leader Infrastructure', 'Default role for Team Leader Infrastructure', 1, '2026-06-09 03:57:53.272759', 'System', '2026-06-09 03:57:53.272760', 'System'),
+('d941584b-880a-4d31-aa4c-ca04a29a43d4', 'Manager', 'Default role for Manager', 1, '2026-06-09 03:57:53.280862', 'System', '2026-06-09 03:57:53.280862', 'System'),
+('ec5f41d3-cec6-4d33-a220-81a18c9e1cfd', 'PIC Studio', 'Default role for PIC Studio', 1, '2026-06-09 03:57:53.187149', 'System', '2026-06-09 03:57:53.187244', 'System');
+
+CREATE TABLE `user_admin_roles` (
+  `Id` char(36) COLLATE ascii_general_ci NOT NULL,
+  `UserId` bigint(20) NOT NULL,
+  `AdminRoleId` char(36) COLLATE ascii_general_ci NOT NULL,
+  `CreatedAt` datetime(6) NOT NULL,
+  `CreatedBy` varchar(100) CHARACTER SET utf8mb4 NULL,
+  `CategoryId` bigint NULL,
+  CONSTRAINT `PK_user_admin_roles` PRIMARY KEY (`Id`),
+  CONSTRAINT `FK_user_admin_roles_admin_roles_AdminRoleId` FOREIGN KEY (`AdminRoleId`) REFERENCES `admin_roles` (`Id`) ON DELETE RESTRICT,
+  CONSTRAINT `FK_user_admin_roles_users_UserId` FOREIGN KEY (`UserId`) REFERENCES `users` (`id`) ON DELETE RESTRICT,
+  CONSTRAINT `FK_user_admin_roles_categories_CategoryId` FOREIGN KEY (`CategoryId`) REFERENCES `categories` (`id`) ON DELETE RESTRICT
+) CHARACTER SET=utf8mb4;
+
+CREATE INDEX `IX_user_admin_roles_AdminRoleId` ON `user_admin_roles` (`AdminRoleId`);
+CREATE INDEX `IX_user_admin_roles_UserId` ON `user_admin_roles` (`UserId`);
+CREATE INDEX `IX_user_admin_roles_CategoryId` ON `user_admin_roles` (`CategoryId`);
