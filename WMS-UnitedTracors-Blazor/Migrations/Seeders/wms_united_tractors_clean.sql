@@ -603,7 +603,7 @@ CREATE TABLE `users` (
   `poin`              int           NOT NULL DEFAULT 0,
   `email_verified_at` DATETIME     NULL,
   `password`          VARCHAR(255) NOT NULL,
-  `role`              VARCHAR(10)  NULL DEFAULT 'staff',
+  `role`              VARCHAR(255) NULL DEFAULT 'User',
   `division_id`       bigint        NULL,
   `remember_token`    VARCHAR(100) NULL,
   `created_at`        DATETIME     NULL,
@@ -611,7 +611,7 @@ CREATE TABLE `users` (
   CONSTRAINT `PK_users`                PRIMARY KEY (`id`),
   CONSTRAINT `UQ_users_email`          UNIQUE      (`email`),
   CONSTRAINT `UQ_users_nrp`            UNIQUE      (`nrp`),
-  CONSTRAINT `CK_users_role`           CHECK       (`role` IN ('superadmin','admin','manager','staff')),
+  -- role kini dinamis (nama AdminRole), tidak lagi dibatasi enum tetap.
   CONSTRAINT `FK_users_division_id`    FOREIGN KEY (`division_id`) REFERENCES `divisions` (`id`)
 );
 

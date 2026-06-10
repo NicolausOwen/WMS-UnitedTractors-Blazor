@@ -6,6 +6,8 @@
 @inject ReportService ReportService
 @inject DivisionService DivisionService
 @inject IJSRuntime JSRuntime
+@inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Navigation
 @rendermode InteractiveServer
 
 <PageTitle>WMS - Laporan Stok</PageTitle>
@@ -425,6 +427,13 @@
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        if (!authState.User.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ReportsView)
+            && !authState.User.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ProductsManage))
+        {
+            Navigation.NavigateTo("/");
+            return;
+        }
         await LoadData();
     }
 

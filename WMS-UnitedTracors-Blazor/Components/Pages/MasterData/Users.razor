@@ -534,11 +534,26 @@
     private async Task DeleteUser(int id)
     {
         bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "Apakah Anda yakin ingin menghapus user ini?");
-        if (confirmed)
+        if (!confirmed) return;
+
+        ErrorMessage = null;
+        SuccessMessage = null;
+        try
         {
-            await UserService.DeleteUserAsync(id, CurrentUserId);
-            SuccessMessage = "User berhasil dihapus.";
-            await LoadData(CurrentPage);
+            var error = await UserService.DeleteUserAsync(id, CurrentUserId);
+            if (error != null)
+            {
+                ErrorMessage = error;
+            }
+            else
+            {
+                SuccessMessage = "User berhasil dihapus.";
+                await LoadData(CurrentPage);
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Gagal menghapus user: " + ex.Message;
         }
     }
 }

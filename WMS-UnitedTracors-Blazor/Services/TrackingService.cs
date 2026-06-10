@@ -59,18 +59,31 @@ public class TrackingService
                 (t.status == WorkflowStatuses.Approved && (t.returned_quantity == null || t.returned_quantity < t.quantity))
             )));
 
-        if (userRole == "staff")
+        // Scope tracking berdasarkan permission (bukan role string), agar role custom tetap benar.
+        var actor = await _context.Users.FindAsync(currentUserId);
+        var actorRole = actor != null ? await _context.AdminRoles.FirstOrDefaultAsync(r => r.RoleName == actor.role && r.IsActive) : null;
+        var perms = Permissions.Resolve(actor?.role, actorRole?.Permissions);
+
+        bool isSuperAdmin = Permissions.All.All(p => perms.Contains(p));
+        bool canManageOrApprove = perms.Contains(Permissions.ApprovalStage1) || perms.Contains(Permissions.ApprovalStage2) ||
+                                  perms.Contains(Permissions.ApprovalHandover) || perms.Contains(Permissions.ApprovalReturn) ||
+                                  perms.Contains(Permissions.ProductsManage);
+
+        if (!canManageOrApprove && perms.Contains(Permissions.ApprovalManager))
         {
-            query = query.Where(t => t.requester_id == currentUserId);
-        }
-        else if (userRole == "manager")
-        {
+            // Manager (hanya approval manager) -> lihat giveaway saja.
             query = query.Where(t => t.request_type == "GIVEAWAY");
         }
-        else if (userRole == "admin" || userRole == "superadmin")
+        else if (!canManageOrApprove)
         {
+            // Pemohon biasa -> hanya request miliknya sendiri.
+            query = query.Where(t => t.requester_id == currentUserId);
+        }
+        else
+        {
+            // Approver/Admin -> semua, dengan scope kategori (jika admin per-kategori).
             var userAdminRoles = await _context.UserAdminRoles.Where(uar => uar.UserId == currentUserId).ToListAsync();
-            bool isGlobalAdmin = userRole == "superadmin" || userAdminRoles.Any(uar => uar.CategoryId == null);
+            bool isGlobalAdmin = isSuperAdmin || userAdminRoles.Any(uar => uar.CategoryId == null);
             if (!isGlobalAdmin)
             {
                 var allowedCategoryIds = userAdminRoles.Where(uar => uar.CategoryId != null).Select(uar => uar.CategoryId!.Value).ToList();

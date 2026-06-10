@@ -29,7 +29,7 @@ public class User
     public string password { get; set; } = string.Empty;
 
     [Required]
-    [StringLength(50)]
+    [StringLength(255)]
     public string role { get; set; } = string.Empty;
 
     public int? division_id { get; set; }

@@ -262,7 +262,19 @@ public class TransactionService
                 t.status == WorkflowStatuses.RevisionByManager)
             .AsQueryable();
 
-        if (userRole == "staff")
+        // Pemohon biasa (tanpa izin approval/kelola) hanya melihat riwayatnya sendiri.
+        var actor = await _context.Users.FindAsync(currentUserId);
+        var actorRole = actor != null ? await _context.AdminRoles.FirstOrDefaultAsync(r => r.RoleName == actor.role && r.IsActive) : null;
+        var perms = WMS_UnitedTracors_Blazor.Helpers.Permissions.Resolve(actor?.role, actorRole?.Permissions);
+        bool isApproverOrAdmin =
+            perms.Contains(WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalStage1) ||
+            perms.Contains(WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalStage2) ||
+            perms.Contains(WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalManager) ||
+            perms.Contains(WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalHandover) ||
+            perms.Contains(WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalReturn) ||
+            perms.Contains(WMS_UnitedTracors_Blazor.Helpers.Permissions.ProductsManage);
+
+        if (!isApproverOrAdmin)
         {
             query = query.Where(t => t.requester_id == currentUserId);
         }

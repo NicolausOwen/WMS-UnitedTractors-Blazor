@@ -1,4 +1,4 @@
-﻿@page "/Approval"
+@page "/Approval"
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components.Forms
 @using System.Security.Claims
@@ -362,8 +362,8 @@
 @if (ShowApprovalHandoverModal)
 {
     <div class="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" @onclick="CloseApprovalHandoverModal">
-        <div class="bg-white rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden border border-[#e5e3dc]" @onclick:stopPropagation="true">
-            <div class="px-5 py-4 border-b border-[#e5e3dc] bg-[#faf9f5] flex items-center justify-between gap-4">
+        <div class="bg-white rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden border border-[#e5e3dc] flex flex-col max-h-[90vh]" @onclick:stopPropagation="true">
+            <div class="px-5 py-4 border-b border-[#e5e3dc] bg-[#faf9f5] flex items-center justify-between gap-4 shrink-0">
                 <div>
                     <h3 class="text-xl font-bold text-[#1a1a1a]">Form Serah Terima</h3>
                     <p class="text-sm text-[#6b665e]">Isi bukti serah terima langsung dari tab `Serah Terima` agar seluruh proses terpusat di halaman approval.</p>
@@ -372,7 +372,7 @@
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
-            <div class="p-5 space-y-5">
+            <div class="p-5 space-y-5 overflow-y-auto">
                 @if (ApprovalHandoverItems.Count > 0)
                 {
                     var firstPending = ApprovalHandoverItems.First();
@@ -442,7 +442,7 @@
                     <div class="rounded-xl border border-[#f8c0c0] bg-[#fef0f0] px-4 py-3 text-sm font-semibold text-[#d94040]">@HandoverDraftError</div>
                 }
             </div>
-            <div class="px-5 py-4 border-t border-[#e5e3dc] bg-[#faf9f5] flex flex-col sm:flex-row-reverse gap-3">
+            <div class="px-5 py-4 border-t border-[#e5e3dc] bg-[#faf9f5] flex flex-col sm:flex-row-reverse gap-3 shrink-0">
                 <button type="button" @onclick="SubmitApprovalHandoverDraft" disabled="@IsProcessing" class="px-5 py-3 bg-[#e8a000] hover:bg-[#d49300] text-[#1a1a1a] text-sm font-bold rounded-xl transition disabled:opacity-50">
                     Simpan Draft Serah Terima
                 </button>
