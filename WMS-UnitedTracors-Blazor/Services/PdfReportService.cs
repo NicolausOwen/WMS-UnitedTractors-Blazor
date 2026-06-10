@@ -98,8 +98,8 @@ namespace WMS_UnitedTracors_Blazor.Services
 
                                     table.Cell().Element(c => CellStyle(c, bgColor)).AlignCenter().Text(i.ToString());
                                     table.Cell().Element(c => CellStyle(c, bgColor)).Text(item.created_at.ToString("dd/MM/yyyy"));
-                                    table.Cell().Element(c => CellStyle(c, bgColor)).Text(item.Product?.name ?? "-").WrapAnywhere();
-                                    table.Cell().Element(c => CellStyle(c, bgColor)).Text(item.Product?.sku ?? "-").WrapAnywhere();
+                                    table.Cell().Element(c => CellStyle(c, bgColor)).Text(item.Product?.name ?? "-");
+                                    table.Cell().Element(c => CellStyle(c, bgColor)).Text(item.Product?.sku ?? "-");
                                     table.Cell().Element(c => CellStyle(c, bgColor)).AlignCenter().Text(item.quantity?.ToString() ?? "-");
                                     
                                     var returnInfo = "-";
@@ -112,9 +112,9 @@ namespace WMS_UnitedTracors_Blazor.Services
                                     
                                     table.Cell().Element(c => CellStyle(c, bgColor)).Text(returnInfo);
                                     table.Cell().Element(c => CellStyle(c, bgColor)).Text(item.status == "REJECTED" ? "-" : (item.return_condition ?? "-"));
-                                    table.Cell().Element(c => CellStyle(c, bgColor)).Text(item.applicant_name ?? "-").WrapAnywhere();
-                                    table.Cell().Element(c => CellStyle(c, bgColor)).Text(item.Division?.name ?? "-").WrapAnywhere();
-                                    table.Cell().Element(c => CellStyle(c, bgColor)).Text(item.event_name ?? "-").WrapAnywhere();
+                                    table.Cell().Element(c => CellStyle(c, bgColor)).Text(item.applicant_name ?? "-");
+                                    table.Cell().Element(c => CellStyle(c, bgColor)).Text(item.Division?.name ?? "-");
+                                    table.Cell().Element(c => CellStyle(c, bgColor)).Text(item.event_name ?? "-");
                                     table.Cell().Element(c => CellStyle(c, bgColor)).Text(item.status ?? "-");
 
                                     i++;

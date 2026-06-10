@@ -1,4 +1,4 @@
-﻿@page "/User"
+@page "/User"
 @using UT_WMSDotnet.Models
 @using UT_WMSDotnet.ViewModels
 @using WMS_UnitedTracors_Blazor.Services
@@ -49,7 +49,7 @@
                     <form @onsubmit="SaveUser" class="flex flex-col gap-4">
                         <div class="flex flex-col sm:flex-row gap-3">
                             <div class="flex-1">
-                                <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Name</label>
+                                <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Name <span class="text-red-500">*</span></label>
                                 <input type="text" @bind="CreateModel.name" required placeholder="Full Name"
                                        class="block w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
                             </div>
@@ -59,7 +59,7 @@
                                        class="block w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
                             </div>
                             <div class="flex-1">
-                                <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Email</label>
+                                <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Email <span class="text-red-500">*</span></label>
                                 <input type="email" @bind="CreateModel.email" required placeholder="Email Address"
                                        class="block w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
                             </div>
@@ -69,14 +69,14 @@
                                        class="block w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
                             </div>
                             <div class="flex-1">
-                                <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Password</label>
+                                <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Password <span class="text-red-500">*</span></label>
                                 <input type="password" @bind="CreateModel.password" required placeholder="Password"
                                        class="block w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
                             </div>
                         </div>
                         <div class="flex flex-col sm:flex-row gap-3 items-end">
                             <div class="flex-1 w-full">
-                                <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Division</label>
+                                <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Division <span class="text-red-500">*</span></label>
                                 <select @bind="CreateModel.division_id" class="block w-full px-3 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
                                     <option value="">-- No Division --</option>
                                     @if (DivisionsList != null)
@@ -89,7 +89,7 @@
                                 </select>
                             </div>
                             <div class="flex-1 w-full">
-                                <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Role</label>
+                                <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Role <span class="text-red-500">*</span></label>
                                 <select @bind="CreateModel.role" required class="block w-full px-3 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
                                     @foreach (var r in RoleNames)
                                     {
@@ -103,6 +103,7 @@
                                 </button>
                             </div>
                         </div>
+                        <p class="text-xs text-gray-500 mt-2">* Wajib diisi</p>
                     </form>
                 </div>
             </div>
@@ -151,7 +152,7 @@
                                     <td class="px-6 py-4 text-sm text-gray-400 align-middle">@index</td>
                                     <td class="px-6 py-4 text-sm font-semibold text-[#1a1a1a] whitespace-nowrap align-middle">@user.name</td>
                                     <td class="px-6 py-4 text-sm text-gray-600 align-middle">@user.email</td>
-                                    <td class="px-6 py-4 text-sm font-semibold text-[#e8a000] align-middle">@user.poin<span class="text-xs font-normal text-gray-400">/1000</span></td>
+                                    <td class="px-6 py-4 text-sm font-semibold text-[#e8a000] align-middle">@user.poin</td>
                                     <td class="px-6 py-4 text-sm text-gray-600 align-middle">@(user.Division?.name ?? "--")</td>
                                     <td class="px-6 py-4 whitespace-nowrap align-middle">
                                         @{
@@ -193,7 +194,7 @@
                                             <form @onsubmit="() => UpdateUser(user.id)" class="flex flex-col gap-4">
                                                 <div class="flex flex-col sm:flex-row gap-3">
                                                     <div class="flex-1">
-                                                        <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Name</label>
+                                                        <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Name <span class="text-red-500">*</span></label>
                                                         <input type="text" @bind="EditModel.name" required
                                                                class="block w-full px-3 py-1.5 text-xs bg-white border border-[#e5e3dc] focus:border-[#e8a000] focus:ring-0 rounded-lg outline-none text-[#1a1a1a] transition-all duration-150">
                                                     </div>
@@ -203,7 +204,7 @@
                                                                class="block w-full px-3 py-1.5 text-xs bg-white border border-[#e5e3dc] focus:border-[#e8a000] focus:ring-0 rounded-lg outline-none text-[#1a1a1a] transition-all duration-150">
                                                     </div>
                                                     <div class="flex-1">
-                                                        <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Email</label>
+                                                        <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Email <span class="text-red-500">*</span></label>
                                                         <input type="email" @bind="EditModel.email" required
                                                                class="block w-full px-3 py-1.5 text-xs bg-white border border-[#e5e3dc] focus:border-[#e8a000] focus:ring-0 rounded-lg outline-none text-[#1a1a1a] transition-all duration-150">
                                                     </div>
@@ -220,7 +221,7 @@
                                                 </div>
                                                 <div class="flex flex-col sm:flex-row gap-3 items-end">
                                                     <div class="flex-1 w-full">
-                                                        <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Division</label>
+                                                        <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Division <span class="text-red-500">*</span></label>
                                                         <select @bind="EditModel.division_id" class="block w-full px-3 py-2 text-[0.82rem] bg-white border border-[#e5e3dc] focus:border-[#e8a000] focus:ring-0 rounded-lg outline-none text-[#1a1a1a] transition-all duration-150">
                                                             <option value="">-- No Division --</option>
                                                             @if (DivisionsList != null)
@@ -233,7 +234,7 @@
                                                         </select>
                                                     </div>
                                                     <div class="flex-1 w-full">
-                                                        <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Role</label>
+                                                        <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Role <span class="text-red-500">*</span></label>
                                                         <select @bind="EditModel.role" required class="block w-full px-3 py-2 text-[0.82rem] bg-white border border-[#e5e3dc] focus:border-[#e8a000] focus:ring-0 rounded-lg outline-none text-[#1a1a1a] transition-all duration-150">
                                                             @if (!string.IsNullOrEmpty(EditModel.role) && !RoleNames.Contains(EditModel.role))
                                                             {
@@ -250,6 +251,7 @@
                                                         <button type="button" @onclick="CancelEdit" class="flex-1 sm:flex-none px-4 py-2 bg-white border border-[#e5e3dc] hover:bg-[#f0ede5] text-[#3a3835] text-xs font-bold rounded-lg transition cursor-pointer">Cancel</button>
                                                     </div>
                                                 </div>
+                                                <p class="text-xs text-gray-500 mt-2">* Wajib diisi</p>
                                             </form>
                                         </td>
                                     </tr>
@@ -300,7 +302,7 @@
                                 <div class="grid grid-cols-2 gap-2 pt-2 border-t border-[#f0ede5] text-xs">
                                     <div>
                                         <span class="text-gray-400 font-medium">Poin:</span>
-                                        <span class="font-bold text-[#e8a000] ml-1">@user.poin<span class="text-[10px] font-normal text-gray-400">/1000</span></span>
+                                        <span class="font-bold text-[#e8a000] ml-1">@user.poin</span>
                                     </div>
                                     <div>
                                         <span class="text-gray-400 font-medium">Division:</span>
@@ -332,7 +334,7 @@
                                 <form @onsubmit="() => UpdateUser(user.id)" class="space-y-4">
                                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                         <div>
-                                            <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1">Name</label>
+                                            <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1">Name <span class="text-red-500">*</span></label>
                                             <input type="text" @bind="EditModel.name" required
                                                    class="block w-full px-3 py-2 text-xs bg-white border border-[#e5e3dc] focus:border-[#e8a000] focus:ring-0 rounded-lg outline-none text-[#1a1a1a] transition-all duration-150">
                                         </div>
@@ -342,7 +344,7 @@
                                                    class="block w-full px-3 py-2 text-xs bg-white border border-[#e5e3dc] focus:border-[#e8a000] focus:ring-0 rounded-lg outline-none text-[#1a1a1a] transition-all duration-150">
                                         </div>
                                         <div>
-                                            <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1">Email</label>
+                                            <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1">Email <span class="text-red-500">*</span></label>
                                             <input type="email" @bind="EditModel.email" required
                                                    class="block w-full px-3 py-2 text-xs bg-white border border-[#e5e3dc] focus:border-[#e8a000] focus:ring-0 rounded-lg outline-none text-[#1a1a1a] transition-all duration-150">
                                         </div>
@@ -357,7 +359,7 @@
                                                    class="block w-full px-3 py-2 text-xs bg-white border border-[#e5e3dc] focus:border-[#e8a000] focus:ring-0 rounded-lg outline-none text-[#1a1a1a] transition-all duration-150">
                                         </div>
                                         <div>
-                                            <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1">Division</label>
+                                            <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1">Division <span class="text-red-500">*</span></label>
                                             <select @bind="EditModel.division_id" class="block w-full px-3 py-2 text-[0.82rem] bg-white border border-[#e5e3dc] focus:border-[#e8a000] focus:ring-0 rounded-lg outline-none text-[#1a1a1a] transition-all duration-150">
                                                 <option value="">-- No Division --</option>
                                                 @if (DivisionsList != null)
@@ -370,7 +372,7 @@
                                             </select>
                                         </div>
                                         <div class="sm:col-span-2">
-                                            <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1">Role</label>
+                                            <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1">Role <span class="text-red-500">*</span></label>
                                             <select @bind="EditModel.role" required class="block w-full px-3 py-2 text-[0.82rem] bg-white border border-[#e5e3dc] focus:border-[#e8a000] focus:ring-0 rounded-lg outline-none text-[#1a1a1a] transition-all duration-150">
                                                 <option value="staff">Staff</option>
                                                 <option value="manager">Manager</option>
@@ -383,6 +385,7 @@
                                         <button type="submit" class="px-4 py-2 bg-[#e8a000] hover:bg-[#d49300] text-[#1a1a1a] text-xs font-bold rounded-lg transition cursor-pointer">Save Changes</button>
                                         <button type="button" @onclick="CancelEdit" class="px-4 py-2 bg-white border border-[#e5e3dc] hover:bg-[#f0ede5] text-[#3a3835] text-xs font-bold rounded-lg transition cursor-pointer">Cancel</button>
                                     </div>
+                                    <p class="text-xs text-gray-500 mt-2">* Wajib diisi</p>
                                 </form>
                             </div>
                         }
@@ -557,7 +560,6 @@
         }
     }
 }
-
 
 
 

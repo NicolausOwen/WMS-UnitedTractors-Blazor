@@ -1,4 +1,4 @@
-﻿@page "/editproduct/{Id:int}"
+@page "/editproduct/{Id:int}"
 @page "/Product/Edit/{Id:int}"
 @page "/Product-Edit/{Id:int}"
 @using UT_WMSDotnet.ViewModels
@@ -51,7 +51,7 @@
                     </button>
                     <div>
                         <h3 class="text-sm font-semibold text-gray-900">Edit Product</h3>
-                        <p class="text-xs text-gray-500 mt-0.5">Update the product information below.</p>
+                        <p class="text-xs text-gray-500 mt-0.5">Update the product information below. <span class="text-red-500 font-semibold">* Wajib diisi</span></p>
                     </div>
                 </div>
                 <div class="px-6 py-6">
@@ -68,14 +68,14 @@
                         <div class="space-y-5">
                             @* SKU *@
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1.5">SKU / Barcode ID</label>
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">SKU / Barcode ID <span class="text-red-500">*</span></label>
                                 <InputText @bind-Value="Model.sku" required class="block w-full py-2 px-3 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#e8a000] focus:border-[#e8a000] outline-none transition" />
                                 <ValidationMessage For="@(() => Model.sku)" class="text-red-600 text-xs mt-1 block" />
                             </div>
 
                             @* Barcode Type *@
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1.5">Barcode Type</label>
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">Barcode Type <span class="text-red-500">*</span></label>
                                 <InputSelect @bind-Value="Model.barcode_type" required class="block w-full py-2 px-3 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#e8a000] focus:border-[#e8a000] outline-none transition">
                                     <option value="TYPE_CODE_128">Code 128 (Recommended)</option>
                                     <option value="TYPE_CODE_39">Code 39</option>
@@ -88,12 +88,12 @@
                             @* Product Name & Point Value *@
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div class="md:col-span-2">
-                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Product Name</label>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Product Name <span class="text-red-500">*</span></label>
                                     <InputText @bind-Value="Model.name" required class="block w-full py-2 px-3 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#e8a000] focus:border-[#e8a000] outline-none transition" />
                                     <ValidationMessage For="@(() => Model.name)" class="text-red-600 text-xs mt-1 block" />
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Point Value</label>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Point Value <span class="text-red-500">*</span></label>
                                     <InputNumber @bind-Value="Model.value" min="0" placeholder="0" class="block w-full py-2 px-3 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#e8a000] focus:border-[#e8a000] outline-none transition" />
                                     <ValidationMessage For="@(() => Model.value)" class="text-red-600 text-xs mt-1 block" />
                                 </div>
@@ -101,7 +101,7 @@
 
                             @* Unit *@
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1.5">Unit</label>
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">Unit <span class="text-red-500">*</span></label>
                                 @if (ShowNewUnitInput)
                                 {
                                     <div class="relative mt-1">
@@ -131,7 +131,7 @@
                             @* Category & Transaction Type *@
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Category</label>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Category <span class="text-red-500">*</span></label>
                                     <InputSelect @bind-Value="Model.category_id" required class="block w-full py-2 px-3 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#e8a000] focus:border-[#e8a000] outline-none transition">
                                         <option value="0">Select category (required)</option>
                                         @if (Categories != null)
@@ -257,12 +257,12 @@
                                 <p class="text-xs font-medium text-gray-500 mb-2">Stock Information</p>
                                 <div class="grid grid-cols-2 gap-4 text-sm">
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Initial Stock:</label>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Initial Stock <span class="text-red-500">*</span></label>
                                         <InputNumber @bind-Value="Model.initial_stock" required min="0" class="block w-full py-2 px-3 text-sm bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#e8a000] focus:border-[#e8a000] outline-none transition" />
                                         <ValidationMessage For="@(() => Model.initial_stock)" class="text-red-600 text-xs mt-1 block" />
                                     </div>
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Current Stock:</label>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Current Stock <span class="text-red-500">*</span></label>
                                         <InputNumber @bind-Value="Model.current_stock" required min="0" class="block w-full py-2 px-3 text-sm bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#e8a000] focus:border-[#e8a000] outline-none transition" />
                                         <ValidationMessage For="@(() => Model.current_stock)" class="text-red-600 text-xs mt-1 block" />
                                     </div>
@@ -276,51 +276,72 @@
                                         <h4 class="text-sm font-semibold text-gray-900">Product Variants</h4>
                                         <p class="text-xs text-gray-500 mt-0.5">Edit sizes, colors, and specific stock/images for this product.</p>
                                     </div>
-                                    <button type="button" @onclick="AddVariant" class="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-200 transition">
-                                        + Add Variant
+                                    <button type="button" @onclick="AddColorGroup" class="px-4 py-2 bg-[#e8a000] text-white rounded-lg text-sm font-medium hover:bg-[#d69300] transition shadow-sm">
+                                        + Add Color Variant
                                     </button>
                                 </div>
                                 
-                                <div class="space-y-3">
-                                    @for (int i = 0; i < Model.variants.Count; i++)
+                                <div class="space-y-4">
+                                    @foreach (var group in VariantGroups)
                                     {
-                                        var index = i;
-                                        var variant = Model.variants[index];
-                                        <div class="flex items-end gap-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                                            <div class="flex-1">
-                                                <label class="block text-xs font-medium text-gray-700 mb-1">Color</label>
-                                                <InputText @bind-Value="variant.color" placeholder="e.g. Red" class="block w-full py-1.5 px-2 text-sm bg-white border border-gray-200 rounded-md focus:ring-[#e8a000] focus:border-[#e8a000] outline-none" />
+                                        <div class="p-5 bg-white border border-gray-200 rounded-xl shadow-sm relative">
+                                            <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-100">
+                                                <h5 class="text-sm font-bold text-gray-700 uppercase tracking-wider">VARIAN WARNA</h5>
+                                                <button type="button" @onclick="() => RemoveColorGroup(group)" class="text-red-500 text-sm font-medium hover:text-red-700 transition">Hapus Warna</button>
                                             </div>
-                                            <div class="flex-1">
-                                                <label class="block text-xs font-medium text-gray-700 mb-1">Size</label>
-                                                <InputText @bind-Value="variant.size" placeholder="e.g. L" class="block w-full py-1.5 px-2 text-sm bg-white border border-gray-200 rounded-md focus:ring-[#e8a000] focus:border-[#e8a000] outline-none" />
-                                            </div>
-                                            <div class="w-24">
-                                                <label class="block text-xs font-medium text-gray-700 mb-1">Stock</label>
-                                                <InputNumber @bind-Value="variant.stock" min="0" class="block w-full py-1.5 px-2 text-sm bg-white border border-gray-200 rounded-md focus:ring-[#e8a000] focus:border-[#e8a000] outline-none" />
-                                            </div>
-                                            <div class="flex-1">
-                                                <label class="block text-xs font-medium text-gray-700 mb-1">Variant Image</label>
-                                                <div class="flex items-center gap-2 mb-1.5">
-                                                    @if (!string.IsNullOrEmpty(variant.image_preview_url))
-                                                    {
-                                                        <div class="w-10 h-10 rounded border border-gray-200 overflow-hidden shrink-0 bg-white shadow-sm">
-                                                            <img src="@variant.image_preview_url" class="w-full h-full object-cover">
+                                            
+                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <!-- Left Column: Color Name and Image -->
+                                                <div class="space-y-4">
+                                                    <div>
+                                                        <label class="block text-sm text-gray-700 mb-1">Nama Warna</label>
+                                                        <InputText @bind-Value="group.ColorName" placeholder="Contoh: Hijau" class="block w-full py-2 px-3 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#e8a000] focus:border-[#e8a000] outline-none transition bg-white" />
+                                                    </div>
+                                                    <div>
+                                                        <label class="block text-sm text-gray-700 mb-1">Foto Varian Warna</label>
+                                                        <div class="flex flex-col gap-3">
+                                                            @if (!string.IsNullOrEmpty(group.ImagePreviewUrl))
+                                                            {
+                                                                <div class="w-20 h-20 rounded-lg border border-gray-200 overflow-hidden shrink-0 bg-white">
+                                                                    <img src="@group.ImagePreviewUrl" class="w-full h-full object-cover">
+                                                                </div>
+                                                            }
+                                                            else if (!string.IsNullOrEmpty(group.ExistingImage))
+                                                            {
+                                                                <div class="w-20 h-20 rounded-lg border border-gray-200 overflow-hidden shrink-0 bg-white">
+                                                                    <img src="@ImageHelper.Resolve(group.ExistingImage)" class="w-full h-full object-cover">
+                                                                </div>
+                                                            }
+                                                            else
+                                                            {
+                                                                <div class="w-20 h-20 rounded-lg border border-gray-200 overflow-hidden shrink-0 bg-gray-50 flex items-center justify-center text-gray-300">
+                                                                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                                                </div>
+                                                            }
+                                                            <InputFile OnChange="@(e => HandleGroupImageSelected(e, group))" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 transition cursor-pointer" />
                                                         </div>
-                                                    }
-                                                    else if (!string.IsNullOrEmpty(variant.existing_image))
-                                                    {
-                                                        <div class="w-10 h-10 rounded border border-gray-200 overflow-hidden shrink-0 bg-white shadow-sm">
-                                                            <img src="@ImageHelper.Resolve(variant.existing_image)" class="w-full h-full object-cover">
-                                                        </div>
-                                                    }
+                                                    </div>
                                                 </div>
-                                                <InputFile OnChange="@(e => HandleVariantImageSelected(e, variant))" accept="image/*" class="block w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-gray-200" />
-                                            </div>
-                                            <div>
-                                                <button type="button" @onclick="() => RemoveVariant(variant)" class="px-2 py-1.5 text-red-600 hover:bg-red-50 rounded-md transition" title="Remove">
-                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                                </button>
+                                                
+                                                <!-- Right Column: Sizes & Stock -->
+                                                <div class="min-w-0">
+                                                    <label class="block text-sm text-gray-700 mb-3">Ukuran & Stok <span class="text-red-500">*</span></label>
+                                                    <div class="space-y-2">
+                                                        @foreach (var size in group.Sizes)
+                                                        {
+                                                            <div class="flex items-center gap-2 sm:gap-3">
+                                                                <InputText @bind-Value="size.Size" placeholder="Size" class="block flex-1 min-w-0 py-2 px-3 text-sm bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#e8a000] focus:border-[#e8a000] outline-none transition" />
+                                                                <InputNumber @bind-Value="size.Stock" min="0" placeholder="Stock" class="block w-20 sm:w-24 min-w-0 py-2 px-3 text-sm bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#e8a000] focus:border-[#e8a000] outline-none transition" />
+                                                                <button type="button" @onclick="() => RemoveSize(group, size)" class="text-red-500 hover:text-red-700 transition px-1 sm:px-2 shrink-0">
+                                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                                                </button>
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                    <button type="button" @onclick="() => AddSize(group)" class="mt-4 text-[#e8a000] text-sm font-semibold hover:text-[#d69300] transition flex items-center gap-1">
+                                                        <span>+</span> Tambah Ukuran
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     }
@@ -369,6 +390,8 @@
     private List<string> existingImages = new();
     private Microsoft.AspNetCore.Components.Forms.IBrowserFile? selectedPositionImage;
     private string? positionPreviewUrl;
+
+    private List<VariantGroupUI> VariantGroups = new();
 
     private bool ShowNewUnitInput = false;
     private string SelectedUnitOption = "";
@@ -429,6 +452,21 @@
                 stock = v.stock,
                 existing_image = v.image
             }).ToList() ?? new List<ProductVariantViewModel>();
+
+            VariantGroups = Model.variants
+                .GroupBy(v => v.color ?? "")
+                .Select(g => new VariantGroupUI
+                {
+                    ColorName = g.Key,
+                    ExistingImage = g.FirstOrDefault()?.existing_image,
+                    Sizes = g.Select(v => new VariantSizeUI
+                    {
+                        Id = v.id,
+                        Sku = v.sku,
+                        Size = v.size ?? "",
+                        Stock = v.stock
+                    }).ToList()
+                }).ToList();
             
             if (!string.IsNullOrEmpty(product.images))
             {
@@ -515,6 +553,25 @@
             };
         }
 
+        Model.variants.Clear();
+        foreach (var group in VariantGroups)
+        {
+            foreach (var size in group.Sizes)
+            {
+                Model.variants.Add(new ProductVariantViewModel
+                {
+                    id = size.Id,
+                    sku = size.Sku,
+                    color = group.ColorName,
+                    size = size.Size,
+                    stock = size.Stock,
+                    existing_image = group.ExistingImage,
+                    image = group.ImageFile,
+                    image_preview_url = group.ImagePreviewUrl
+                });
+            }
+        }
+
         var result = await ProductService.UpdateProductAsync(Id, Model);
         
         IsSubmitting = false;
@@ -560,26 +617,55 @@
         positionPreviewUrl = $"data:{format};base64,{Convert.ToBase64String(ms.ToArray())}";
     }
 
-    private void AddVariant()
+    private void AddColorGroup()
     {
-        Model.variants.Add(new ProductVariantViewModel());
+        var group = new VariantGroupUI();
+        group.Sizes.Add(new VariantSizeUI());
+        VariantGroups.Add(group);
     }
 
-    private void RemoveVariant(ProductVariantViewModel variant)
+    private void RemoveColorGroup(VariantGroupUI group)
     {
-        Model.variants.Remove(variant);
+        VariantGroups.Remove(group);
     }
 
-    private async Task HandleVariantImageSelected(Microsoft.AspNetCore.Components.Forms.InputFileChangeEventArgs e, ProductVariantViewModel variant)
+    private void AddSize(VariantGroupUI group)
+    {
+        group.Sizes.Add(new VariantSizeUI());
+    }
+
+    private void RemoveSize(VariantGroupUI group, VariantSizeUI size)
+    {
+        group.Sizes.Remove(size);
+    }
+
+    private async Task HandleGroupImageSelected(Microsoft.AspNetCore.Components.Forms.InputFileChangeEventArgs e, VariantGroupUI group)
     {
         var format = "image/jpeg";
         var resizedForUpload = await e.File.RequestImageFileAsync(format, 1024, 1024);
-        variant.image = resizedForUpload;
+        group.ImageFile = resizedForUpload;
         
         var resizedForPreview = await e.File.RequestImageFileAsync(format, 100, 100);
         using var ms = new System.IO.MemoryStream();
         await resizedForPreview.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024).CopyToAsync(ms);
-        variant.image_preview_url = $"data:{format};base64,{Convert.ToBase64String(ms.ToArray())}";
+        group.ImagePreviewUrl = $"data:{format};base64,{Convert.ToBase64String(ms.ToArray())}";
+    }
+
+    public class VariantGroupUI
+    {
+        public string ColorName { get; set; } = "";
+        public string? ExistingImage { get; set; }
+        public Microsoft.AspNetCore.Components.Forms.IBrowserFile? ImageFile { get; set; }
+        public string? ImagePreviewUrl { get; set; }
+        public List<VariantSizeUI> Sizes { get; set; } = new();
+    }
+
+    public class VariantSizeUI
+    {
+        public int? Id { get; set; }
+        public string? Sku { get; set; }
+        public string Size { get; set; } = "";
+        public int Stock { get; set; }
     }
 
     private void NavigateBack()
