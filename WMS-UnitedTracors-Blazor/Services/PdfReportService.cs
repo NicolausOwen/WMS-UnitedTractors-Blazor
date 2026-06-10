@@ -38,55 +38,68 @@ namespace WMS_UnitedTracors_Blazor.Services
                     container.Page(page =>
                     {
                         page.Size(PageSizes.A4.Landscape());
-                        page.Margin(1.0f, QuestPDF.Infrastructure.Unit.Centimetre);
+                        page.MarginTop(1.5f, QuestPDF.Infrastructure.Unit.Centimetre);
+                        page.MarginBottom(2.2f, QuestPDF.Infrastructure.Unit.Centimetre);
+                        page.MarginHorizontal(2.0f, QuestPDF.Infrastructure.Unit.Centimetre);
                         page.PageColor(Colors.White);
-                        page.DefaultTextStyle(x => x.FontSize(9).FontFamily(Fonts.Arial).LineHeight(1.3f));
+                        page.DefaultTextStyle(x => x.FontSize(9).FontFamily(Fonts.Arial).FontColor("#1f2937").LineHeight(1.3f));
 
                         page.Header().Element(c => ComposeHeader(c, "Laporan Peminjaman Barang", wwwrootPath));
                         
                         page.Content().PaddingVertical(10).Column(column =>
                         {
-                            column.Item().AlignCenter().Text($"Periode: {startDate:dd MMM yyyy} - {endDate:dd MMM yyyy}").FontSize(8).FontColor(Colors.Grey.Darken1);
+                            column.Item().AlignCenter().Text($"Periode: {startDate:dd MMM yyyy} - {endDate:dd MMM yyyy}").FontSize(8).FontColor("#6b7280");
                             column.Item().PaddingBottom(8);
 
-                            column.Item().Background(Colors.Grey.Lighten4).BorderLeft(3).BorderColor(Colors.Blue.Medium).Padding(4).Text($"Status: {status} | Total Transaksi: {statusTransactions.Count} | Total Qty: {statusTransactions.Sum(t => t.quantity)}").FontSize(8).FontColor(Colors.Grey.Darken3).SemiBold();
+                            column.Item().Background("#f9fafb").BorderLeft(3).BorderColor("#3b82f6").Padding(4)
+                                .Text(txt => 
+                                {
+                                    txt.Span("Status: ").FontSize(8).FontColor("#374151");
+                                    txt.Span(status).FontSize(8).FontColor("#374151").SemiBold();
+                                    txt.Span(" | Total Transaksi: ").FontSize(8).FontColor("#374151");
+                                    txt.Span(statusTransactions.Count.ToString()).FontSize(8).FontColor("#374151").SemiBold();
+                                    txt.Span(" | Total Qty: ").FontSize(8).FontColor("#374151");
+                                    txt.Span(statusTransactions.Sum(t => t.quantity).ToString()).FontSize(8).FontColor("#374151").SemiBold();
+                                });
                             
-                            column.Item().PaddingTop(10).PaddingBottom(4).BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Text($"Daftar Transaksi - {status}").FontSize(10).SemiBold().FontColor(Colors.Grey.Darken4);
+                            column.Item().PaddingTop(10).PaddingBottom(2).BorderBottom(1).BorderColor("#e5e7eb")
+                                .Text($"DAFTAR TRANSAKSI - {status}").FontSize(10).SemiBold().FontColor("#1a1a2e");
 
-                            column.Item().Table(table =>
+                            column.Item().PaddingTop(6).Table(table =>
                             {
                                 table.ColumnsDefinition(columns =>
                                 {
-                                    columns.ConstantColumn(40); // No
-                                    columns.RelativeColumn(2); // Tanggal
-                                    columns.RelativeColumn(4); // Produk
-                                    columns.RelativeColumn(3); // SKU
-                                    columns.ConstantColumn(40); // Qty
-                                    columns.RelativeColumn(4); // Info Pengembalian
-                                    columns.RelativeColumn(2); // Kondisi
-                                    columns.RelativeColumn(3); // Pemohon
-                                    columns.RelativeColumn(2); // Divisi
-                                    columns.RelativeColumn(3); // Event
-                                    columns.RelativeColumn(2); // Status
+                                    columns.RelativeColumn(3); // No
+                                    columns.RelativeColumn(8); // Tanggal
+                                    columns.RelativeColumn(15); // Produk
+                                    columns.RelativeColumn(10); // SKU
+                                    columns.RelativeColumn(5); // Qty
+                                    columns.RelativeColumn(15); // Info Pengembalian
+                                    columns.RelativeColumn(8); // Kondisi
+                                    columns.RelativeColumn(12); // Pemohon
+                                    columns.RelativeColumn(10); // Divisi
+                                    columns.RelativeColumn(10); // Event
+                                    columns.RelativeColumn(8); // Status
                                 });
 
                                 table.Header(header =>
                                 {
-                                    header.Cell().Element(CellStyle).AlignCenter().Text("No");
-                                    header.Cell().Element(CellStyle).Text("Tanggal");
-                                    header.Cell().Element(CellStyle).Text("Produk");
-                                    header.Cell().Element(CellStyle).Text("SKU");
-                                    header.Cell().Element(CellStyle).AlignCenter().Text("Qty");
-                                    header.Cell().Element(CellStyle).Text("Keterangan Pengembalian");
-                                    header.Cell().Element(CellStyle).Text("Kondisi");
-                                    header.Cell().Element(CellStyle).Text("Pemohon");
-                                    header.Cell().Element(CellStyle).Text("Divisi");
-                                    header.Cell().Element(CellStyle).Text("Event");
-                                    header.Cell().Element(CellStyle).Text("Status");
+                                    header.Cell().Element(HeaderStyle).AlignCenter().Text("NO");
+                                    header.Cell().Element(HeaderStyle).Text("TANGGAL");
+                                    header.Cell().Element(HeaderStyle).Text("PRODUK");
+                                    header.Cell().Element(HeaderStyle).Text("SKU");
+                                    header.Cell().Element(HeaderStyle).AlignCenter().Text("QTY");
+                                    header.Cell().Element(HeaderStyle).Text("KETERANGAN PENGEMBALIAN");
+                                    header.Cell().Element(HeaderStyle).Text("KONDISI");
+                                    header.Cell().Element(HeaderStyle).Text("PEMOHON");
+                                    header.Cell().Element(HeaderStyle).Text("DIVISI");
+                                    header.Cell().Element(HeaderStyle).Text("EVENT");
+                                    header.Cell().Element(HeaderStyle).Text("STATUS");
 
-                                    static IContainer CellStyle(IContainer container)
+                                    static IContainer HeaderStyle(IContainer container)
                                     {
-                                        return container.DefaultTextStyle(x => x.SemiBold().FontColor(Colors.White)).PaddingVertical(6).PaddingHorizontal(4).Border(1).BorderColor(Colors.Grey.Darken3).Background(Colors.Grey.Darken3);
+                                        return container.Background("#1f2937").Border(1).BorderColor("#374151").PaddingVertical(6).PaddingHorizontal(4)
+                                            .DefaultTextStyle(x => x.SemiBold().FontColor(Colors.White).FontSize(8.5f));
                                     }
                                 });
 
@@ -94,35 +107,67 @@ namespace WMS_UnitedTracors_Blazor.Services
                                 foreach (var item in statusTransactions)
                                 {
                                     var isEven = i % 2 == 0;
-                                    var bgColor = isEven ? Colors.Grey.Lighten5 : Colors.White;
+                                    var bgColor = isEven ? "#fafbfc" : "#ffffff";
 
                                     table.Cell().Element(c => CellStyle(c, bgColor)).AlignCenter().Text(i.ToString());
                                     table.Cell().Element(c => CellStyle(c, bgColor)).Text(item.created_at.ToString("dd/MM/yyyy"));
-                                    table.Cell().Element(c => CellStyle(c, bgColor)).Text(item.Product?.name ?? "-").WrapAnywhere();
-                                    table.Cell().Element(c => CellStyle(c, bgColor)).Text(item.Product?.sku ?? "-").WrapAnywhere();
+                                    table.Cell().Element(c => CellStyle(c, bgColor)).Text(item.Product?.name ?? "-");
+                                    table.Cell().Element(c => CellStyle(c, bgColor)).Text(item.Product?.sku ?? "-").FontFamily(Fonts.Courier);
                                     table.Cell().Element(c => CellStyle(c, bgColor)).AlignCenter().Text(item.quantity?.ToString() ?? "-");
                                     
-                                    var returnInfo = "-";
-                                    if (item.status != "REJECTED")
+                                    table.Cell().Element(c => CellStyle(c, bgColor)).Column(col => 
                                     {
-                                        if (item.returned_quantity >= item.quantity) returnInfo = "Sudah Dikembalikan Semuanya";
-                                        else if (item.returned_quantity > 0) returnInfo = $"Dikembalikan Sebagian ({item.returned_quantity} dari {item.quantity})";
-                                        else returnInfo = "Belum Dikembalikan";
-                                    }
-                                    
-                                    table.Cell().Element(c => CellStyle(c, bgColor)).Text(returnInfo);
+                                        if (item.status == "REJECTED")
+                                        {
+                                            col.Item().Text("Ditolak:").SemiBold().FontColor("#991b1b");
+                                            col.Item().Text(string.IsNullOrEmpty(item.rejection_reason) ? "Tidak ada alasan" : item.rejection_reason)
+                                                .FontSize(7.5f).FontColor("#555555");
+                                        }
+                                        else
+                                        {
+                                            var returnInfo = "-";
+                                            if (item.returned_quantity >= item.quantity) returnInfo = "Sudah Dikembalikan Semuanya";
+                                            else if (item.returned_quantity > 0) returnInfo = $"Dikembalikan Sebagian ({item.returned_quantity} dari {item.quantity})";
+                                            else returnInfo = "Belum Dikembalikan";
+                                            col.Item().Text(returnInfo);
+                                        }
+                                    });
+
                                     table.Cell().Element(c => CellStyle(c, bgColor)).Text(item.status == "REJECTED" ? "-" : (item.return_condition ?? "-"));
-                                    table.Cell().Element(c => CellStyle(c, bgColor)).Text(item.applicant_name ?? "-").WrapAnywhere();
-                                    table.Cell().Element(c => CellStyle(c, bgColor)).Text(item.Division?.name ?? "-").WrapAnywhere();
-                                    table.Cell().Element(c => CellStyle(c, bgColor)).Text(item.event_name ?? "-").WrapAnywhere();
-                                    table.Cell().Element(c => CellStyle(c, bgColor)).Text(item.status ?? "-");
+                                    table.Cell().Element(c => CellStyle(c, bgColor)).Text(item.applicant_name ?? "-");
+                                    table.Cell().Element(c => CellStyle(c, bgColor)).Text(item.Division?.name ?? "-");
+                                    table.Cell().Element(c => CellStyle(c, bgColor)).Text(item.event_name ?? "-");
+                                    
+                                    table.Cell().Element(c => CellStyle(c, bgColor)).Column(col => 
+                                    {
+                                        if (item.status == "PENDING")
+                                        {
+                                            col.Item().Background("#fef3c7").PaddingHorizontal(5).PaddingVertical(2).Text("PENDING")
+                                                .FontSize(7.5f).SemiBold().FontColor("#92400e");
+                                        }
+                                        else if (item.status == "APPROVED")
+                                        {
+                                            col.Item().Background("#d1fae5").PaddingHorizontal(5).PaddingVertical(2).Text("APPROVED")
+                                                .FontSize(7.5f).SemiBold().FontColor("#065f46");
+                                        }
+                                        else
+                                        {
+                                            col.Item().Background("#fee2e2").PaddingHorizontal(5).PaddingVertical(2).Text("REJECTED")
+                                                .FontSize(7.5f).SemiBold().FontColor("#991b1b");
+                                            if (!string.IsNullOrEmpty(item.rejection_reason))
+                                            {
+                                                col.Item().Text($"Alasan: {item.rejection_reason}").FontSize(7f).FontColor("#991b1b");
+                                            }
+                                        }
+                                    });
 
                                     i++;
                                 }
                                 
                                 static IContainer CellStyle(IContainer container, string bgColor)
                                 {
-                                    return container.Border(1).BorderColor(Colors.Grey.Lighten2).Background(bgColor).PaddingVertical(5).PaddingHorizontal(4);
+                                    return container.Background(bgColor).Border(1).BorderColor("#e5e7eb").PaddingVertical(5).PaddingHorizontal(4)
+                                        .DefaultTextStyle(x => x.FontSize(8.5f));
                                 }
                             });
                         });
@@ -793,13 +838,13 @@ namespace WMS_UnitedTracors_Blazor.Services
             var utLogo = Path.Combine(wwwrootPath, "img", "ut.png");
             var corpuLogo = Path.Combine(wwwrootPath, "img", "corpu.png");
 
-            container.BorderBottom(2).BorderColor(Colors.Grey.Darken4).PaddingBottom(8).Row(row =>
+            container.PaddingBottom(12).BorderBottom(2).BorderColor("#1a1a2e").PaddingBottom(8).Row(row =>
             {
                 row.ConstantItem(120).Height(35).AlignLeft().Image(File.Exists(utLogo) ? utLogo : Path.Combine(wwwrootPath, "img", "logo.svg")).FitArea();
                 row.RelativeItem().Column(column =>
                 {
-                    column.Item().AlignCenter().Text(title).FontSize(14).SemiBold().FontColor(Colors.Grey.Darken4);
-                    column.Item().AlignCenter().Text("Warehouse Management System - United Tractors").FontSize(8).FontColor(Colors.Grey.Darken1);
+                    column.Item().AlignCenter().Text(title).FontSize(14).SemiBold().FontColor("#1a1a2e");
+                    column.Item().AlignCenter().Text("Warehouse Management System - United Tractors").FontSize(8).FontColor("#6b7280");
                 });
                 row.ConstantItem(120).Height(35).AlignRight().Image(File.Exists(corpuLogo) ? corpuLogo : Path.Combine(wwwrootPath, "img", "logo.svg")).FitArea();
             });
@@ -809,12 +854,12 @@ namespace WMS_UnitedTracors_Blazor.Services
         {
             var movingLogo = Path.Combine(wwwrootPath, "img", "moving.png");
             
-            container.BorderTop(1).BorderColor(Colors.Grey.Lighten2).PaddingTop(6).Row(row =>
+            container.BorderTop(1).BorderColor("#e5e7eb").PaddingTop(6).Row(row =>
             {
-                row.RelativeItem().Text($"Dicetak pada {DateTime.Now:dd MMM yyyy HH:mm:ss} | WMS United Tractors").FontSize(7.5f).FontColor(Colors.Grey.Medium);
+                row.RelativeItem().Text($"Dicetak pada {DateTime.Now:dd MMM yyyy HH:mm:ss} | WMS United Tractors").FontSize(7.5f).FontColor("#9ca3af");
                 if (File.Exists(movingLogo))
                 {
-                    row.ConstantItem(100).AlignRight().Height(20).Image(movingLogo);
+                    row.ConstantItem(100).Height(20).AlignRight().Image(movingLogo).FitArea();
                 }
             });
         }
