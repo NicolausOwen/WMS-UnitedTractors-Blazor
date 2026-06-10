@@ -493,19 +493,21 @@ public class TransactionService
         List<int> transactionIds,
         Microsoft.AspNetCore.Components.Forms.IBrowserFile? photo,
         string? notes,
+        string? uploadedBy = null,
         string? recipientName = null,
         DateTime? handoverTimestamp = null)
     {
         var photos = photo == null
             ? new List<Microsoft.AspNetCore.Components.Forms.IBrowserFile>()
             : new List<Microsoft.AspNetCore.Components.Forms.IBrowserFile> { photo };
-        return await ConfirmHandoverAsync(transactionIds, photos, notes, recipientName, handoverTimestamp);
+        return await ConfirmHandoverAsync(transactionIds, photos, notes, uploadedBy, recipientName, handoverTimestamp);
     }
 
     public async Task<string?> ConfirmHandoverAsync(
         List<int> transactionIds,
         IReadOnlyList<Microsoft.AspNetCore.Components.Forms.IBrowserFile> photos,
         string? notes,
+        string? uploadedBy = null,
         string? recipientName = null,
         DateTime? handoverTimestamp = null)
     {
@@ -563,6 +565,7 @@ public class TransactionService
             item.handover_notes = notes;
             item.handover_recipient_name = string.IsNullOrWhiteSpace(recipientName) ? (item.applicant_name ?? item.Requester?.name) : recipientName;
             item.handover_timestamp = handoverTimestamp ?? DateTime.Now;
+            item.handover_uploaded_by = uploadedBy;
             item.rejection_reason = null; // bersihkan alasan penolakan sebelumnya (jika re-upload)
             item.updated_at = DateTime.UtcNow;
             _context.Transactions.Update(item);
@@ -598,7 +601,7 @@ public class TransactionService
                 {
                     if (item.request_type == "BORROW")
                     {
-                        item.status = WorkflowStatuses.WaitingAdminHandover;
+                        item.status = WorkflowStatuses.WaitingHandoverConfirm;
                     }
                     else if (item.request_type == "GIVEAWAY")
                     {
@@ -637,6 +640,41 @@ public class TransactionService
                 return "Gagal submit serah terima: " + ex.Message;
             }
         });
+    }
+
+    public async Task<string?> ConfirmHandoverReceiptByUserAsync(string groupId, int currentUserId, bool isApproved, string? rejectionReason)
+    {
+        if (!isApproved && string.IsNullOrWhiteSpace(rejectionReason)) return "Alasan penolakan wajib diisi.";
+
+        var query = await _context.Transactions
+            .Where(t => t.status == WorkflowStatuses.WaitingHandoverConfirm && t.handover_uploaded_by == "SI" && t.type == "OUT" && t.request_type == "BORROW")
+            .ToListAsync();
+
+        var matched = query.Where(t => t.group_id == groupId).ToList();
+
+        if (matched.Count == 0) return "Tidak ada transaksi serah terima yang menunggu konfirmasi Anda pada event ini.";
+
+        if (matched.Any(t => t.requester_id != currentUserId))
+            return "Unauthorized action.";
+
+        foreach (var item in matched)
+        {
+            if (isApproved)
+            {
+                item.status = WorkflowStatuses.WaitingAdminHandover;
+                item.rejection_reason = null;
+            }
+            else
+            {
+                item.status = WorkflowStatuses.WaitingHandover;
+                item.rejection_reason = rejectionReason;
+            }
+            item.updated_at = DateTime.UtcNow;
+            _context.Transactions.Update(item);
+        }
+
+        await _context.SaveChangesAsync();
+        return null;
     }
 
     public async Task<string?> SubmitGiveawayDocumentationAsync(

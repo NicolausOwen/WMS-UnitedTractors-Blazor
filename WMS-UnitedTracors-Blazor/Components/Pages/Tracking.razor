@@ -1137,7 +1137,13 @@
         {
             var handoverTimestamp = HandoverTimestampInput;
 
-            var err = await TransactionService.ConfirmHandoverAsync(HandoverTransactionIds, HandoverFile, HandoverNotes, HandoverRecipientName, handoverTimestamp);
+            var err = await TransactionService.ConfirmHandoverAsync(
+                HandoverTransactionIds, 
+                HandoverFile, 
+                HandoverNotes, 
+                "USER",
+                HandoverRecipientName, 
+                handoverTimestamp);
             if (err == null)
             {
                 SuccessMessage = HandoverRequestType == "GIVEAWAY"
@@ -1150,6 +1156,38 @@
             {
                 ErrorMessage = err;
             }
+        }
+        finally
+        {
+            IsSubmitting = false;
+        }
+    }
+
+    private async Task ConfirmHandoverReceiptByUser(List<Transaction> borrowItems, bool isApproved)
+    {
+        if (IsSubmitting) return;
+        var groupId = borrowItems.FirstOrDefault(i => i.status == "WAITING_HANDOVER_CONFIRM")?.group_id;
+        if (string.IsNullOrEmpty(groupId)) return;
+
+        IsSubmitting = true;
+        ErrorMessage = null;
+        SuccessMessage = null;
+        try
+        {
+            var err = await TransactionService.ConfirmHandoverReceiptByUserAsync(groupId, CurrentUserId, isApproved, null);
+            if (err == null)
+            {
+                SuccessMessage = isApproved ? "Konfirmasi penerimaan berhasil." : "Penerimaan ditolak.";
+                await LoadData();
+            }
+            else
+            {
+                ErrorMessage = err;
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Terjadi kesalahan saat konfirmasi penerimaan: " + ex.Message;
         }
         finally
         {

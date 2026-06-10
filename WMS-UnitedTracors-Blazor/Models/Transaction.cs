@@ -53,6 +53,11 @@ public class Transaction
 
     public DateTime? handover_timestamp { get; set; }
 
+    [MaxLength(10)]
+    public string? handover_uploaded_by { get; set; }
+
+    public DateTime? handover_approved_at { get; set; }
+
     [Column(TypeName = "text")]
     public string? documentation_photo { get; set; }
 

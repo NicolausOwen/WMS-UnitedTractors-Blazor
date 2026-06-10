@@ -10,10 +10,12 @@ public static class Permissions
     public const string RequestCreate = "request.create";
     public const string TrackingView = "tracking.view";
     public const string ApprovalStage1 = "approval.stage1";   // Staff Inventoris
-    public const string ApprovalStage2 = "approval.stage2";   // Admin
-    public const string ApprovalManager = "approval.manager"; // Manager (giveaway)
-    public const string ApprovalHandover = "approval.handover"; // Verifikasi serah terima
-    public const string ApprovalReturn = "approval.return";   // Approve pengembalian
+    public const string ApprovalStage2 = "approval.stage2";
+    public const string ApprovalReturn = "approval.return";
+    public const string ApprovalHandover = "approval.handover";
+    public const string ApprovalHandoverFinal = "approval.handover_final";
+    public const string ApprovalManager = "approval.manager";
+    public const string SettingsGeneral = "settings.general";
 
     // ── Kelola Data ──
     public const string DashboardView = "dashboard.view";
@@ -33,10 +35,11 @@ public static class Permissions
         new(RequestCreate,    "Buat Request (Borrow/Giveaway)",            "Alur Proses", 10),
         new(TrackingView,     "Lihat Tracking",                            "Alur Proses", 20),
         new(ApprovalStage1,   "Approve Tahap 1 (Staff Inventoris)",        "Alur Proses", 30),
-        new(ApprovalStage2,   "Approve Tahap 2 (Admin)",                   "Alur Proses", 40),
-        new(ApprovalManager,  "Approve Manager (Giveaway)",                "Alur Proses", 50),
-        new(ApprovalHandover, "Verifikasi Serah Terima",                   "Alur Proses", 60),
-        new(ApprovalReturn,   "Approve Pengembalian",                      "Alur Proses", 70),
+        new(ApprovalStage2,   "Approval Tahap 2 (TL / PIC Studio)",        "Alur Proses", 40),
+        new(ApprovalReturn,   "Approval Pengembalian",                     "Alur Proses", 50),
+        new(ApprovalHandover, "Upload & Konfirmasi Serah Terima (SI)",     "Alur Proses", 60),
+        new(ApprovalHandoverFinal, "Approval Final Serah Terima (TL)",     "Alur Proses", 70),
+        new(ApprovalManager,  "Approval Manager",                          "Alur Proses", 80),
         // Kelola Data
         new(DashboardView,    "Lihat Dashboard / Katalog",                 "Kelola Data", 110),
         new(ProductsManage,   "Kelola Produk",                             "Kelola Data", 120),
@@ -45,6 +48,7 @@ public static class Permissions
         new(ScannerUse,       "Gunakan Scanner",                           "Kelola Data", 150),
         new(UsersManage,      "Kelola User",                               "Kelola Data", 160),
         new(RolesManage,      "Kelola Role & Permission",                  "Kelola Data", 170),
+        new(SettingsGeneral,  "Pengaturan Umum",                           "Kelola Data", 180),
     };
 
     /// <summary>Semua key (untuk superadmin).</summary>
@@ -82,8 +86,9 @@ public static class Permissions
         "superadmin" => All,
         "admin" => new[]
         {
-            RequestCreate, TrackingView, ApprovalStage1, ApprovalStage2, ApprovalHandover,
-            ApprovalReturn, DashboardView, ProductsManage, MasterDataManage, ReportsView, ScannerUse
+            RequestCreate, TrackingView, ApprovalStage1, ApprovalStage2, ApprovalReturn,
+            ApprovalHandover, ApprovalHandoverFinal, ApprovalManager, SettingsGeneral,
+            DashboardView, ProductsManage, MasterDataManage, ReportsView, ScannerUse
         },
         "manager" => new[] { DashboardView, TrackingView, ApprovalManager, ReportsView },
         "staff" => new[] { DashboardView, RequestCreate, TrackingView },

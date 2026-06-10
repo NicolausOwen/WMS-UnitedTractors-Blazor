@@ -31,8 +31,8 @@ public class ApprovalService
         bool isSuperAdmin = Permissions.All.All(p => perms.Contains(p));
         bool hasApprovalPerms = perms.Contains(Permissions.ApprovalStage1) || 
                                 perms.Contains(Permissions.ApprovalStage2) || 
-                                perms.Contains(Permissions.ApprovalManager) || 
                                 perms.Contains(Permissions.ApprovalHandover) || 
+                                perms.Contains(Permissions.ApprovalHandoverFinal) || 
                                 perms.Contains(Permissions.ApprovalReturn) ||
                                 perms.Contains(Permissions.UsersManage);
 
@@ -102,7 +102,7 @@ public class ApprovalService
                 .ToListAsync();
         }
 
-        if (perms.Contains(Permissions.ApprovalHandover))
+        if (perms.Contains(Permissions.ApprovalHandover) || perms.Contains(Permissions.ApprovalHandoverFinal))
         {
             var handoversQ = _context.Transactions
                 .Include(t => t.Product)
@@ -111,7 +111,12 @@ public class ApprovalService
                 .Where(t =>
                     t.type == "OUT" &&
                     (t.request_type == "BORROW" || t.request_type == "GIVEAWAY") &&
-                    (t.status == WorkflowStatuses.WaitingHandover || t.status == WorkflowStatuses.WaitingAdminHandover));
+                    (
+                        (perms.Contains(Permissions.ApprovalHandover) && 
+                            (t.status == WorkflowStatuses.WaitingHandover || 
+                            (t.status == WorkflowStatuses.WaitingHandoverConfirm && t.handover_uploaded_by == "USER"))) ||
+                        (perms.Contains(Permissions.ApprovalHandoverFinal) && t.status == WorkflowStatuses.WaitingAdminHandover)
+                    ));
 
             if (!isGlobalAdmin && allowedCategoryIds != null)
             {
@@ -400,7 +405,7 @@ public class ApprovalService
     public async Task<string?> ApproveHandoverBatchAsync(string groupId, int currentUserId, string? userRole)
     {
         var perms = await ResolvePermsAsync(currentUserId);
-        if (!perms.Contains(Permissions.ApprovalHandover)) return "Unauthorized action.";
+        if (!perms.Contains(Permissions.ApprovalHandoverFinal)) return "Unauthorized action.";
 
         var query = await _context.Transactions
             .Include(t => t.Product)
@@ -422,10 +427,43 @@ public class ApprovalService
         return null;
     }
 
-    public async Task<string?> RejectHandoverBatchAsync(string groupId, string rejectionReason, int currentUserId, string? userRole)
+    public async Task<string?> ConfirmHandoverBySiAsync(string groupId, int currentUserId, bool isApproved, string? rejectionReason)
     {
         var perms = await ResolvePermsAsync(currentUserId);
         if (!perms.Contains(Permissions.ApprovalHandover)) return "Unauthorized action.";
+        if (!isApproved && string.IsNullOrWhiteSpace(rejectionReason)) return "Alasan penolakan wajib diisi.";
+
+        var query = await _context.Transactions
+            .Where(t => t.status == WorkflowStatuses.WaitingHandoverConfirm && t.handover_uploaded_by == "USER" && t.type == "OUT" && t.request_type == "BORROW")
+            .ToListAsync();
+
+        var matched = query.Where(t => t.group_id == groupId).ToList();
+        if (matched.Count == 0) return "Tidak ada transaksi yang menunggu konfirmasi serah terima Anda.";
+
+        foreach (var item in matched)
+        {
+            if (isApproved)
+            {
+                item.status = WorkflowStatuses.WaitingAdminHandover;
+                item.rejection_reason = null;
+            }
+            else
+            {
+                item.status = WorkflowStatuses.WaitingHandover;
+                item.rejection_reason = rejectionReason;
+            }
+            item.updated_at = DateTime.UtcNow;
+            _context.Transactions.Update(item);
+        }
+
+        await _context.SaveChangesAsync();
+        return null;
+    }
+
+    public async Task<string?> RejectHandoverBatchAsync(string groupId, string rejectionReason, int currentUserId, string? userRole)
+    {
+        var perms = await ResolvePermsAsync(currentUserId);
+        if (!perms.Contains(Permissions.ApprovalHandoverFinal)) return "Unauthorized action.";
         if (string.IsNullOrWhiteSpace(rejectionReason)) return "Rejection reason is required.";
 
         var query = await _context.Transactions

@@ -136,6 +136,7 @@
                     {
                         var firstItem = group.Value.First();
                         var isWaitingInput = group.Value.Any(i => i.status == WorkflowStatuses.WaitingHandover);
+                        var isWaitingUserConfirm = group.Value.Any(i => i.status == WorkflowStatuses.WaitingHandoverConfirm && i.handover_uploaded_by == "USER");
                         var isWaitingVerification = group.Value.Any(i => i.status == WorkflowStatuses.WaitingAdminHandover);
                         var isGiveawayHandover = group.Value.All(i => i.request_type == "GIVEAWAY");
                         <div class="bg-white rounded-xl border border-[#e5e3dc] shadow-sm overflow-hidden">
@@ -144,8 +145,8 @@
                                     <h4 class="font-bold text-[#1a1a1a]">Event: @(firstItem.event_name ?? "-")</h4>
                                     <div class="text-xs text-gray-500 mt-1">Pemohon: @(firstItem.applicant_name ?? firstItem.Requester?.name) | @(group.Value.Count) Items</div>
                                     <div class="mt-2">
-                                        <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase tracking-[0.08em] @(isWaitingVerification ? "bg-[#eef9f0] text-[#1a7a30] border border-[#b8e8c0]" : "bg-[#fffbeb] text-[#b77900] border border-[#f3d37a]")">
-                                            @(isWaitingVerification ? "Menunggu Verifikasi Admin" : "Menunggu Input Serah Terima")
+                                        <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase tracking-[0.08em] @(isWaitingVerification ? "bg-[#eef9f0] text-[#1a7a30] border border-[#b8e8c0]" : isWaitingUserConfirm ? "bg-[#e0f2fe] text-[#1a6b8a] border border-[#bae6fd]" : "bg-[#fffbeb] text-[#b77900] border border-[#f3d37a]")">
+                                            @(isWaitingVerification ? "Menunggu Verifikasi Admin" : isWaitingUserConfirm ? "Menunggu Konfirmasi SI" : "Menunggu Input Serah Terima")
                                         </span>
                                     </div>
                                 </div>
@@ -161,6 +162,11 @@
                                                 @(isGiveawayHandover ? "Selesaikan Serah Terima" : "Submit ke Verifikasi")
                                             </button>
                                         }
+                                    }
+                                    @if (isWaitingUserConfirm)
+                                    {
+                                        <button type="button" @onclick='() => AskConfirm("Konfirmasi Serah Terima", "Konfirmasi penerimaan bukti serah terima ini?", () => ConfirmHandoverBySi(group.Key, true), "Ya, Konfirmasi")' disabled="@IsProcessing" class="px-4 py-2 bg-[#1a7a30] text-white text-xs font-bold rounded-lg shadow-sm hover:bg-[#166528] transition disabled:opacity-50">Konfirmasi Serah Terima</button>
+                                        <button type="button" @onclick='() => AskConfirm("Tolak Serah Terima", "Tolak bukti serah terima ini?", () => ConfirmHandoverBySi(group.Key, false), "Ya, Tolak")' disabled="@IsProcessing" class="px-4 py-2 bg-white border border-red-200 text-red-600 text-xs font-bold rounded-lg hover:bg-red-50 transition disabled:opacity-50">Tolak</button>
                                     }
                                     @if (isWaitingVerification)
                                     {
@@ -1128,6 +1134,33 @@
     private DateTime? ApprovalHandoverTimestampInput;
     private string HandoverDraftError = "";
 
+    private async Task ConfirmHandoverBySi(string groupId, bool isApproved)
+    {
+        if (IsProcessing) return;
+        IsProcessing = true;
+        try
+        {
+            var err = await ApprovalService.ConfirmHandoverBySiAsync(groupId, CurrentUserId, isApproved, null);
+            if (err == null)
+            {
+                SuccessMessage = isApproved ? "Berhasil konfirmasi bukti serah terima. Menunggu final approve TL." : "Bukti serah terima ditolak, dikembalikan ke user.";
+                await LoadData();
+            }
+            else
+            {
+                ErrorMessage = err;
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Terjadi kesalahan saat konfirmasi: " + ex.Message;
+        }
+        finally
+        {
+            IsProcessing = false;
+        }
+    }
+
     private void OpenHandoverRejectModal(string groupId)
     {
         HandoverRejectGroupId = groupId;
@@ -1191,6 +1224,7 @@
                 ApprovalHandoverItems.Select(i => i.id).ToList(),
                 ApprovalHandoverFiles,
                 ApprovalHandoverNotes,
+                "SI",
                 ApprovalHandoverRecipientName,
                 ApprovalHandoverTimestampInput);
 
