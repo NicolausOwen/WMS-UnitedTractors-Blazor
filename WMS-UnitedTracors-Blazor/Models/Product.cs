@@ -27,10 +27,10 @@ public class Product
     [StringLength(255)]
     public string? image { get; set; }
 
-    [Column(TypeName = "nvarchar(max)")]
+    [Column(TypeName = "text")]
     public string? description { get; set; }
 
-    [Column(TypeName = "nvarchar(max)")]
+    [Column(TypeName = "json")]
     public string? images { get; set; }
 
     public int? category_id { get; set; }

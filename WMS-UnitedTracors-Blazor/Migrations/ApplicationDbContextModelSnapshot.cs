@@ -394,8 +394,7 @@ namespace ut_wms_asp.net.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("documentation_photo")
-                        .HasMaxLength(255)
-                        .HasColumnType("varchar(255)");
+                        .HasColumnType("text");
 
                     b.Property<DateTime?>("documentation_uploaded_at")
                         .HasColumnType("datetime(6)");
@@ -414,8 +413,7 @@ namespace ut_wms_asp.net.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("handover_photo")
-                        .HasMaxLength(255)
-                        .HasColumnType("varchar(255)");
+                        .HasColumnType("text");
 
                     b.Property<string>("handover_recipient_name")
                         .HasMaxLength(255)
