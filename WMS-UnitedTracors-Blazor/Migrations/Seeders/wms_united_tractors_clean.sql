@@ -625,7 +625,7 @@ INSERT INTO `users` (`id`,`name`,`nrp`,`email`,`poin`,`email_verified_at`,`passw
   (1,'Admin User',        '73216958','admin@wms.com',     1000,'2026-05-11 11:30:04','$2y$12$6frRu6KhnRFsPL8sXW7ls.4QQk9rtkvkgxoFYp/tqp9/5zZHcEE.m','admin',      3,'tupohEJ7W6UHk61RcHxSCWsrMtF71Ut35MCUqFMMNMf3zv6Ykmtieo1jPEV6','2026-05-11 11:30:04','2026-05-26 09:46:53'),
   (2,'Manager User',      '44920801','manager@wms.com',   1000,'2026-05-11 11:30:04','$2y$12$JCmEGC2gvkTljXwVWKizbuxsCoVxVOHmIdAtS7KwohAJAa7IeGuGK', 'manager',    3,'qxl2W9eeqk',                                                   '2026-05-11 11:30:04','2026-05-26 09:46:53'),
   (3,'Staff User',        '44727320','staff@wms.com',     1000,'2026-05-11 11:30:05','$2y$12$n6yveeCHq3V/57rF7HbMyOAzuCa7WIXOkkQkBjkxT0B77Vaoa1Oy.','staff',      3,'ljf4NYEGgb',                                                   '2026-05-11 11:30:05','2026-05-26 09:46:53'),
-  (4,'Super Administrator','35610885','superadmin@wms.com', 450,NULL,                '$2y$12$X2dRJ8Lk7hvYkgFj1MdVUe3QlpWWMxIs3PaSJV0M4oUuXz4H5rBS.','superadmin', 3,NULL,                                                           '2026-05-26 09:46:53','2026-05-26 09:46:53');
+  (4,'Super Administrator','35610885','superadmin@wms.com', 1000,'2026-05-11 11:30:05','$2y$12$X2dRJ8Lk7hvYkgFj1MdVUe3QlpWWMxIs3PaSJV0M4oUuXz4H5rBS.','superadmin', 3,NULL,                                                           '2026-05-26 09:46:53','2026-05-26 09:46:53');
 
 
 -- =============================================================

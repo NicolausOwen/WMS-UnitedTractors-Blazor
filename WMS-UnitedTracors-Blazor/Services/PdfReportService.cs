@@ -14,6 +14,7 @@ namespace WMS_UnitedTracors_Blazor.Services
         public PdfReportService()
         {
             QuestPDF.Settings.License = LicenseType.Community;
+            QuestPDF.Settings.EnableDebugging = true;
         }
 
         public byte[] GeneratePeminjamanReport(List<Transaction> transactions, DateTime startDate, DateTime endDate, string wwwrootPath)
@@ -37,7 +38,7 @@ namespace WMS_UnitedTracors_Blazor.Services
                     container.Page(page =>
                     {
                         page.Size(PageSizes.A4.Landscape());
-                        page.Margin(1.5f, QuestPDF.Infrastructure.Unit.Centimetre);
+                        page.Margin(1.0f, QuestPDF.Infrastructure.Unit.Centimetre);
                         page.PageColor(Colors.White);
                         page.DefaultTextStyle(x => x.FontSize(9).FontFamily(Fonts.Arial).LineHeight(1.3f));
 
@@ -56,11 +57,11 @@ namespace WMS_UnitedTracors_Blazor.Services
                             {
                                 table.ColumnsDefinition(columns =>
                                 {
-                                    columns.ConstantColumn(30); // No
+                                    columns.ConstantColumn(40); // No
                                     columns.RelativeColumn(2); // Tanggal
                                     columns.RelativeColumn(4); // Produk
                                     columns.RelativeColumn(3); // SKU
-                                    columns.ConstantColumn(30); // Qty
+                                    columns.ConstantColumn(40); // Qty
                                     columns.RelativeColumn(4); // Info Pengembalian
                                     columns.RelativeColumn(2); // Kondisi
                                     columns.RelativeColumn(3); // Pemohon
@@ -97,8 +98,8 @@ namespace WMS_UnitedTracors_Blazor.Services
 
                                     table.Cell().Element(c => CellStyle(c, bgColor)).AlignCenter().Text(i.ToString());
                                     table.Cell().Element(c => CellStyle(c, bgColor)).Text(item.created_at.ToString("dd/MM/yyyy"));
-                                    table.Cell().Element(c => CellStyle(c, bgColor)).Text(item.Product?.name ?? "-");
-                                    table.Cell().Element(c => CellStyle(c, bgColor)).Text(item.Product?.sku ?? "-");
+                                    table.Cell().Element(c => CellStyle(c, bgColor)).Text(item.Product?.name ?? "-").WrapAnywhere();
+                                    table.Cell().Element(c => CellStyle(c, bgColor)).Text(item.Product?.sku ?? "-").WrapAnywhere();
                                     table.Cell().Element(c => CellStyle(c, bgColor)).AlignCenter().Text(item.quantity?.ToString() ?? "-");
                                     
                                     var returnInfo = "-";
@@ -111,9 +112,9 @@ namespace WMS_UnitedTracors_Blazor.Services
                                     
                                     table.Cell().Element(c => CellStyle(c, bgColor)).Text(returnInfo);
                                     table.Cell().Element(c => CellStyle(c, bgColor)).Text(item.status == "REJECTED" ? "-" : (item.return_condition ?? "-"));
-                                    table.Cell().Element(c => CellStyle(c, bgColor)).Text(item.applicant_name ?? "-");
-                                    table.Cell().Element(c => CellStyle(c, bgColor)).Text(item.Division?.name ?? "-");
-                                    table.Cell().Element(c => CellStyle(c, bgColor)).Text(item.event_name ?? "-");
+                                    table.Cell().Element(c => CellStyle(c, bgColor)).Text(item.applicant_name ?? "-").WrapAnywhere();
+                                    table.Cell().Element(c => CellStyle(c, bgColor)).Text(item.Division?.name ?? "-").WrapAnywhere();
+                                    table.Cell().Element(c => CellStyle(c, bgColor)).Text(item.event_name ?? "-").WrapAnywhere();
                                     table.Cell().Element(c => CellStyle(c, bgColor)).Text(item.status ?? "-");
 
                                     i++;
@@ -155,7 +156,7 @@ namespace WMS_UnitedTracors_Blazor.Services
                     container.Page(page =>
                     {
                         page.Size(PageSizes.A4.Landscape());
-                        page.Margin(1.5f, QuestPDF.Infrastructure.Unit.Centimetre);
+                        page.Margin(1.0f, QuestPDF.Infrastructure.Unit.Centimetre);
                         page.PageColor(Colors.White);
                         page.DefaultTextStyle(x => x.FontSize(9).FontFamily(Fonts.Arial).LineHeight(1.3f));
 
@@ -261,7 +262,7 @@ namespace WMS_UnitedTracors_Blazor.Services
                     container.Page(page =>
                     {
                         page.Size(PageSizes.A4.Landscape());
-                        page.Margin(1.5f, QuestPDF.Infrastructure.Unit.Centimetre);
+                        page.Margin(1.0f, QuestPDF.Infrastructure.Unit.Centimetre);
                         page.PageColor(Colors.White);
                         page.DefaultTextStyle(x => x.FontSize(9).FontFamily(Fonts.Arial).LineHeight(1.3f));
 
@@ -609,13 +610,13 @@ namespace WMS_UnitedTracors_Blazor.Services
 
                         c.BorderBottom(2).BorderColor(Colors.Black).PaddingBottom(8).Row(row =>
                         {
-                            row.ConstantItem(120).AlignLeft().Height(35).Image(File.Exists(utLogo) ? utLogo : Path.Combine(wwwrootPath, "img", "logo.svg"));
+                            row.ConstantItem(120).Height(35).AlignLeft().Image(File.Exists(utLogo) ? utLogo : Path.Combine(wwwrootPath, "img", "logo.svg")).FitArea();
                             row.RelativeItem().AlignCenter().Column(col => 
                             {
                                 col.Item().Text("Bukti Transaksi Barang").FontSize(20).SemiBold().FontColor(Colors.Black);
                                 col.Item().Text("Warehouse Management System - United Tractors").FontSize(10).FontColor(Colors.Grey.Medium);
                             });
-                            row.ConstantItem(120).AlignRight().Height(35).Image(File.Exists(corpuLogo) ? corpuLogo : Path.Combine(wwwrootPath, "img", "logo.svg"));
+                            row.ConstantItem(120).Height(35).AlignRight().Image(File.Exists(corpuLogo) ? corpuLogo : Path.Combine(wwwrootPath, "img", "logo.svg")).FitArea();
                         });
                     });
 
@@ -794,13 +795,13 @@ namespace WMS_UnitedTracors_Blazor.Services
 
             container.BorderBottom(2).BorderColor(Colors.Grey.Darken4).PaddingBottom(8).Row(row =>
             {
-                row.ConstantItem(120).AlignLeft().Height(35).Image(File.Exists(utLogo) ? utLogo : Path.Combine(wwwrootPath, "img", "logo.svg"));
+                row.ConstantItem(120).Height(35).AlignLeft().Image(File.Exists(utLogo) ? utLogo : Path.Combine(wwwrootPath, "img", "logo.svg")).FitArea();
                 row.RelativeItem().Column(column =>
                 {
                     column.Item().AlignCenter().Text(title).FontSize(14).SemiBold().FontColor(Colors.Grey.Darken4);
                     column.Item().AlignCenter().Text("Warehouse Management System - United Tractors").FontSize(8).FontColor(Colors.Grey.Darken1);
                 });
-                row.ConstantItem(120).AlignRight().Height(35).Image(File.Exists(corpuLogo) ? corpuLogo : Path.Combine(wwwrootPath, "img", "logo.svg"));
+                row.ConstantItem(120).Height(35).AlignRight().Image(File.Exists(corpuLogo) ? corpuLogo : Path.Combine(wwwrootPath, "img", "logo.svg")).FitArea();
             });
         }
 

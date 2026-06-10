@@ -25,18 +25,18 @@
 
 <div class="w-full min-h-screen bg-[#f5f4f0] px-4 md:px-10 py-6 pb-24 md:pb-12 font-sans">
     
-    @* Metric Cards *@
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
-        <div class="bg-white border border-[#e5e3dc] hover:border-[#e8a000] border-l-4 border-l-[#e8a000] rounded-r-[10px] rounded-l-[4px] p-4 sm:p-5 sm:px-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-[1px]">
-            <p class="text-[0.6rem] sm:text-[0.65rem] font-bold tracking-[0.12em] uppercase text-[#8a8880] mb-1.5">Total Items</p>
-            <p class="font-sans text-2xl sm:text-4xl font-bold text-[#1a1a1a] leading-none">@WidgetTotalItems</p>
-        </div>
-        <div class="bg-white border border-[#e5e3dc] hover:border-[#1a7a30] border-l-4 border-l-[#1a7a30] rounded-r-[10px] rounded-l-[4px] p-4 sm:p-5 sm:px-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-[1px]">
-            <p class="text-[0.6rem] sm:text-[0.65rem] font-bold tracking-[0.12em] uppercase text-[#8a8880] mb-1.5">Total Stock</p>
-            <p class="font-sans text-2xl sm:text-4xl font-bold text-[#1a1a1a] leading-none">@TotalStock</p>
-        </div>
-        @if (UserRole == "superadmin" || UserRole == "manager" || UserRole == "admin")
-        {
+    @* Metric Cards / Continue Activity *@
+    <!-- @if (UserRole == "superadmin" || UserRole == "manager" || UserRole == "admin")
+    {
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+            <div class="bg-white border border-[#e5e3dc] hover:border-[#e8a000] border-l-4 border-l-[#e8a000] rounded-r-[10px] rounded-l-[4px] p-4 sm:p-5 sm:px-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-[1px]">
+                <p class="text-[0.6rem] sm:text-[0.65rem] font-bold tracking-[0.12em] uppercase text-[#8a8880] mb-1.5">Total Items</p>
+                <p class="font-sans text-2xl sm:text-4xl font-bold text-[#1a1a1a] leading-none">@WidgetTotalItems</p>
+            </div>
+            <div class="bg-white border border-[#e5e3dc] hover:border-[#1a7a30] border-l-4 border-l-[#1a7a30] rounded-r-[10px] rounded-l-[4px] p-4 sm:p-5 sm:px-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-[1px]">
+                <p class="text-[0.6rem] sm:text-[0.65rem] font-bold tracking-[0.12em] uppercase text-[#8a8880] mb-1.5">Total Stock</p>
+                <p class="font-sans text-2xl sm:text-4xl font-bold text-[#1a1a1a] leading-none">@TotalStock</p>
+            </div>
             <div class="bg-white border border-[#e5e3dc] hover:border-[#e8a000] border-l-4 border-l-[#e8a000] rounded-r-[10px] rounded-l-[4px] p-4 sm:p-5 sm:px-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-[1px]">
                 <p class="text-[0.6rem] sm:text-[0.65rem] font-bold tracking-[0.12em] uppercase text-[#8a8880] mb-1.5">Pending Approval</p>
                 <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
@@ -46,18 +46,121 @@
                     }
                 </div>
             </div>
-        }
-        <div class="bg-white border border-[#e5e3dc] hover:border-[#d94040] border-l-4 border-l-[#d94040] rounded-r-[10px] rounded-l-[4px] p-4 sm:p-5 sm:px-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-[1px] flex items-start justify-between">
-            <div>
-                <p class="text-[0.6rem] sm:text-[0.65rem] font-bold tracking-[0.12em] uppercase text-[#8a8880] mb-1.5">Overdue Return</p>
-                <p class="font-sans text-2xl sm:text-4xl font-bold text-[#d94040] leading-none">@OverdueReturnCount</p>
+            <div class="bg-white border border-[#e5e3dc] hover:border-[#d94040] border-l-4 border-l-[#d94040] rounded-r-[10px] rounded-l-[4px] p-4 sm:p-5 sm:px-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-[1px] flex items-start justify-between">
+                <div>
+                    <p class="text-[0.6rem] sm:text-[0.65rem] font-bold tracking-[0.12em] uppercase text-[#8a8880] mb-1.5">Overdue Return</p>
+                    <p class="font-sans text-2xl sm:text-4xl font-bold text-[#d94040] leading-none">@OverdueReturnCount</p>
+                </div>
+                @if(OverdueReturnCount > 0) {
+                    <span class="inline-flex h-6.5 w-6.5 sm:h-9 sm:w-9 items-center justify-center rounded-lg bg-[#fef0f0] text-[#d94040] font-extrabold text-xs sm:text-base border border-[#f8c0c0] shrink-0 leading-none">!</span>
+                }
             </div>
-            @if(OverdueReturnCount > 0) {
-                <span class="inline-flex h-6.5 w-6.5 sm:h-9 sm:w-9 items-center justify-center rounded-lg bg-[#fef0f0] text-[#d94040] font-extrabold text-xs sm:text-base border border-[#f8c0c0] shrink-0 leading-none">!</span>
+        </div>
+    } -->
+
+    @* Kegiatan Lanjutan (Action Items) Widget *@
+        <div class="mb-6 sm:mb-8 bg-white border border-[#e5e3dc] rounded-[18px] p-5 sm:p-6 shadow-sm">
+            <div class="flex items-center justify-between cursor-pointer select-none" @onclick="() => ActionItemsExpanded = !ActionItemsExpanded">
+                <div class="flex items-center gap-2.5">
+                    <h3 class="text-base font-bold text-[#1a1a1a] tracking-tight">Kegiatan Lanjutan</h3>
+                    @if (ActionItems.Count > 0)
+                    {
+                        <span class="relative flex h-2 w-2">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                        </span>
+                        <span class="inline-flex items-center px-2 py-0.5 bg-[#d94040] text-white text-[0.62rem] font-bold rounded-full uppercase tracking-wider shrink-0 animate-pulse">
+                            @ActionItems.Count Pending
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="inline-flex items-center px-2 py-0.5 bg-[#f0ede5] text-[#5a5855] text-[0.62rem] font-bold rounded-full uppercase tracking-wider shrink-0">
+                            0 Pending
+                        </span>
+                    }
+                </div>
+                <div class="text-gray-400 p-1 hover:text-gray-600 transition shrink-0">
+                    <svg class="w-5 h-5 transform transition-transform duration-200 @(!ActionItemsExpanded ? "rotate-180" : "")" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+            </div>
+
+            @if (ActionItemsExpanded)
+            {
+                <div class="mt-4 pt-4 border-t border-[#f0ede5]">
+                    @if (ActionItems.Count > 0)
+                    {
+                        <div class="space-y-3 max-h-[350px] overflow-y-auto pr-1 custom-scrollbar">
+                            @foreach (var item in ActionItems)
+                            {
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-[#faf9f5] border border-[#e5e3dc] rounded-xl hover:border-[#e8a000] hover:bg-white hover:shadow-md transition-all duration-300 gap-4">
+                                    <div class="flex items-start gap-3 sm:gap-3.5 min-w-0 flex-1 w-full">
+                                        @* Icon *@
+                                        <div class="p-2.5 rounded-xl shrink-0 mt-0.5
+                                            @(item.Type == "handover" ? "bg-[#fef3c7] text-[#d97706]" :
+                                              item.Type == "revision" ? "bg-[#fef0f0] text-[#d94040]" :
+                                              item.Type == "return" ? "bg-[#f0f9ff] text-[#0284c7]" :
+                                              "bg-[#eef9f0] text-[#1a7a30]")">
+                                            @if (item.Type == "handover")
+                                            {
+                                                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"/></svg>
+                                            }
+                                            else if (item.Type == "revision")
+                                            {
+                                                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                            }
+                                            else if (item.Type == "return")
+                                            {
+                                                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3"/></svg>
+                                            }
+                                            else
+                                            {
+                                                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                                            }
+                                        </div>
+
+                                        @* Details *@
+                                        <div class="min-w-0 flex-1">
+                                            <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                                                <h4 class="text-xs sm:text-sm font-extrabold text-[#1a1a1a] leading-tight">@item.Title</h4>
+                                                <span class="px-1.5 py-0.5 sm:px-2 rounded text-[0.55rem] sm:text-[0.62rem] font-bold shrink-0 @item.BadgeClass">
+                                                    @item.Badge
+                                                </span>
+                                            </div>
+                                            <p class="text-[0.68rem] sm:text-xs text-[#5a5855] font-semibold mt-1 leading-snug break-words">
+                                                @item.Description
+                                            </p>
+                                            <div class="text-[0.65rem] text-[#8a8880] font-medium mt-1">
+                                                Diajukan pada: @item.Date.ToString("dd MMMM yyyy, HH:mm")
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    @* CTA Button *@
+                                    <div class="shrink-0 w-full sm:w-auto">
+                                        <a href="@item.BtnUrl" class="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 bg-[#e8a000] hover:bg-[#d49300] active:scale-[0.98] text-[#1a1a1a] text-[0.68rem] sm:text-xs font-bold uppercase tracking-wider rounded-lg transition shadow-sm">
+                                            <span>@item.BtnText</span>
+                                            <svg class="w-3 h-3 text-[#1a1a1a]" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+                                        </a>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="flex flex-col items-center justify-center text-center py-6">
+                            <div class="p-3 bg-[#eef9f0] border border-[#b8e8c0] text-[#1a7a30] rounded-full mb-3 shrink-0">
+                                <svg class="w-6 h-6 text-[#1a7a30]" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                            </div>
+                            <h4 class="text-sm font-extrabold text-[#1a1a1a]">Luar Biasa!</h4>
+                            <p class="text-xs text-[#8a8880] mt-1 font-medium">Semua tugas selesai. Tidak ada tindakan yang diperlukan saat ini.</p>
+                        </div>
+                    }
+                </div>
             }
         </div>
-    </div>
-
+    
     @* Quick Actions *@
     <div class="flex flex-wrap items-center gap-3 mb-8">
         @if (UserRole == "superadmin" || UserRole == "staff") {
@@ -481,8 +584,10 @@
                     <div class="grid grid-cols-1 lg:grid-cols-[0.85fr_1.15fr] gap-5">
                         <div class="space-y-5">
                             @* Image Carousel *@
-                            <div class="relative w-full aspect-square lg:aspect-[4/3] bg-[#f5f4f0] rounded-xl overflow-hidden border border-[#e5e3dc] mb-3">
-                                <img src="@GetImageUrl(SelectedMainImage)" class="w-full h-full object-cover" onerror="this.onerror=null;this.src='https://placehold.co/600x400?text=No+Picture';">
+                            <div class="relative w-full aspect-square lg:aspect-[4/3] bg-[#f5f4f0] rounded-xl overflow-hidden border border-[#e5e3dc] mb-3 cursor-crosshair"
+                                 onmousemove="const r=this.getBoundingClientRect();const x=(event.clientX-r.left)/r.width*100;const y=(event.clientY-r.top)/r.height*100;const i=this.querySelector('img');i.style.transformOrigin=`${x}% ${y}%`;i.style.transform='scale(2)';"
+                                 onmouseleave="const i=this.querySelector('img');i.style.transformOrigin='center';i.style.transform='scale(1)';">
+                                <img src="@GetImageUrl(SelectedMainImage)" class="w-full h-full object-cover transition-transform duration-200" onerror="this.onerror=null;this.src='https://placehold.co/600x400?text=No+Picture';">
                             </div>
                             
                             @if(ModalImages.Count > 1) {
@@ -644,6 +749,9 @@
     private int TotalStock = 0;
     private int OverdueReturnCount = 0;
     
+    private List<DashboardService.ActionItemModel> ActionItems = new();
+    private bool ActionItemsExpanded = false;
+    
     private List<Category>? Categories;
     private List<Division>? Divisions;
     private List<Product>? CatalogProducts;
@@ -774,6 +882,8 @@
         if (CurrentUserId > 0)
         {
             ActiveBorrows = await DashboardService.GetActiveBorrowsAsync(CurrentUserId, UserRole);
+            ActionItems = await DashboardService.GetUserActionItemsAsync(CurrentUserId);
+            if (ActionItems.Count > 0) ActionItemsExpanded = true;
         }
 
         _shouldRenderCharts = true;
