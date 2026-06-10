@@ -365,4 +365,4 @@ FodyWeavers.xsd
 /WMS-UnitedTracors-Blazor/old_dotnet_build
 /WMS-UnitedTracors-Blazor/old_laravel
 WMS-UnitedTracors-Blazor/appsettings.Development.json
-WMS-UnitedTracors-Blazor/appsettings.Development.json
+WMS-UnitedTracors-Blazor/appsettings.Production.json

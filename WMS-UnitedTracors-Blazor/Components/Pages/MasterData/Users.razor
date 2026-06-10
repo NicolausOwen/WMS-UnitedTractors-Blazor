@@ -4,6 +4,7 @@
 @using WMS_UnitedTracors_Blazor.Services
 @inject UserService UserService
 @inject DivisionService DivisionService
+@inject AdminRoleService AdminRoleService
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
 @inject AuthenticationStateProvider AuthStateProvider
@@ -90,10 +91,10 @@
                             <div class="flex-1 w-full">
                                 <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Role</label>
                                 <select @bind="CreateModel.role" required class="block w-full px-3 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
-                                    <option value="staff">Staff</option>
-                                    <option value="manager">Manager</option>
-                                    <option value="admin">Admin</option>
-                                    <option value="superadmin">Superadmin</option>
+                                    @foreach (var r in RoleNames)
+                                    {
+                                        <option value="@r">@r</option>
+                                    }
                                 </select>
                             </div>
                             <div class="w-full sm:w-auto">
@@ -234,10 +235,14 @@
                                                     <div class="flex-1 w-full">
                                                         <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Role</label>
                                                         <select @bind="EditModel.role" required class="block w-full px-3 py-2 text-[0.82rem] bg-white border border-[#e5e3dc] focus:border-[#e8a000] focus:ring-0 rounded-lg outline-none text-[#1a1a1a] transition-all duration-150">
-                                                            <option value="staff">Staff</option>
-                                                            <option value="manager">Manager</option>
-                                                            <option value="admin">Admin</option>
-                                                            <option value="superadmin">Superadmin</option>
+                                                            @if (!string.IsNullOrEmpty(EditModel.role) && !RoleNames.Contains(EditModel.role))
+                                                            {
+                                                                <option value="@EditModel.role">@EditModel.role (legacy)</option>
+                                                            }
+                                                            @foreach (var r in RoleNames)
+                                                            {
+                                                                <option value="@r">@r</option>
+                                                            }
                                                         </select>
                                                     </div>
                                                     <div class="flex gap-2 w-full sm:w-auto">
@@ -405,8 +410,9 @@
     private int CurrentPage = 1;
     private int TotalPages = 1;
     
-    private UserCreateViewModel CreateModel = new() { role = "staff" };
+    private UserCreateViewModel CreateModel = new() { role = "User" };
     private UserUpdateViewModel EditModel = new();
+    private List<string> RoleNames = new();
     private string? EditPassword;
     private int? EditingUserId;
     
@@ -426,12 +432,15 @@
             if (int.TryParse(user.FindFirst(ClaimTypes.NameIdentifier)?.Value, out int id))
                 CurrentUserId = id;
             UserRole = user.FindFirst(ClaimTypes.Role)?.Value;
-            IsAdmin = UserRole == "admin" || UserRole == "superadmin";
-            IsSuperAdmin = UserRole == "superadmin";
+            IsAdmin = user.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.UsersManage);
+            IsSuperAdmin = user.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.RolesManage);
         }
 
         var divsResult = await DivisionService.GetDivisionsAsync(1, 100);
         DivisionsList = divsResult.Divisions;
+        RoleNames = await AdminRoleService.GetActiveRoleNamesAsync();
+        if (RoleNames.Count > 0 && !RoleNames.Contains(CreateModel.role))
+            CreateModel.role = RoleNames.Contains("User") ? "User" : RoleNames[0];
         await LoadData(1);
     }
 
@@ -454,7 +463,7 @@
         ErrorMessage = null;
         SuccessMessage = null;
 
-        string? error = await UserService.CreateUserAsync(CreateModel);
+        string? error = null; try { error = await UserService.CreateUserAsync(CreateModel); } catch (Exception ex) { error = $"CRASH: {ex.Message} {ex.InnerException?.Message}"; }
 
         if (error != null)
         {
@@ -463,7 +472,7 @@
         else
         {
             SuccessMessage = "User berhasil ditambahkan.";
-            CreateModel = new UserCreateViewModel { role = "staff" };
+            CreateModel = new UserCreateViewModel { role = RoleNames.Count > 0 ? RoleNames[0] : "User" };
             await LoadData(CurrentPage);
         }
     }
@@ -477,7 +486,7 @@
             email = user.email ?? "",
             nrp = user.nrp,
             poin = user.poin,
-            role = user.role ?? "staff",
+            role = user.role ?? (RoleNames.Count > 0 ? RoleNames[0] : "User"),
             division_id = user.division_id
         };
         EditPassword = null;
@@ -508,7 +517,7 @@
         // Let's assume UserUpdateViewModel has a password field? If not, the old code didn't update it directly via this endpoint anyway, or maybe it did. Let's just leave EditPassword unhandled for now if it doesn't compile, or add it.
 
         EditModel.password = EditPassword;
-        string? error = await UserService.UpdateUserAsync(id, EditModel, CurrentUserId, UserRole);
+        string? error = null; try { error = await UserService.UpdateUserAsync(id, EditModel, CurrentUserId, UserRole); } catch (Exception ex) { error = $"CRASH: {ex.Message} {ex.InnerException?.Message}"; }
 
         if (error != null)
         {
@@ -533,3 +542,7 @@
         }
     }
 }
+
+
+
+

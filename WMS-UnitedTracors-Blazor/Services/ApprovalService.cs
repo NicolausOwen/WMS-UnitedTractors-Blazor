@@ -23,43 +23,46 @@ public class ApprovalService
             .OrderByDescending(t => t.created_at)
             .AsQueryable();
 
+        var perms = await ResolvePermsAsync(currentUserId);
+        
         List<int>? allowedCategoryIds = null;
         bool isGlobalAdmin = true;
 
-        if (userRole == "admin" || userRole == "superadmin")
+        bool isSuperAdmin = Permissions.All.All(p => perms.Contains(p));
+        bool hasApprovalPerms = perms.Contains(Permissions.ApprovalStage1) || 
+                                perms.Contains(Permissions.ApprovalStage2) || 
+                                perms.Contains(Permissions.ApprovalManager) || 
+                                perms.Contains(Permissions.ApprovalHandover) || 
+                                perms.Contains(Permissions.ApprovalReturn) ||
+                                perms.Contains(Permissions.UsersManage);
+
+        if (hasApprovalPerms || isSuperAdmin)
         {
             var userAdminRoles = await _context.UserAdminRoles.Where(uar => uar.UserId == currentUserId).ToListAsync();
-            isGlobalAdmin = userRole == "superadmin" || userAdminRoles.Any(uar => uar.CategoryId == null);
+            isGlobalAdmin = isSuperAdmin || userAdminRoles.Any(uar => uar.CategoryId == null);
             if (!isGlobalAdmin)
             {
                 allowedCategoryIds = userAdminRoles.Where(uar => uar.CategoryId != null).Select(uar => uar.CategoryId!.Value).ToList();
             }
         }
 
-        if (userRole == "staff")
-        {
-            query = query.Where(t => t.requester_id == currentUserId);
-        }
-        else if (userRole == "manager")
-        {
-            query = query.Where(t => t.status == WorkflowStatuses.PendingManager && t.request_type == "GIVEAWAY");
-        }
-        else if (userRole == "admin")
-        {
-            query = query.Where(t =>
-                (t.request_type == "BORROW" && t.status == WorkflowStatuses.Pending) ||
-                (t.request_type == "GIVEAWAY" && t.status == WorkflowStatuses.PendingStaffInventory));
-            if (!isGlobalAdmin && allowedCategoryIds != null)
-            {
-                query = query.Where(t => t.Product != null && t.Product.category_id != null && allowedCategoryIds.Contains(t.Product.category_id.Value));
-            }
-        }
-        else if (userRole == "superadmin")
-        {
-            query = query.Where(t =>
-                (t.request_type == "BORROW" && t.status == WorkflowStatuses.Pending) ||
-                (t.request_type == "GIVEAWAY" && t.status == WorkflowStatuses.PendingAdmin));
-        }
+        // Predicate for what approvals to show:
+        // Users only see requests that require their specific approval role
+        query = query.Where(t => 
+            // If they can approve stage 1
+            (perms.Contains(Permissions.ApprovalStage1) && 
+                (t.status == WorkflowStatuses.PendingStaffInventory || (t.request_type == "BORROW" && t.status == WorkflowStatuses.Pending)) && 
+                (isGlobalAdmin || allowedCategoryIds == null || (t.Product != null && t.Product.category_id != null && allowedCategoryIds.Contains(t.Product.category_id.Value)))
+            ) ||
+            // If they can approve stage 2
+            (perms.Contains(Permissions.ApprovalStage2) && 
+                (t.status == WorkflowStatuses.PendingAdmin || (t.request_type == "BORROW" && t.status == WorkflowStatuses.Pending)) && 
+                (isGlobalAdmin || allowedCategoryIds == null || (t.Product != null && t.Product.category_id != null && allowedCategoryIds.Contains(t.Product.category_id.Value)))
+            ) ||
+            // If they can approve manager
+            (perms.Contains(Permissions.ApprovalManager) && 
+                (t.status == WorkflowStatuses.PendingManager && t.request_type == "GIVEAWAY")
+            ));
 
         var transactions = await query.ToListAsync();
         var groupedApprovals = transactions
@@ -70,7 +73,7 @@ public class ApprovalService
         var pendingProfileRequests = new List<ProfileRequest>();
         var groupedHandovers = new Dictionary<string, List<Transaction>>();
 
-        if (userRole == "admin" || userRole == "superadmin")
+        if (perms.Contains(Permissions.ApprovalReturn))
         {
             var returnsQuery = _context.Transactions
                 .Include(t => t.Product)
@@ -87,14 +90,20 @@ public class ApprovalService
             pendingReturns = await returnsQuery
                 .OrderByDescending(t => t.updated_at)
                 .ToListAsync();
+        }
 
+        if (perms.Contains(Permissions.UsersManage))
+        {
             pendingProfileRequests = await _context.ProfileRequests
                 .Include(pr => pr.User)
                 .Include(pr => pr.Division)
                 .Where(pr => pr.status == "PENDING")
                 .OrderByDescending(pr => pr.created_at)
                 .ToListAsync();
+        }
 
+        if (perms.Contains(Permissions.ApprovalHandover))
+        {
             var handoversQ = _context.Transactions
                 .Include(t => t.Product)
                 .Include(t => t.Requester)
@@ -125,18 +134,29 @@ public class ApprovalService
     {
         var transaction = await _context.Transactions.Include(t => t.Product).Include(t => t.Requester).FirstOrDefaultAsync(t => t.id == id);
         if (transaction == null) return "Transaction not found.";
-        if (!CanApprove(transaction, userRole)) return "Transaction is no longer pending or is not assigned to your approval stage.";
-
-        if (userRole == "manager" && transaction.Product != null && transaction.Product.is_returnable == 1)
-        {
-            return "Managers cannot approve borrowing transactions. Only admins can.";
-        }
+        var perms = await ResolvePermsAsync(currentUserId);
+        if (!CanApprove(transaction, perms)) return "Transaction is no longer pending or is not assigned to your approval stage.";
 
         if (transaction.request_type == "GIVEAWAY")
         {
-            return await ApproveGiveawayAsync(transaction, notes, currentUserId, userRole);
+            return await ApproveGiveawayAsync(transaction, notes, currentUserId, perms);
         }
 
+        // BORROW stage 1: Staff Inventoris menyetujui -> lanjut ke tahap Admin (belum potong stok).
+        if (transaction.status == WorkflowStatuses.PendingStaffInventory && perms.Contains(Permissions.ApprovalStage1))
+        {
+            transaction.status = WorkflowStatuses.PendingAdmin;
+            transaction.staff_inventory_notes = notes;
+            transaction.approver_id = currentUserId;
+            transaction.updated_at = DateTime.UtcNow;
+            transaction.last_revision_stage = null;
+            transaction.rejection_reason = null;
+            _context.Transactions.Update(transaction);
+            await _context.SaveChangesAsync();
+            return null;
+        }
+
+        // BORROW stage 2 (PendingAdmin / legacy Pending): persetujuan final -> potong stok + WaitingHandover.
         var strategy = _context.Database.CreateExecutionStrategy();
         return await strategy.ExecuteAsync(async () =>
         {
@@ -201,11 +221,11 @@ public class ApprovalService
                 transaction.approver_id = currentUserId;
                 transaction.updated_at = DateTime.UtcNow;
 
-                if (userRole == "admin" || userRole == "superadmin")
+                if (perms.Contains(Permissions.ApprovalStage2))
                 {
                     transaction.admin_notes = notes;
                 }
-                else if (userRole == "manager")
+                else if (perms.Contains(Permissions.ApprovalManager))
                 {
                     transaction.manager_notes = notes;
                 }
@@ -228,12 +248,15 @@ public class ApprovalService
     {
         var transaction = await _context.Transactions.Include(t => t.Product).Include(t => t.Requester).FirstOrDefaultAsync(t => t.id == id);
         if (transaction == null) return "Transaction not found.";
-        if (!CanApprove(transaction, userRole)) return "Transaction is no longer pending or is not assigned to your approval stage.";
+        var perms = await ResolvePermsAsync(currentUserId);
+        if (!CanApprove(transaction, perms)) return "Transaction is no longer pending or is not assigned to your approval stage.";
 
-        if (userRole == "manager" && transaction.Product != null && transaction.Product.is_returnable == 1)
+        if (perms.Contains(Permissions.ApprovalManager) && transaction.Product != null && transaction.Product.is_returnable == 1)
         {
             return "Managers cannot reject borrowing transactions. Only admins can.";
         }
+
+        var stageBefore = transaction.status;
 
         transaction.status = WorkflowStatuses.Rejected;
         transaction.approver_id = currentUserId;
@@ -241,18 +264,7 @@ public class ApprovalService
         transaction.updated_at = DateTime.UtcNow;
         transaction.last_revision_stage = null;
 
-        if (transaction.request_type == "GIVEAWAY" && userRole == "admin")
-        {
-            transaction.staff_inventory_notes = rejectionReason;
-        }
-        else if (userRole == "admin" || userRole == "superadmin")
-        {
-            transaction.admin_notes = rejectionReason;
-        }
-        else if (userRole == "manager")
-        {
-            transaction.manager_notes = rejectionReason;
-        }
+        ApplyStageNotes(transaction, stageBefore, rejectionReason);
 
         if (transaction.type == "OUT" && transaction.Product != null && transaction.Requester != null)
         {
@@ -284,9 +296,10 @@ public class ApprovalService
             .Include(t => t.Requester)
             .FirstOrDefaultAsync(t => t.id == id);
         if (transaction == null) return "Transaction not found.";
-        if (!CanApprove(transaction, userRole)) return "Transaction is no longer pending or is not assigned to your approval stage.";
+        var perms = await ResolvePermsAsync(currentUserId);
+        if (!CanApprove(transaction, perms)) return "Transaction is no longer pending or is not assigned to your approval stage.";
 
-        if (userRole == "manager" && transaction.Product != null && transaction.Product.is_returnable == 1)
+        if (perms.Contains(Permissions.ApprovalManager) && transaction.Product != null && transaction.Product.is_returnable == 1)
             return "Managers cannot request revision for borrowing transactions. Only admins can.";
 
         if (string.IsNullOrWhiteSpace(revisionReason)) return "Catatan revisi wajib diisi.";
@@ -311,24 +324,15 @@ public class ApprovalService
             transaction.quantity = revisedQuantity.Value;
         }
 
-        transaction.status = GetRevisionStatusForRole(userRole);
+        var stageBefore = transaction.status;
+
+        transaction.status = GetRevisionStatusForStage(stageBefore);
         transaction.approver_id = currentUserId;
         transaction.rejection_reason = revisionReason;
         transaction.updated_at = DateTime.UtcNow;
         transaction.last_revision_stage = WorkflowStatuses.GetRevisionStage(transaction.status);
 
-        if (transaction.request_type == "GIVEAWAY" && userRole == "admin")
-        {
-            transaction.staff_inventory_notes = revisionReason;
-        }
-        else if (userRole == "admin" || userRole == "superadmin")
-        {
-            transaction.admin_notes = revisionReason;
-        }
-        else if (userRole == "manager")
-        {
-            transaction.manager_notes = revisionReason;
-        }
+        ApplyStageNotes(transaction, stageBefore, revisionReason);
 
         _context.Transactions.Update(transaction);
         await _context.SaveChangesAsync();
@@ -339,6 +343,10 @@ public class ApprovalService
     {
         var transaction = await _context.Transactions.Include(t => t.Product).FirstOrDefaultAsync(t => t.id == id);
         if (transaction == null) return "Transaction not found.";
+        
+        var perms = await ResolvePermsAsync(currentUserId);
+        if (!perms.Contains(Permissions.ApprovalReturn)) return "Unauthorized action.";
+        
         if (transaction.status != WorkflowStatuses.Approved || transaction.pending_return_quantity <= 0 || transaction.is_return_draft != 0)
             return "Transaction is not pending return approval.";
 
@@ -391,7 +399,8 @@ public class ApprovalService
 
     public async Task<string?> ApproveHandoverBatchAsync(string groupId, int currentUserId, string? userRole)
     {
-        if (userRole != "admin" && userRole != "superadmin") return "Unauthorized action.";
+        var perms = await ResolvePermsAsync(currentUserId);
+        if (!perms.Contains(Permissions.ApprovalHandover)) return "Unauthorized action.";
 
         var query = await _context.Transactions
             .Include(t => t.Product)
@@ -415,7 +424,8 @@ public class ApprovalService
 
     public async Task<string?> RejectHandoverBatchAsync(string groupId, string rejectionReason, int currentUserId, string? userRole)
     {
-        if (userRole != "admin" && userRole != "superadmin") return "Unauthorized action.";
+        var perms = await ResolvePermsAsync(currentUserId);
+        if (!perms.Contains(Permissions.ApprovalHandover)) return "Unauthorized action.";
         if (string.IsNullOrWhiteSpace(rejectionReason)) return "Rejection reason is required.";
 
         var query = await _context.Transactions
@@ -441,6 +451,10 @@ public class ApprovalService
     {
         var transaction = await _context.Transactions.FirstOrDefaultAsync(t => t.id == id);
         if (transaction == null) return "Transaction not found.";
+        
+        var perms = await ResolvePermsAsync(currentUserId);
+        if (!perms.Contains(Permissions.ApprovalReturn)) return "Unauthorized action.";
+        
         if (transaction.status != WorkflowStatuses.Approved || transaction.pending_return_quantity <= 0 || transaction.is_return_draft != 0)
             return "Transaction is not pending return approval.";
 
@@ -457,6 +471,10 @@ public class ApprovalService
     {
         var request = await _context.ProfileRequests.FirstOrDefaultAsync(pr => pr.id == id);
         if (request == null) return "Profile request not found.";
+        
+        var perms = await ResolvePermsAsync(currentUserId);
+        if (!perms.Contains(Permissions.UsersManage)) return "Unauthorized action.";
+        
         if (request.status != "PENDING") return "Profile request is not pending.";
 
         var user = await _context.Users.FindAsync(request.user_id);
@@ -482,6 +500,10 @@ public class ApprovalService
     {
         var request = await _context.ProfileRequests.FirstOrDefaultAsync(pr => pr.id == id);
         if (request == null) return "Profile request not found.";
+        
+        var perms = await ResolvePermsAsync(currentUserId);
+        if (!perms.Contains(Permissions.UsersManage)) return "Unauthorized action.";
+        
         if (request.status != "PENDING") return "Profile request is not pending.";
 
         request.status = "REJECTED";
@@ -493,31 +515,43 @@ public class ApprovalService
         return null;
     }
 
-    private bool CanApprove(Transaction transaction, string? userRole)
+    /// <summary>Resolusi permission efektif user (User.role -> AdminRole, dengan fallback role lama).</summary>
+    private async Task<HashSet<string>> ResolvePermsAsync(int userId)
+    {
+        var user = await _context.Users.FindAsync(userId);
+        if (user == null) return new HashSet<string>();
+        var role = await _context.AdminRoles.FirstOrDefaultAsync(r => r.RoleName == user.role && r.IsActive);
+        return Permissions.Resolve(user.role, role?.Permissions);
+    }
+
+    private static bool CanApprove(Transaction transaction, HashSet<string> perms)
     {
         if (transaction.request_type == "GIVEAWAY")
         {
-            return (transaction.status == WorkflowStatuses.PendingStaffInventory && userRole == "admin") ||
-                   (transaction.status == WorkflowStatuses.PendingAdmin && userRole == "superadmin") ||
-                   (transaction.status == WorkflowStatuses.PendingManager && userRole == "manager");
+            return (transaction.status == WorkflowStatuses.PendingStaffInventory && perms.Contains(Permissions.ApprovalStage1)) ||
+                   (transaction.status == WorkflowStatuses.PendingAdmin && perms.Contains(Permissions.ApprovalStage2)) ||
+                   (transaction.status == WorkflowStatuses.PendingManager && perms.Contains(Permissions.ApprovalManager));
         }
 
-        return transaction.status == WorkflowStatuses.Pending && (userRole == "admin" || userRole == "superadmin");
+        // BORROW: Stage 1 (approval.stage1) -> Stage 2 (approval.stage2). Legacy PENDING boleh oleh keduanya.
+        return (transaction.status == WorkflowStatuses.PendingStaffInventory && perms.Contains(Permissions.ApprovalStage1)) ||
+               (transaction.status == WorkflowStatuses.PendingAdmin && perms.Contains(Permissions.ApprovalStage2)) ||
+               (transaction.status == WorkflowStatuses.Pending && (perms.Contains(Permissions.ApprovalStage1) || perms.Contains(Permissions.ApprovalStage2)));
     }
 
-    private async Task<string?> ApproveGiveawayAsync(Transaction transaction, string? notes, int currentUserId, string? userRole)
+    private async Task<string?> ApproveGiveawayAsync(Transaction transaction, string? notes, int currentUserId, HashSet<string> perms)
     {
         switch (transaction.status)
         {
-            case WorkflowStatuses.PendingStaffInventory when userRole == "admin":
+            case WorkflowStatuses.PendingStaffInventory when perms.Contains(Permissions.ApprovalStage1):
                 transaction.status = WorkflowStatuses.PendingAdmin;
                 transaction.staff_inventory_notes = notes;
                 break;
-            case WorkflowStatuses.PendingAdmin when userRole == "superadmin":
+            case WorkflowStatuses.PendingAdmin when perms.Contains(Permissions.ApprovalStage2):
                 transaction.status = WorkflowStatuses.PendingManager;
                 transaction.admin_notes = notes;
                 break;
-            case WorkflowStatuses.PendingManager when userRole == "manager":
+            case WorkflowStatuses.PendingManager when perms.Contains(Permissions.ApprovalManager):
                 transaction.status = WorkflowStatuses.WaitingHandover;
                 transaction.manager_notes = notes;
                 transaction.rejection_reason = null;
@@ -534,12 +568,23 @@ public class ApprovalService
         return null;
     }
 
-    private static string GetRevisionStatusForRole(string? userRole) =>
-        userRole switch
+    // Status revisi & catatan ditentukan oleh TAHAP (status sebelum aksi), bukan role.
+    private static string GetRevisionStatusForStage(string? status) =>
+        status switch
         {
-            "admin" => WorkflowStatuses.RevisionByStaffInventory,
-            "superadmin" => WorkflowStatuses.RevisionByAdmin,
-            "manager" => WorkflowStatuses.RevisionByManager,
+            WorkflowStatuses.PendingStaffInventory => WorkflowStatuses.RevisionByStaffInventory,
+            WorkflowStatuses.PendingAdmin => WorkflowStatuses.RevisionByAdmin,
+            WorkflowStatuses.PendingManager => WorkflowStatuses.RevisionByManager,
             _ => WorkflowStatuses.Revision
         };
+
+    private static void ApplyStageNotes(Transaction t, string? stageBefore, string? notes)
+    {
+        switch (stageBefore)
+        {
+            case WorkflowStatuses.PendingStaffInventory: t.staff_inventory_notes = notes; break;
+            case WorkflowStatuses.PendingManager: t.manager_notes = notes; break;
+            default: t.admin_notes = notes; break; // PendingAdmin / legacy Pending
+        }
+    }
 }

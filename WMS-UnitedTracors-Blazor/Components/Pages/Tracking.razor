@@ -122,7 +122,7 @@
                     var hasHandoverDraftPhoto = hasBorrow && borrowItemsOnly.Any(i => i.status == "WAITING_HANDOVER" && !string.IsNullOrEmpty(i.handover_photo));
                     var canGiveawayHandover = false;
                     var hasGiveawayHandoverDraftPhoto = isGiveaway && giveawayItemsOnly.Any(i => i.status == "WAITING_HANDOVER" && !string.IsNullOrEmpty(i.handover_photo));
-                    var canUploadDocumentation = isGiveaway && (status == "WAITING_DOCUMENTATION" || status == "DOCUMENTATION_OVERDUE") && (firstItem.requester_id == CurrentUserId || UserRole == "superadmin");
+                    var canUploadDocumentation = isGiveaway && (status == "WAITING_DOCUMENTATION" || status == "DOCUMENTATION_OVERDUE") && (firstItem.requester_id == CurrentUserId || userPrincipal.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ProductsManage));
 
                     var isExpanded = ExpandedGroupIds.Contains(groupId);
 
@@ -166,8 +166,12 @@
                                         } else {
                                             @if(status == "REJECTED") {
                                                 <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#fef0f0] text-[#d94040] border border-[#f8c0c0]">Ditolak</span>
-                                            } else if(status == "REVISION" || status == "REVISION_BY_ADMIN") {
+                                            } else if(status == "REVISION" || status == "REVISION_BY_STAFF_INVENTORY" || status == "REVISION_BY_ADMIN") {
                                                 <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#fffbeb] text-[#d97706] border border-[#fde68a]">Butuh Revisi</span>
+                                            } else if(status == "PENDING_STAFF_INVENTORY") {
+                                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#fff8e6] text-[#b37a00] border border-[#ffe099]">Menunggu Staff Inventoris</span>
+                                            } else if(status == "PENDING_ADMIN" || status == "PENDING") {
+                                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#fff8e6] text-[#b37a00] border border-[#ffe099]">Menunggu Admin</span>
                                             } else if(status == "WAITING_HANDOVER") {
                                                 <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#fff8e6] text-[#b37a00] border border-[#ffe099]">Menunggu Bukti Serah Terima</span>
                                             } else if(status == "WAITING_ADMIN_HANDOVER") {
@@ -578,7 +582,7 @@
                                                                             && (usage.pending_return_quantity ?? 0) == 0;
                                                             var isReturnDraft = usage.status == "APPROVED" && usage.request_type == "BORROW"
                                                                                 && (usage.pending_return_quantity ?? 0) > 0 && usage.is_return_draft == 1;
-                                                            var canManageDraft = isReturnDraft && (UserRole == "admin" || UserRole == "superadmin" || usage.requester_id == CurrentUserId);
+                                                            var canManageDraft = isReturnDraft && (UserRole == "admin" || userPrincipal.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ProductsManage) || usage.requester_id == CurrentUserId);
                                                             var canRevise = usage.status == "REVISION" || usage.status == "REVISION_BY_STAFF_INVENTORY" || usage.status == "REVISION_BY_ADMIN" || usage.status == "REVISION_BY_MANAGER";
                                                             var hasAction = canReturn || canManageDraft || canRevise;
                                                         }
@@ -588,7 +592,7 @@
                                                                 <button type="button" @onclick="() => OpenReturnModal(usage, false)" class="text-[10px] px-2 py-1 bg-white border border-[#e5e3dc] rounded hover:border-[#1a1a1a] transition font-bold whitespace-nowrap">
                                                                     Return Item
                                                                 </button>
-                                                                @if (UserRole == "admin" || UserRole == "superadmin")
+                                                                @if (UserRole == "admin" || userPrincipal.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ProductsManage))
                                                                 {
                                                                     <button type="button" @onclick="() => OpenReturnModal(usage, true)" class="text-[10px] px-2 py-1 bg-[#1a1a1a] text-white rounded hover:bg-[#333] transition font-bold whitespace-nowrap">
                                                                         Force Return
@@ -888,7 +892,7 @@
     private string? SuccessMessage;
     
     private int CurrentUserId;
-    private string? UserRole;
+    private string? UserRole; private System.Security.Claims.ClaimsPrincipal userPrincipal = new System.Security.Claims.ClaimsPrincipal();
 
     private bool IsReturnModalOpen = false;
     private bool IsForceReturn = false;
@@ -937,7 +941,7 @@
             {
                 CurrentUserId = id;
             }
-            UserRole = user.FindFirst(ClaimTypes.Role)?.Value;
+            UserRole = user.FindFirst(ClaimTypes.Role)?.Value; userPrincipal = user;
         }
 
         Divisions = await DivisionService.GetAllDivisionsAsync();
@@ -1501,19 +1505,33 @@
             int totalQty = groupItems.Sum(i => i.quantity ?? 0);
             int totalReturned = groupItems.Sum(i => i.returned_quantity ?? 0);
 
-            if (firstItem.status == "PENDING") {
+            if (firstItem.status == "PENDING_STAFF_INVENTORY") {
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "ACTIVE" });
+                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "PENDING" });
+                steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "PENDING" });
+                steps.Add(new TrackingStep { Name = "Pengembalian", Status = "PENDING" });
+            } else if (firstItem.status == "REVISION_BY_STAFF_INVENTORY") {
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "WARNING" });
+                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "PENDING" });
+                steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "PENDING" });
+                steps.Add(new TrackingStep { Name = "Pengembalian", Status = "PENDING" });
+            } else if (firstItem.status == "PENDING_ADMIN" || firstItem.status == "PENDING") {
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE" });
                 steps.Add(new TrackingStep { Name = "Approval Admin", Status = "ACTIVE" });
                 steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "PENDING" });
                 steps.Add(new TrackingStep { Name = "Pengembalian", Status = "PENDING" });
-            } else if (firstItem.status == "REVISION") {
+            } else if (firstItem.status == "REVISION_BY_ADMIN" || firstItem.status == "REVISION") {
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE" });
                 steps.Add(new TrackingStep { Name = "Approval Admin", Status = "WARNING" });
                 steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "PENDING" });
                 steps.Add(new TrackingStep { Name = "Pengembalian", Status = "PENDING" });
             } else if (firstItem.status == "WAITING_HANDOVER" || firstItem.status == "WAITING_ADMIN_HANDOVER") {
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE" });
                 steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE" });
                 steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "ACTIVE" });
                 steps.Add(new TrackingStep { Name = "Pengembalian", Status = "PENDING" });
             } else if (firstItem.status == "APPROVED") {
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE" });
                 steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE" });
                 steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "DONE" });
 
@@ -1523,9 +1541,13 @@
                     steps.Add(new TrackingStep { Name = "Pengembalian", Status = "ACTIVE" });
                 }
             } else if (firstItem.status == "REJECTED") {
-                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "WARNING" });
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "WARNING" });
+                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "PENDING" });
+                steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "PENDING" });
+                steps.Add(new TrackingStep { Name = "Pengembalian", Status = "PENDING" });
             }
         }
         return steps;
     }
 }
+

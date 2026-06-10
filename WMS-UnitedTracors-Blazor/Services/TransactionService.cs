@@ -206,7 +206,8 @@ public class TransactionService
                     type = model.type,
                     request_type = model.type == "OUT" ? reqType : "BORROW",
                     quantity = item.quantity,
-                    status = model.type == "OUT" && reqType == "GIVEAWAY"
+                    // Borrow & giveaway (OUT) sama-sama mulai dari tahap Staff Inventoris.
+                    status = model.type == "OUT"
                         ? WorkflowStatuses.PendingStaffInventory
                         : WorkflowStatuses.Pending,
                     requester_id = currentUserId,

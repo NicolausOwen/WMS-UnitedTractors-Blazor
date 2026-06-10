@@ -678,7 +678,7 @@
                     </div>
                 </div>
                 <div class="flex items-center justify-end w-auto gap-3">
-                    @if (UserRole == "manager" || UserRole == "admin" || UserRole == "superadmin")
+                    @if (true)
                     {
                         var cardDecisionsCount = group.Value.Count(i => Decisions.ContainsKey(i.id));
                         if (cardDecisionsCount > 0)
@@ -757,7 +757,7 @@
                                     <th class="px-4 py-3 font-semibold">Credit</th>
                                     <th class="px-4 py-3 font-semibold">Type</th>
                                     <th class="px-4 py-3 font-semibold">Status</th>
-                                    @if (UserRole == "manager" || UserRole == "admin" || UserRole == "superadmin")
+                                    @if (true)
                                     {
                                         <th class="px-4 py-3 font-semibold text-right">Actions</th>
                                     }
@@ -822,7 +822,7 @@
                                         <td class="p-4">
                                             <span class="@GetApprovalStatusClass(item.status)">@GetApprovalStatusLabel(item.status)</span>
                                         </td>
-                                        @if (UserRole == "manager" || UserRole == "admin" || UserRole == "superadmin")
+                                        @if (true)
                                         {
                                             <td class="p-4 text-right">
                                                 <div class="flex flex-col items-end gap-1.5">

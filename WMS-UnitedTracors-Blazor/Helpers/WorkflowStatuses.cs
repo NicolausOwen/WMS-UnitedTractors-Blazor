@@ -40,6 +40,8 @@ public static class WorkflowStatuses
 
     public static bool IsBorrowActive(string? status) =>
         status == Pending ||
+        status == PendingStaffInventory ||
+        status == PendingAdmin ||
         IsRevision(status) ||
         status == WaitingHandover ||
         status == WaitingAdminHandover ||

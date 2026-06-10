@@ -818,6 +818,7 @@ CREATE TABLE `admin_roles` (
   `Id` char(36) COLLATE ascii_general_ci NOT NULL,
   `RoleName` varchar(255) CHARACTER SET utf8mb4 NOT NULL,
   `Description` varchar(500) CHARACTER SET utf8mb4 NULL,
+  `Permissions` text CHARACTER SET utf8mb4 NULL,
   `IsActive` tinyint(1) NOT NULL,
   `CreatedAt` datetime(6) NOT NULL,
   `CreatedBy` varchar(100) CHARACTER SET utf8mb4 NULL,

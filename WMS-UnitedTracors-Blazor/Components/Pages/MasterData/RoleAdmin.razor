@@ -291,9 +291,9 @@
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
-        var userRole = user.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+        
 
-        if (userRole != "superadmin")
+        if (!user.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.RolesManage))
         {
             Navigation.NavigateTo("/");
             return;

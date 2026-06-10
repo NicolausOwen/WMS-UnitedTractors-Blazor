@@ -230,8 +230,8 @@
             return;
         }
 
-        var role = user.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
-        if (role != "admin" && role != "superadmin" && role != "staff")
+        
+        if (!user.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ScannerUse))
         {
             NavigationManager.NavigateTo("/");
             return;

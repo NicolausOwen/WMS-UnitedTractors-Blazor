@@ -49,7 +49,10 @@ public class TrackingService
             )) ||
             (t.request_type == "BORROW" && (
                 t.status == WorkflowStatuses.Pending ||
+                t.status == WorkflowStatuses.PendingStaffInventory ||
+                t.status == WorkflowStatuses.PendingAdmin ||
                 t.status == WorkflowStatuses.Revision ||
+                t.status == WorkflowStatuses.RevisionByStaffInventory ||
                 t.status == WorkflowStatuses.RevisionByAdmin ||
                 t.status == WorkflowStatuses.WaitingHandover ||
                 t.status == WorkflowStatuses.WaitingAdminHandover ||

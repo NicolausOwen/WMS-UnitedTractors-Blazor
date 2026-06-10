@@ -86,7 +86,7 @@
                                         @p.current_stock @(p.Unit?.name ?? "--")
                                     </span>
                                     
-                                    @if (IsSuperAdmin)
+                                    @if (CanManage)
                                     {
                                         <div class="flex items-center gap-1 border-l border-[#e5e3dc] pl-3 ml-auto sm:ml-1">
                                             <a href="/editproduct/@p.id" class="text-[10px] font-bold text-[#3a3835] hover:text-[#1a1a1a] px-2 py-1 rounded bg-white border border-[#e5e3dc] hover:bg-[#f0ede5] transition cursor-pointer">
@@ -113,7 +113,7 @@
     [Parameter] public string Title { get; set; } = "";
     [Parameter] public string Type { get; set; } = ""; // category, location, unit, division
     [Parameter] public int TargetId { get; set; }
-    [Parameter] public bool IsSuperAdmin { get; set; }
+    [Parameter] public bool CanManage { get; set; }
     [Parameter] public EventCallback<int> OnProductDeleted { get; set; }
 
     private List<Product>? ModalProducts;

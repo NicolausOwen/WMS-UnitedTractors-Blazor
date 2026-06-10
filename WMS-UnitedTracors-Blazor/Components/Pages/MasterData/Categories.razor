@@ -36,7 +36,7 @@
         }
 
         @* Add Category *@
-        @if (IsSuperAdmin)
+        @if (CanManage)
         {
             <div class="bg-white rounded-xl border border-[#e5e3dc] mb-6 overflow-hidden shadow-sm">
                 <div class="px-6 py-4 border-b border-[#f0ede5] bg-[#faf9f5]">
@@ -71,7 +71,7 @@
                             <th class="px-6 py-3.5 text-[0.68rem] font-bold tracking-wider uppercase text-[#c8c5bc]">Name</th>
                             <th class="px-6 py-3.5 text-[0.68rem] font-bold tracking-wider uppercase text-[#c8c5bc]">Description</th>
                             <th class="px-6 py-3.5 text-[0.68rem] font-bold tracking-wider uppercase text-[#c8c5bc]">Products</th>
-                            @if (IsSuperAdmin)
+                            @if (CanManage)
                             {
                                 <th class="px-6 py-3.5 text-[0.68rem] font-bold tracking-wider uppercase text-[#c8c5bc] w-32"></th>
                             }
@@ -81,7 +81,7 @@
                         @if (CategoriesList == null || !CategoriesList.Any())
                         {
                             <tr>
-                                <td colspan="@(IsSuperAdmin ? 5 : 4)" class="px-6 py-16 text-center">
+                                <td colspan="@(CanManage ? 5 : 4)" class="px-6 py-16 text-center">
                                     <p class="text-sm text-gray-500">No categories yet.</p>
                                     <p class="text-xs text-gray-400 mt-1">Add a category above to organize your products.</p>
                                 </td>
@@ -105,7 +105,7 @@
                                         </span>
                                         <span class="text-xs text-gray-400 ml-1">items</span>
                                     </td>
-                                    @if (IsSuperAdmin)
+                                    @if (CanManage)
                                     {
                                         <td class="px-6 py-4 whitespace-nowrap align-middle">
                                             <div class="flex items-center gap-2 justify-end">
@@ -122,7 +122,7 @@
                                     }
                                 </tr>
                                 
-                                @if (IsSuperAdmin)
+                                @if (CanManage)
                                 {
                                     <tr class="@(isEditing ? "" : "hidden") bg-[#faf9f5]">
                                         <td class="px-6 py-4" colspan="5">
@@ -182,7 +182,7 @@
                                 </div>
                                 <p class="text-xs text-gray-600 mb-4">@(category.Description ?? "No description provided.")</p>
                                 
-                                @if (IsSuperAdmin)
+                                @if (CanManage)
                                 {
                                     <div class="flex items-center gap-2 pt-3 border-t border-[#f0ede5] justify-end">
                                         <button type="button" @onclick="() => StartEdit(category)"
@@ -242,7 +242,7 @@
     Title="@ModalTitle" 
     Type="category" 
     TargetId="ModalTargetId" 
-    IsSuperAdmin="IsSuperAdmin" 
+    CanManage="CanManage" 
     OnProductDeleted="() => LoadData(CurrentPage)" />
 
 @code {
@@ -256,7 +256,7 @@
     
     private string? ErrorMessage;
     private string? SuccessMessage;
-    private bool IsSuperAdmin = false;
+    private bool CanManage = false;
 
     private bool ShowProductsModal = false;
     private string ModalTitle = "";
@@ -277,8 +277,8 @@
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        var userRole = authState.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
-        IsSuperAdmin = userRole == "superadmin";
+        
+        CanManage = authState.User.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.MasterDataManage);
 
         await LoadData(1);
     }

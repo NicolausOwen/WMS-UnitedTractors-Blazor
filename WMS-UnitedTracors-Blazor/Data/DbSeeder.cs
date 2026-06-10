@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using System.Text.RegularExpressions;
 using UT_WMSDotnet.Models;
+using Perms = WMS_UnitedTracors_Blazor.Helpers.Permissions;
 
 namespace UT_WMSDotnet.Data;
 
@@ -135,23 +136,40 @@ public class DbSeeder
 
     private async Task SeedDefaultAdminRolesAsync()
     {
-        var roles = new[] { "PIC Studio", "Team Leader Infrastructure", "Manager", "Staff Inventoris" };
-        foreach (var roleName in roles)
+        // roleName -> default permission keys
+        var defaults = new (string Name, string[] Perms)[]
         {
-            var exists = await _context.AdminRoles.AnyAsync(r => r.RoleName == roleName);
-            if (!exists)
+            ("Super Admin", Perms.All),
+            ("Staff Inventoris", new[] { Perms.DashboardView, Perms.TrackingView, Perms.ApprovalStage1, Perms.ApprovalHandover, Perms.ProductsManage }),
+            ("PIC Studio", new[] { Perms.DashboardView, Perms.TrackingView, Perms.ApprovalStage2, Perms.ApprovalReturn, Perms.ProductsManage, Perms.MasterDataManage }),
+            ("Team Leader Infrastructure", new[] { Perms.DashboardView, Perms.TrackingView, Perms.ApprovalStage2, Perms.ApprovalReturn, Perms.ProductsManage, Perms.MasterDataManage }),
+            ("Manager", new[] { Perms.DashboardView, Perms.TrackingView, Perms.ApprovalManager, Perms.ReportsView }),
+            ("User", new[] { Perms.DashboardView, Perms.RequestCreate, Perms.TrackingView }),
+        };
+
+        foreach (var (name, perms) in defaults)
+        {
+            var existing = await _context.AdminRoles.FirstOrDefaultAsync(r => r.RoleName == name);
+            if (existing == null)
             {
                 _context.AdminRoles.Add(new AdminRole
                 {
                     Id = Guid.NewGuid(),
-                    RoleName = roleName,
-                    Description = $"Default role for {roleName}",
+                    RoleName = name,
+                    Description = $"Default role for {name}",
+                    Permissions = System.Text.Json.JsonSerializer.Serialize(perms),
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow,
                     CreatedBy = "System",
                     UpdatedAt = DateTime.UtcNow,
                     UpdatedBy = "System"
                 });
+            }
+            else if (string.IsNullOrEmpty(existing.Permissions))
+            {
+                // Isi permission default hanya jika belum pernah diset.
+                existing.Permissions = System.Text.Json.JsonSerializer.Serialize(perms);
+                existing.UpdatedAt = DateTime.UtcNow;
             }
         }
         await _context.SaveChangesAsync();
