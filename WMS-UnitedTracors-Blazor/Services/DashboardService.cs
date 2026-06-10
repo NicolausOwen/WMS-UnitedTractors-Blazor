@@ -115,7 +115,14 @@ public class DashboardService
                         (t.quantity - (t.returned_quantity) - t.pending_return_quantity) > 0)
             .AsQueryable();
 
-        if (userRole != "superadmin")
+        // Pengelola/approver melihat semua peminjaman aktif; pemohon biasa hanya miliknya.
+        var actor = await _context.Users.FindAsync(currentUserId);
+        var actorRole = actor != null ? await _context.AdminRoles.FirstOrDefaultAsync(r => r.RoleName == actor.role && r.IsActive) : null;
+        var perms = WMS_UnitedTracors_Blazor.Helpers.Permissions.Resolve(actor?.role, actorRole?.Permissions);
+        bool seesAll = perms.Contains(WMS_UnitedTracors_Blazor.Helpers.Permissions.ProductsManage) ||
+                       perms.Contains(WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalReturn);
+
+        if (!seesAll)
         {
             activeBorrowsQuery = activeBorrowsQuery.Where(t => t.requester_id == currentUserId);
         }

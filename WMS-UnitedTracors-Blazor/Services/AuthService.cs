@@ -22,7 +22,7 @@ public class AuthService
 
         if (user != null && BCrypt.Net.BCrypt.Verify(password, user.password))
         {
-            var principal = CreateClaimsPrincipal(user);
+            var principal = await CreateClaimsPrincipalAsync(user);
             return (principal, null);
         }
 
@@ -71,11 +71,11 @@ public class AuthService
             await _context.SaveChangesAsync();
         }
 
-        var principal = CreateClaimsPrincipal(user);
+        var principal = await CreateClaimsPrincipalAsync(user);
         return (principal, null);
     }
 
-    private ClaimsPrincipal CreateClaimsPrincipal(User user)
+    private async Task<ClaimsPrincipal> CreateClaimsPrincipalAsync(User user)
     {
         var claims = new List<Claim>
         {
@@ -88,6 +88,14 @@ public class AuthService
             new Claim("division", user.Division?.name ?? ""),
             new Claim("division_id", user.division_id?.ToString() ?? "")
         };
+
+        // Permission claims: resolve dari role yang dimiliki user.
+        var role = await _context.AdminRoles.FirstOrDefaultAsync(r => r.RoleName == user.role && r.IsActive);
+        var perms = WMS_UnitedTracors_Blazor.Helpers.Permissions.Resolve(user.role, role?.Permissions);
+        foreach (var p in perms)
+        {
+            claims.Add(new Claim("perm", p));
+        }
 
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
         return new ClaimsPrincipal(identity);

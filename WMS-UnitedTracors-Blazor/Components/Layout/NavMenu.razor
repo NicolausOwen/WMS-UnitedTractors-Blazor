@@ -45,7 +45,7 @@
                 <span class="ut-link-text">Tracking</span>
             </NavLink>
 
-            @if (navRole == "superadmin" || navRole == "manager" || navRole == "admin")
+            @if (userPrincipal.HasAnyPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalStage1, WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalStage2, WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalManager, WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalHandover, WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalReturn))
             {
                 <NavLink href="Approval" class="ut-nav-link flex items-center gap-2.5 px-4 py-2.5 text-[#8a8780] hover:text-white hover:bg-[#222222] hover:border-l-[rgba(232,160,0,0.4)] no-underline text-[0.8rem] font-medium border-l-[2.5px] border-l-transparent relative whitespace-nowrap cursor-pointer" activeClass="active text-[#e8a000] bg-[rgba(232,160,0,0.08)] border-l-[#e8a000] font-semibold" data-label="Approvals">
                     <svg class="w-[17px] h-[17px] stroke-current fill-none stroke-[1.8] stroke-linecap-round stroke-linejoin-round flex-shrink-0" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
@@ -58,7 +58,7 @@
                 <span class="ut-link-text">History</span>
             </NavLink>
 
-            @if (IsAdminOrSuperadmin || navRole == "manager")
+            @if (userPrincipal.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ReportsView) || userPrincipal.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ProductsManage))
             {
                 <NavLink href="Reports" class="ut-nav-link flex items-center gap-2.5 px-4 py-2.5 text-[#8a8780] hover:text-white hover:bg-[#222222] hover:border-l-[rgba(232,160,0,0.4)] no-underline text-[0.8rem] font-medium border-l-[2.5px] border-l-transparent relative whitespace-nowrap cursor-pointer" activeClass="active text-[#e8a000] bg-[rgba(232,160,0,0.08)] border-l-[#e8a000] font-semibold" data-label="Reports">
                     <svg class="w-[17px] h-[17px] stroke-current fill-none stroke-[1.8] stroke-linecap-round stroke-linejoin-round flex-shrink-0" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
@@ -68,7 +68,7 @@
         </div>
 
         <!-- Catalog -->
-        @if (IsAdminOrSuperadmin || navRole == "manager")
+        @if (userPrincipal.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ReportsView) || userPrincipal.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ProductsManage))
         {
             <div class="ut-nav-section py-1.5 md:py-1">
                 <div class="ut-section-label text-[0.58rem] font-bold text-[#8a8780] tracking-[0.1em] uppercase px-4 py-1.5 whitespace-nowrap overflow-hidden">Catalog</div>
@@ -78,7 +78,7 @@
                     <span class="ut-link-text">Products</span>
                 </NavLink>
 
-                @if (IsAdminOrSuperadmin)
+                @if (userPrincipal.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.MasterDataManage))
                 {
                     <NavLink href="Category" class="ut-nav-link flex items-center gap-2.5 px-4 py-2.5 text-[#8a8780] hover:text-white hover:bg-[#222222] hover:border-l-[rgba(232,160,0,0.4)] no-underline text-[0.8rem] font-medium border-l-[2.5px] border-l-transparent relative whitespace-nowrap cursor-pointer" activeClass="active text-[#e8a000] bg-[rgba(232,160,0,0.08)] border-l-[#e8a000] font-semibold" data-label="Categories">
                         <svg class="w-[17px] h-[17px] stroke-current fill-none stroke-[1.8] stroke-linecap-round stroke-linejoin-round flex-shrink-0" viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
@@ -94,7 +94,7 @@
         }
 
         <!-- Admin -->
-        @if (IsAdminOrSuperadmin)
+        @if (userPrincipal.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.MasterDataManage))
         {
             <div class="ut-nav-section py-1.5 md:py-1">
                 <div class="ut-section-label text-[0.58rem] font-bold text-[#8a8780] tracking-[0.1em] uppercase px-4 py-1.5 whitespace-nowrap overflow-hidden">Admin</div>
@@ -117,7 +117,7 @@
         }
 
         <!-- Master Data (Super Admin Only) -->
-        @if (navRole == "superadmin")
+        @if (userPrincipal.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.RolesManage))
         {
             <div class="ut-nav-section py-1.5 md:py-1">
                 <div class="ut-section-label text-[0.58rem] font-bold text-[#8a8780] tracking-[0.1em] uppercase px-4 py-1.5 whitespace-nowrap overflow-hidden">Master Data</div>
@@ -195,7 +195,7 @@
                     Dashboard
                 </NavLink>
 
-                @if (navRole == "superadmin" || navRole == "admin" || navRole == "staff")
+                @if (userPrincipal.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.TrackingView))
                 {
                     <NavLink href="Tracking" class="flex items-center gap-2.5 px-5 py-2.5 text-[#8a8780] hover:text-white hover:bg-[#222222] no-underline text-[0.75rem] font-medium transition-colors" activeClass="text-[#e8a000] bg-[rgba(232,160,0,0.08)] font-semibold">
                         <svg class="w-5 h-5 stroke-current fill-none stroke-[1.8]" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>
@@ -203,7 +203,7 @@
                     </NavLink>
                 }
 
-                @if (navRole == "superadmin" || navRole == "manager" || navRole == "admin")
+                @if (userPrincipal.HasAnyPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalStage1, WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalStage2, WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalManager, WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalHandover, WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalReturn))
                 {
                     <NavLink href="Approval" class="flex items-center gap-2.5 px-5 py-2.5 text-[#8a8780] hover:text-white hover:bg-[#222222] no-underline text-[0.75rem] font-medium transition-colors" activeClass="text-[#e8a000] bg-[rgba(232,160,0,0.08)] font-semibold">
                         <svg class="w-5 h-5 stroke-current fill-none stroke-[1.8]" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
@@ -211,7 +211,7 @@
                     </NavLink>
                 }
 
-                @if (navRole == "superadmin" || navRole == "manager" || navRole == "admin" || navRole == "staff")
+                @if (true)
                 {
                     <NavLink href="TransactionHistory" class="flex items-center gap-2.5 px-5 py-2.5 text-[#8a8780] hover:text-white hover:bg-[#222222] no-underline text-[0.75rem] font-medium transition-colors" activeClass="text-[#e8a000] bg-[rgba(232,160,0,0.08)] font-semibold">
                         <svg class="w-5 h-5 stroke-current fill-none stroke-[1.8]" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -219,7 +219,7 @@
                     </NavLink>
                 }
 
-                @if (IsAdminOrSuperadmin || navRole == "manager")
+                @if (userPrincipal.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ReportsView) || userPrincipal.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ProductsManage))
                 {
                     <NavLink href="Reports" class="flex items-center gap-2.5 px-5 py-2.5 text-[#8a8780] hover:text-white hover:bg-[#222222] no-underline text-[0.75rem] font-medium transition-colors" activeClass="text-[#e8a000] bg-[rgba(232,160,0,0.08)] font-semibold">
                         <svg class="w-5 h-5 stroke-current fill-none stroke-[1.8]" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
@@ -228,7 +228,7 @@
                 }
             </div>
 
-            @if (IsAdminOrSuperadmin || navRole == "manager")
+            @if (userPrincipal.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ReportsView) || userPrincipal.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ProductsManage))
             {
                 <div class="py-2 border-t border-[#2a2a2a]/30">
                     <div class="text-[0.58rem] font-bold text-[#8a8780] tracking-[0.1em] uppercase px-5 py-1.5">Catalog</div>
@@ -236,7 +236,7 @@
                         <svg class="w-5 h-5 stroke-current fill-none stroke-[1.8]" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73L13 2.27a2 2 0 0 0-2 0L4 6.27A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
                         Products
                     </NavLink>
-                    @if (IsAdminOrSuperadmin)
+                    @if (userPrincipal.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.MasterDataManage))
                     {
                         <NavLink href="Category" class="flex items-center gap-2.5 px-5 py-2.5 text-[#8a8780] hover:text-white hover:bg-[#222222] no-underline text-[0.75rem] font-medium transition-colors" activeClass="text-[#e8a000] bg-[rgba(232,160,0,0.08)] font-semibold">
                             <svg class="w-5 h-5 stroke-current fill-none stroke-[1.8]" viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/></svg>
@@ -250,7 +250,7 @@
                 </div>
             }
 
-            @if (IsAdminOrSuperadmin)
+            @if (userPrincipal.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.MasterDataManage))
             {
                 <div class="py-2 border-t border-[#2a2a2a]/30">
                     <div class="text-[0.58rem] font-bold text-[#8a8780] tracking-[0.1em] uppercase px-5 py-1.5">Admin</div>
@@ -269,7 +269,7 @@
                 </div>
             }
 
-            @if (navRole == "superadmin")
+            @if (userPrincipal.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.RolesManage))
             {
                 <div class="py-2 border-t border-[#2a2a2a]/30">
                     <div class="text-[0.58rem] font-bold text-[#8a8780] tracking-[0.1em] uppercase px-5 py-1.5">Master Data</div>
@@ -328,7 +328,7 @@
     </NavLink>
 
     <!-- Tracking -->
-    @if (navRole == "superadmin" || navRole == "admin" || navRole == "staff")
+    @if (userPrincipal.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.TrackingView))
     {
         <NavLink href="Tracking" class="ut-bottom-link flex-1 flex flex-col items-center justify-center gap-0.5 text-[#8a8780] hover:text-white no-underline text-[0.58rem] font-semibold tracking-[0.02em] transition-colors py-1.5 relative border-none bg-none cursor-pointer font-sans" activeClass="active text-[#e8a000]">
             <div class="relative inline-flex">
@@ -339,7 +339,7 @@
     }
 
     <!-- Approvals -->
-    @if (navRole == "superadmin" || navRole == "manager" || navRole == "admin")
+    @if (userPrincipal.HasAnyPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalStage1, WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalStage2, WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalManager, WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalHandover, WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalReturn))
     {
         <NavLink href="Approval" class="ut-bottom-link flex-1 flex flex-col items-center justify-center gap-0.5 text-[#8a8780] hover:text-white no-underline text-[0.58rem] font-semibold tracking-[0.02em] transition-colors py-1.5 relative border-none bg-none cursor-pointer font-sans" activeClass="active text-[#e8a000]">
             <div class="relative inline-flex">
@@ -350,7 +350,7 @@
     }
 
     <!-- History -->
-    @if (navRole == "superadmin" || navRole == "manager" || navRole == "admin" || navRole == "staff")
+    @if (true)
     {
         <NavLink href="TransactionHistory" class="ut-bottom-link flex-1 flex flex-col items-center justify-center gap-0.5 text-[#8a8780] hover:text-white no-underline text-[0.58rem] font-semibold tracking-[0.02em] transition-colors py-1.5 relative border-none bg-none cursor-pointer font-sans" activeClass="active text-[#e8a000]">
             <div class="relative inline-flex">
@@ -362,7 +362,7 @@
 </nav>
 
 @code {
-    private bool IsAdminOrSuperadmin = false;
+    private System.Security.Claims.ClaimsPrincipal userPrincipal = new System.Security.Claims.ClaimsPrincipal();
     private string navUserName = "";
     private string navRole = "";
     private string navEmail = "";
@@ -371,18 +371,14 @@
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
+        var user = authState.User; userPrincipal = user;
         if (user.Identity != null && user.Identity.IsAuthenticated)
         {
             navUserName = user.FindFirst(ClaimTypes.Name)?.Value ?? "";
             navEmail = user.FindFirst(ClaimTypes.Email)?.Value ?? "";
             navPoin = user.FindFirst("poin")?.Value ?? "0";
             navRole = user.FindFirst(ClaimTypes.Role)?.Value ?? "";
-
-            if (navRole == "admin" || navRole == "superadmin")
-            {
-                IsAdminOrSuperadmin = true;
-            }
         }
     }
 }
+

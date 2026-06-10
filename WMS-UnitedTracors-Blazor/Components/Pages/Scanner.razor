@@ -176,7 +176,7 @@
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
                                 <div>
                                     <label class="block text-[0.6rem] font-bold tracking-wider uppercase text-[#a09e99] mb-1.5">Tanggal Event <span class="text-[#d94040]">*</span></label>
-                                    <InputDate @bind-Value="Model.EventDate" class="w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none text-[#1a1a1a] transition-colors duration-150" required />
+                                    <InputDate @bind-Value="Model.EventDate" min="@TodayDateString" class="w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none text-[#1a1a1a] transition-colors duration-150" required />
                                 </div>
                                 <div>
                                     <label class="block text-[0.6rem] font-bold tracking-wider uppercase text-[#a09e99] mb-1.5">Division <span class="text-[#d94040]">*</span></label>
@@ -218,6 +218,7 @@
     private string? SuccessMessage;
     private string? ErrorMessage;
     private bool IsSubmitting = false;
+    private string TodayDateString => DateTime.Today.ToString("yyyy-MM-dd");
 
     protected override async Task OnInitializedAsync()
     {
@@ -229,8 +230,8 @@
             return;
         }
 
-        var role = user.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
-        if (role != "admin" && role != "superadmin" && role != "staff")
+        
+        if (!user.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ScannerUse))
         {
             NavigationManager.NavigateTo("/");
             return;

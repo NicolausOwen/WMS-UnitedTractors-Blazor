@@ -42,7 +42,7 @@ public class Transaction
     [StringLength(255)]
     public string? return_photo { get; set; }
 
-    [StringLength(255)]
+    [Column(TypeName = "text")]
     public string? handover_photo { get; set; }
 
     [Column(TypeName = "text")]
@@ -53,7 +53,7 @@ public class Transaction
 
     public DateTime? handover_timestamp { get; set; }
 
-    [StringLength(255)]
+    [Column(TypeName = "text")]
     public string? documentation_photo { get; set; }
 
     [Column(TypeName = "text")]

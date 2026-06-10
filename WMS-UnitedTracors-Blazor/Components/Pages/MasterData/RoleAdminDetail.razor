@@ -157,6 +157,43 @@
                     }
                 </div>
 
+                @* Permissions Card (Full Width) *@
+                <div class="bg-white rounded-xl border border-[#e5e3dc] shadow-sm overflow-hidden">
+                    <div class="px-6 py-4 border-b border-[#f0ede5] bg-[#faf9f5] flex items-center justify-between gap-3">
+                        <div>
+                            <h3 class="text-sm font-bold text-[#1a1a1a] font-syne">Permissions</h3>
+                            <p class="text-[0.72rem] text-[#8a8880] mt-0.5">Atur apa saja yang boleh dilakukan role ini (mengikuti urutan alur proses).</p>
+                        </div>
+                        <button type="button" @onclick="SavePermissions" class="px-4 py-2 bg-[#e8a000] hover:bg-[#d49300] text-[#1a1a1a] text-xs font-bold rounded-lg transition active:scale-95 cursor-pointer shrink-0">
+                            Save Permissions
+                        </button>
+                    </div>
+                    @if (!string.IsNullOrEmpty(PermSavedMessage))
+                    {
+                        <div class="mx-6 mt-4 flex items-center gap-2 bg-[#eef9f0] border border-[#b8e8c0] text-[#1a7a30] px-4 py-2.5 rounded-lg text-xs font-semibold">
+                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            @PermSavedMessage
+                        </div>
+                    }
+                    <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+                        @foreach (var group in WMS_UnitedTracors_Blazor.Helpers.Permissions.Catalog.GroupBy(d => d.Group))
+                        {
+                            <div>
+                                <h4 class="text-[0.62rem] font-bold uppercase tracking-wider text-[#8a8880] mb-3 pb-2 border-b border-[#f0ede5]">@group.Key</h4>
+                                <div class="space-y-2.5">
+                                    @foreach (var def in group.OrderBy(d => d.Order))
+                                    {
+                                        <label class="flex items-center gap-2.5 cursor-pointer text-sm text-gray-700 hover:text-gray-900">
+                                            <input type="checkbox" checked="@SelectedPermissions.Contains(def.Key)" @onchange="@(e => TogglePerm(def.Key, e.Value))" class="rounded border-gray-300 text-[#e8a000] focus:ring-[#e8a000]" />
+                                            @def.Label
+                                        </label>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
                 @* Bottom Section: Users list (Full Width) *@
                 <div class="bg-white rounded-xl border border-[#e5e3dc] shadow-sm overflow-hidden">
                     <div class="px-6 py-4 border-b border-[#f0ede5] bg-[#faf9f5]">
@@ -244,16 +281,32 @@
     private List<int> SelectedCategoryIdsToAssign = new() { 0 };
     private string? AssignErrorMessage;
 
+    private HashSet<string> SelectedPermissions = new();
+    private string? PermSavedMessage;
+
     private bool IsLoading = true;
     private string CurrentUsername = "System";
+
+    private void TogglePerm(string key, object? value)
+    {
+        PermSavedMessage = null;
+        if (value is bool b && b) SelectedPermissions.Add(key);
+        else SelectedPermissions.Remove(key);
+    }
+
+    private async Task SavePermissions()
+    {
+        var err = await AdminRoleService.UpdateRolePermissionsAsync(Id, SelectedPermissions.ToList(), CurrentUsername);
+        PermSavedMessage = err ?? "Permissions berhasil disimpan. User perlu login ulang agar perubahan berlaku.";
+    }
 
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
-        var userRole = user.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+        
 
-        if (userRole != "superadmin")
+        if (!user.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.RolesManage))
         {
             Navigation.NavigateTo("/");
             return;
@@ -274,6 +327,7 @@
         {
             AssignedUsers = await AdminRoleService.GetAssignedUsersAsync(Id);
             UnassignedUsers = await AdminRoleService.GetUnassignedUsersAsync(Id);
+            SelectedPermissions = new HashSet<string>(await AdminRoleService.GetRolePermissionsAsync(Id));
         }
         IsLoading = false;
     }

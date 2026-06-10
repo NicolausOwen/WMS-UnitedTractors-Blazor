@@ -1,4 +1,4 @@
-﻿@page "/"
+@page "/"
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
 @using UT_WMSDotnet.Models
@@ -25,18 +25,18 @@
 
 <div class="w-full min-h-screen bg-[#f5f4f0] px-4 md:px-10 py-6 pb-24 md:pb-12 font-sans">
     
-    @* Metric Cards / Continue Activity *@
-    <!-- @if (UserRole == "superadmin" || UserRole == "manager" || UserRole == "admin")
-    {
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
-            <div class="bg-white border border-[#e5e3dc] hover:border-[#e8a000] border-l-4 border-l-[#e8a000] rounded-r-[10px] rounded-l-[4px] p-4 sm:p-5 sm:px-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-[1px]">
-                <p class="text-[0.6rem] sm:text-[0.65rem] font-bold tracking-[0.12em] uppercase text-[#8a8880] mb-1.5">Total Items</p>
-                <p class="font-sans text-2xl sm:text-4xl font-bold text-[#1a1a1a] leading-none">@WidgetTotalItems</p>
-            </div>
-            <div class="bg-white border border-[#e5e3dc] hover:border-[#1a7a30] border-l-4 border-l-[#1a7a30] rounded-r-[10px] rounded-l-[4px] p-4 sm:p-5 sm:px-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-[1px]">
-                <p class="text-[0.6rem] sm:text-[0.65rem] font-bold tracking-[0.12em] uppercase text-[#8a8880] mb-1.5">Total Stock</p>
-                <p class="font-sans text-2xl sm:text-4xl font-bold text-[#1a1a1a] leading-none">@TotalStock</p>
-            </div>
+    @* Metric Cards *@
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+        <div class="bg-white border border-[#e5e3dc] hover:border-[#e8a000] border-l-4 border-l-[#e8a000] rounded-r-[10px] rounded-l-[4px] p-4 sm:p-5 sm:px-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-[1px]">
+            <p class="text-[0.6rem] sm:text-[0.65rem] font-bold tracking-[0.12em] uppercase text-[#8a8880] mb-1.5">Total Items</p>
+            <p class="font-sans text-2xl sm:text-4xl font-bold text-[#1a1a1a] leading-none">@WidgetTotalItems</p>
+        </div>
+        <div class="bg-white border border-[#e5e3dc] hover:border-[#1a7a30] border-l-4 border-l-[#1a7a30] rounded-r-[10px] rounded-l-[4px] p-4 sm:p-5 sm:px-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-[1px]">
+            <p class="text-[0.6rem] sm:text-[0.65rem] font-bold tracking-[0.12em] uppercase text-[#8a8880] mb-1.5">Total Stock</p>
+            <p class="font-sans text-2xl sm:text-4xl font-bold text-[#1a1a1a] leading-none">@TotalStock</p>
+        </div>
+        @if (userPrincipal.HasAnyPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalStage1, WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalStage2, WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalManager))
+        {
             <div class="bg-white border border-[#e5e3dc] hover:border-[#e8a000] border-l-4 border-l-[#e8a000] rounded-r-[10px] rounded-l-[4px] p-4 sm:p-5 sm:px-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-[1px]">
                 <p class="text-[0.6rem] sm:text-[0.65rem] font-bold tracking-[0.12em] uppercase text-[#8a8880] mb-1.5">Pending Approval</p>
                 <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
@@ -55,8 +55,8 @@
                     <span class="inline-flex h-6.5 w-6.5 sm:h-9 sm:w-9 items-center justify-center rounded-lg bg-[#fef0f0] text-[#d94040] font-extrabold text-xs sm:text-base border border-[#f8c0c0] shrink-0 leading-none">!</span>
                 }
             </div>
-        </div>
-    } -->
+        }
+    </div>
 
     @* Kegiatan Lanjutan (Action Items) Widget *@
         <div class="mb-6 sm:mb-8 bg-white border border-[#e5e3dc] rounded-[18px] p-5 sm:p-6 shadow-sm">
@@ -163,13 +163,13 @@
     
     @* Quick Actions *@
     <div class="flex flex-wrap items-center gap-3 mb-8">
-        @if (UserRole == "superadmin" || UserRole == "staff") {
+        @if (userPrincipal.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.TrackingView)) {
         <a href="Tracking" class="inline-flex items-center gap-2 px-[1.1rem] py-[0.6rem] bg-[#1a1a1a] hover:bg-[#333333] active:scale-[0.98] text-white text-[0.75rem] font-bold tracking-[0.06em] uppercase rounded-lg transition">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
             Return Item
         </a>
         }
-        @if (UserRole == "superadmin" || UserRole == "manager" || UserRole == "admin") {
+        @if (userPrincipal.HasAnyPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalStage1, WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalStage2, WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalManager)) {
         <a href="Approval" class="inline-flex items-center gap-2 px-[1.1rem] py-[0.6rem] bg-[#1a1a1a] hover:bg-[#333333] active:scale-[0.98] text-white text-[0.75rem] font-bold tracking-[0.06em] uppercase rounded-lg transition">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
             Review Approvals
@@ -177,7 +177,7 @@
         }
     </div>
 
-    @if (UserRole == "superadmin" || UserRole == "admin" || UserRole == "manager")
+    @if (userPrincipal.HasAnyPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalStage1, WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalStage2, WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalManager))
     {
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
             @* 1. Transaction Status Donut *@
@@ -422,7 +422,7 @@
 }
 
 @* Floating Cart Button *@
-@if(UserRole == "superadmin" || UserRole == "admin" || UserRole == "staff") {
+@if(userPrincipal.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.TrackingView)) {
 <button type="button" @onclick='() => ShowCartModal = true' class="fixed bottom-24 sm:bottom-8 right-8 z-50 flex items-center justify-center w-[3.5rem] h-[3.5rem] bg-[#e8a000] hover:bg-[#d49300] active:scale-[0.95] rounded-full shadow-2xl transition-transform border-4 border-white" title="View Cart">
     <svg class="w-7 h-7 text-[#1a1a1a]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
     @if(CartService.Items.Any()) {
@@ -493,14 +493,14 @@
                                             @if (item.RequestType == "BORROW")
                                             {
                                                 <div class="flex gap-2">
-                                                    <input type="date" @bind="item.BorrowStartDate" class="w-full px-2 py-1.5 text-[10px] bg-white border border-[#e5e3dc] rounded outline-none focus:border-[#e8a000]" title="Tanggal Pinjam">
+                                                    <input type="date" @bind="item.BorrowStartDate" min="@TodayDateString" class="w-full px-2 py-1.5 text-[10px] bg-white border border-[#e5e3dc] rounded outline-none focus:border-[#e8a000]" title="Tanggal Pinjam">
                                                     <input type="date" @bind="item.ExpectedReturnDate" class="w-full px-2 py-1.5 text-[10px] bg-white border border-[#e5e3dc] rounded outline-none focus:border-[#e8a000]" title="Tanggal Kembali">
                                                 </div>
                                             }
                                             @if (item.RequestType == "GIVEAWAY")
                                             {
                                                 <div>
-                                                    <input type="date" @bind="item.PickupDate" class="w-full px-2 py-1.5 text-[10px] bg-white border border-[#e5e3dc] rounded outline-none focus:border-[#e8a000]" title="Tanggal Pengambilan">
+                                                    <input type="date" @bind="item.PickupDate" min="@TodayDateString" class="w-full px-2 py-1.5 text-[10px] bg-white border border-[#e5e3dc] rounded outline-none focus:border-[#e8a000]" title="Tanggal Pengambilan">
                                                 </div>
                                             }
                                         </div>
@@ -530,7 +530,7 @@
 
                             <div class="mt-4">
                                 <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Tanggal Event</label>
-                                <input type="date" @bind="EventDate" class="w-full px-3.5 py-2.5 text-xs bg-[#f5f4f0] border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none text-[#1a1a1a]">
+                                <input type="date" @bind="EventDate" min="@TodayDateString" class="w-full px-3.5 py-2.5 text-xs bg-[#f5f4f0] border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none text-[#1a1a1a]">
                             </div>
 
 
@@ -704,7 +704,7 @@
                                     <div class="gap-4 bg-[#f9f8f6] p-3 rounded-lg border border-[#e5e3dc] mt-4 grid grid-cols-2">
                                         <div>
                                             <label class="block text-[0.65rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1">Tgl Pinjam</label>
-                                            <input type="date" @bind="SelectedStartDate" class="w-full bg-white border border-[#e5e3dc] rounded-md px-2 py-1.5 text-xs focus:border-[#e8a000] outline-none">
+                                            <input type="date" @bind="SelectedStartDate" min="@TodayDateString" class="w-full bg-white border border-[#e5e3dc] rounded-md px-2 py-1.5 text-xs focus:border-[#e8a000] outline-none">
                                         </div>
                                         <div>
                                             <label class="block text-[0.65rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1">Tgl Kembali</label>
@@ -717,7 +717,7 @@
                                     <div class="bg-[#f9f8f6] p-3 rounded-lg border border-[#e5e3dc] mt-4">
                                         <div>
                                             <label class="block text-[0.65rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1">Tanggal Pengambilan</label>
-                                            <input type="date" @bind="SelectedPickupDate" class="w-full bg-white border border-[#e5e3dc] rounded-md px-2 py-1.5 text-xs focus:border-[#e8a000] outline-none">
+                                            <input type="date" @bind="SelectedPickupDate" min="@TodayDateString" class="w-full bg-white border border-[#e5e3dc] rounded-md px-2 py-1.5 text-xs focus:border-[#e8a000] outline-none">
                                         </div>
                                     </div>
                                 }
@@ -794,7 +794,7 @@
     private string? SelectedVariantSize;
     
     private int CurrentUserId = 0;
-    private string? UserRole;
+    private string? UserRole; private System.Security.Claims.ClaimsPrincipal userPrincipal = new System.Security.Claims.ClaimsPrincipal();
     private string? ApplicantName;
     private string? ApplicantNrp;
     private int? UserDivisionId;
@@ -804,6 +804,7 @@
     private string? DocumentationLink;
     private string? Notes;
     private DateTime? SelectedPickupDate;
+    private string TodayDateString => DateTime.Today.ToString("yyyy-MM-dd");
 
     protected override async Task OnInitializedAsync()
     {
@@ -819,7 +820,7 @@
             {
                 CurrentUserId = id;
             }
-            UserRole = user.FindFirst(ClaimTypes.Role)?.Value;
+            UserRole = user.FindFirst(ClaimTypes.Role)?.Value; userPrincipal = user;
             ApplicantName = user.Identity.Name;
             
             // Get user's exact details from db
@@ -841,7 +842,7 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (_shouldRenderCharts && (UserRole == "superadmin" || UserRole == "admin" || UserRole == "manager"))
+        if (_shouldRenderCharts && (userPrincipal.HasAnyPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalStage1, WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalStage2, WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalManager)))
         {
             _shouldRenderCharts = false;
             await JSRuntime.InvokeVoidAsync("renderDashboardCharts", new {
@@ -1239,6 +1240,12 @@
                 return;
             }
 
+            if (EventDate.Value.Date < DateTime.Today)
+            {
+                ErrorMessage = "Tanggal Event tidak boleh sebelum hari ini.";
+                return;
+            }
+
 
             // Validasi tanggal peminjaman untuk item BORROW
             foreach (var item in CartService.Items.Where(i => i.RequestType == "BORROW"))
@@ -1249,9 +1256,15 @@
                     return;
                 }
 
-                if (item.ExpectedReturnDate <= item.BorrowStartDate)
+                if (item.BorrowStartDate.Value.Date < DateTime.Today)
                 {
-                    ErrorMessage = $"Tanggal kembali harus lebih besar dari tanggal pinjam untuk item: {item.Name}.";
+                    ErrorMessage = $"Tanggal pengambilan tidak boleh di masa lalu untuk item: {item.Name}.";
+                    return;
+                }
+
+                if (item.ExpectedReturnDate.Value.Date <= item.BorrowStartDate.Value.Date)
+                {
+                    ErrorMessage = $"Tanggal pengembalian tidak boleh sebelum atau sama dengan tanggal pengambilan untuk item: {item.Name}.";
                     return;
                 }
             }
@@ -1268,6 +1281,12 @@
                 if (item.PickupDate < DateTime.Today)
                 {
                     ErrorMessage = $"Tanggal pengambilan tidak boleh di masa lalu untuk item: {item.Name}.";
+                    return;
+                }
+
+                if (EventDate.HasValue && EventDate.Value.Date < item.PickupDate.Value.Date)
+                {
+                    ErrorMessage = $"Tanggal event tidak boleh lebih kecil dari tanggal pengambilan untuk item: {item.Name}.";
                     return;
                 }
             }
@@ -1345,3 +1364,4 @@
         }
     }
 }
+

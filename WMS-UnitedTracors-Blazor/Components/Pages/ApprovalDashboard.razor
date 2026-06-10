@@ -1,9 +1,11 @@
-﻿@page "/Approval"
+@page "/Approval"
 @using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Forms
 @using System.Security.Claims
 @using UT_WMSDotnet.Models
 @using WMS_UnitedTracors_Blazor.Services
 @inject ApprovalService ApprovalService
+@inject TransactionService TransactionService
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthStateProvider
 @rendermode InteractiveServer
@@ -133,31 +135,77 @@
                     @foreach (var group in GroupedHandovers)
                     {
                         var firstItem = group.Value.First();
+                        var isWaitingInput = group.Value.Any(i => i.status == WorkflowStatuses.WaitingHandover);
+                        var isWaitingVerification = group.Value.Any(i => i.status == WorkflowStatuses.WaitingAdminHandover);
+                        var isGiveawayHandover = group.Value.All(i => i.request_type == "GIVEAWAY");
                         <div class="bg-white rounded-xl border border-[#e5e3dc] shadow-sm overflow-hidden">
                             <div class="px-5 py-4 border-b border-[#f0ede5] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                 <div>
                                     <h4 class="font-bold text-[#1a1a1a]">Event: @(firstItem.event_name ?? "-")</h4>
                                     <div class="text-xs text-gray-500 mt-1">Pemohon: @(firstItem.applicant_name ?? firstItem.Requester?.name) | @(group.Value.Count) Items</div>
+                                    <div class="mt-2">
+                                        <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase tracking-[0.08em] @(isWaitingVerification ? "bg-[#eef9f0] text-[#1a7a30] border border-[#b8e8c0]" : "bg-[#fffbeb] text-[#b77900] border border-[#f3d37a]")">
+                                            @(isWaitingVerification ? "Menunggu Verifikasi Admin" : "Menunggu Input Serah Terima")
+                                        </span>
+                                    </div>
                                 </div>
                                 <div class="flex gap-2">
-                                    <button type="button" @onclick='() => AskConfirm("Approve Serah Terima", "Setujui bukti serah terima ini? Barang akan tercatat sebagai sedang dipinjam.", () => ApproveHandoverBatch(group.Key), "Ya, Setujui")' disabled="@IsProcessing" class="px-4 py-2 bg-gray-900 text-white text-xs font-bold rounded-lg shadow-sm hover:bg-gray-800 transition">Approve Handover</button>
-                                    <button type="button" @onclick="() => OpenHandoverRejectModal(group.Key)" class="px-4 py-2 bg-white border border-red-200 text-red-600 text-xs font-bold rounded-lg hover:bg-red-50 transition">Reject Proof</button>
+                                    @if (isWaitingInput)
+                                    {
+                                        <button type="button" @onclick="() => OpenApprovalHandoverModal(group.Value)" class="px-4 py-2 bg-[#e8a000] text-[#1a1a1a] text-xs font-bold rounded-lg shadow-sm hover:bg-[#d49300] transition">
+                                            @(TransactionService.HasStoredFiles(firstItem.handover_photo) ? "Ubah Draft Serah Terima" : "Isi Form Serah Terima")
+                                        </button>
+                                        @if (TransactionService.HasStoredFiles(firstItem.handover_photo))
+                                        {
+                                            <button type="button" @onclick='() => AskConfirm(isGiveawayHandover ? "Selesaikan Serah Terima" : "Submit Serah Terima", isGiveawayHandover ? "Selesaikan serah terima giveaway ini? Stok akan dipotong dan sistem akan menunggu dokumentasi user." : "Kirim bukti serah terima ke admin untuk diverifikasi?", () => SubmitApprovalHandover(group.Value), isGiveawayHandover ? "Ya, Selesaikan" : "Ya, Submit")' disabled="@IsProcessing" class="px-4 py-2 bg-[#1a7a30] text-white text-xs font-bold rounded-lg shadow-sm hover:bg-[#166528] transition disabled:opacity-50">
+                                                @(isGiveawayHandover ? "Selesaikan Serah Terima" : "Submit ke Verifikasi")
+                                            </button>
+                                        }
+                                    }
+                                    @if (isWaitingVerification)
+                                    {
+                                        <button type="button" @onclick='() => AskConfirm("Approve Serah Terima", "Setujui bukti serah terima ini? Barang akan tercatat sebagai sedang dipinjam.", () => ApproveHandoverBatch(group.Key), "Ya, Setujui")' disabled="@IsProcessing" class="px-4 py-2 bg-gray-900 text-white text-xs font-bold rounded-lg shadow-sm hover:bg-gray-800 transition">Approve Handover</button>
+                                        <button type="button" @onclick="() => OpenHandoverRejectModal(group.Key)" class="px-4 py-2 bg-white border border-red-200 text-red-600 text-xs font-bold rounded-lg hover:bg-red-50 transition">Reject Proof</button>
+                                    }
                                 </div>
                             </div>
                             
                             <div class="p-4 bg-gray-50/50 flex flex-col md:flex-row gap-6">
-                                <div class="w-32 h-32 rounded-lg border border-[#e5e3dc] overflow-hidden bg-white shrink-0">
-                                    @if (!string.IsNullOrEmpty(firstItem.handover_photo))
+                                <div class="w-32 shrink-0">
+                                    @if (TransactionService.ParseStoredFiles(firstItem.handover_photo).Any())
                                     {
-                                        <a href="@($"/{firstItem.handover_photo.TrimStart('/')}")" target="_blank" data-image-popup>
-                                            <img src="@($"/{firstItem.handover_photo.TrimStart('/')}")" class="w-full h-full object-cover" />
-                                        </a>
+                                        var handoverFiles = TransactionService.ParseStoredFiles(firstItem.handover_photo);
+                                        <div class="grid grid-cols-2 gap-2">
+                                            @foreach (var handoverFile in handoverFiles.Take(4))
+                                            {
+                                                <div class="w-[60px] h-[60px] rounded-lg border border-[#e5e3dc] overflow-hidden bg-white">
+                                                    @if (handoverFile.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+                                                    {
+                                                        <a href="@($"/{handoverFile.TrimStart('/')}")" target="_blank" class="w-full h-full flex items-center justify-center bg-red-50">
+                                                            <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                                                        </a>
+                                                    }
+                                                    else
+                                                    {
+                                                        <a href="@($"/{handoverFile.TrimStart('/')}")" target="_blank" data-image-popup>
+                                                            <img src="@($"/{handoverFile.TrimStart('/')}")" class="w-full h-full object-cover" />
+                                                        </a>
+                                                    }
+                                                </div>
+                                            }
+                                        </div>
+                                        @if (handoverFiles.Count > 4)
+                                        {
+                                            <div class="mt-2 text-[10px] font-bold text-[#8a8880]">+@(handoverFiles.Count - 4) file lainnya</div>
+                                        }
                                     }
-                                    else { <div class="w-full h-full flex items-center justify-center text-[10px] text-gray-300">No Photo</div> }
+                                    else { <div class="w-full h-24 rounded-lg border border-[#e5e3dc] flex items-center justify-center text-[10px] text-gray-300 bg-white">No Photo</div> }
                                 </div>
                                 <div class="flex-1">
                                     <h5 class="text-[10px] font-bold text-[#8a8880] uppercase mb-1">Handover Notes</h5>
-                                    <p class="text-xs text-[#5a5855] italic">"@firstItem.handover_notes"</p>
+                                    <p class="text-xs text-[#5a5855] italic">"@(string.IsNullOrWhiteSpace(firstItem.handover_notes) ? "-" : firstItem.handover_notes)"</p>
+                                    <p class="mt-2 text-xs text-[#6b665e]">Penerima: <span class="font-semibold text-[#1a1a1a]">@(firstItem.handover_recipient_name ?? firstItem.applicant_name ?? "-")</span></p>
+                                    <p class="mt-1 text-xs text-[#6b665e]">Waktu: <span class="font-semibold text-[#1a1a1a]">@(firstItem.handover_timestamp?.ToString("dd MMM yyyy HH:mm") ?? "-")</span></p>
                                     
                                     <div class="mt-4">
                                         <h5 class="text-[10px] font-bold text-[#8a8880] uppercase mb-2">Items List</h5>
@@ -311,6 +359,101 @@
     </div>
 }
 
+@if (ShowApprovalHandoverModal)
+{
+    <div class="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" @onclick="CloseApprovalHandoverModal">
+        <div class="bg-white rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden border border-[#e5e3dc] flex flex-col max-h-[90vh]" @onclick:stopPropagation="true">
+            <div class="px-5 py-4 border-b border-[#e5e3dc] bg-[#faf9f5] flex items-center justify-between gap-4 shrink-0">
+                <div>
+                    <h3 class="text-xl font-bold text-[#1a1a1a]">Form Serah Terima</h3>
+                    <p class="text-sm text-[#6b665e]">Isi bukti serah terima langsung dari tab `Serah Terima` agar seluruh proses terpusat di halaman approval.</p>
+                </div>
+                <button type="button" @onclick="CloseApprovalHandoverModal" class="text-[#8a8880] hover:text-[#1a1a1a] transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="p-5 space-y-5 overflow-y-auto">
+                @if (ApprovalHandoverItems.Count > 0)
+                {
+                    var firstPending = ApprovalHandoverItems.First();
+                    <div class="rounded-2xl border border-[#e5e3dc] bg-[#faf9f5] p-4">
+                        <div class="text-[0.65rem] font-bold uppercase tracking-[0.16em] text-[#8a8880] mb-3">Ringkasan Event</div>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+                            <div>
+                                <div class="text-[#8a8880] font-semibold">Pemohon</div>
+                                <div class="text-[#1a1a1a] font-bold">@(firstPending.applicant_name ?? firstPending.Requester?.name ?? "-")</div>
+                            </div>
+                            <div>
+                                <div class="text-[#8a8880] font-semibold">Event</div>
+                                <div class="text-[#1a1a1a] font-bold">@(firstPending.event_name ?? "-")</div>
+                            </div>
+                            <div>
+                                <div class="text-[#8a8880] font-semibold">Jumlah Item</div>
+                                <div class="text-[#1a1a1a] font-bold">@ApprovalHandoverItems.Count item</div>
+                            </div>
+                        </div>
+                        <div class="mt-4 flex flex-wrap gap-2">
+                            @foreach (var item in ApprovalHandoverItems)
+                            {
+                                <div class="px-3 py-2 rounded-xl border border-[#e5e3dc] bg-white text-xs font-semibold text-[#1a1a1a]">
+                                    @(item.Product?.name ?? item.Product?.sku ?? $"Item #{item.id}") - @item.quantity @(item.Product?.Unit?.name ?? "unit")
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+
+                <div>
+                    <label class="block text-[0.72rem] font-bold tracking-[0.14em] uppercase text-[#8a8880] mb-2">Foto / PDF Bukti Serah Terima</label>
+                    <InputFile OnChange="HandleApprovalHandoverFileSelected" multiple accept="image/jpg,image/jpeg,image/png,image/webp,application/pdf" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-[#f5f4f0] file:text-[#1a1a1a] hover:file:bg-[#e5e3dc] transition cursor-pointer border border-[#e5e3dc] rounded-lg" />
+                    <p class="text-[10px] text-gray-500 mt-1">Format: JPG, PNG, WEBP, PDF. Maksimal 5 file, dan maksimal 4MB per file.</p>
+                    @if (ApprovalHandoverFiles.Any())
+                    {
+                        <div class="mt-3 flex flex-wrap gap-2">
+                            @foreach (var file in ApprovalHandoverFiles)
+                            {
+                                <div class="px-3 py-2 rounded-xl border border-[#e5e3dc] bg-[#faf9f5] text-xs font-semibold text-[#1a1a1a]">
+                                    @file.Name
+                                    <span class="ml-1 text-[#8a8880]">(@((file.Size / 1024.0 / 1024.0).ToString("0.#")) MB)</span>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[0.72rem] font-bold tracking-[0.14em] uppercase text-[#8a8880] mb-2">Nama Penerima</label>
+                        <input type="text" @bind="ApprovalHandoverRecipientName" class="w-full p-3 text-sm bg-white border border-[#e5e3dc] rounded-lg focus:border-[#e8a000] focus:ring-1 focus:ring-[#e8a000] outline-none transition-shadow" />
+                    </div>
+                    <div>
+                        <label class="block text-[0.72rem] font-bold tracking-[0.14em] uppercase text-[#8a8880] mb-2">Timestamp Serah Terima</label>
+                        <input type="datetime-local" @bind="ApprovalHandoverTimestampInput" class="w-full p-3 text-sm bg-white border border-[#e5e3dc] rounded-lg focus:border-[#e8a000] focus:ring-1 focus:ring-[#e8a000] outline-none transition-shadow" />
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[0.72rem] font-bold tracking-[0.14em] uppercase text-[#8a8880] mb-2">Catatan Tambahan</label>
+                    <textarea @bind="ApprovalHandoverNotes" rows="4" class="w-full p-3 text-sm bg-white border border-[#e5e3dc] rounded-lg focus:border-[#e8a000] focus:ring-1 focus:ring-[#e8a000] outline-none transition-shadow" placeholder="Misal: Diserahkan ke penerima di area lobby utama..."></textarea>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(HandoverDraftError))
+                {
+                    <div class="rounded-xl border border-[#f8c0c0] bg-[#fef0f0] px-4 py-3 text-sm font-semibold text-[#d94040]">@HandoverDraftError</div>
+                }
+            </div>
+            <div class="px-5 py-4 border-t border-[#e5e3dc] bg-[#faf9f5] flex flex-col sm:flex-row-reverse gap-3 shrink-0">
+                <button type="button" @onclick="SubmitApprovalHandoverDraft" disabled="@IsProcessing" class="px-5 py-3 bg-[#e8a000] hover:bg-[#d49300] text-[#1a1a1a] text-sm font-bold rounded-xl transition disabled:opacity-50">
+                    Simpan Draft Serah Terima
+                </button>
+                <button type="button" @onclick="CloseApprovalHandoverModal" class="px-5 py-3 bg-white border border-[#e5e3dc] hover:bg-[#f0ede5] text-[#3a3835] text-sm font-bold rounded-xl transition">
+                    Batal
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
 @if (ShowApproveAllModal && ApproveAllItems != null)
 {
     <div class="relative z-50" role="dialog" aria-modal="true">
@@ -383,45 +526,71 @@
 @if (ShowRejectModal)
 {
     <div class="relative z-50" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div class="fixed inset-0 backdrop-blur-md bg-black/5 transition-opacity"></div>
-        <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
-            <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-                <div class="relative transform overflow-hidden rounded-xl bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg border border-gray-100">
-                    <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
-                        <div class="sm:flex sm:items-start">
-                            <div class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-50 sm:mx-0 sm:h-10 sm:w-10">
-                                <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+        <div class="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"></div>
+        <div class="fixed inset-0 z-10 overflow-y-auto md:pl-[var(--ut-sidebar-w)] transition-all">
+            <div class="flex min-h-full items-end justify-center p-3 sm:p-4 text-center sm:items-center">
+                <div class="relative my-0 sm:my-8 w-full max-w-[calc(100vw-1.5rem)] sm:max-w-2xl transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all border border-[#e5e3dc]">
+                    <div class="bg-[#faf9f5] px-4 py-4 sm:px-5 border-b border-[#e5e3dc]">
+                        <div class="flex items-start gap-3 sm:gap-4">
+                            <div class="flex h-11 w-11 sm:h-12 sm:w-12 flex-shrink-0 items-center justify-center rounded-full bg-[#fef0f0]">
+                                <svg class="h-6 w-6 text-[#d94040]" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                 </svg>
                             </div>
-                            <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left w-full">
-                                <h3 class="text-base font-semibold leading-6 text-gray-900" id="modal-title">@(IsRejectingReturn ? "Tolak Pengembalian" : "Reject Request")</h3>
-                                    <div class="mt-2">
-                                        <p class="text-sm text-gray-500 mb-4">@(IsRejectingReturn ? "Berikan alasan penolakan pengembalian ini. Barang akan dikembalikan ke status pinjam untuk diajukan ulang." : "Masukkan catatan untuk reject atau revisi. Catatan ini akan terlihat oleh pemohon.")</p>
-                                        <textarea @bind="RejectReason" @bind:event="oninput" @onkeypress="() => RejectionError = false" class="w-full rounded-md border shadow-sm sm:text-sm @(RejectionError ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:border-red-500 focus:ring-red-500")" rows="3" placeholder="Enter rejection reason here..."></textarea>
-                                        @if (RejectionError)
-                                        {
-                                            <p class="mt-1 text-xs text-red-600">A reason is required to reject this request.</p>
-                                        }
-                                        @if (!IsRejectingReturn && RejectItemId > 0)
-                                        {
-                                            <div class="mt-4">
-                                                <label class="block text-xs font-semibold text-gray-700 mb-1">Qty revisi opsional</label>
-                                                <input type="number" min="1" @bind="RejectRevisedQuantity" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-amber-500 focus:ring-amber-500" />
-                                                <p class="mt-1 text-[11px] text-gray-500">Isi jika ingin mengusulkan jumlah baru untuk item ini.</p>
-                                            </div>
-                                        }
-                                    </div>
+                            <div class="w-full">
+                                <h3 class="text-xl sm:text-2xl font-bold text-[#1a1a1a] leading-tight" id="modal-title">@(IsRejectingReturn ? "Tolak Pengembalian" : "Reject / Revisi Item")</h3>
+                                <p class="mt-1 text-sm leading-6 text-[#6b665e]">@(IsRejectingReturn ? "Berikan alasan penolakan pengembalian ini. Barang akan kembali ke status pinjam agar bisa diajukan ulang." : "Masukkan catatan yang akan terlihat oleh pemohon, lalu pilih apakah item ditolak penuh atau diminta revisi.")</p>
                             </div>
                         </div>
                     </div>
-                    <div class="bg-gray-50 px-4 py-3 flex flex-col sm:flex-row-reverse sm:px-6 gap-2">
-                        <button type="button" @onclick='() => SubmitReject("REJECT")' class="inline-flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:w-auto transition">Reject Total</button>
+                    <div class="px-4 py-4 sm:px-5 sm:py-5 bg-white">
+                        @if (!IsRejectingReturn && RejectItemId > 0)
+                        {
+                            var rejectItem = GetApprovalItemById(RejectItemId);
+                            if (rejectItem != null)
+                            {
+                                <div class="mb-5 rounded-2xl border border-[#e5e3dc] bg-[#faf9f5] p-4">
+                                    <div class="text-[0.65rem] font-bold uppercase tracking-[0.16em] text-[#8a8880] mb-2">Item yang Diproses</div>
+                                    <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                        <div class="min-w-0">
+                                            <div class="text-base sm:text-lg font-bold text-[#1a1a1a] break-words">@rejectItem.Product?.name</div>
+                                            <div class="mt-1 text-xs text-[#6b665e]">SKU: @(rejectItem.Product?.sku ?? "-")</div>
+                                        </div>
+                                        <div class="w-full sm:w-auto sm:shrink-0 rounded-xl border border-[#f3d37a] bg-[#fffbeb] px-3 py-2 text-left sm:text-right">
+                                            <div class="text-[0.65rem] font-bold uppercase tracking-[0.14em] text-[#b77900]">Qty Diajukan</div>
+                                            <div class="text-lg font-bold text-[#1a1a1a]">@rejectItem.quantity @(rejectItem.Product?.Unit?.name ?? "unit")</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+
+                        <div>
+                            <label class="block text-[0.72rem] font-bold tracking-[0.14em] uppercase text-[#8a8880] mb-2">Catatan Reject / Revisi</label>
+                            <textarea @bind="RejectReason" @bind:event="oninput" @onkeypress="() => RejectionError = false" class="w-full rounded-xl border bg-white px-4 py-3 text-sm text-[#1a1a1a] shadow-sm @(RejectionError ? "border-[#d94040] focus:border-[#d94040] focus:ring-[#d94040]" : "border-[#e5e3dc] focus:border-[#e8a000] focus:ring-[#e8a000]")" rows="4" placeholder="Jelaskan alasan penolakan atau revisi qty secara spesifik..."></textarea>
+                            @if (RejectionError)
+                            {
+                                <p class="mt-2 text-xs font-semibold text-[#d94040]">Catatan wajib diisi sebelum item diproses.</p>
+                            }
+                        </div>
+
                         @if (!IsRejectingReturn)
                         {
-                            <button type="button" @onclick='() => SubmitReject("REVISE")' class="inline-flex w-full justify-center rounded-md bg-amber-500 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-amber-600 sm:w-auto transition">Butuh Revisi</button>
+                            <div class="mt-5 rounded-2xl border border-[#e5e3dc] bg-[#faf9f5] p-4">
+                                <label class="block text-[0.72rem] font-bold tracking-[0.14em] uppercase text-[#8a8880] mb-2">Qty Revisi</label>
+                                <input type="number" min="1" @bind="RejectRevisedQuantity" class="w-full rounded-xl border border-[#e5e3dc] bg-white px-4 py-3 text-base font-semibold text-[#1a1a1a] shadow-sm focus:border-[#e8a000] focus:ring-[#e8a000]" />
+                                <p class="mt-2 text-xs text-[#6b665e]">Isi jumlah baru jika item tidak ditolak penuh. Contoh: dari 10 unit menjadi 4 unit.</p>
+                            </div>
                         }
-                        <button type="button" @onclick="CloseRejectModal" class="inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:w-auto transition">Cancel</button>
+
+                    </div>
+                    <div class="px-4 py-4 sm:px-5 bg-[#faf9f5] border-t border-[#e5e3dc] flex flex-col sm:flex-row-reverse gap-3">
+                        <button type="button" @onclick='() => SubmitReject("REJECT")' class="inline-flex w-full justify-center rounded-xl bg-[#d94040] px-4 py-3 text-sm font-bold text-white shadow-sm hover:bg-[#bf3535] sm:w-auto sm:min-w-[140px] transition">Tolak Item</button>
+                        @if (!IsRejectingReturn)
+                        {
+                            <button type="button" @onclick='() => SubmitReject("REVISE")' class="inline-flex w-full justify-center rounded-xl bg-[#e8a000] px-4 py-3 text-sm font-bold text-[#1a1a1a] shadow-sm hover:bg-[#d49300] sm:w-auto sm:min-w-[140px] transition">Ajukan Revisi</button>
+                        }
+                        <button type="button" @onclick="CloseRejectModal" class="inline-flex w-full justify-center rounded-xl bg-white px-4 py-3 text-sm font-bold text-[#3a3835] border border-[#e5e3dc] hover:bg-[#f0ede5] sm:w-auto sm:min-w-[120px] transition">Batal</button>
                     </div>
                 </div>
             </div>
@@ -509,7 +678,7 @@
                     </div>
                 </div>
                 <div class="flex items-center justify-end w-auto gap-3">
-                    @if (UserRole == "manager" || UserRole == "admin" || UserRole == "superadmin")
+                    @if (true)
                     {
                         var cardDecisionsCount = group.Value.Count(i => Decisions.ContainsKey(i.id));
                         if (cardDecisionsCount > 0)
@@ -584,11 +753,11 @@
                             <thead class="text-gray-500 text-[0.65rem] uppercase tracking-wider border-b border-gray-100 bg-white">
                                 <tr>
                                     <th class="px-4 py-3 font-semibold pl-6">Product Details</th>
-                                    <th class="px-4 py-3 font-semibold">Qty / Stok</th>
+                                    <th class="px-4 py-3 font-semibold">Detail Qty</th>
                                     <th class="px-4 py-3 font-semibold">Credit</th>
                                     <th class="px-4 py-3 font-semibold">Type</th>
                                     <th class="px-4 py-3 font-semibold">Status</th>
-                                    @if (UserRole == "manager" || UserRole == "admin" || UserRole == "superadmin")
+                                    @if (true)
                                     {
                                         <th class="px-4 py-3 font-semibold text-right">Actions</th>
                                     }
@@ -610,9 +779,22 @@
                                             </div>
                                         </td>
                                         <td class="p-4">
-                                            <div class="text-sm font-bold text-gray-900">
-                                                @item.quantity/<span class="text-gray-500 font-medium">@(item.Product?.current_stock)</span>
-                                                <span class="text-xs font-normal text-gray-400 ml-0.5">@(item.Product?.Unit?.name ?? "--")</span>
+                                            <div class="space-y-1.5 min-w-[180px]">
+                                                <div class="flex items-center justify-between gap-3 text-sm">
+                                                    <span class="font-semibold text-[#6b665e]">Diminta</span>
+                                                    <span class="font-bold text-[#1a1a1a]">@item.quantity @(item.Product?.Unit?.name ?? "unit")</span>
+                                                </div>
+                                                <div class="flex items-center justify-between gap-3 text-sm">
+                                                    <span class="font-semibold text-[#6b665e]">Stok tersedia</span>
+                                                    <span class="font-bold text-[#1a1a1a]">@(item.Product?.current_stock ?? 0) @(item.Product?.Unit?.name ?? "unit")</span>
+                                                </div>
+                                                @if (RevisedQuantities.TryGetValue(item.id, out var revisedQty) && revisedQty.HasValue)
+                                                {
+                                                    <div class="flex items-center justify-between gap-3 text-sm rounded-lg border border-[#f3d37a] bg-[#fffbeb] px-2.5 py-1.5">
+                                                        <span class="font-semibold text-[#b77900]">Usulan revisi</span>
+                                                        <span class="font-bold text-[#1a1a1a]">@revisedQty @(item.Product?.Unit?.name ?? "unit")</span>
+                                                    </div>
+                                                }
                                             </div>
                                         </td>
                                         <td class="p-4">
@@ -640,7 +822,7 @@
                                         <td class="p-4">
                                             <span class="@GetApprovalStatusClass(item.status)">@GetApprovalStatusLabel(item.status)</span>
                                         </td>
-                                        @if (UserRole == "manager" || UserRole == "admin" || UserRole == "superadmin")
+                                        @if (true)
                                         {
                                             <td class="p-4 text-right">
                                                 <div class="flex flex-col items-end gap-1.5">
@@ -655,14 +837,19 @@
                                                         }
                                                         else
                                                         {
-                                                            <button type="button" @onclick='() => SetDecision(item.id, "APPROVE")' class="px-3 py-1.5 text-xs font-medium text-white bg-gray-900 rounded-md hover:bg-gray-800 transition">Approve</button>
-                                                            <button type="button" @onclick='() => OpenRejectModal(item.id)' class="px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 transition">Reject / Revise</button>
+                                                            <button type="button" @onclick='() => SetDecision(item.id, "APPROVE")' class="px-3.5 py-2 text-xs font-bold text-white bg-[#1a1a1a] rounded-lg hover:bg-[#333333] transition">Approve</button>
+                                                            <button type="button" @onclick='() => OpenRejectModal(item.id)' class="px-3.5 py-2 text-xs font-bold text-[#b45309] bg-[#fffbeb] border border-[#f3d37a] rounded-lg hover:bg-[#fef3c7] transition">Reject / Revisi</button>
                                                         }
                                                     </div>
                                                     @if (Decisions.ContainsKey(item.id))
                                                     {
-                                                        <div class="mt-1">
-                                                            <input type="text" @bind="Reasons[item.id]" placeholder="Notes..." class="px-2.5 py-1 text-xs border border-gray-300 rounded-lg w-48 text-right bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-amber-500 focus:border-amber-500 shadow-sm" />
+                                                        <div class="mt-1 w-56 rounded-xl border border-[#e5e3dc] bg-[#faf9f5] px-3 py-2 text-left">
+                                                            <div class="text-[0.6rem] font-bold uppercase tracking-[0.12em] text-[#8a8880] mb-1">Decision Draft</div>
+                                                            <div class="text-xs font-semibold text-[#1a1a1a]">@GetDecisionLabel(Decisions[item.id])</div>
+                                                            @if (!string.IsNullOrWhiteSpace(Reasons.GetValueOrDefault(item.id)))
+                                                            {
+                                                                <div class="mt-1 text-xs text-[#6b665e] line-clamp-2">@Reasons[item.id]</div>
+                                                            }
                                                         </div>
                                                     }
                                                 </div>
@@ -754,6 +941,21 @@
     private int? RejectRevisedQuantity;
     private bool IsRejectingReturn = false;
     private bool RejectionError = false;
+
+    private Transaction? GetApprovalItemById(int id)
+    {
+        return GroupedApprovals?
+            .SelectMany(g => g.Value)
+            .FirstOrDefault(t => t.id == id);
+    }
+
+    private static string GetDecisionLabel(string? decision) => decision switch
+    {
+        "APPROVE" => "Akan disetujui",
+        "REJECT" => "Akan ditolak",
+        "REVISE" => "Akan diminta revisi",
+        _ => "-"
+    };
 
     private void OpenRejectModal(int id, bool isReturn = false)
     {
@@ -918,6 +1120,13 @@
     private string HandoverRejectGroupId = "";
     private string HandoverRejectReason = "";
     private bool HandoverRejectionError = false;
+    private bool ShowApprovalHandoverModal = false;
+    private List<Transaction> ApprovalHandoverItems = new();
+    private List<IBrowserFile> ApprovalHandoverFiles = new();
+    private string? ApprovalHandoverNotes;
+    private string? ApprovalHandoverRecipientName;
+    private DateTime? ApprovalHandoverTimestampInput;
+    private string HandoverDraftError = "";
 
     private void OpenHandoverRejectModal(string groupId)
     {
@@ -925,6 +1134,117 @@
         HandoverRejectReason = "";
         HandoverRejectionError = false;
         ShowHandoverRejectModal = true;
+    }
+
+    private void OpenApprovalHandoverModal(List<Transaction> items)
+    {
+        ApprovalHandoverItems = items.Where(i => i.status == WorkflowStatuses.WaitingHandover).ToList();
+        var firstPending = ApprovalHandoverItems.FirstOrDefault();
+        ApprovalHandoverNotes = firstPending?.handover_notes;
+        ApprovalHandoverRecipientName = firstPending?.handover_recipient_name ?? firstPending?.applicant_name;
+        ApprovalHandoverTimestampInput = firstPending?.handover_timestamp ?? DateTime.Now;
+        ApprovalHandoverFiles = new();
+        HandoverDraftError = "";
+        ShowApprovalHandoverModal = true;
+    }
+
+    private void CloseApprovalHandoverModal()
+    {
+        ShowApprovalHandoverModal = false;
+        ApprovalHandoverItems = new();
+        ApprovalHandoverFiles = new();
+        ApprovalHandoverNotes = null;
+        ApprovalHandoverRecipientName = null;
+        ApprovalHandoverTimestampInput = null;
+        HandoverDraftError = "";
+    }
+
+    private void HandleApprovalHandoverFileSelected(InputFileChangeEventArgs e)
+    {
+        ApprovalHandoverFiles = e.GetMultipleFiles(5).ToList();
+        HandoverDraftError = "";
+    }
+
+    private async Task SubmitApprovalHandoverDraft()
+    {
+        if (!ApprovalHandoverItems.Any())
+        {
+            HandoverDraftError = "Tidak ada item serah terima yang bisa diproses.";
+            return;
+        }
+
+        if (!ApprovalHandoverFiles.Any())
+        {
+            HandoverDraftError = "Minimal satu file bukti serah terima wajib diunggah.";
+            return;
+        }
+
+        if (IsProcessing) return;
+        IsProcessing = true;
+        HandoverDraftError = "";
+        ErrorMessage = null;
+        SuccessMessage = null;
+
+        try
+        {
+            var err = await TransactionService.ConfirmHandoverAsync(
+                ApprovalHandoverItems.Select(i => i.id).ToList(),
+                ApprovalHandoverFiles,
+                ApprovalHandoverNotes,
+                ApprovalHandoverRecipientName,
+                ApprovalHandoverTimestampInput);
+
+            if (err == null)
+            {
+                SuccessMessage = "Draft serah terima berhasil disimpan dari tab Serah Terima.";
+                CloseApprovalHandoverModal();
+                await LoadData();
+            }
+            else
+            {
+                HandoverDraftError = err;
+            }
+        }
+        catch (Exception ex)
+        {
+            HandoverDraftError = "Terjadi kesalahan saat menyimpan draft serah terima: " + ex.Message;
+        }
+        finally
+        {
+            IsProcessing = false;
+        }
+    }
+
+    private async Task SubmitApprovalHandover(List<Transaction> items)
+    {
+        if (IsProcessing) return;
+        IsProcessing = true;
+        ErrorMessage = null;
+        SuccessMessage = null;
+        try
+        {
+            var ids = items.Where(i => i.status == WorkflowStatuses.WaitingHandover).Select(i => i.id).ToList();
+            var err = await TransactionService.SubmitHandoverAsync(ids);
+            if (err == null)
+            {
+                SuccessMessage = items.All(i => i.request_type == "GIVEAWAY")
+                    ? "Serah terima giveaway selesai. Sistem menunggu dokumentasi user."
+                    : "Bukti serah terima berhasil dikirim ke tahap verifikasi admin.";
+                await LoadData();
+            }
+            else
+            {
+                ErrorMessage = err;
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Terjadi kesalahan saat submit serah terima: " + ex.Message;
+        }
+        finally
+        {
+            IsProcessing = false;
+        }
     }
 
     private void CloseHandoverRejectModal()

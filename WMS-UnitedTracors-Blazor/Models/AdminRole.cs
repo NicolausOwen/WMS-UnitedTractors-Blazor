@@ -17,6 +17,10 @@ public class AdminRole
     [StringLength(500)]
     public string? Description { get; set; }
 
+    /// <summary>JSON array of permission keys (see <c>WMS_UnitedTracors_Blazor.Helpers.Permissions</c>).</summary>
+    [Column(TypeName = "text")]
+    public string? Permissions { get; set; }
+
     public bool IsActive { get; set; } = true;
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

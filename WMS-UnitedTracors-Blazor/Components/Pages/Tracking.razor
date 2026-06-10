@@ -1,4 +1,4 @@
-﻿@page "/Tracking"
+@page "/Tracking"
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
 @using UT_WMSDotnet.Models
@@ -117,12 +117,12 @@
                     var handoverDone = hasBorrow && borrowItemsOnly.Any(i => i.status == "APPROVED" && !string.IsNullOrEmpty(i.handover_photo));
                     // Tombol upload hanya saat menunggu bukti dari user (WAITING_HANDOVER), bukan saat menunggu verifikasi admin.
                     var canHandover = hasBorrow && borrowItemsOnly.Any(i => i.status == "WAITING_HANDOVER")
-                                      && (UserRole == "admin" || UserRole == "superadmin" || firstItem.requester_id == CurrentUserId);
+                                      && firstItem.requester_id == CurrentUserId;
                     // Draft serah terima: status masih WAITING_HANDOVER tapi foto sudah diunggah (belum disubmit ke admin).
                     var hasHandoverDraftPhoto = hasBorrow && borrowItemsOnly.Any(i => i.status == "WAITING_HANDOVER" && !string.IsNullOrEmpty(i.handover_photo));
-                    var canGiveawayHandover = isGiveaway && status == "WAITING_HANDOVER" && (UserRole == "admin" || UserRole == "superadmin");
+                    var canGiveawayHandover = false;
                     var hasGiveawayHandoverDraftPhoto = isGiveaway && giveawayItemsOnly.Any(i => i.status == "WAITING_HANDOVER" && !string.IsNullOrEmpty(i.handover_photo));
-                    var canUploadDocumentation = isGiveaway && (status == "WAITING_DOCUMENTATION" || status == "DOCUMENTATION_OVERDUE") && (firstItem.requester_id == CurrentUserId || UserRole == "superadmin");
+                    var canUploadDocumentation = isGiveaway && (status == "WAITING_DOCUMENTATION" || status == "DOCUMENTATION_OVERDUE") && (firstItem.requester_id == CurrentUserId || userPrincipal.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ProductsManage));
 
                     var isExpanded = ExpandedGroupIds.Contains(groupId);
 
@@ -166,8 +166,12 @@
                                         } else {
                                             @if(status == "REJECTED") {
                                                 <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#fef0f0] text-[#d94040] border border-[#f8c0c0]">Ditolak</span>
-                                            } else if(status == "REVISION" || status == "REVISION_BY_ADMIN") {
+                                            } else if(status == "REVISION" || status == "REVISION_BY_STAFF_INVENTORY" || status == "REVISION_BY_ADMIN") {
                                                 <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#fffbeb] text-[#d97706] border border-[#fde68a]">Butuh Revisi</span>
+                                            } else if(status == "PENDING_STAFF_INVENTORY") {
+                                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#fff8e6] text-[#b37a00] border border-[#ffe099]">Menunggu Staff Inventoris</span>
+                                            } else if(status == "PENDING_ADMIN" || status == "PENDING") {
+                                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#fff8e6] text-[#b37a00] border border-[#ffe099]">Menunggu Admin</span>
                                             } else if(status == "WAITING_HANDOVER") {
                                                 <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#fff8e6] text-[#b37a00] border border-[#ffe099]">Menunggu Bukti Serah Terima</span>
                                             } else if(status == "WAITING_ADMIN_HANDOVER") {
@@ -270,55 +274,67 @@
                                 <!-- PDF Bookkeeping Download Checklist -->
                                 <div class="p-4 bg-white border-b border-[#e5e3dc] flex flex-wrap gap-2.5 items-center">
                                     <span class="text-[0.65rem] font-bold uppercase tracking-wider text-[#8a8780] mr-2 block w-full sm:w-auto">Dokumen Pembukuan (PDF):</span>
-                                    
-                                    <!-- 1. Bukti Pengajuan -->
-                                    @if(groupItems.Any(i => i.status == "WAITING_HANDOVER" || i.status == "WAITING_ADMIN_HANDOVER" || i.status == "APPROVED"))
-                                    {
-                                    <a href="/api/pdf/receipt-request/@firstItem.group_id" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-700 rounded-lg text-xs font-semibold transition shadow-sm">
-                                        <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                                        1. Bukti Pengajuan
-                                    </a>
-                                    }
-                                    else
-                                    {
-                                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100/50 border border-gray-200/50 text-gray-400 rounded-lg text-xs font-semibold cursor-not-allowed" title="Menunggu persetujuan Admin/Manager">
-                                        <svg class="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                                        1. Bukti Pengajuan
-                                    </span>
-                                    }
 
-                                    <!-- 2. Bukti Penyerahan -->
-                                    @if(groupItems.Any(i => i.status == "WAITING_ADMIN_HANDOVER" || i.status == "APPROVED"))
+                                    @if (isGiveaway)
                                     {
-                                    <a href="/api/pdf/receipt-handover/@firstItem.group_id" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-700 rounded-lg text-xs font-semibold transition shadow-sm">
-                                        <svg class="w-3.5 h-3.5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                                        2. Bukti Penyerahan
-                                    </a>
-                                    }
-                                    else
-                                    {
-                                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100/50 border border-gray-200/50 text-gray-400 rounded-lg text-xs font-semibold cursor-not-allowed" title="Menunggu upload bukti serah terima">
-                                        <svg class="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                                        2. Bukti Penyerahan
-                                    </span>
-                                    }
+                                        var requestReceiptReady = giveawayItemsOnly.Any(i =>
+                                            i.status == WorkflowStatuses.PendingAdmin ||
+                                            i.status == WorkflowStatuses.PendingManager ||
+                                            i.status == WorkflowStatuses.WaitingHandover ||
+                                            i.status == WorkflowStatuses.WaitingAdminHandover ||
+                                            i.status == WorkflowStatuses.WaitingDocumentation ||
+                                            i.status == WorkflowStatuses.DocumentationOverdue ||
+                                            i.status == WorkflowStatuses.Completed ||
+                                            i.status == WorkflowStatuses.Approved ||
+                                            i.status == WorkflowStatuses.RevisionByAdmin ||
+                                            i.status == WorkflowStatuses.RevisionByManager);
 
-                                    <!-- 3. Bukti Pengembalian -->
-                                    @if(hasBorrow)
-                                    {
-                                        @if(groupItems.Any(i => i.returned_quantity > 0 || (i.pending_return_quantity > 0 && i.is_return_draft == 0)))
+                                        var handoverReceiptReady = giveawayItemsOnly.Any(i => TransactionService.HasStoredFiles(i.handover_photo));
+                                        var documentationReceiptReady = giveawayItemsOnly.Any(i => TransactionService.HasStoredFiles(i.documentation_photo));
+
+                                        @if (requestReceiptReady)
                                         {
-                                        <a href="/api/pdf/receipt-return/@firstItem.group_id" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 rounded-lg text-xs font-semibold transition shadow-sm">
-                                            <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                                            3. Bukti Pengembalian
-                                        </a>
+                                            <a href="/api/pdf/receipt-request/@firstItem.group_id" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-700 rounded-lg text-xs font-semibold transition shadow-sm">
+                                                <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                                1. Bukti Pengajuan
+                                            </a>
                                         }
                                         else
                                         {
-                                        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100/50 border border-gray-200/50 text-gray-400 rounded-lg text-xs font-semibold cursor-not-allowed" title="Menunggu pengembalian barang">
-                                            <svg class="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                                            3. Bukti Pengembalian
-                                        </span>
+                                            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100/50 border border-gray-200/50 text-gray-400 rounded-lg text-xs font-semibold cursor-not-allowed" title="Bisa diakses setelah permohonan giveaway di-acc oleh staff inventoris.">
+                                                <svg class="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                                1. Bukti Pengajuan
+                                            </span>
+                                        }
+
+                                        @if (handoverReceiptReady)
+                                        {
+                                            <a href="/api/pdf/receipt-handover/@firstItem.group_id" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-700 rounded-lg text-xs font-semibold transition shadow-sm">
+                                                <svg class="w-3.5 h-3.5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                                2. Bukti Penyerahan
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100/50 border border-gray-200/50 text-gray-400 rounded-lg text-xs font-semibold cursor-not-allowed" title="Bisa diakses setelah staff inventoris mengunggah bukti penyerahan.">
+                                                <svg class="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                                2. Bukti Penyerahan
+                                            </span>
+                                        }
+
+                                        @if (documentationReceiptReady)
+                                        {
+                                            <a href="/api/pdf/receipt-documentation/@firstItem.group_id" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 rounded-lg text-xs font-semibold transition shadow-sm">
+                                                <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                                3. Bukti Dokumentasi
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100/50 border border-gray-200/50 text-gray-400 rounded-lg text-xs font-semibold cursor-not-allowed" title="Bisa diakses setelah user mengunggah dokumentasi setelah event selesai.">
+                                                <svg class="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                                3. Bukti Dokumentasi
+                                            </span>
                                         }
                                     }
                                 </div>
@@ -341,23 +357,29 @@
                                     </div>
                                 }
                                 
-                                @if(!string.IsNullOrEmpty(firstItem.handover_photo))
+                                @if(TransactionService.ParseStoredFiles(firstItem.handover_photo).Any())
                                 {
-                                    var handoverPhotoSrc = ImageHelper.Resolve(firstItem.handover_photo);
+                                    var handoverFiles = TransactionService.ParseStoredFiles(firstItem.handover_photo);
                                     <div class="p-4 @(status == "WAITING_HANDOVER" ? "bg-[#fffbeb]" : "bg-white") border-b border-[#e5e3dc] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                                         <div class="flex items-start gap-4">
-                                            @if (firstItem.handover_photo.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
-                                            {
-                                                <a href="@handoverPhotoSrc" target="_blank" class="block w-20 h-20 rounded border border-gray-200 overflow-hidden bg-red-50 flex items-center justify-center flex-shrink-0 hover:opacity-95 transition cursor-pointer" title="Klik untuk membuka dokumen">
-                                                    <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                                                </a>
-                                            }
-                                            else
-                                            {
-                                                <a href="@handoverPhotoSrc" data-image-popup class="block w-20 h-20 rounded border border-gray-200 overflow-hidden bg-gray-50 flex-shrink-0 hover:opacity-95 transition cursor-pointer" title="Klik untuk memperbesar foto bukti">
-                                                    <img src="@handoverPhotoSrc" alt="Bukti Serah Terima" class="w-full h-full object-cover">
-                                                </a>
-                                            }
+                                            <div class="grid grid-cols-2 gap-2 shrink-0">
+                                                @foreach (var handoverFile in handoverFiles.Take(4))
+                                                {
+                                                    var handoverPhotoSrc = ImageHelper.Resolve(handoverFile);
+                                                    @if (handoverFile.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+                                                    {
+                                                        <a href="@handoverPhotoSrc" target="_blank" class="block w-20 h-20 rounded border border-gray-200 overflow-hidden bg-red-50 flex items-center justify-center hover:opacity-95 transition cursor-pointer" title="Klik untuk membuka dokumen">
+                                                            <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                                                        </a>
+                                                    }
+                                                    else
+                                                    {
+                                                        <a href="@handoverPhotoSrc" data-image-popup class="block w-20 h-20 rounded border border-gray-200 overflow-hidden bg-gray-50 hover:opacity-95 transition cursor-pointer" title="Klik untuk memperbesar foto bukti">
+                                                            <img src="@handoverPhotoSrc" alt="Bukti Serah Terima" class="w-full h-full object-cover">
+                                                        </a>
+                                                    }
+                                                }
+                                            </div>
                                             <div>
                                                 <div class="flex items-center gap-2 mb-1">
                                                     <h4 class="text-xs font-bold text-gray-900 tracking-wider uppercase">Bukti Serah Terima</h4>
@@ -376,6 +398,10 @@
                                                 </div>
                                                 <p class="text-xs text-gray-600 leading-relaxed max-w-xl italic">"@firstItem.handover_notes"</p>
                                                 <p class="text-[11px] text-gray-500 mt-1">Penerima: @(firstItem.handover_recipient_name ?? firstItem.applicant_name ?? "-") | Waktu: @(firstItem.handover_timestamp?.ToString("dd MMM yyyy HH:mm") ?? "-")</p>
+                                                @if (handoverFiles.Count > 4)
+                                                {
+                                                    <p class="text-[11px] text-gray-400 mt-1">+@(handoverFiles.Count - 4) file lainnya</p>
+                                                }
                                             </div>
                                         </div>
                                         @if ((canHandover || canGiveawayHandover) && status == "WAITING_HANDOVER")
@@ -388,25 +414,32 @@
                                     </div>
                                 }
 
-                                @if (isGiveaway && !string.IsNullOrEmpty(firstItem.documentation_photo))
+                                @if (isGiveaway && TransactionService.ParseStoredFiles(firstItem.documentation_photo).Any())
                                 {
-                                    var documentationPhotoSrc = ImageHelper.Resolve(firstItem.documentation_photo);
+                                    var documentationFiles = TransactionService.ParseStoredFiles(firstItem.documentation_photo);
                                     <div class="p-4 bg-white border-b border-[#e5e3dc] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                                         <div class="flex items-start gap-4">
-                                            @if (firstItem.documentation_photo.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
-                                            {
-                                                <a href="@documentationPhotoSrc" target="_blank" class="block w-20 h-20 rounded border border-gray-200 overflow-hidden bg-red-50 flex items-center justify-center flex-shrink-0 hover:opacity-95 transition cursor-pointer">
-                                                    <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                                                </a>
-                                            }
-                                            else
-                                            {
-                                                <a href="@documentationPhotoSrc" data-image-popup class="block w-20 h-20 rounded border border-gray-200 overflow-hidden bg-gray-50 flex-shrink-0 hover:opacity-95 transition cursor-pointer">
-                                                    <img src="@documentationPhotoSrc" alt="Dokumentasi User" class="w-full h-full object-cover">
-                                                </a>
-                                            }
+                                            <div class="flex flex-wrap gap-3">
+                                                @foreach (var documentationFile in documentationFiles.Take(4))
+                                                {
+                                                    var documentationPhotoSrc = ImageHelper.Resolve(documentationFile);
+                                                    if (documentationFile.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+                                                    {
+                                                        <a href="@documentationPhotoSrc" target="_blank" class="block w-20 h-20 rounded border border-gray-200 overflow-hidden bg-red-50 flex items-center justify-center flex-shrink-0 hover:opacity-95 transition cursor-pointer">
+                                                            <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                                                        </a>
+                                                    }
+                                                    else
+                                                    {
+                                                        <a href="@documentationPhotoSrc" data-image-popup class="block w-20 h-20 rounded border border-gray-200 overflow-hidden bg-gray-50 flex-shrink-0 hover:opacity-95 transition cursor-pointer">
+                                                            <img src="@documentationPhotoSrc" alt="Dokumentasi User" class="w-full h-full object-cover">
+                                                        </a>
+                                                    }
+                                                }
+                                            </div>
                                             <div>
                                                 <h4 class="text-xs font-bold text-gray-900 tracking-wider uppercase">Dokumentasi User</h4>
+                                                <p class="text-[11px] text-gray-500 mt-1">Total file: @documentationFiles.Count</p>
                                                 <p class="text-xs text-gray-600 leading-relaxed max-w-xl italic">"@(firstItem.documentation_notes ?? "-")"</p>
                                                 <p class="text-[11px] text-gray-500 mt-1">Diupload: @(firstItem.documentation_uploaded_at?.ToString("dd MMM yyyy HH:mm") ?? "-")</p>
                                             </div>
@@ -561,7 +594,7 @@
                                                                             && (usage.pending_return_quantity ?? 0) == 0;
                                                             var isReturnDraft = usage.status == "APPROVED" && usage.request_type == "BORROW"
                                                                                 && (usage.pending_return_quantity ?? 0) > 0 && usage.is_return_draft == 1;
-                                                            var canManageDraft = isReturnDraft && (UserRole == "admin" || UserRole == "superadmin" || usage.requester_id == CurrentUserId);
+                                                            var canManageDraft = isReturnDraft && (usage.requester_id == CurrentUserId || userPrincipal.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalReturn));
                                                             var canRevise = usage.status == "REVISION" || usage.status == "REVISION_BY_STAFF_INVENTORY" || usage.status == "REVISION_BY_ADMIN" || usage.status == "REVISION_BY_MANAGER";
                                                             var hasAction = canReturn || canManageDraft || canRevise;
                                                         }
@@ -571,7 +604,7 @@
                                                                 <button type="button" @onclick="() => OpenReturnModal(usage, false)" class="text-[10px] px-2 py-1 bg-white border border-[#e5e3dc] rounded hover:border-[#1a1a1a] transition font-bold whitespace-nowrap">
                                                                     Return Item
                                                                 </button>
-                                                                @if (UserRole == "admin" || UserRole == "superadmin")
+                                                                @if (userPrincipal.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalReturn))
                                                                 {
                                                                     <button type="button" @onclick="() => OpenReturnModal(usage, true)" class="text-[10px] px-2 py-1 bg-[#1a1a1a] text-white rounded hover:bg-[#333] transition font-bold whitespace-nowrap">
                                                                         Force Return
@@ -618,200 +651,174 @@
     </div>
 </div>
 
-@if (IsHandoverModalOpen)
-{
-    <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" @onclick="CloseHandoverModal">
-        <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden" @onclick:stopPropagation="true">
-            <div class="p-6 border-b border-[#e5e3dc] flex justify-between items-center bg-[#faf9f5]">
-                <h3 class="font-syne text-lg font-bold text-[#1a1a1a]">Upload Bukti Serah Terima</h3>
-                <button type="button" @onclick="CloseHandoverModal" class="text-gray-400 hover:text-gray-600 transition">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
-            </div>
-            
-            <div class="p-6 space-y-4">
-                <div class="p-4 bg-blue-50 text-blue-700 text-xs rounded-lg border border-blue-100 flex items-start gap-3">
-                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    <p>@(HandoverRequestType == "GIVEAWAY" ? "Bukti serah terima giveaway akan disimpan sebagai draft. Setelah yakin benar, lanjutkan untuk menyelesaikan serah terima dan mengaktifkan tahap dokumentasi user." : "Foto akan disimpan sebagai draft — Anda masih bisa menggantinya berkali-kali. Setelah yakin benar, klik Submit ke Admin untuk mengirim verifikasi.")</p>
-                </div>
-
-                <div>
-                  <div>
-                      <label class="block text-xs font-bold text-[#8a8880] uppercase tracking-wider mb-2">Foto/PDF Bukti Serah Terima <span class="text-[#d94040]">*</span></label>
-                      <InputFile OnChange="HandleHandoverFileSelected" accept="image/jpg,image/jpeg,image/png,image/webp,application/pdf" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-[#f5f4f0] file:text-[#1a1a1a] hover:file:bg-[#e5e3dc] transition cursor-pointer border border-[#e5e3dc] rounded-lg" required />
-                      <p class="text-[10px] text-gray-500 mt-1">Format: JPG, PNG, WEBP, PDF. Maks 4MB.</p>
-                      @if (HandoverFile != null && HandoverFile.ContentType == "application/pdf")
-                      {
-                          <div class="mt-2 p-2 bg-[#f0ede5] border border-[#e5e3dc] rounded-lg flex items-center gap-2">
-                              <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                              <span class="text-xs font-semibold text-[#1a1a1a] truncate">@HandoverFile.Name</span>
-                          </div>
-                      }
-                  </div></div>
-
-                <div>
-                    <label class="block text-xs font-bold text-[#8a8880] uppercase tracking-wider mb-2">Catatan Tambahan</label>
-                    <textarea @bind="HandoverNotes" class="w-full p-3 text-sm bg-white border border-[#e5e3dc] rounded-lg focus:border-[#e8a000] focus:ring-1 focus:ring-[#e8a000] outline-none h-24 transition-shadow" placeholder="Misal: Diserahkan kepada Bapak Budi dari Divisi IT..."></textarea>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-[#8a8880] uppercase tracking-wider mb-2">Nama Penerima</label>
-                    <input type="text" @bind="HandoverRecipientName" class="w-full p-3 text-sm bg-white border border-[#e5e3dc] rounded-lg focus:border-[#e8a000] focus:ring-1 focus:ring-[#e8a000] outline-none transition-shadow" />
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-[#8a8880] uppercase tracking-wider mb-2">Timestamp Serah Terima</label>
-                    <input type="datetime-local" @bind="HandoverTimestampInput" class="w-full p-3 text-sm bg-white border border-[#e5e3dc] rounded-lg focus:border-[#e8a000] focus:ring-1 focus:ring-[#e8a000] outline-none transition-shadow" />
-                </div>
-            </div>
-
-            <div class="p-6 border-t border-[#e5e3dc] bg-white flex justify-end gap-3">
-                <button type="button" @onclick="CloseHandoverModal" class="px-5 py-2.5 text-sm font-bold text-gray-600 hover:text-gray-900 bg-white border border-gray-200 hover:bg-gray-50 rounded-xl transition">Batal</button>
-                <button type="button" @onclick="SubmitHandover" disabled="@IsSubmitting" class="px-6 py-2.5 bg-[#e8a000] hover:bg-[#d49300] active:scale-[0.98] text-[#1a1a1a] text-sm font-bold tracking-wider rounded-xl transition shadow-sm disabled:opacity-50 inline-flex items-center gap-2">
-                    @if(IsSubmitting) {
-                        <span class="animate-spin inline-block w-4 h-4 border-2 border-[#1a1a1a] border-t-transparent rounded-full"></span>
-                    }
-                    @(HandoverRequestType == "GIVEAWAY" ? "Simpan Draft Serah Terima" : "Simpan Draft")
-                </button>
-            </div>
-        </div>
+<Modal Show="IsHandoverModalOpen" Title="Upload Bukti Serah Terima" Size="lg" OnClose="CloseHandoverModal">
+  <ChildContent>
+    <div class="p-4 bg-blue-50 text-blue-700 text-xs rounded-lg border border-blue-100 flex items-start gap-3">
+        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <p>@(HandoverRequestType == "GIVEAWAY" ? "Bukti serah terima giveaway akan disimpan sebagai draft. Setelah yakin benar, lanjutkan untuk menyelesaikan serah terima dan mengaktifkan tahap dokumentasi user." : "Foto akan disimpan sebagai draft — Anda masih bisa menggantinya berkali-kali. Setelah yakin benar, klik Submit ke Admin untuk mengirim verifikasi.")</p>
     </div>
-}
 
-@if (IsDocumentationModalOpen)
-{
-    <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" @onclick="CloseDocumentationModal">
-        <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden" @onclick:stopPropagation="true">
-            <div class="p-6 border-b border-[#e5e3dc] flex justify-between items-center bg-[#faf9f5]">
-                <h3 class="font-syne text-lg font-bold text-[#1a1a1a]">Upload Dokumentasi User</h3>
-                <button type="button" @onclick="CloseDocumentationModal" class="text-gray-400 hover:text-gray-600 transition">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
+    <div>
+        <label class="block text-xs font-bold text-[#8a8880] uppercase tracking-wider mb-2">Foto/PDF Bukti Serah Terima <span class="text-[#d94040]">*</span></label>
+        <InputFile OnChange="HandleHandoverFileSelected" accept="image/jpg,image/jpeg,image/png,image/webp,application/pdf" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-[#f5f4f0] file:text-[#1a1a1a] hover:file:bg-[#e5e3dc] transition cursor-pointer border border-[#e5e3dc] rounded-lg" required />
+        <p class="text-[10px] text-gray-500 mt-1">Format: JPG, PNG, WEBP, PDF. Maks 4MB.</p>
+        @if (HandoverFile != null && HandoverFile.ContentType == "application/pdf")
+        {
+            <div class="mt-2 p-2 bg-[#f0ede5] border border-[#e5e3dc] rounded-lg flex items-center gap-2">
+                <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                <span class="text-xs font-semibold text-[#1a1a1a] truncate">@HandoverFile.Name</span>
             </div>
-            <div class="p-6 space-y-4">
-                <div class="p-4 bg-amber-50 text-amber-700 text-xs rounded-lg border border-amber-100 flex items-start gap-3">
-                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    <p>Upload dokumentasi maksimal H+3 dari tanggal event. Jika melewati batas, status akan ditandai overdue sampai dokumentasi diunggah.</p>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-[#8a8880] uppercase tracking-wider mb-2">Foto/PDF Dokumentasi <span class="text-[#d94040]">*</span></label>
-                    <InputFile OnChange="HandleDocumentationFileSelected" accept="image/jpg,image/jpeg,image/png,image/webp,application/pdf" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-[#f5f4f0] file:text-[#1a1a1a] hover:file:bg-[#e5e3dc] transition cursor-pointer border border-[#e5e3dc] rounded-lg" required />
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-[#8a8880] uppercase tracking-wider mb-2">Catatan Dokumentasi</label>
-                    <textarea @bind="DocumentationNotes" class="w-full p-3 text-sm bg-white border border-[#e5e3dc] rounded-lg focus:border-[#e8a000] focus:ring-1 focus:ring-[#e8a000] outline-none h-24 transition-shadow" placeholder="Catatan singkat dokumentasi..."></textarea>
-                </div>
-            </div>
-            <div class="p-6 border-t border-[#e5e3dc] bg-white flex justify-end gap-3">
-                <button type="button" @onclick="CloseDocumentationModal" class="px-5 py-2.5 text-sm font-bold text-gray-600 hover:text-gray-900 bg-white border border-gray-200 hover:bg-gray-50 rounded-xl transition">Batal</button>
-                <button type="button" @onclick="SubmitDocumentation" disabled="@IsSubmitting" class="px-6 py-2.5 bg-[#1a7a30] hover:bg-[#166528] active:scale-[0.98] text-white text-sm font-bold tracking-wider rounded-xl transition shadow-sm disabled:opacity-50 inline-flex items-center gap-2">
-                    @if(IsSubmitting) {
-                        <span class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
-                    }
-                    Submit Dokumentasi
-                </button>
-            </div>
-        </div>
+        }
     </div>
-}
 
-@if (IsReturnModalOpen && ReturnTransaction != null)
-{
-    <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" @onclick="CloseReturnModal">
-        <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden" @onclick:stopPropagation="true">
-            <div class="p-6 border-b border-[#e5e3dc] flex justify-between items-center">
-                <h3 class="text-lg font-bold text-[#1a1a1a]">@(IsForceReturn ? "Force Return Item" : "Pengembalian Barang")</h3>
-                <button type="button" @onclick="CloseReturnModal" class="text-gray-400 hover:text-gray-600 transition">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
-            </div>
-            
-            <div class="p-6 space-y-4">
-                @if (!string.IsNullOrEmpty(ModalError))
+    <div>
+        <label class="block text-xs font-bold text-[#8a8880] uppercase tracking-wider mb-2">Catatan Tambahan</label>
+        <textarea @bind="HandoverNotes" class="w-full p-3 text-sm bg-white border border-[#e5e3dc] rounded-lg focus:border-[#e8a000] focus:ring-1 focus:ring-[#e8a000] outline-none h-24 transition-shadow" placeholder="Misal: Diserahkan kepada Bapak Budi dari Divisi IT..."></textarea>
+    </div>
+
+    <div>
+        <label class="block text-xs font-bold text-[#8a8880] uppercase tracking-wider mb-2">Nama Penerima</label>
+        <input type="text" @bind="HandoverRecipientName" class="w-full p-3 text-sm bg-white border border-[#e5e3dc] rounded-lg focus:border-[#e8a000] focus:ring-1 focus:ring-[#e8a000] outline-none transition-shadow" />
+    </div>
+
+    <div>
+        <label class="block text-xs font-bold text-[#8a8880] uppercase tracking-wider mb-2">Timestamp Serah Terima</label>
+        <input type="datetime-local" @bind="HandoverTimestampInput" class="w-full p-3 text-sm bg-white border border-[#e5e3dc] rounded-lg focus:border-[#e8a000] focus:ring-1 focus:ring-[#e8a000] outline-none transition-shadow" />
+    </div>
+  </ChildContent>
+  <Footer>
+        <button type="button" @onclick="CloseHandoverModal" class="px-5 py-2.5 text-sm font-bold text-gray-600 hover:text-gray-900 bg-white border border-gray-200 hover:bg-gray-50 rounded-xl transition">Batal</button>
+        <button type="button" @onclick="SubmitHandover" disabled="@IsSubmitting" class="px-6 py-2.5 bg-[#e8a000] hover:bg-[#d49300] active:scale-[0.98] text-[#1a1a1a] text-sm font-bold tracking-wider rounded-xl transition shadow-sm disabled:opacity-50 inline-flex items-center justify-center gap-2">
+            @if(IsSubmitting) {
+                <span class="animate-spin inline-block w-4 h-4 border-2 border-[#1a1a1a] border-t-transparent rounded-full"></span>
+            }
+            @(HandoverRequestType == "GIVEAWAY" ? "Simpan Draft Serah Terima" : "Simpan Draft")
+        </button>
+  </Footer>
+</Modal>
+
+<Modal Show="IsDocumentationModalOpen" Title="Upload Dokumentasi User" Size="lg" OnClose="CloseDocumentationModal">
+  <ChildContent>
+    <div class="p-4 bg-amber-50 text-amber-700 text-xs rounded-lg border border-amber-100 flex items-start gap-3">
+        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <p>Upload dokumentasi maksimal H+3 dari tanggal event. Jika melewati batas, status akan ditandai overdue sampai dokumentasi diunggah.</p>
+    </div>
+    <div>
+        <label class="block text-xs font-bold text-[#8a8880] uppercase tracking-wider mb-2">Foto/PDF Dokumentasi <span class="text-[#d94040]">*</span></label>
+        <InputFile OnChange="HandleDocumentationFileSelected" accept="image/jpg,image/jpeg,image/png,image/webp,application/pdf" multiple class="block w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-[#f5f4f0] file:text-[#1a1a1a] hover:file:bg-[#e5e3dc] transition cursor-pointer border border-[#e5e3dc] rounded-lg" required />
+        <p class="mt-2 text-[11px] text-gray-500">Maksimal 5 file. Tiap file maksimal 4 MB. Format: JPG, PNG, WEBP, atau PDF.</p>
+        @if (DocumentationFiles.Any())
+        {
+            <div class="mt-3 space-y-2">
+                @foreach (var file in DocumentationFiles)
                 {
-                    <div class="bg-[#fef0f0] border border-[#f8c0c0] text-[#d94040] px-4 py-3 rounded-lg flex items-start gap-2.5">
-                        <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        <p class="text-xs font-semibold">@ModalError</p>
+                    <div class="flex items-center justify-between gap-3 rounded-lg border border-[#e5e3dc] bg-[#faf9f5] px-3 py-2 text-xs text-[#3a3835]">
+                        <span class="truncate font-medium">@file.Name</span>
+                        <span class="shrink-0 text-[#8a8880]">@($"{file.Size / 1024.0 / 1024.0:0.##} MB")</span>
                     </div>
                 }
-                <div class="flex items-center gap-4 p-4 bg-[#faf9f5] rounded-xl border border-[#e5e3dc]">
-                    <img src="@ImageHelper.ResolveProduct(ReturnTransaction.Product, "https://placehold.co/100?text=Item")" class="w-12 h-12 rounded-lg object-cover">
-                    <div>
-                        <div class="font-bold text-[#1a1a1a]">@ReturnTransaction.Product?.name</div>
-                        <div class="text-xs text-[#8a8880]">Max Return: @((ReturnTransaction.quantity ?? 0) - (ReturnTransaction.returned_quantity ?? 0))</div>
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-[#8a8880] uppercase tracking-wider mb-2">Jumlah Dikembalikan</label>
-                    <input type="number" min="1" max="@((ReturnTransaction.quantity ?? 0) - (ReturnTransaction.returned_quantity ?? 0))" @bind="ReturnModel.return_quantity" class="w-full p-2 border border-[#e5e3dc] rounded-lg focus:border-[#e8a000] focus:ring-1 focus:ring-[#e8a000] outline-none">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-[#8a8880] uppercase tracking-wider mb-2">Kondisi</label>
-                    <select @bind="ReturnModel.return_status" class="w-full p-2 border border-[#e5e3dc] rounded-lg focus:border-[#e8a000] outline-none">
-                        <option value="baik">Baik</option>
-                        <option value="rusak">Rusak</option>
-                        <option value="hilang">Hilang</option>
-                    </select>
-                </div>
-
-                @if (ReturnModel.return_status == "rusak" || ReturnModel.return_status == "hilang")
-                {
-                    <div>
-                        <label class="block text-xs font-bold text-[#8a8880] uppercase tracking-wider mb-2">Alasan</label>
-                        <textarea @bind="ReturnModel.return_reason" class="w-full p-2 border border-[#e5e3dc] rounded-lg focus:border-[#e8a000] outline-none h-20" placeholder="Jelaskan detail..."></textarea>
-                    </div>
-                }
-
-                @if (!IsForceReturn)
-                {
-                    <div>
-                      <div>
-                          <label class="block text-xs font-bold text-[#8a8880] uppercase tracking-wider mb-2">Foto/PDF Bukti <span class="text-[#d94040]">*</span></label>
-                          <InputFile OnChange="HandleFileSelected" accept="image/jpg,image/jpeg,image/png,image/webp,application/pdf" class="w-full p-2 border border-[#e5e3dc] rounded-lg text-sm" />
-                          <p class="text-[10px] text-gray-500 mt-1">Format: JPG, PNG, WEBP, PDF. Maks 4MB.</p>
-                          @if (SelectedFile != null && SelectedFile.ContentType == "application/pdf")
-                          {
-                              <div class="mt-2 p-2 bg-[#f0ede5] border border-[#e5e3dc] rounded-lg flex items-center gap-2">
-                                  <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                                  <span class="text-xs font-semibold text-[#1a1a1a] truncate">@SelectedFile.Name</span>
-                              </div>
-                          }
-                      </div></div>
-                }
             </div>
+        }
+    </div>
+    <div>
+        <label class="block text-xs font-bold text-[#8a8880] uppercase tracking-wider mb-2">Catatan Dokumentasi</label>
+        <textarea @bind="DocumentationNotes" class="w-full p-3 text-sm bg-white border border-[#e5e3dc] rounded-lg focus:border-[#e8a000] focus:ring-1 focus:ring-[#e8a000] outline-none h-24 transition-shadow" placeholder="Catatan singkat dokumentasi..."></textarea>
+    </div>
+  </ChildContent>
+  <Footer>
+        <button type="button" @onclick="CloseDocumentationModal" class="px-5 py-2.5 text-sm font-bold text-gray-600 hover:text-gray-900 bg-white border border-gray-200 hover:bg-gray-50 rounded-xl transition">Batal</button>
+        <button type="button" @onclick="SubmitDocumentation" disabled="@IsSubmitting" class="px-6 py-2.5 bg-[#1a7a30] hover:bg-[#166528] active:scale-[0.98] text-white text-sm font-bold tracking-wider rounded-xl transition shadow-sm disabled:opacity-50 inline-flex items-center justify-center gap-2">
+            @if(IsSubmitting) {
+                <span class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
+            }
+            Submit Dokumentasi
+        </button>
+  </Footer>
+</Modal>
 
-            <div class="p-6 border-t border-[#e5e3dc] bg-[#faf9f5] flex justify-end gap-3">
-                <button type="button" @onclick="CloseReturnModal" class="px-4 py-2 font-bold text-[#8a8880] hover:text-[#1a1a1a] transition">Batal</button>
-                <button type="button" @onclick="SubmitReturn" disabled="@IsSubmitting" class="px-6 py-2 bg-[#1a1a1a] text-white font-bold rounded-lg hover:bg-[#333] transition disabled:opacity-50">
-                    @(IsSubmitting ? "Memproses..." : (IsForceReturn ? "Proses Force Return" : "Simpan Draft"))
-                </button>
+<Modal Show="@(IsReturnModalOpen && ReturnTransaction != null)" Title="@(IsForceReturn ? "Force Return Item" : "Pengembalian Barang")" Size="lg" OnClose="CloseReturnModal">
+  <ChildContent>
+    @if (ReturnTransaction != null)
+    {
+        @if (!string.IsNullOrEmpty(ModalError))
+        {
+            <div class="bg-[#fef0f0] border border-[#f8c0c0] text-[#d94040] px-4 py-3 rounded-lg flex items-start gap-2.5">
+                <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <p class="text-xs font-semibold">@ModalError</p>
+            </div>
+        }
+        <div class="flex items-center gap-4 p-4 bg-[#faf9f5] rounded-xl border border-[#e5e3dc]">
+            <img src="@ImageHelper.ResolveProduct(ReturnTransaction.Product, "https://placehold.co/100?text=Item")" class="w-12 h-12 rounded-lg object-cover">
+            <div>
+                <div class="font-bold text-[#1a1a1a]">@ReturnTransaction.Product?.name</div>
+                <div class="text-xs text-[#8a8880]">Max Return: @((ReturnTransaction.quantity ?? 0) - (ReturnTransaction.returned_quantity ?? 0))</div>
             </div>
         </div>
-    </div>
-}
 
-@if (ShowConfirm)
-{
-    <div class="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" @onclick="CancelConfirm">
-        <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden" @onclick:stopPropagation="true">
-            <div class="p-6 flex items-start gap-4">
-                <div class="w-11 h-11 rounded-full bg-amber-50 flex items-center justify-center shrink-0">
-                    <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                </div>
-                <div>
-                    <h3 class="text-base font-bold text-[#1a1a1a]">@ConfirmTitle</h3>
-                    <p class="text-sm text-[#5a5855] mt-1">@ConfirmMessage</p>
-                </div>
+        <div>
+            <label class="block text-xs font-bold text-[#8a8880] uppercase tracking-wider mb-2">Jumlah Dikembalikan</label>
+            <input type="number" min="1" max="@((ReturnTransaction.quantity ?? 0) - (ReturnTransaction.returned_quantity ?? 0))" @bind="ReturnModel.return_quantity" class="w-full p-2 border border-[#e5e3dc] rounded-lg focus:border-[#e8a000] focus:ring-1 focus:ring-[#e8a000] outline-none">
+        </div>
+
+        <div>
+            <label class="block text-xs font-bold text-[#8a8880] uppercase tracking-wider mb-2">Kondisi</label>
+            <select @bind="ReturnModel.return_status" class="w-full p-2 border border-[#e5e3dc] rounded-lg focus:border-[#e8a000] outline-none">
+                <option value="baik">Baik</option>
+                <option value="rusak">Rusak</option>
+                <option value="hilang">Hilang</option>
+            </select>
+        </div>
+
+        @if (ReturnModel.return_status == "rusak" || ReturnModel.return_status == "hilang")
+        {
+            <div>
+                <label class="block text-xs font-bold text-[#8a8880] uppercase tracking-wider mb-2">Alasan</label>
+                <textarea @bind="ReturnModel.return_reason" class="w-full p-2 border border-[#e5e3dc] rounded-lg focus:border-[#e8a000] outline-none h-20" placeholder="Jelaskan detail..."></textarea>
             </div>
-            <div class="px-6 py-4 bg-[#faf9f5] border-t border-[#e5e3dc] flex justify-end gap-3">
-                <button type="button" @onclick="CancelConfirm" class="px-4 py-2 text-sm font-bold text-gray-600 hover:text-gray-900 bg-white border border-[#e5e3dc] rounded-lg transition">Batal</button>
-                <button type="button" @onclick="RunConfirm" disabled="@IsSubmitting" class="px-5 py-2 bg-[#1a1a1a] text-white text-sm font-bold rounded-lg hover:bg-[#333] transition disabled:opacity-50">@ConfirmButtonText</button>
+        }
+
+        @if (!IsForceReturn)
+        {
+            <div>
+                <label class="block text-xs font-bold text-[#8a8880] uppercase tracking-wider mb-2">Foto/PDF Bukti <span class="text-[#d94040]">*</span></label>
+                <InputFile OnChange="HandleFileSelected" accept="image/jpg,image/jpeg,image/png,image/webp,application/pdf" class="w-full p-2 border border-[#e5e3dc] rounded-lg text-sm" />
+                <p class="text-[10px] text-gray-500 mt-1">Format: JPG, PNG, WEBP, PDF. Maks 4MB.</p>
+                @if (SelectedFile != null && SelectedFile.ContentType == "application/pdf")
+                {
+                    <div class="mt-2 p-2 bg-[#f0ede5] border border-[#e5e3dc] rounded-lg flex items-center gap-2">
+                        <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                        <span class="text-xs font-semibold text-[#1a1a1a] truncate">@SelectedFile.Name</span>
+                    </div>
+                }
             </div>
+        }
+    }
+  </ChildContent>
+  <Footer>
+        <button type="button" @onclick="CloseReturnModal" class="px-4 py-2 font-bold text-[#8a8880] hover:text-[#1a1a1a] transition">Batal</button>
+        <button type="button" @onclick="SubmitReturn" disabled="@IsSubmitting" class="px-6 py-2 bg-[#1a1a1a] text-white font-bold rounded-lg hover:bg-[#333] transition disabled:opacity-50">
+            @(IsSubmitting ? "Memproses..." : (IsForceReturn ? "Proses Force Return" : "Simpan Draft"))
+        </button>
+  </Footer>
+</Modal>
+
+<Modal Show="ShowConfirm" Size="md" ShowClose="false" ZIndex="120" OnClose="CancelConfirm">
+  <ChildContent>
+    <div class="flex items-start gap-4">
+        <div class="w-11 h-11 rounded-full bg-amber-50 flex items-center justify-center shrink-0">
+            <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        </div>
+        <div>
+            <h3 class="text-base font-bold text-[#1a1a1a]">@ConfirmTitle</h3>
+            <p class="text-sm text-[#5a5855] mt-1">@ConfirmMessage</p>
         </div>
     </div>
-}
+  </ChildContent>
+  <Footer>
+        <button type="button" @onclick="CancelConfirm" class="px-4 py-2 text-sm font-bold text-gray-600 hover:text-gray-900 bg-white border border-[#e5e3dc] rounded-lg transition">Batal</button>
+        <button type="button" @onclick="RunConfirm" disabled="@IsSubmitting" class="px-5 py-2 bg-[#1a1a1a] text-white text-sm font-bold rounded-lg hover:bg-[#333] transition disabled:opacity-50">@ConfirmButtonText</button>
+  </Footer>
+</Modal>
 
 @code {
     // Reusable konfirmasi "apakah yakin" untuk aksi submit final.
@@ -858,7 +865,7 @@
     private string? SuccessMessage;
     
     private int CurrentUserId;
-    private string? UserRole;
+    private string? UserRole; private System.Security.Claims.ClaimsPrincipal userPrincipal = new System.Security.Claims.ClaimsPrincipal();
 
     private bool IsReturnModalOpen = false;
     private bool IsForceReturn = false;
@@ -872,7 +879,7 @@
     private Microsoft.AspNetCore.Components.Forms.IBrowserFile? HandoverFile;
     private List<int> DocumentationTransactionIds = new();
     private string? DocumentationNotes;
-    private Microsoft.AspNetCore.Components.Forms.IBrowserFile? DocumentationFile;
+    private List<Microsoft.AspNetCore.Components.Forms.IBrowserFile> DocumentationFiles = new();
 
     private bool IsSubmitting = false;
     private Transaction? ReturnTransaction;
@@ -907,7 +914,7 @@
             {
                 CurrentUserId = id;
             }
-            UserRole = user.FindFirst(ClaimTypes.Role)?.Value;
+            UserRole = user.FindFirst(ClaimTypes.Role)?.Value; userPrincipal = user;
         }
 
         Divisions = await DivisionService.GetAllDivisionsAsync();
@@ -1157,7 +1164,7 @@
             .Select(i => i.id)
             .ToList();
         DocumentationNotes = items.FirstOrDefault(i => i.status == "WAITING_DOCUMENTATION" || i.status == "DOCUMENTATION_OVERDUE")?.documentation_notes;
-        DocumentationFile = null;
+        DocumentationFiles = new();
         ModalError = null;
         IsDocumentationModalOpen = true;
     }
@@ -1167,34 +1174,31 @@
         IsDocumentationModalOpen = false;
         DocumentationTransactionIds = new();
         DocumentationNotes = null;
-        DocumentationFile = null;
+        DocumentationFiles = new();
     }
 
     private void HandleDocumentationFileSelected(Microsoft.AspNetCore.Components.Forms.InputFileChangeEventArgs e)
     {
         ModalError = null;
-        var err = ValidateUpload(e.File);
-        if (err != null)
+        var files = e.GetMultipleFiles(5).ToList();
+        foreach (var file in files)
         {
-            ModalError = err;
-            DocumentationFile = null;
-            return;
+            var err = ValidateUpload(file);
+            if (err != null)
+            {
+                ModalError = err;
+                DocumentationFiles = new();
+                return;
+            }
         }
-        DocumentationFile = e.File;
+        DocumentationFiles = files;
     }
 
     private async Task SubmitDocumentation()
     {
-        if (DocumentationFile == null)
+        if (!DocumentationFiles.Any())
         {
             ModalError = "Foto/PDF dokumentasi wajib diunggah.";
-            return;
-        }
-
-        var validationError = ValidateUpload(DocumentationFile);
-        if (validationError != null)
-        {
-            ModalError = validationError;
             return;
         }
 
@@ -1203,7 +1207,7 @@
         SuccessMessage = null;
         try
         {
-            var err = await TransactionService.SubmitGiveawayDocumentationAsync(DocumentationTransactionIds, DocumentationFile, DocumentationNotes);
+            var err = await TransactionService.SubmitGiveawayDocumentationAsync(DocumentationTransactionIds, DocumentationFiles, DocumentationNotes);
             if (err == null)
             {
                 SuccessMessage = "Dokumentasi giveaway berhasil diunggah.";
@@ -1474,19 +1478,33 @@
             int totalQty = groupItems.Sum(i => i.quantity ?? 0);
             int totalReturned = groupItems.Sum(i => i.returned_quantity ?? 0);
 
-            if (firstItem.status == "PENDING") {
+            if (firstItem.status == "PENDING_STAFF_INVENTORY") {
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "ACTIVE" });
+                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "PENDING" });
+                steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "PENDING" });
+                steps.Add(new TrackingStep { Name = "Pengembalian", Status = "PENDING" });
+            } else if (firstItem.status == "REVISION_BY_STAFF_INVENTORY") {
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "WARNING" });
+                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "PENDING" });
+                steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "PENDING" });
+                steps.Add(new TrackingStep { Name = "Pengembalian", Status = "PENDING" });
+            } else if (firstItem.status == "PENDING_ADMIN" || firstItem.status == "PENDING") {
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE" });
                 steps.Add(new TrackingStep { Name = "Approval Admin", Status = "ACTIVE" });
                 steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "PENDING" });
                 steps.Add(new TrackingStep { Name = "Pengembalian", Status = "PENDING" });
-            } else if (firstItem.status == "REVISION") {
+            } else if (firstItem.status == "REVISION_BY_ADMIN" || firstItem.status == "REVISION") {
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE" });
                 steps.Add(new TrackingStep { Name = "Approval Admin", Status = "WARNING" });
                 steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "PENDING" });
                 steps.Add(new TrackingStep { Name = "Pengembalian", Status = "PENDING" });
             } else if (firstItem.status == "WAITING_HANDOVER" || firstItem.status == "WAITING_ADMIN_HANDOVER") {
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE" });
                 steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE" });
                 steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "ACTIVE" });
                 steps.Add(new TrackingStep { Name = "Pengembalian", Status = "PENDING" });
             } else if (firstItem.status == "APPROVED") {
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE" });
                 steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE" });
                 steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "DONE" });
 
@@ -1496,9 +1514,13 @@
                     steps.Add(new TrackingStep { Name = "Pengembalian", Status = "ACTIVE" });
                 }
             } else if (firstItem.status == "REJECTED") {
-                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "WARNING" });
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "WARNING" });
+                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "PENDING" });
+                steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "PENDING" });
+                steps.Add(new TrackingStep { Name = "Pengembalian", Status = "PENDING" });
             }
         }
         return steps;
     }
 }
+

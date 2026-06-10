@@ -406,8 +406,8 @@
             return;
         }
 
-        var role = user.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
-        if (role != "admin" && role != "superadmin")
+        
+        if (!user.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ProductsManage))
         {
             NavigationManager.NavigateTo("/");
             return;

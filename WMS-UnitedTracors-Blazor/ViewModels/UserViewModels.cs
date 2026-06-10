@@ -24,7 +24,6 @@ public class UserCreateViewModel
     public string password { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Role wajib dipilih.")]
-    [RegularExpression("^(staff|manager|admin|superadmin)$", ErrorMessage = "Role tidak valid.")]
     public string role { get; set; } = string.Empty;
 
     public int? division_id { get; set; }
@@ -53,7 +52,6 @@ public class UserUpdateViewModel
     public string? password { get; set; }
 
     [Required(ErrorMessage = "Role wajib dipilih.")]
-    [RegularExpression("^(staff|manager|admin|superadmin)$", ErrorMessage = "Role tidak valid.")]
     public string role { get; set; } = string.Empty;
 
     public int? division_id { get; set; }

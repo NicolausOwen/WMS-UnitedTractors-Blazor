@@ -1,4 +1,4 @@
-﻿@page "/TransactionHistory"
+@page "/TransactionHistory"
 @page "/Transactions/History"
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
@@ -372,18 +372,10 @@
     </div>
 </div>
 
-@if (ShowRevisionModal && RevisionItem != null)
-{
-    <div class="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" @onclick="CloseRevisionModal">
-        <div class="bg-white rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden" @onclick:stopPropagation="true">
-            <div class="p-6 border-b border-[#e5e3dc] flex justify-between items-center bg-[#faf9f5]">
-                <h3 class="font-syne text-lg font-bold text-[#1a1a1a]">Revisi Permintaan</h3>
-                <button type="button" @onclick="CloseRevisionModal" class="text-gray-400 hover:text-gray-600 transition">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
-            </div>
-            
-            <div class="p-6 max-h-[70vh] overflow-y-auto space-y-5">
+<Modal Show="@(ShowRevisionModal && RevisionItem != null)" Title="Revisi Permintaan" Size="xl" OnClose="CloseRevisionModal">
+  <ChildContent>
+    @if (RevisionItem != null)
+    {
                 <div class="p-4 bg-[#fffbeb] border border-[#fde68a] text-[#92400e] text-xs rounded-xl flex items-start gap-3">
                     <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                     <div>
@@ -421,15 +413,13 @@
                     <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Event / Program</label>
                     <input type="text" @bind="RevisionModel.event_name" class="w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] border border-[#e5e3dc] rounded-lg outline-none focus:border-[#e8a000]" />
                 </div>
-            </div>
-
-            <div class="p-6 border-t border-[#e5e3dc] bg-white flex justify-end gap-3">
-                <button type="button" @onclick="CloseRevisionModal" class="px-5 py-2.5 text-sm font-bold text-gray-600 hover:text-gray-900 bg-white border border-[#e5e3dc] rounded-xl transition">Batal</button>
-                <button type="button" @onclick="SubmitRevision" class="px-6 py-2.5 bg-[#e8a000] hover:bg-[#d49300] active:scale-[0.98] text-[#1a1a1a] text-sm font-bold tracking-wider rounded-xl transition shadow-sm">Kirim Perbaikan</button>
-            </div>
-        </div>
-    </div>
-}
+    }
+  </ChildContent>
+  <Footer>
+        <button type="button" @onclick="CloseRevisionModal" class="px-5 py-2.5 text-sm font-bold text-gray-600 hover:text-gray-900 bg-white border border-[#e5e3dc] rounded-xl transition">Batal</button>
+        <button type="button" @onclick="SubmitRevision" class="px-6 py-2.5 bg-[#e8a000] hover:bg-[#d49300] active:scale-[0.98] text-[#1a1a1a] text-sm font-bold tracking-wider rounded-xl transition shadow-sm">Kirim Perbaikan</button>
+  </Footer>
+</Modal>
 
 @code {
     private List<Transaction>? Transactions;

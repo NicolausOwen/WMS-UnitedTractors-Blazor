@@ -79,11 +79,14 @@ public class UserService
         if (!string.IsNullOrEmpty(model.nrp) && await _context.Users.AnyAsync(u => u.nrp == model.nrp && u.id != id))
             return "NRP sudah digunakan.";
 
-        if (user.id == currentUserId && currentUserRole == "admin" && model.role != "admin" && model.role != "superadmin")
-            return "You cannot downgrade your own admin role.";
-
-        if (user.id == currentUserId && currentUserRole == "superadmin" && model.role != "superadmin")
-            return "You cannot downgrade your own superadmin role.";
+        // Cegah self-lockout: tidak boleh mengubah role sendiri ke role tanpa izin Kelola User.
+        if (user.id == currentUserId && model.role != user.role)
+        {
+            var newRole = await _context.AdminRoles.FirstOrDefaultAsync(r => r.RoleName == model.role && r.IsActive);
+            var newPerms = WMS_UnitedTracors_Blazor.Helpers.Permissions.Resolve(model.role, newRole?.Permissions);
+            if (!newPerms.Contains(WMS_UnitedTracors_Blazor.Helpers.Permissions.UsersManage))
+                return "Anda tidak bisa mengubah role sendiri ke role tanpa izin Kelola User (mencegah terkunci dari menu User).";
+        }
 
         user.name = model.name;
         user.nrp = model.nrp;
@@ -110,13 +113,31 @@ public class UserService
             return "You cannot delete your own account.";
 
         var user = await _context.Users.FindAsync(id);
-        if (user != null)
+        if (user == null)
+            return "User tidak ditemukan.";
+
+        // Transaksi = riwayat/audit. User yang pernah jadi pemohon/penyetuju tidak boleh dihapus.
+        bool hasTransactions = await _context.Transactions.AnyAsync(t => t.requester_id == id || t.approver_id == id);
+        if (hasTransactions)
+            return "User tidak bisa dihapus karena masih memiliki riwayat transaksi (sebagai pemohon/penyetuju). Hapus/selesaikan transaksinya dulu, atau biarkan akun tetap ada sebagai arsip.";
+
+        // Bersihkan metadata per-user yang aman dihapus (assignment role/kategori & permintaan profil).
+        var roleAssignments = await _context.UserAdminRoles.Where(uar => uar.UserId == id).ToListAsync();
+        if (roleAssignments.Count > 0) _context.UserAdminRoles.RemoveRange(roleAssignments);
+
+        var profileReqs = await _context.ProfileRequests.Where(pr => pr.user_id == id).ToListAsync();
+        if (profileReqs.Count > 0) _context.ProfileRequests.RemoveRange(profileReqs);
+
+        _context.Users.Remove(user);
+
+        try
         {
-            _context.Users.Remove(user);
             await _context.SaveChangesAsync();
             return null;
         }
-
-        return "User tidak ditemukan.";
+        catch (Exception ex)
+        {
+            return "Gagal menghapus user: " + (ex.InnerException?.Message ?? ex.Message);
+        }
     }
 }

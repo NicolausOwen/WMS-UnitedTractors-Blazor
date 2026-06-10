@@ -552,8 +552,8 @@
         }
 
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        var userRole = authState.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
-        IsAdmin = userRole == "admin" || userRole == "superadmin";
+        
+        IsAdmin = authState.User.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ProductsManage);
 
         var catResult = await CategoryService.GetCategoriesAsync(1, 100);
         Categories = catResult.Categories;
@@ -640,3 +640,4 @@
         }
     }
 }
+

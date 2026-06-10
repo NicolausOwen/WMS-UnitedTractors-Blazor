@@ -247,4 +247,52 @@ public class AdminRoleService
         await _context.SaveChangesAsync();
         return null;
     }
+
+    // ── Permissions ──
+
+    /// <summary>Daftar permission key yang dimiliki sebuah role (dari kolom JSON).</summary>
+    public async Task<List<string>> GetRolePermissionsAsync(Guid roleId)
+    {
+        var role = await _context.AdminRoles.FindAsync(roleId);
+        if (role == null || string.IsNullOrWhiteSpace(role.Permissions)) return new List<string>();
+        try
+        {
+            return System.Text.Json.JsonSerializer.Deserialize<List<string>>(role.Permissions) ?? new List<string>();
+        }
+        catch { return new List<string>(); }
+    }
+
+    public async Task<string?> UpdateRolePermissionsAsync(Guid roleId, List<string> permissions, string updatedBy)
+    {
+        var role = await _context.AdminRoles.FindAsync(roleId);
+        if (role == null) return "Role tidak ditemukan.";
+
+        // Hanya simpan key yang valid.
+        var valid = permissions.Where(p => WMS_UnitedTracors_Blazor.Helpers.Permissions.All.Contains(p)).Distinct().ToList();
+        role.Permissions = System.Text.Json.JsonSerializer.Serialize(valid);
+        role.UpdatedAt = DateTime.UtcNow;
+        role.UpdatedBy = updatedBy;
+        _context.Update(role);
+        await _context.SaveChangesAsync();
+        return null;
+    }
+
+    /// <summary>Resolusi permission efektif seorang user (berdasarkan User.role → AdminRole).</summary>
+    public async Task<HashSet<string>> GetUserPermissionsAsync(int userId)
+    {
+        var user = await _context.Users.FindAsync(userId);
+        if (user == null) return new HashSet<string>();
+        var role = await _context.AdminRoles.FirstOrDefaultAsync(r => r.RoleName == user.role && r.IsActive);
+        return WMS_UnitedTracors_Blazor.Helpers.Permissions.Resolve(user.role, role?.Permissions);
+    }
+
+    /// <summary>Nama role aktif untuk dropdown (Manage Users).</summary>
+    public async Task<List<string>> GetActiveRoleNamesAsync()
+    {
+        return await _context.AdminRoles
+            .Where(r => r.IsActive)
+            .OrderBy(r => r.RoleName)
+            .Select(r => r.RoleName)
+            .ToListAsync();
+    }
 }

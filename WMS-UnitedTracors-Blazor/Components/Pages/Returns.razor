@@ -1,4 +1,4 @@
-﻿@page "/Returns"
+@page "/Returns"
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Components.Web
@@ -312,12 +312,12 @@
 {
     <div class="fixed inset-0 z-[70] flex min-h-full items-center justify-center p-4 text-center">
         <div class="fixed inset-0 backdrop-blur-sm bg-black/60 transition-opacity" @onclick="CloseReturnModal"></div>
-        <div class="relative transform overflow-hidden rounded-xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-md border border-[#e5e3dc] z-10">
-            <div class="px-6 py-4 border-b border-[#f0ede5] flex items-center justify-between">
+        <div class="relative transform overflow-hidden rounded-xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-md border border-[#e5e3dc] z-10 flex flex-col max-h-[90vh]">
+            <div class="px-6 py-4 border-b border-[#f0ede5] flex items-center justify-between shrink-0">
                 <h3 class="font-syne text-[1.05rem] font-bold text-[#1a1a1a]">Pengembalian Barang</h3>
                 <button type="button" @onclick="CloseReturnModal" class="text-[#a09e99] hover:text-[#1a1a1a] transition font-bold text-xl">&times;</button>
             </div>
-            <div class="p-6">
+            <div class="p-6 overflow-y-auto">
                 <p class="text-sm text-gray-600 mb-4">Mengembalikan <strong class="text-gray-900">@(SelectedTransaction.Product?.name)</strong>.</p>
                 <div class="mb-4">
                     <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Jumlah Kembali</label>
@@ -344,14 +344,14 @@
                     <InputFile OnChange="HandleFileSelected" class="w-full px-3.5 py-2 text-xs bg-[#f5f4f0] border border-[#e5e3dc] rounded-lg outline-none text-[#1a1a1a] focus:border-[#e8a000] transition" />
                 </div>
                 
-                <div class="flex flex-row-reverse justify-start gap-3 mt-6 pt-4 border-t border-[#f0ede5]">
-                    <button type="button" @onclick="SaveReturn" disabled="@IsSaving" class="px-5 py-2.5 bg-[#e8a000] hover:bg-[#d49300] active:scale-[0.98] text-[#1a1a1a] text-xs font-bold tracking-wider rounded-lg transition shadow-sm disabled:opacity-50">
-                        @(IsSaving ? "Menyimpan..." : "Simpan Draft")
-                    </button>
-                    <button type="button" @onclick="CloseReturnModal" class="inline-flex justify-center px-5 py-2.5 bg-white border border-[#e5e3dc] hover:bg-[#f0ede5] text-[#3a3835] text-xs font-bold rounded-lg transition cursor-pointer">
-                        Batal
-                    </button>
-                </div>
+            </div>
+            <div class="flex flex-row-reverse justify-start gap-3 px-6 py-4 border-t border-[#e5e3dc] bg-[#faf9f5] shrink-0">
+                <button type="button" @onclick="SaveReturn" disabled="@IsSaving" class="px-5 py-2.5 bg-[#e8a000] hover:bg-[#d49300] active:scale-[0.98] text-[#1a1a1a] text-xs font-bold tracking-wider rounded-lg transition shadow-sm disabled:opacity-50">
+                    @(IsSaving ? "Menyimpan..." : "Simpan Draft")
+                </button>
+                <button type="button" @onclick="CloseReturnModal" class="inline-flex justify-center px-5 py-2.5 bg-white border border-[#e5e3dc] hover:bg-[#f0ede5] text-[#3a3835] text-xs font-bold rounded-lg transition cursor-pointer">
+                    Batal
+                </button>
             </div>
         </div>
     </div>
