@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using UT_WMSDotnet.Data;
 using UT_WMSDotnet.Models;
 using UT_WMSDotnet.ViewModels;
@@ -35,6 +36,30 @@ public class TransactionService
         return null;
     }
 
+    public static List<string> ParseStoredFiles(string? storedValue)
+    {
+        if (string.IsNullOrWhiteSpace(storedValue)) return new List<string>();
+
+        var trimmed = storedValue.Trim();
+        if (!trimmed.StartsWith("["))
+        {
+            return new List<string> { trimmed };
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<List<string>>(trimmed)?
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .ToList() ?? new List<string>();
+        }
+        catch
+        {
+            return new List<string> { trimmed };
+        }
+    }
+
+    public static bool HasStoredFiles(string? storedValue) => ParseStoredFiles(storedValue).Any();
+
     public async Task<string?> StoreTransactionAsync(TransactionRequestViewModel model, int currentUserId)
     {
         var items = new List<TransactionItemViewModel>();
@@ -63,6 +88,11 @@ public class TransactionService
             {
                 return "Detail event, pemohon, dan divisi wajib diisi untuk transaksi OUT.";
             }
+
+            if (model.event_date.Value.Date < DateTime.Today)
+            {
+                return "Tanggal event tidak boleh sebelum hari ini.";
+            }
         }
 
         foreach (var item in items)
@@ -85,6 +115,11 @@ public class TransactionService
                     return $"Tanggal pinjam dan tanggal kembali wajib diisi untuk SKU: {item.sku}.";
                 }
 
+                if (item.borrow_start_date.Value.Date < DateTime.Today)
+                {
+                    return $"Tanggal pinjam tidak boleh sebelum hari ini untuk SKU: {item.sku}.";
+                }
+
                 if (item.expected_return_date <= item.borrow_start_date)
                 {
                     return $"Tanggal kembali harus lebih besar dari tanggal pinjam untuk SKU: {item.sku}.";
@@ -97,6 +132,18 @@ public class TransactionService
                 if (item.borrow_duration_days <= 0)
                 {
                     return $"Durasi peminjaman untuk SKU {item.sku} tidak valid.";
+                }
+            }
+            else if (reqType == "GIVEAWAY")
+            {
+                if (item.pickup_date.HasValue && item.pickup_date.Value.Date < DateTime.Today)
+                {
+                    return $"Tanggal pengambilan tidak boleh sebelum hari ini untuk SKU: {item.sku}.";
+                }
+
+                if (item.pickup_date.HasValue && model.event_date.HasValue && model.event_date.Value.Date < item.pickup_date.Value.Date)
+                {
+                    return $"Tanggal event tidak boleh lebih kecil dari tanggal pengambilan untuk SKU: {item.sku}.";
                 }
             }
         }
@@ -436,6 +483,19 @@ public class TransactionService
         string? recipientName = null,
         DateTime? handoverTimestamp = null)
     {
+        var photos = photo == null
+            ? new List<Microsoft.AspNetCore.Components.Forms.IBrowserFile>()
+            : new List<Microsoft.AspNetCore.Components.Forms.IBrowserFile> { photo };
+        return await ConfirmHandoverAsync(transactionIds, photos, notes, recipientName, handoverTimestamp);
+    }
+
+    public async Task<string?> ConfirmHandoverAsync(
+        List<int> transactionIds,
+        IReadOnlyList<Microsoft.AspNetCore.Components.Forms.IBrowserFile> photos,
+        string? notes,
+        string? recipientName = null,
+        DateTime? handoverTimestamp = null)
+    {
         if (transactionIds == null || !transactionIds.Any())
             return "Tidak ada item yang menunggu serah terima.";
 
@@ -453,24 +513,31 @@ public class TransactionService
         if (!pending.Any())
             return "Item ini tidak sedang menunggu bukti serah terima.";
 
-        if (photo == null)
-            return "Foto bukti serah terima wajib diunggah.";
+        if (photos == null || photos.Count == 0)
+            return "Minimal satu foto bukti serah terima wajib diunggah.";
 
-        var uploadError = ValidateUploadFile(photo);
-        if (uploadError != null) return uploadError;
+        if (photos.Count > 5)
+            return "Maksimal 5 file bukti serah terima per upload.";
 
-        string photoPath;
+        foreach (var photo in photos)
+        {
+            var uploadError = ValidateUploadFile(photo);
+            if (uploadError != null) return uploadError;
+        }
+
+        List<string> photoPaths = new();
         try
         {
             var uploads = Path.Combine(_env.WebRootPath, "storage", "handovers");
             if (!Directory.Exists(uploads)) Directory.CreateDirectory(uploads);
-            var fileName = Guid.NewGuid().ToString() + Path.GetExtension(photo.Name);
-            var filePath = Path.Combine(uploads, fileName);
-            using (var fileStream = new FileStream(filePath, FileMode.Create))
+            foreach (var photo in photos)
             {
+                var fileName = Guid.NewGuid().ToString() + Path.GetExtension(photo.Name);
+                var filePath = Path.Combine(uploads, fileName);
+                using var fileStream = new FileStream(filePath, FileMode.Create);
                 await photo.OpenReadStream(MaxUploadBytes).CopyToAsync(fileStream);
+                photoPaths.Add("storage/handovers/" + fileName);
             }
-            photoPath = "storage/handovers/" + fileName;
         }
         catch (Exception ex)
         {
@@ -479,7 +546,7 @@ public class TransactionService
 
         foreach (var item in pending)
         {
-            item.handover_photo = photoPath;
+            item.handover_photo = JsonSerializer.Serialize(photoPaths);
             item.handover_notes = notes;
             item.handover_recipient_name = string.IsNullOrWhiteSpace(recipientName) ? (item.applicant_name ?? item.Requester?.name) : recipientName;
             item.handover_timestamp = handoverTimestamp ?? DateTime.Now;
@@ -505,7 +572,7 @@ public class TransactionService
         if (!pending.Any())
             return "Tidak ada draft serah terima yang bisa disubmit.";
 
-        if (pending.Any(t => string.IsNullOrEmpty(t.handover_photo)))
+        if (pending.Any(t => !HasStoredFiles(t.handover_photo)))
             return "Unggah bukti serah terima terlebih dahulu sebelum submit.";
 
         var strategy = _context.Database.CreateExecutionStrategy();
@@ -563,6 +630,15 @@ public class TransactionService
         List<int> transactionIds,
         Microsoft.AspNetCore.Components.Forms.IBrowserFile? photo,
         string? notes)
+        => await SubmitGiveawayDocumentationAsync(
+            transactionIds,
+            photo == null ? Array.Empty<Microsoft.AspNetCore.Components.Forms.IBrowserFile>() : new[] { photo },
+            notes);
+
+    public async Task<string?> SubmitGiveawayDocumentationAsync(
+        List<int> transactionIds,
+        IReadOnlyList<Microsoft.AspNetCore.Components.Forms.IBrowserFile> photos,
+        string? notes)
     {
         if (transactionIds == null || !transactionIds.Any())
             return "Tidak ada item dokumentasi.";
@@ -575,22 +651,29 @@ public class TransactionService
         if (!transactions.Any())
             return "Tidak ada giveaway yang menunggu dokumentasi.";
 
-        if (photo == null)
+        if (photos == null || photos.Count == 0)
             return "Foto dokumentasi wajib diunggah.";
 
-        var uploadError = ValidateUploadFile(photo);
-        if (uploadError != null) return uploadError;
+        if (photos.Count > 5)
+            return "Maksimal 5 file dokumentasi.";
 
-        string photoPath;
+        var photoPaths = new List<string>();
         try
         {
             var uploads = Path.Combine(_env.WebRootPath, "storage", "documentation");
             if (!Directory.Exists(uploads)) Directory.CreateDirectory(uploads);
-            var fileName = Guid.NewGuid().ToString() + Path.GetExtension(photo.Name);
-            var filePath = Path.Combine(uploads, fileName);
-            using var fileStream = new FileStream(filePath, FileMode.Create);
-            await photo.OpenReadStream(MaxUploadBytes).CopyToAsync(fileStream);
-            photoPath = "storage/documentation/" + fileName;
+
+            foreach (var photo in photos)
+            {
+                var uploadError = ValidateUploadFile(photo);
+                if (uploadError != null) return uploadError;
+
+                var fileName = Guid.NewGuid() + Path.GetExtension(photo.Name);
+                var filePath = Path.Combine(uploads, fileName);
+                using var fileStream = new FileStream(filePath, FileMode.Create);
+                await photo.OpenReadStream(MaxUploadBytes).CopyToAsync(fileStream);
+                photoPaths.Add("storage/documentation/" + fileName);
+            }
         }
         catch (Exception ex)
         {
@@ -599,7 +682,7 @@ public class TransactionService
 
         foreach (var item in transactions)
         {
-            item.documentation_photo = photoPath;
+            item.documentation_photo = JsonSerializer.Serialize(photoPaths);
             item.documentation_notes = notes;
             item.documentation_uploaded_at = DateTime.UtcNow;
             item.status = WorkflowStatuses.Completed;
@@ -864,6 +947,9 @@ public class TransactionService
 
     public async Task ProcessScannerTransactionAsync(UT_WMSDotnet.ViewModels.ScannerTransactionViewModel model, int userId)
         {
+            if (model.Type == "OUT" && model.EventDate.HasValue && model.EventDate.Value.Date < DateTime.Today)
+                throw new Exception("Tanggal event tidak boleh sebelum hari ini.");
+
             foreach (var item in model.Items)
             {
                 var product = await _context.Products.FirstOrDefaultAsync(p => p.sku == item.Sku);

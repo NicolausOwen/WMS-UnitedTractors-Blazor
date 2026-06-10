@@ -390,14 +390,14 @@
                                             @if (item.RequestType == "BORROW")
                                             {
                                                 <div class="flex gap-2">
-                                                    <input type="date" @bind="item.BorrowStartDate" class="w-full px-2 py-1.5 text-[10px] bg-white border border-[#e5e3dc] rounded outline-none focus:border-[#e8a000]" title="Tanggal Pinjam">
+                                                    <input type="date" @bind="item.BorrowStartDate" min="@TodayDateString" class="w-full px-2 py-1.5 text-[10px] bg-white border border-[#e5e3dc] rounded outline-none focus:border-[#e8a000]" title="Tanggal Pinjam">
                                                     <input type="date" @bind="item.ExpectedReturnDate" class="w-full px-2 py-1.5 text-[10px] bg-white border border-[#e5e3dc] rounded outline-none focus:border-[#e8a000]" title="Tanggal Kembali">
                                                 </div>
                                             }
                                             @if (item.RequestType == "GIVEAWAY")
                                             {
                                                 <div>
-                                                    <input type="date" @bind="item.PickupDate" class="w-full px-2 py-1.5 text-[10px] bg-white border border-[#e5e3dc] rounded outline-none focus:border-[#e8a000]" title="Tanggal Pengambilan">
+                                                    <input type="date" @bind="item.PickupDate" min="@TodayDateString" class="w-full px-2 py-1.5 text-[10px] bg-white border border-[#e5e3dc] rounded outline-none focus:border-[#e8a000]" title="Tanggal Pengambilan">
                                                 </div>
                                             }
                                         </div>
@@ -427,7 +427,7 @@
 
                             <div class="mt-4">
                                 <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Tanggal Event</label>
-                                <input type="date" @bind="EventDate" class="w-full px-3.5 py-2.5 text-xs bg-[#f5f4f0] border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none text-[#1a1a1a]">
+                                <input type="date" @bind="EventDate" min="@TodayDateString" class="w-full px-3.5 py-2.5 text-xs bg-[#f5f4f0] border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none text-[#1a1a1a]">
                             </div>
 
 
@@ -599,7 +599,7 @@
                                     <div class="gap-4 bg-[#f9f8f6] p-3 rounded-lg border border-[#e5e3dc] mt-4 grid grid-cols-2">
                                         <div>
                                             <label class="block text-[0.65rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1">Tgl Pinjam</label>
-                                            <input type="date" @bind="SelectedStartDate" class="w-full bg-white border border-[#e5e3dc] rounded-md px-2 py-1.5 text-xs focus:border-[#e8a000] outline-none">
+                                            <input type="date" @bind="SelectedStartDate" min="@TodayDateString" class="w-full bg-white border border-[#e5e3dc] rounded-md px-2 py-1.5 text-xs focus:border-[#e8a000] outline-none">
                                         </div>
                                         <div>
                                             <label class="block text-[0.65rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1">Tgl Kembali</label>
@@ -612,7 +612,7 @@
                                     <div class="bg-[#f9f8f6] p-3 rounded-lg border border-[#e5e3dc] mt-4">
                                         <div>
                                             <label class="block text-[0.65rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1">Tanggal Pengambilan</label>
-                                            <input type="date" @bind="SelectedPickupDate" class="w-full bg-white border border-[#e5e3dc] rounded-md px-2 py-1.5 text-xs focus:border-[#e8a000] outline-none">
+                                            <input type="date" @bind="SelectedPickupDate" min="@TodayDateString" class="w-full bg-white border border-[#e5e3dc] rounded-md px-2 py-1.5 text-xs focus:border-[#e8a000] outline-none">
                                         </div>
                                     </div>
                                 }
@@ -696,6 +696,7 @@
     private string? DocumentationLink;
     private string? Notes;
     private DateTime? SelectedPickupDate;
+    private string TodayDateString => DateTime.Today.ToString("yyyy-MM-dd");
 
     protected override async Task OnInitializedAsync()
     {
@@ -1129,6 +1130,12 @@
                 return;
             }
 
+            if (EventDate.Value.Date < DateTime.Today)
+            {
+                ErrorMessage = "Tanggal Event tidak boleh sebelum hari ini.";
+                return;
+            }
+
 
             // Validasi tanggal peminjaman untuk item BORROW
             foreach (var item in CartService.Items.Where(i => i.RequestType == "BORROW"))
@@ -1158,6 +1165,12 @@
                 if (item.PickupDate < DateTime.Today)
                 {
                     ErrorMessage = $"Tanggal pengambilan tidak boleh di masa lalu untuk item: {item.Name}.";
+                    return;
+                }
+
+                if (EventDate.HasValue && EventDate.Value.Date < item.PickupDate.Value.Date)
+                {
+                    ErrorMessage = $"Tanggal event tidak boleh lebih kecil dari tanggal pengambilan untuk item: {item.Name}.";
                     return;
                 }
             }

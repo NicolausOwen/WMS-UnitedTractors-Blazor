@@ -117,10 +117,10 @@
                     var handoverDone = hasBorrow && borrowItemsOnly.Any(i => i.status == "APPROVED" && !string.IsNullOrEmpty(i.handover_photo));
                     // Tombol upload hanya saat menunggu bukti dari user (WAITING_HANDOVER), bukan saat menunggu verifikasi admin.
                     var canHandover = hasBorrow && borrowItemsOnly.Any(i => i.status == "WAITING_HANDOVER")
-                                      && (UserRole == "admin" || UserRole == "superadmin" || firstItem.requester_id == CurrentUserId);
+                                      && firstItem.requester_id == CurrentUserId;
                     // Draft serah terima: status masih WAITING_HANDOVER tapi foto sudah diunggah (belum disubmit ke admin).
                     var hasHandoverDraftPhoto = hasBorrow && borrowItemsOnly.Any(i => i.status == "WAITING_HANDOVER" && !string.IsNullOrEmpty(i.handover_photo));
-                    var canGiveawayHandover = isGiveaway && status == "WAITING_HANDOVER" && (UserRole == "admin" || UserRole == "superadmin");
+                    var canGiveawayHandover = false;
                     var hasGiveawayHandoverDraftPhoto = isGiveaway && giveawayItemsOnly.Any(i => i.status == "WAITING_HANDOVER" && !string.IsNullOrEmpty(i.handover_photo));
                     var canUploadDocumentation = isGiveaway && (status == "WAITING_DOCUMENTATION" || status == "DOCUMENTATION_OVERDUE") && (firstItem.requester_id == CurrentUserId || UserRole == "superadmin");
 
@@ -341,23 +341,29 @@
                                     </div>
                                 }
                                 
-                                @if(!string.IsNullOrEmpty(firstItem.handover_photo))
+                                @if(TransactionService.ParseStoredFiles(firstItem.handover_photo).Any())
                                 {
-                                    var handoverPhotoSrc = ImageHelper.Resolve(firstItem.handover_photo);
+                                    var handoverFiles = TransactionService.ParseStoredFiles(firstItem.handover_photo);
                                     <div class="p-4 @(status == "WAITING_HANDOVER" ? "bg-[#fffbeb]" : "bg-white") border-b border-[#e5e3dc] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                                         <div class="flex items-start gap-4">
-                                            @if (firstItem.handover_photo.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
-                                            {
-                                                <a href="@handoverPhotoSrc" target="_blank" class="block w-20 h-20 rounded border border-gray-200 overflow-hidden bg-red-50 flex items-center justify-center flex-shrink-0 hover:opacity-95 transition cursor-pointer" title="Klik untuk membuka dokumen">
-                                                    <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                                                </a>
-                                            }
-                                            else
-                                            {
-                                                <a href="@handoverPhotoSrc" data-image-popup class="block w-20 h-20 rounded border border-gray-200 overflow-hidden bg-gray-50 flex-shrink-0 hover:opacity-95 transition cursor-pointer" title="Klik untuk memperbesar foto bukti">
-                                                    <img src="@handoverPhotoSrc" alt="Bukti Serah Terima" class="w-full h-full object-cover">
-                                                </a>
-                                            }
+                                            <div class="grid grid-cols-2 gap-2 shrink-0">
+                                                @foreach (var handoverFile in handoverFiles.Take(4))
+                                                {
+                                                    var handoverPhotoSrc = ImageHelper.Resolve(handoverFile);
+                                                    @if (handoverFile.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+                                                    {
+                                                        <a href="@handoverPhotoSrc" target="_blank" class="block w-20 h-20 rounded border border-gray-200 overflow-hidden bg-red-50 flex items-center justify-center hover:opacity-95 transition cursor-pointer" title="Klik untuk membuka dokumen">
+                                                            <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                                                        </a>
+                                                    }
+                                                    else
+                                                    {
+                                                        <a href="@handoverPhotoSrc" data-image-popup class="block w-20 h-20 rounded border border-gray-200 overflow-hidden bg-gray-50 hover:opacity-95 transition cursor-pointer" title="Klik untuk memperbesar foto bukti">
+                                                            <img src="@handoverPhotoSrc" alt="Bukti Serah Terima" class="w-full h-full object-cover">
+                                                        </a>
+                                                    }
+                                                }
+                                            </div>
                                             <div>
                                                 <div class="flex items-center gap-2 mb-1">
                                                     <h4 class="text-xs font-bold text-gray-900 tracking-wider uppercase">Bukti Serah Terima</h4>
@@ -376,6 +382,10 @@
                                                 </div>
                                                 <p class="text-xs text-gray-600 leading-relaxed max-w-xl italic">"@firstItem.handover_notes"</p>
                                                 <p class="text-[11px] text-gray-500 mt-1">Penerima: @(firstItem.handover_recipient_name ?? firstItem.applicant_name ?? "-") | Waktu: @(firstItem.handover_timestamp?.ToString("dd MMM yyyy HH:mm") ?? "-")</p>
+                                                @if (handoverFiles.Count > 4)
+                                                {
+                                                    <p class="text-[11px] text-gray-400 mt-1">+@(handoverFiles.Count - 4) file lainnya</p>
+                                                }
                                             </div>
                                         </div>
                                         @if ((canHandover || canGiveawayHandover) && status == "WAITING_HANDOVER")
@@ -388,25 +398,32 @@
                                     </div>
                                 }
 
-                                @if (isGiveaway && !string.IsNullOrEmpty(firstItem.documentation_photo))
+                                @if (isGiveaway && TransactionService.ParseStoredFiles(firstItem.documentation_photo).Any())
                                 {
-                                    var documentationPhotoSrc = ImageHelper.Resolve(firstItem.documentation_photo);
+                                    var documentationFiles = TransactionService.ParseStoredFiles(firstItem.documentation_photo);
                                     <div class="p-4 bg-white border-b border-[#e5e3dc] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                                         <div class="flex items-start gap-4">
-                                            @if (firstItem.documentation_photo.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
-                                            {
-                                                <a href="@documentationPhotoSrc" target="_blank" class="block w-20 h-20 rounded border border-gray-200 overflow-hidden bg-red-50 flex items-center justify-center flex-shrink-0 hover:opacity-95 transition cursor-pointer">
-                                                    <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                                                </a>
-                                            }
-                                            else
-                                            {
-                                                <a href="@documentationPhotoSrc" data-image-popup class="block w-20 h-20 rounded border border-gray-200 overflow-hidden bg-gray-50 flex-shrink-0 hover:opacity-95 transition cursor-pointer">
-                                                    <img src="@documentationPhotoSrc" alt="Dokumentasi User" class="w-full h-full object-cover">
-                                                </a>
-                                            }
+                                            <div class="flex flex-wrap gap-3">
+                                                @foreach (var documentationFile in documentationFiles.Take(4))
+                                                {
+                                                    var documentationPhotoSrc = ImageHelper.Resolve(documentationFile);
+                                                    if (documentationFile.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+                                                    {
+                                                        <a href="@documentationPhotoSrc" target="_blank" class="block w-20 h-20 rounded border border-gray-200 overflow-hidden bg-red-50 flex items-center justify-center flex-shrink-0 hover:opacity-95 transition cursor-pointer">
+                                                            <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                                                        </a>
+                                                    }
+                                                    else
+                                                    {
+                                                        <a href="@documentationPhotoSrc" data-image-popup class="block w-20 h-20 rounded border border-gray-200 overflow-hidden bg-gray-50 flex-shrink-0 hover:opacity-95 transition cursor-pointer">
+                                                            <img src="@documentationPhotoSrc" alt="Dokumentasi User" class="w-full h-full object-cover">
+                                                        </a>
+                                                    }
+                                                }
+                                            </div>
                                             <div>
                                                 <h4 class="text-xs font-bold text-gray-900 tracking-wider uppercase">Dokumentasi User</h4>
+                                                <p class="text-[11px] text-gray-500 mt-1">Total file: @documentationFiles.Count</p>
                                                 <p class="text-xs text-gray-600 leading-relaxed max-w-xl italic">"@(firstItem.documentation_notes ?? "-")"</p>
                                                 <p class="text-[11px] text-gray-500 mt-1">Diupload: @(firstItem.documentation_uploaded_at?.ToString("dd MMM yyyy HH:mm") ?? "-")</p>
                                             </div>
@@ -695,7 +712,20 @@
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-[#8a8880] uppercase tracking-wider mb-2">Foto/PDF Dokumentasi <span class="text-[#d94040]">*</span></label>
-                    <InputFile OnChange="HandleDocumentationFileSelected" accept="image/jpg,image/jpeg,image/png,image/webp,application/pdf" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-[#f5f4f0] file:text-[#1a1a1a] hover:file:bg-[#e5e3dc] transition cursor-pointer border border-[#e5e3dc] rounded-lg" required />
+                    <InputFile OnChange="HandleDocumentationFileSelected" accept="image/jpg,image/jpeg,image/png,image/webp,application/pdf" multiple class="block w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-[#f5f4f0] file:text-[#1a1a1a] hover:file:bg-[#e5e3dc] transition cursor-pointer border border-[#e5e3dc] rounded-lg" required />
+                    <p class="mt-2 text-[11px] text-gray-500">Maksimal 5 file. Tiap file maksimal 4 MB. Format: JPG, PNG, WEBP, atau PDF.</p>
+                    @if (DocumentationFiles.Any())
+                    {
+                        <div class="mt-3 space-y-2">
+                            @foreach (var file in DocumentationFiles)
+                            {
+                                <div class="flex items-center justify-between gap-3 rounded-lg border border-[#e5e3dc] bg-[#faf9f5] px-3 py-2 text-xs text-[#3a3835]">
+                                    <span class="truncate font-medium">@file.Name</span>
+                                    <span class="shrink-0 text-[#8a8880]">@($"{file.Size / 1024.0 / 1024.0:0.##} MB")</span>
+                                </div>
+                            }
+                        </div>
+                    }
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-[#8a8880] uppercase tracking-wider mb-2">Catatan Dokumentasi</label>
@@ -872,7 +902,7 @@
     private Microsoft.AspNetCore.Components.Forms.IBrowserFile? HandoverFile;
     private List<int> DocumentationTransactionIds = new();
     private string? DocumentationNotes;
-    private Microsoft.AspNetCore.Components.Forms.IBrowserFile? DocumentationFile;
+    private List<Microsoft.AspNetCore.Components.Forms.IBrowserFile> DocumentationFiles = new();
 
     private bool IsSubmitting = false;
     private Transaction? ReturnTransaction;
@@ -1157,7 +1187,7 @@
             .Select(i => i.id)
             .ToList();
         DocumentationNotes = items.FirstOrDefault(i => i.status == "WAITING_DOCUMENTATION" || i.status == "DOCUMENTATION_OVERDUE")?.documentation_notes;
-        DocumentationFile = null;
+        DocumentationFiles = new();
         ModalError = null;
         IsDocumentationModalOpen = true;
     }
@@ -1167,34 +1197,31 @@
         IsDocumentationModalOpen = false;
         DocumentationTransactionIds = new();
         DocumentationNotes = null;
-        DocumentationFile = null;
+        DocumentationFiles = new();
     }
 
     private void HandleDocumentationFileSelected(Microsoft.AspNetCore.Components.Forms.InputFileChangeEventArgs e)
     {
         ModalError = null;
-        var err = ValidateUpload(e.File);
-        if (err != null)
+        var files = e.GetMultipleFiles(5).ToList();
+        foreach (var file in files)
         {
-            ModalError = err;
-            DocumentationFile = null;
-            return;
+            var err = ValidateUpload(file);
+            if (err != null)
+            {
+                ModalError = err;
+                DocumentationFiles = new();
+                return;
+            }
         }
-        DocumentationFile = e.File;
+        DocumentationFiles = files;
     }
 
     private async Task SubmitDocumentation()
     {
-        if (DocumentationFile == null)
+        if (!DocumentationFiles.Any())
         {
             ModalError = "Foto/PDF dokumentasi wajib diunggah.";
-            return;
-        }
-
-        var validationError = ValidateUpload(DocumentationFile);
-        if (validationError != null)
-        {
-            ModalError = validationError;
             return;
         }
 
@@ -1203,7 +1230,7 @@
         SuccessMessage = null;
         try
         {
-            var err = await TransactionService.SubmitGiveawayDocumentationAsync(DocumentationTransactionIds, DocumentationFile, DocumentationNotes);
+            var err = await TransactionService.SubmitGiveawayDocumentationAsync(DocumentationTransactionIds, DocumentationFiles, DocumentationNotes);
             if (err == null)
             {
                 SuccessMessage = "Dokumentasi giveaway berhasil diunggah.";

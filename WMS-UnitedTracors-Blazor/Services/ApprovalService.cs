@@ -101,8 +101,8 @@ public class ApprovalService
                 .Include(t => t.Division)
                 .Where(t =>
                     t.type == "OUT" &&
-                    t.request_type == "BORROW" &&
-                    t.status == WorkflowStatuses.WaitingAdminHandover);
+                    (t.request_type == "BORROW" || t.request_type == "GIVEAWAY") &&
+                    (t.status == WorkflowStatuses.WaitingHandover || t.status == WorkflowStatuses.WaitingAdminHandover));
 
             if (!isGlobalAdmin && allowedCategoryIds != null)
             {
