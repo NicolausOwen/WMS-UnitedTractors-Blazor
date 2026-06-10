@@ -349,12 +349,20 @@
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                                             </div>
                                             <div>
-                                                <h4 class="text-sm font-extrabold text-[#d97706]">Permintaan Membutuhkan Revisi</h4>
+                                                <div class="flex flex-wrap items-center gap-2">
+                                                    <h4 class="text-sm font-extrabold text-[#d97706]">Permintaan Perlu Revisi</h4>
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#fff7d6] text-[#9a6700] border border-[#fde68a]">
+                                                        Oleh @GetRevisionActorLabel(firstItem)
+                                                    </span>
+                                                </div>
                                                 @if (!string.IsNullOrEmpty(firstItem.rejection_reason))
                                                 {
-                                                    <p class="text-xs text-[#92400e] font-medium mt-0.5">Catatan/Alasan Staff: <span class="italic font-bold">"@firstItem.rejection_reason"</span></p>
+                                                    <p class="text-xs text-[#92400e] font-medium mt-1">
+                                                        Catatan revisi:
+                                                        <span class="italic font-bold">"@firstItem.rejection_reason"</span>
+                                                    </p>
                                                 }
-                                                <p class="text-[11px] text-[#b45309] mt-1">Silakan klik tombol "Revisi" pada tabel item di bawah untuk memasukkan kembali pengajuan ke keranjang dan memperbaikinya.</p>
+                                                <p class="text-[11px] text-[#b45309] mt-1">Klik tombol "Revisi" pada item terkait untuk memindahkan kembali pengajuan ke keranjang lalu perbaiki sesuai catatan.</p>
                                             </div>
                                         </div>
                                         <div class="flex gap-2 shrink-0 w-full sm:w-auto">
@@ -515,8 +523,8 @@
                                                                 </span>
                                                                 @if (usage.original_pickup_date.HasValue && usage.original_pickup_date.Value.Date != usage.pickup_date?.Date)
                                                                 {
-                                                                    <span class="text-[10px] text-red-600 font-semibold italic">
-                                                                        (Direvisi dari @usage.original_pickup_date.Value.ToString("dd MMM yyyy"))
+                                                                    <span class="inline-flex items-center gap-1 bg-rose-50 text-rose-700 px-1.5 py-0.5 rounded border border-rose-100 text-[10px] font-semibold">
+                                                                        Revisi: @usage.original_pickup_date.Value.ToString("dd MMM yyyy") -> @(usage.pickup_date?.ToString("dd MMM yyyy") ?? "-")
                                                                     </span>
                                                                 }
                                                             }
@@ -529,8 +537,10 @@
                                                         </div>
                                                         @if (usage.original_quantity.HasValue && usage.original_quantity.Value != usage.quantity)
                                                         {
-                                                            <div class="text-[10px] text-red-600 font-semibold italic mt-0.5">
-                                                                (Direvisi dari @usage.original_quantity.Value)
+                                                            <div class="mt-1">
+                                                                <span class="inline-flex items-center gap-1 bg-rose-50 text-rose-700 px-1.5 py-0.5 rounded border border-rose-100 text-[10px] font-semibold">
+                                                                    Revisi qty: @usage.original_quantity.Value -> @usage.quantity
+                                                                </span>
                                                             </div>
                                                         }
                                                     </td>
@@ -624,20 +634,22 @@
                                                                 <div class="text-[10px] text-red-600 mt-1.5 italic font-semibold">"@usage.rejection_reason"</div>
                                                             }
                                                         } else if (usage.status == "REVISION" || usage.status == "REVISION_BY_STAFF_INVENTORY" || usage.status == "REVISION_BY_ADMIN" || usage.status == "REVISION_BY_MANAGER") {
-                                                            <span class="inline-flex items-center px-2 py-0.5 border border-[#fde68a] rounded text-[10px] font-bold bg-[#fffbeb] text-[#d97706]">
-                                                                Butuh Revisi
-                                                            </span>
-                                                            @if(!string.IsNullOrEmpty(usage.rejection_reason)) {
-                                                                <div class="text-[10px] text-amber-700 mt-1.5 italic font-semibold">"@usage.rejection_reason"</div>
-                                                            }
+                                                            <div class="space-y-1.5">
+                                                                <span class="inline-flex items-center px-2 py-0.5 border border-[#fde68a] rounded text-[10px] font-bold bg-[#fffbeb] text-[#d97706]">
+                                                                    Butuh Revisi
+                                                                </span>
+                                                                <div class="text-[10px] font-semibold text-[#b45309]">
+                                                                    Oleh @GetRevisionActorLabel(usage)
+                                                                </div>
+                                                            </div>
                                                         }
                                                     </td>
                                                     <td class="px-5 py-3.5 align-middle text-xs text-gray-500 space-y-1">
                                                         @if (!string.IsNullOrEmpty(usage.notes)) { <div><span class="font-bold text-gray-400">User:</span> @usage.notes</div> }
-                                                        @if (!string.IsNullOrEmpty(usage.staff_inventory_notes)) { <div><span class="font-bold text-[#e8a000]">Staff Inv:</span> @usage.staff_inventory_notes</div> }
-                                                        @if (!string.IsNullOrEmpty(usage.admin_notes)) { <div><span class="font-bold text-[#e8a000]">Admin:</span> @usage.admin_notes</div> }
-                                                        @if (!string.IsNullOrEmpty(usage.manager_notes)) { <div><span class="font-bold text-[#e8a000]">Manager:</span> @usage.manager_notes</div> }
-                                                        @if (string.IsNullOrEmpty(usage.notes) && string.IsNullOrEmpty(usage.staff_inventory_notes) && string.IsNullOrEmpty(usage.admin_notes) && string.IsNullOrEmpty(usage.manager_notes)) { <span>-</span> }
+                                                        @if (!string.IsNullOrEmpty(usage.staff_inventory_notes) && !ShouldHideRevisionNoteInNotesColumn(usage, usage.staff_inventory_notes, WorkflowStatuses.RevisionByStaffInventory)) { <div><span class="font-bold text-[#e8a000]">Staff Inv:</span> @usage.staff_inventory_notes</div> }
+                                                        @if (!string.IsNullOrEmpty(usage.admin_notes) && !ShouldHideRevisionNoteInNotesColumn(usage, usage.admin_notes, WorkflowStatuses.RevisionByAdmin)) { <div><span class="font-bold text-[#e8a000]">Admin:</span> @usage.admin_notes</div> }
+                                                        @if (!string.IsNullOrEmpty(usage.manager_notes) && !ShouldHideRevisionNoteInNotesColumn(usage, usage.manager_notes, WorkflowStatuses.RevisionByManager)) { <div><span class="font-bold text-[#e8a000]">Manager:</span> @usage.manager_notes</div> }
+                                                        @if (string.IsNullOrEmpty(usage.notes) && !HasVisibleInternalNotes(usage)) { <span>-</span> }
                                                     </td>
                                                     <td class="px-5 py-3.5 align-middle text-right">
                                                         @{
@@ -1471,6 +1483,49 @@
     {
         public string Name { get; set; } = "";
         public string Status { get; set; } = "";
+    }
+
+    private static bool IsRevisionStatus(string? status) =>
+        status == WorkflowStatuses.Revision ||
+        status == WorkflowStatuses.RevisionByStaffInventory ||
+        status == WorkflowStatuses.RevisionByAdmin ||
+        status == WorkflowStatuses.RevisionByManager;
+
+    private static string GetRevisionActorLabel(Transaction transaction) =>
+        transaction.status switch
+        {
+            WorkflowStatuses.RevisionByStaffInventory => "Staff Inventori",
+            WorkflowStatuses.RevisionByManager => "Manager",
+            WorkflowStatuses.RevisionByAdmin => "Admin",
+            WorkflowStatuses.Revision => transaction.last_revision_stage switch
+            {
+                "STAFF_INVENTORY" => "Staff Inventori",
+                "MANAGER" => "Manager",
+                "ADMIN" => "Admin",
+                _ => "Admin"
+            },
+            _ => "Approver"
+        };
+
+    private static bool ShouldHideRevisionNoteInNotesColumn(Transaction transaction, string? note, string revisionStatus)
+    {
+        if (!IsRevisionStatus(transaction.status) || transaction.status != revisionStatus)
+            return false;
+
+        return !string.IsNullOrWhiteSpace(note) &&
+               string.Equals(note?.Trim(), transaction.rejection_reason?.Trim(), StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool HasVisibleInternalNotes(Transaction transaction)
+    {
+        var hasStaffNote = !string.IsNullOrEmpty(transaction.staff_inventory_notes) &&
+            !ShouldHideRevisionNoteInNotesColumn(transaction, transaction.staff_inventory_notes, WorkflowStatuses.RevisionByStaffInventory);
+        var hasAdminNote = !string.IsNullOrEmpty(transaction.admin_notes) &&
+            !ShouldHideRevisionNoteInNotesColumn(transaction, transaction.admin_notes, WorkflowStatuses.RevisionByAdmin);
+        var hasManagerNote = !string.IsNullOrEmpty(transaction.manager_notes) &&
+            !ShouldHideRevisionNoteInNotesColumn(transaction, transaction.manager_notes, WorkflowStatuses.RevisionByManager);
+
+        return hasStaffNote || hasAdminNote || hasManagerNote;
     }
 
     private List<TrackingStep> GetGroupSteps(List<Transaction> groupItems)
