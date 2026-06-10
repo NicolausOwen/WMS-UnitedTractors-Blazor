@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Jun 10, 2026 at 09:15 AM
+-- Generation Time: Jun 10, 2026 at 05:52 AM
 -- Server version: 9.3.0
 -- PHP Version: 8.4.8
 
@@ -29,15 +29,15 @@ SET time_zone = "+00:00";
 
 CREATE TABLE `admin_roles` (
   `Id` char(36) CHARACTER SET ascii COLLATE ascii_general_ci NOT NULL,
-  `RoleName` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-  `Description` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `RoleName` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `Description` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `Permissions` text,
   `IsActive` tinyint(1) NOT NULL,
   `CreatedAt` datetime(6) NOT NULL,
-  `CreatedBy` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `CreatedBy` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `UpdatedAt` datetime(6) NOT NULL,
-  `UpdatedBy` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  `UpdatedBy` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `admin_roles`
@@ -45,11 +45,11 @@ CREATE TABLE `admin_roles` (
 
 INSERT INTO `admin_roles` (`Id`, `RoleName`, `Description`, `Permissions`, `IsActive`, `CreatedAt`, `CreatedBy`, `UpdatedAt`, `UpdatedBy`) VALUES
 ('063e920c-626c-4fa8-a8b9-35900bb7b7b7', 'Staff Inventoris', 'Default role for Staff Inventoris', '[\"dashboard.view\",\"tracking.view\",\"approval.stage1\",\"approval.handover\",\"products.manage\"]', 1, '2026-06-09 03:57:53.286081', 'System', '2026-06-10 02:37:39.854257', 'System'),
-('0aa48329-85e7-480d-9e62-21cd0dec8e86', 'Super Admin', 'Default role for Super Admin', '[\"request.create\",\"tracking.view\",\"approval.stage1\",\"approval.stage2\",\"approval.manager\",\"approval.handover\",\"approval.return\",\"dashboard.view\",\"products.manage\",\"masterdata.manage\",\"reports.view\",\"scanner.use\",\"users.manage\",\"roles.manage\"]', 1, '2026-06-10 02:37:39.813699', 'System', '2026-06-10 07:14:16.811572', 'Super Administrator'),
-('6969448e-153b-43fc-8be0-1dda5927a8a1', 'Team Leader Infrastructure', 'Default role for Team Leader Infrastructure', '[\"dashboard.view\",\"tracking.view\",\"approval.stage2\",\"approval.return\",\"products.manage\",\"masterdata.manage\",\"reports.view\",\"scanner.use\",\"approval.handover\"]', 1, '2026-06-09 03:57:53.272759', 'System', '2026-06-10 08:37:15.569312', 'Super Administrator'),
+('0aa48329-85e7-480d-9e62-21cd0dec8e86', 'Super Admin', 'Default role for Super Admin', '[\"request.create\",\"tracking.view\",\"approval.stage1\",\"approval.stage2\",\"approval.manager\",\"approval.handover\",\"approval.return\",\"dashboard.view\",\"products.manage\",\"masterdata.manage\",\"reports.view\",\"scanner.use\",\"users.manage\",\"roles.manage\"]', 1, '2026-06-10 02:37:39.813699', 'System', '2026-06-10 02:55:59.610173', 'Super Administrator'),
+('6969448e-153b-43fc-8be0-1dda5927a8a1', 'Team Leader Infrastructure', 'Default role for Team Leader Infrastructure', '[\"dashboard.view\",\"tracking.view\",\"approval.stage2\",\"approval.return\",\"products.manage\",\"masterdata.manage\"]', 1, '2026-06-09 03:57:53.272759', 'System', '2026-06-10 02:37:39.856502', 'System'),
 ('d941584b-880a-4d31-aa4c-ca04a29a43d4', 'Manager', 'Default role for Manager', '[\"dashboard.view\",\"tracking.view\",\"approval.manager\",\"reports.view\"]', 1, '2026-06-09 03:57:53.280862', 'System', '2026-06-10 02:37:39.856923', 'System'),
-('e6ad3624-7c19-48cb-a746-b0f58f13ad31', 'User', 'Default role for User', '[\"dashboard.view\",\"request.create\",\"tracking.view\"]', 1, '2026-06-10 02:37:39.857361', 'System', '2026-06-10 08:36:32.591954', 'Super Administrator'),
-('ec5f41d3-cec6-4d33-a220-81a18c9e1cfd', 'PIC Studio', 'Default role for PIC Studio', '[\"dashboard.view\",\"tracking.view\",\"approval.stage2\",\"approval.return\",\"products.manage\",\"masterdata.manage\",\"reports.view\",\"approval.handover\"]', 1, '2026-06-09 03:57:53.187149', 'System', '2026-06-10 08:38:02.080663', 'Super Administrator');
+('e6ad3624-7c19-48cb-a746-b0f58f13ad31', 'User', 'Default role for User', '[\"dashboard.view\",\"request.create\",\"tracking.view\"]', 1, '2026-06-10 02:37:39.857361', 'System', '2026-06-10 02:46:42.014613', 'Super Administrator'),
+('ec5f41d3-cec6-4d33-a220-81a18c9e1cfd', 'PIC Studio', 'Default role for PIC Studio', '[\"dashboard.view\",\"tracking.view\",\"approval.stage2\",\"approval.return\",\"products.manage\",\"masterdata.manage\"]', 1, '2026-06-09 03:57:53.187149', 'System', '2026-06-10 02:37:39.855778', 'System');
 
 -- --------------------------------------------------------
 
@@ -63,7 +63,7 @@ CREATE TABLE `categories` (
   `description` varchar(255) DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `categories`
@@ -90,7 +90,7 @@ CREATE TABLE `divisions` (
   `description` varchar(255) DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `divisions`
@@ -124,7 +124,7 @@ CREATE TABLE `locations` (
   `description` varchar(255) DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `locations`
@@ -339,7 +339,7 @@ INSERT INTO `products` (`id`, `sku`, `barcode_type`, `name`, `description`, `tra
 (174, 'FCY-260511-0047', 'TYPE_CODE_128', 'Plakat BPK Penabur Jakarta', NULL, NULL, '50.00', '/images/products/7dbf8e00-115f-4551-b785-2103ec487dd4.png', '[\"/images/products/7dbf8e00-115f-4551-b785-2103ec487dd4.png\"]', 4, NULL, NULL, 1, 1, 3, 0, 0, '2026-05-11 13:46:23', '2026-05-26 09:46:52'),
 (175, 'FCY-260511-0048', 'TYPE_CODE_128', 'QCC Dashboard', NULL, NULL, '50.00', NULL, NULL, 4, NULL, NULL, 5, 5, 21, 0, 0, '2026-05-11 13:46:23', '2026-05-26 09:46:52'),
 (176, 'MHE-260511-0007', 'TYPE_CODE_128', 'Gelang Corpu', NULL, NULL, '50.00', '/images/products/c3957bc5-bb05-437e-a306-644ddb6e6e9f.png', '[\"/images/products/c3957bc5-bb05-437e-a306-644ddb6e6e9f.png\"]', 6, 2, NULL, 279, 30, 3, 0, 0, '2026-05-11 13:46:23', '2026-05-26 09:46:52'),
-(180, 'FCY-260511-0049', 'TYPE_CODE_128', 'Gelas Plastik', NULL, NULL, '50.00', 'images/products/8ed36c09-c097-4531-b0b4-1f2063e6eab9.jpg', NULL, 4, 1, NULL, 69, 2, 3, 0, 0, '2026-05-11 13:46:23', '2026-05-26 09:46:52'),
+(180, 'FCY-260511-0049', 'TYPE_CODE_128', 'Gelas Plastik', '', NULL, '50.00', 'images/products/8ed36c09-c097-4531-b0b4-1f2063e6eab9.jpg', '[\"images/products/8ed36c09-c097-4531-b0b4-1f2063e6eab9.jpg\"]', 4, 1, NULL, 69, 2, 3, 0, 0, '2026-05-11 13:46:23', '2026-06-10 09:31:04'),
 (183, 'FCY-260511-0050', 'TYPE_CODE_128', 'Cup', NULL, NULL, '50.00', 'images/products/c93cdbea-7efc-419b-94af-08568b686284.jpg', NULL, 4, 1, NULL, 98, 20, 3, 0, 0, '2026-05-11 13:46:23', '2026-05-26 09:46:52'),
 (185, 'FCY-260511-0051', 'TYPE_CODE_128', 'Benang', NULL, NULL, '50.00', 'images/products/69104e83-cc7c-4b65-8aa2-fcab70d7f67a.jpg', NULL, 4, 1, NULL, 11, 5, 22, 0, 0, '2026-05-11 13:46:23', '2026-05-26 09:46:52'),
 (187, 'FCY-260511-0052', 'TYPE_CODE_128', 'Tali tambang putih', NULL, NULL, '50.00', 'images/products/787a6bb4-9846-44cd-a40e-e8f5419df25c.jpg', NULL, 4, 1, NULL, 5, 5, 22, 0, 0, '2026-05-11 13:46:23', '2026-05-26 09:46:52'),
@@ -358,7 +358,7 @@ INSERT INTO `products` (`id`, `sku`, `barcode_type`, `name`, `description`, `tra
 (205, 'MHE-260511-0011', 'TYPE_CODE_128', 'Lanyard UTSMART Merah + Biru', '', NULL, '50.00', '/images/products/ac0f07c0-519f-4f39-bed7-9edfe40e7484.jpg', '[\"/images/products/ac0f07c0-519f-4f39-bed7-9edfe40e7484.jpg\"]', 6, 4, NULL, 90, 97, 3, 0, 0, '2026-05-11 13:46:23', '2026-06-10 01:43:48'),
 (208, 'MHE-260511-0012', 'TYPE_CODE_128', 'Package UT Virtual Gathering - Kaos, Tumblr, Masket Mulut', NULL, NULL, '50.00', NULL, NULL, 6, 4, NULL, 6, 6, 3, 0, 0, '2026-05-11 13:46:23', '2026-05-26 09:46:52'),
 (210, 'MHE-260511-0013', 'TYPE_CODE_128', 'Tas Reven', NULL, NULL, '50.00', '/images/products/Yt3zw1dAU8nAXLh4arGdQG9eAgvc77VFT1OOcqcs.jpg', '[\"/images/products/Yt3zw1dAU8nAXLh4arGdQG9eAgvc77VFT1OOcqcs.jpg\"]', 6, 4, NULL, 8, 4, 3, 0, 0, '2026-05-11 13:46:23', '2026-05-26 09:46:52'),
-(213, 'MHE-260511-0014', 'TYPE_CODE_128', 'Sweater UT', '', NULL, '50.00', '/images/products/4dO3o7jk4h8AAwTE0MtqVAsBATECRbalrBA9vF61.jpg', '[\"/images/products/4dO3o7jk4h8AAwTE0MtqVAsBATECRbalrBA9vF61.jpg\"]', 6, 4, NULL, 113, 7, 3, 0, 0, '2026-05-11 13:46:23', '2026-06-10 02:15:50'),
+(213, 'MHE-260511-0014', 'TYPE_CODE_128', 'Sweater UT', '', NULL, '50.00', '/images/products/4dO3o7jk4h8AAwTE0MtqVAsBATECRbalrBA9vF61.jpg', '[\"/images/products/4dO3o7jk4h8AAwTE0MtqVAsBATECRbalrBA9vF61.jpg\"]', 6, 4, NULL, 113, 7, 3, 0, 0, '2026-05-11 13:46:23', '2026-06-10 08:30:45'),
 (228, 'MHE-260511-0015', 'TYPE_CODE_128', 'Tumbler UT Smart', NULL, NULL, '50.00', '/images/products/PvqIubSfSp7ootvD480EtqKrPw71BtY4kch5sYHE.jpg', '[\"/images/products/PvqIubSfSp7ootvD480EtqKrPw71BtY4kch5sYHE.jpg\"]', 6, 4, NULL, 66, 73, 3, 0, 0, '2026-05-11 13:46:23', '2026-05-26 09:46:52'),
 (229, 'MHE-260511-0016', 'TYPE_CODE_128', 'Tumbler Plastik UT Smart', NULL, NULL, '50.00', '/images/products/ymVgSipIGBtEA6XLhpQMFbYbhITtaCCCw9xN0PTz.jpg', '[\"/images/products/ymVgSipIGBtEA6XLhpQMFbYbhITtaCCCw9xN0PTz.jpg\"]', 6, 4, NULL, 367, 181, 3, 0, 0, '2026-05-11 13:46:23', '2026-05-26 09:46:52'),
 (231, 'MHE-260511-0017', 'TYPE_CODE_128', 'Box Packaging Sweater UNTR', NULL, NULL, '50.00', NULL, NULL, 6, 4, NULL, 26, 25, 14, 0, 0, '2026-05-11 13:46:23', '2026-05-26 09:46:52'),
@@ -385,9 +385,9 @@ INSERT INTO `products` (`id`, `sku`, `barcode_type`, `name`, `description`, `tra
 (289, 'GME-260511-0084', 'TYPE_CODE_128', 'Board Game Penguin', NULL, NULL, '0.00', NULL, NULL, 3, 6, NULL, 2, 2, 14, 1, 0, '2026-05-11 13:46:24', '2026-05-26 09:46:52'),
 (290, 'GME-260511-0085', 'TYPE_CODE_128', 'Klask - Board Game', NULL, NULL, '0.00', NULL, NULL, 3, 7, NULL, 1, 1, 14, 1, 0, '2026-05-11 13:46:24', '2026-05-26 09:46:52'),
 (291, 'GME-260511-0086', 'TYPE_CODE_128', 'Board Game', NULL, NULL, '0.00', NULL, NULL, 3, 7, NULL, 2, 1, 14, 1, 0, '2026-05-11 13:46:24', '2026-05-26 09:46:52'),
-(293, 'FCY-260511-0060', 'TYPE_CODE_128', 'Bel Quiz', NULL, NULL, '50.00', NULL, NULL, 4, 8, NULL, 2, 2, 3, 0, 0, '2026-05-11 13:46:24', '2026-05-26 09:46:52'),
-(294, 'GME-260511-0087', 'TYPE_CODE_128', '3D Puzzle Cube', NULL, NULL, '0.00', NULL, NULL, 3, 8, NULL, 1, 2, 3, 1, 0, '2026-05-11 13:46:24', '2026-05-26 09:46:52');
+(293, 'FCY-260511-0060', 'TYPE_CODE_128', 'Bel Quiz', NULL, NULL, '50.00', NULL, NULL, 4, 8, NULL, 2, 2, 3, 0, 0, '2026-05-11 13:46:24', '2026-05-26 09:46:52');
 INSERT INTO `products` (`id`, `sku`, `barcode_type`, `name`, `description`, `transaction_type`, `value`, `image`, `images`, `category_id`, `location_id`, `position_image`, `current_stock`, `initial_stock`, `unit_id`, `is_returnable`, `min_stock`, `created_at`, `updated_at`) VALUES
+(294, 'GME-260511-0087', 'TYPE_CODE_128', '3D Puzzle Cube', NULL, NULL, '0.00', NULL, NULL, 3, 8, NULL, 1, 2, 3, 1, 0, '2026-05-11 13:46:24', '2026-05-26 09:46:52'),
 (295, 'GME-260511-0088', 'TYPE_CODE_128', 'Rubik Speed Cube', NULL, NULL, '0.00', NULL, NULL, 3, 8, NULL, 2, 2, 3, 1, 0, '2026-05-11 13:46:24', '2026-05-26 09:46:52'),
 (296, 'GME-260511-0089', 'TYPE_CODE_128', 'Puzzle Kayu', NULL, NULL, '0.00', NULL, NULL, 3, 8, NULL, 25, 25, 14, 1, 0, '2026-05-11 13:46:24', '2026-05-26 09:46:52'),
 (297, 'GME-260511-0090', 'TYPE_CODE_128', 'Games Balok Kayu Set', NULL, NULL, '0.00', NULL, NULL, 3, 8, NULL, 1, 1, 14, 1, 0, '2026-05-11 13:46:24', '2026-05-26 09:46:52'),
@@ -429,7 +429,7 @@ CREATE TABLE `product_variants` (
   `stock` int NOT NULL DEFAULT '0',
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `product_variants`
@@ -439,25 +439,25 @@ INSERT INTO `product_variants` (`id`, `product_id`, `sku`, `color`, `size`, `ima
 (1, 197, 'MHE-260511-0008-V01', NULL, 'XL', NULL, 2, '2026-05-26 09:46:46', '2026-05-26 09:46:51'),
 (2, 197, 'MHE-260511-0008-V02', NULL, 'L', NULL, 1, '2026-05-26 09:46:46', '2026-05-26 09:46:51'),
 (3, 197, 'MHE-260511-0008-V03', NULL, 'M', NULL, 2, '2026-05-26 09:46:46', '2026-05-26 09:46:51'),
-(4, 213, 'MHE-260511-0014-V01', 'Hijau', 'L', '/images/products/variants/CKqH9jvgmlFJ9pUajspkwPCycgZ5RAWsMDtZh3wA.jpg', 7, '2026-05-26 09:46:46', '2026-06-10 02:15:50'),
-(5, 213, 'MHE-260511-0014-V02', 'Hijau', '5XL', '/images/products/variants/R4ezf9NrTFUOKiByCEerefvoxtafP9CSXNaZVnz4.jpg', 6, '2026-05-26 09:46:46', '2026-06-10 02:15:50'),
-(6, 213, 'MHE-260511-0014-V03', 'Hijau', 'M', '/images/products/variants/lmK67qH8Gj8rRQqfiNepwYBfK0kZXVv38ixzhk9S.jpg', 6, '2026-05-26 09:46:46', '2026-06-10 02:15:50'),
-(7, 213, 'MHE-260511-0014-V04', 'Hijau', '4XL', '/images/products/variants/z8unAv4IE7Qer2NU7nItrl79zeGg5yU9E5Hqs8Rz.jpg', 7, '2026-05-26 09:46:46', '2026-06-10 02:15:50'),
-(8, 213, 'MHE-260511-0014-V05', 'Hijau', 'XXXL', '/images/products/variants/vWEVzVHriuZ7QY2TUFiA8VBaeNbkTHxS6EdknmLt.jpg', 5, '2026-05-26 09:46:46', '2026-06-10 02:15:50'),
-(9, 213, 'MHE-260511-0014-V06', 'Hijau', 'M', '/images/products/variants/accWkNPiwzwrTBFNnbV9JhDvJedYQ0QMv7q0R14O.jpg', 1, '2026-05-26 09:46:47', '2026-06-10 02:15:50'),
-(10, 213, 'MHE-260511-0014-V07', 'Hijau', 'L', '/images/products/variants/ozUyk2V27GVrZCyJbQMqTJfScVucQiCXJlh2U6I0.jpg', 1, '2026-05-26 09:46:47', '2026-06-10 02:15:50'),
-(11, 213, 'MHE-260511-0014-V08', 'Hijau', 'XXL', '/images/products/variants/ctA1Ps0Rklvg8vU3kIVPMNun4Py91WcZrD8YTxMK.jpg', 1, '2026-05-26 09:46:47', '2026-06-10 02:15:50'),
-(12, 213, 'MHE-260511-0014-V09', 'Hitam', '5XL', 'images/products/variants/9130e761-55c5-4fda-a252-20ca37c317cd.png', 5, '2026-05-26 09:46:47', '2026-06-10 02:15:50'),
-(13, 213, 'MHE-260511-0014-V10', 'Hitam', 'XXXL', 'images/products/variants/524899bb-953f-451e-9313-096f5b31e56f.png', 5, '2026-05-26 09:46:47', '2026-06-10 02:15:50'),
-(14, 213, 'MHE-260511-0014-V11', 'Hitam', '4XL', 'images/products/variants/334defab-4ceb-41a6-b656-834b0c1a1ec1.png', 15, '2026-05-26 09:46:47', '2026-06-10 02:15:50'),
-(15, 213, 'MHE-260511-0014-V12', 'Abu-abu', 'XXXL', '/images/products/variants/4tW5D7Z4FDVkOn0QhSjB1KEJCWf0oK8O6hro8Jff.jpg', 10, '2026-05-26 09:46:47', '2026-06-10 02:15:50'),
-(16, 213, 'MHE-260511-0014-V13', 'Abu-abu', '4XL', '/images/products/variants/XZtcUFXo34IpO1UGUzr5dtgiQI7RMUIHWV7H9mTd.jpg', 23, '2026-05-26 09:46:47', '2026-06-10 02:15:50'),
-(17, 213, 'MHE-260511-0014-V14', 'Abu-abu', 'XXL', '/images/products/variants/wAHFb6tQlfXSoUgkHlCePeSQGtnzVxFoywkUYUbh.jpg', 5, '2026-05-26 09:46:47', '2026-06-10 02:15:50'),
-(18, 213, 'MHE-260511-0014-V15', 'Abu-abu', '5XL', '/images/products/variants/AUoS5BrR8BlzQmIi0J630Bi1u2unlg3naTOV2qWk.jpg', 8, '2026-05-26 09:46:47', '2026-06-10 02:15:50'),
-(19, 213, 'MHE-260511-0014-V16', 'UNTR', 'XXL', 'images/products/variants/8b4db075-7a13-4c3e-9ec7-c5242f335d8c.jpg', 5, '2026-05-26 09:46:47', '2026-06-10 02:15:50'),
-(20, 213, 'MHE-260511-0014-V17', 'UNTR', 'L', 'images/products/variants/f70773f6-3a60-44eb-87e9-10bbd8b05ace.jpg', 1, '2026-05-26 09:46:47', '2026-06-10 02:15:50'),
-(21, 213, 'MHE-260511-0014-V18', 'UNTR', 'M', 'images/products/variants/17371903-45de-4855-bf50-273d8be0892f.jpg', 1, '2026-05-26 09:46:47', '2026-06-10 02:15:50'),
-(22, 213, 'MHE-260511-0014-V19', 'UNTR', 'XL', 'images/products/variants/db4e6e3f-8e3b-46f1-9726-98ec742bb613.jpg', 1, '2026-05-26 09:46:47', '2026-06-10 02:15:50'),
+(4, 213, 'MHE-260511-0014-V01', 'Hijau', 'L', '/images/products/variants/CKqH9jvgmlFJ9pUajspkwPCycgZ5RAWsMDtZh3wA.jpg', 7, '2026-05-26 09:46:46', '2026-06-10 08:30:45'),
+(5, 213, 'MHE-260511-0014-V02', 'Hijau', '5XL', '/images/products/variants/R4ezf9NrTFUOKiByCEerefvoxtafP9CSXNaZVnz4.jpg', 6, '2026-05-26 09:46:46', '2026-06-10 08:30:45'),
+(6, 213, 'MHE-260511-0014-V03', 'Hijau', 'M', '/images/products/variants/lmK67qH8Gj8rRQqfiNepwYBfK0kZXVv38ixzhk9S.jpg', 6, '2026-05-26 09:46:46', '2026-06-10 08:30:45'),
+(7, 213, 'MHE-260511-0014-V04', 'Hijau', '4XL', '/images/products/variants/z8unAv4IE7Qer2NU7nItrl79zeGg5yU9E5Hqs8Rz.jpg', 7, '2026-05-26 09:46:46', '2026-06-10 08:30:45'),
+(8, 213, 'MHE-260511-0014-V05', 'Hijau', 'XXXL', '/images/products/variants/vWEVzVHriuZ7QY2TUFiA8VBaeNbkTHxS6EdknmLt.jpg', 5, '2026-05-26 09:46:46', '2026-06-10 08:30:45'),
+(9, 213, 'MHE-260511-0014-V06', 'Hijau', 'M', '/images/products/variants/accWkNPiwzwrTBFNnbV9JhDvJedYQ0QMv7q0R14O.jpg', 1, '2026-05-26 09:46:47', '2026-06-10 08:30:45'),
+(10, 213, 'MHE-260511-0014-V07', 'Hijau', 'L', '/images/products/variants/ozUyk2V27GVrZCyJbQMqTJfScVucQiCXJlh2U6I0.jpg', 1, '2026-05-26 09:46:47', '2026-06-10 08:30:45'),
+(11, 213, 'MHE-260511-0014-V08', 'Hijau', 'XXL', '/images/products/variants/ctA1Ps0Rklvg8vU3kIVPMNun4Py91WcZrD8YTxMK.jpg', 1, '2026-05-26 09:46:47', '2026-06-10 08:30:45'),
+(12, 213, 'MHE-260511-0014-V09', 'Hitam', '5XL', 'images/products/variants/9130e761-55c5-4fda-a252-20ca37c317cd.png', 5, '2026-05-26 09:46:47', '2026-06-10 08:30:45'),
+(13, 213, 'MHE-260511-0014-V10', 'Hitam', 'XXXL', 'images/products/variants/524899bb-953f-451e-9313-096f5b31e56f.png', 5, '2026-05-26 09:46:47', '2026-06-10 08:30:45'),
+(14, 213, 'MHE-260511-0014-V11', 'Hitam', '4XL', 'images/products/variants/334defab-4ceb-41a6-b656-834b0c1a1ec1.png', 15, '2026-05-26 09:46:47', '2026-06-10 08:30:45'),
+(15, 213, 'MHE-260511-0014-V12', 'Abu-abu', 'XXXL', '/images/products/variants/4tW5D7Z4FDVkOn0QhSjB1KEJCWf0oK8O6hro8Jff.jpg', 10, '2026-05-26 09:46:47', '2026-06-10 08:30:45'),
+(16, 213, 'MHE-260511-0014-V13', 'Abu-abu', '4XL', '/images/products/variants/XZtcUFXo34IpO1UGUzr5dtgiQI7RMUIHWV7H9mTd.jpg', 23, '2026-05-26 09:46:47', '2026-06-10 08:30:45'),
+(17, 213, 'MHE-260511-0014-V14', 'Abu-abu', 'XXL', '/images/products/variants/wAHFb6tQlfXSoUgkHlCePeSQGtnzVxFoywkUYUbh.jpg', 5, '2026-05-26 09:46:47', '2026-06-10 08:30:45'),
+(18, 213, 'MHE-260511-0014-V15', 'Abu-abu', '5XL', '/images/products/variants/AUoS5BrR8BlzQmIi0J630Bi1u2unlg3naTOV2qWk.jpg', 8, '2026-05-26 09:46:47', '2026-06-10 08:30:45'),
+(19, 213, 'MHE-260511-0014-V16', 'UNTR', 'XXL', 'images/products/variants/8b4db075-7a13-4c3e-9ec7-c5242f335d8c.jpg', 5, '2026-05-26 09:46:47', '2026-06-10 08:30:45'),
+(20, 213, 'MHE-260511-0014-V17', 'UNTR', 'L', 'images/products/variants/f70773f6-3a60-44eb-87e9-10bbd8b05ace.jpg', 1, '2026-05-26 09:46:47', '2026-06-10 08:30:45'),
+(21, 213, 'MHE-260511-0014-V18', 'UNTR', 'M', 'images/products/variants/17371903-45de-4855-bf50-273d8be0892f.jpg', 1, '2026-05-26 09:46:47', '2026-06-10 08:30:45'),
+(22, 213, 'MHE-260511-0014-V19', 'UNTR', 'XL', 'images/products/variants/db4e6e3f-8e3b-46f1-9726-98ec742bb613.jpg', 1, '2026-05-26 09:46:47', '2026-06-10 08:30:45'),
 (23, 241, 'MHE-260511-0021-V01', 'Abu UT Fresh', 'XXL', '/images/products/variants/Lm94NYIwXVd6UtSVdan0jQnuoAesazmSbGu7t4LY.jpg', 5, '2026-05-26 09:46:47', '2026-06-10 02:20:56'),
 (24, 241, 'MHE-260511-0021-V02', 'Abu UT Fresh', 'XXXL', '/images/products/variants/EJsoqmzjRO4NbryAcxObTIOc8ppmcc7Wo0S45Nax.jpg', 27, '2026-05-26 09:46:47', '2026-06-10 02:20:56'),
 (25, 241, 'MHE-260511-0021-V03', 'Abu UT Fresh', 'XL', '/images/products/variants/9pnvz1snavwpql5M2tEtdWG1c5RtmeRaHpWa3opK.jpg', 50, '2026-05-26 09:46:47', '2026-06-10 02:20:56'),
@@ -559,9 +559,9 @@ INSERT INTO `product_variants` (`id`, `product_id`, `sku`, `color`, `size`, `ima
 (121, 280, 'MHE-260511-0030-V02', 'Giftbox Notebook PB + Pen - Dus 2', NULL, NULL, 15, '2026-05-26 09:46:49', '2026-05-26 09:46:52'),
 (122, 283, 'MHE-260511-0032-V01', 'Putih', NULL, NULL, 10, '2026-05-26 09:46:49', '2026-05-26 09:46:52'),
 (123, 283, 'MHE-260511-0032-V02', 'Black', NULL, NULL, 10, '2026-05-26 09:46:49', '2026-05-26 09:46:52'),
-(124, 180, 'FCY-260511-0049-V01', 'Standard/Default', NULL, 'images/products/variants/9e3c1400-cc43-497b-b95d-e634614b36bb.jpg', 2, '2026-05-26 09:46:49', '2026-06-08 19:13:43'),
-(125, 180, 'FCY-260511-0049-V02', 'warna warni', NULL, 'images/products/variants/87e90818-ee12-44e3-979d-3f8033736782.jpg', 14, '2026-05-26 09:46:49', '2026-06-08 19:13:43'),
-(126, 180, 'FCY-260511-0049-V03', 'bening', NULL, 'images/products/variants/32a324a5-4b71-470e-a95e-9d19ac9b48e2.jpg', 53, '2026-05-26 09:46:49', '2026-06-08 19:13:43');
+(124, 180, 'FCY-260511-0049-V01', 'Standard/Default', '', 'images/products/variants/9e3c1400-cc43-497b-b95d-e634614b36bb.jpg', 2, '2026-05-26 09:46:49', '2026-06-10 09:31:04'),
+(125, 180, 'FCY-260511-0049-V02', 'warna warni', '', 'images/products/variants/87e90818-ee12-44e3-979d-3f8033736782.jpg', 14, '2026-05-26 09:46:49', '2026-06-10 09:31:04'),
+(126, 180, 'FCY-260511-0049-V03', 'bening', '', 'images/products/variants/32a324a5-4b71-470e-a95e-9d19ac9b48e2.jpg', 53, '2026-05-26 09:46:49', '2026-06-10 09:31:04');
 
 -- --------------------------------------------------------
 
@@ -579,7 +579,7 @@ CREATE TABLE `profile_requests` (
   `status` varchar(50) NOT NULL DEFAULT 'PENDING',
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -595,14 +595,35 @@ CREATE TABLE `stock_logs` (
   `stock_after` int NOT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `stock_logs`
 --
 
 INSERT INTO `stock_logs` (`id`, `transaction_id`, `product_id`, `stock_before`, `stock_after`, `created_at`, `updated_at`) VALUES
-(35, 31, 72, 1, 0, '2026-06-10 08:47:57', '2026-06-10 08:47:57');
+(1, 5, 294, 2, 1, '2026-06-04 00:35:39', '2026-06-04 00:35:39'),
+(2, 12, 72, 5, 4, '2026-06-04 00:40:48', '2026-06-04 00:40:48'),
+(3, 13, 72, 4, 2, '2026-06-04 00:47:59', '2026-06-04 00:47:59'),
+(4, 13, 72, 2, 4, '2026-06-04 00:48:09', '2026-06-04 00:48:09'),
+(5, 14, 400, 27, 26, '2026-06-04 00:48:41', '2026-06-04 00:48:41'),
+(6, 15, 400, 26, 23, '2026-06-04 01:08:22', '2026-06-04 01:08:22'),
+(7, 15, 400, 23, 20, '2026-06-04 01:08:52', '2026-06-04 01:08:52'),
+(8, 12, 72, 4, 5, '2026-06-04 01:09:20', '2026-06-04 01:09:20'),
+(9, 5, 294, 1, 2, '2026-06-04 01:09:38', '2026-06-04 01:09:38'),
+(10, 8, 231, 25, 26, '2026-06-04 01:20:13', '2026-06-04 01:20:13'),
+(11, 6, 50, 41, 42, '2026-06-04 01:20:18', '2026-06-04 01:20:18'),
+(13, 17, 400, 20, 19, '2026-06-04 01:52:03', '2026-06-04 01:52:03'),
+(14, 17, 400, 19, 18, '2026-06-04 01:58:22', '2026-06-04 01:58:22'),
+(15, 18, 400, 18, 17, '2026-06-04 02:08:15', '2026-06-04 02:08:15'),
+(16, 19, 400, 17, 16, '2026-06-04 17:35:56', '2026-06-04 17:35:56'),
+(17, 20, 124, 1, 0, '2026-06-04 18:59:29', '2026-06-04 18:59:29'),
+(18, 21, 72, 5, 4, '2026-06-10 01:12:50', '2026-06-10 01:12:50'),
+(19, 23, 72, 4, 3, '2026-06-10 03:22:56', '2026-06-10 03:22:56'),
+(20, 24, 50, 42, 41, '2026-06-10 03:32:11', '2026-06-10 03:32:11'),
+(21, 24, 50, 41, 42, '2026-06-10 03:33:12', '2026-06-10 03:33:12'),
+(22, 25, 72, 3, 2, '2026-06-10 03:34:52', '2026-06-10 03:34:52'),
+(23, 25, 72, 2, 3, '2026-06-10 03:36:10', '2026-06-10 03:36:10');
 
 -- --------------------------------------------------------
 
@@ -621,11 +642,11 @@ CREATE TABLE `transactions` (
   `pending_return_quantity` int NOT NULL DEFAULT '0',
   `returned_at` datetime DEFAULT NULL,
   `return_photo` varchar(255) DEFAULT NULL,
-  `handover_photo` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci,
+  `handover_photo` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
   `handover_notes` text,
   `handover_recipient_name` varchar(255) DEFAULT NULL,
   `handover_timestamp` datetime DEFAULT NULL,
-  `documentation_photo` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci,
+  `documentation_photo` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
   `documentation_notes` text,
   `documentation_uploaded_at` datetime DEFAULT NULL,
   `return_status` varchar(255) DEFAULT NULL,
@@ -662,7 +683,30 @@ CREATE TABLE `transactions` (
 --
 
 INSERT INTO `transactions` (`id`, `product_id`, `product_variant_id`, `type`, `request_type`, `quantity`, `returned_quantity`, `pending_return_quantity`, `returned_at`, `return_photo`, `handover_photo`, `handover_notes`, `handover_recipient_name`, `handover_timestamp`, `documentation_photo`, `documentation_notes`, `documentation_uploaded_at`, `return_status`, `return_reason`, `is_return_draft`, `return_condition`, `status`, `rejection_reason`, `admin_notes`, `manager_notes`, `staff_inventory_notes`, `last_revision_stage`, `return_rejection_reason`, `requester_id`, `approver_id`, `notes`, `used_by`, `division_id`, `created_at`, `updated_at`, `applicant_name`, `applicant_nrp`, `borrow_duration_days`, `borrow_start_date`, `pickup_date`, `expected_return_date`, `event_name`, `event_date`, `documentation_link`) VALUES
-(31, 72, NULL, 'OUT', 'BORROW', 1, 0, 0, NULL, NULL, '[\"storage/handovers/06dfe587-e550-44ad-97fc-3c71eeb0aa0d.jpg\"]', NULL, 'User', '2026-06-10 15:49:04', NULL, NULL, NULL, NULL, NULL, 0, NULL, 'APPROVED', NULL, '', NULL, '', NULL, NULL, 8, 9, NULL, 'User', 3, '2026-06-10 08:46:13', '2026-06-10 08:49:39', 'User', '1234567', 1, '2026-06-10', NULL, '2026-06-11', 'Pinjam Angklung', '2026-06-10', NULL);
+(1, 1, NULL, 'IN', 'BORROW', 5, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 'APPROVED', NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, NULL, NULL, NULL, '2026-05-11 12:16:11', '2026-05-11 12:16:20', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(2, 2, NULL, 'IN', 'BORROW', 50, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 'APPROVED', NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, NULL, NULL, NULL, '2026-05-11 12:19:00', '2026-05-11 12:20:54', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(3, 2, NULL, 'IN', 'BORROW', 10, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 'APPROVED', NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, NULL, NULL, NULL, '2026-05-11 12:20:13', '2026-05-11 12:21:00', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(4, 2, NULL, 'IN', 'BORROW', 3, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 'APPROVED', NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, NULL, NULL, NULL, '2026-05-11 12:20:41', '2026-05-11 12:20:57', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(5, 294, NULL, 'OUT', 'BORROW', 1, 1, 0, '2026-06-04 01:09:38', 'images/return/48e38a67-f012-4238-870d-7320c7e2b043.jpg', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'baik', NULL, 0, NULL, 'APPROVED', NULL, 'halo boleh ya', NULL, NULL, NULL, NULL, 3, 4, 'ok', 'Staff User', 3, '2026-06-02 01:10:48', '2026-06-04 01:09:38', 'Staff User', '44939834', NULL, '2026-06-11', NULL, '2026-06-11', 'Testing event', '2026-06-16', NULL),
+(6, 50, NULL, 'OUT', 'BORROW', 1, 1, 0, '2026-06-04 01:20:18', 'images/return/06ccdaca-6200-4016-9933-4973629acf8b.jpeg', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'baik', NULL, 0, NULL, 'APPROVED', NULL, NULL, NULL, NULL, NULL, NULL, 3, 4, 'oko', 'Staff User', 3, '2026-06-02 01:23:02', '2026-06-04 01:20:18', 'Staff User', '44939834', NULL, '2026-06-16', NULL, '2026-06-16', 'Testing event', '2026-06-16', NULL),
+(7, 152, NULL, 'OUT', 'BORROW', 1, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 'PENDING_MANAGER', NULL, NULL, NULL, NULL, NULL, NULL, 3, NULL, 'ok', 'Staff User', 3, '2026-06-02 01:37:30', '2026-06-02 01:55:55', 'Staff User', '44939834', NULL, '2026-06-02', NULL, '2026-06-02', 'Testing event', '2026-06-02', NULL),
+(8, 231, NULL, 'OUT', 'BORROW', 1, 1, 0, '2026-06-04 01:20:13', 'images/return/4f5ce0b3-d253-4863-ab05-14355afe9b59.jpg', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'baik', NULL, 0, NULL, 'APPROVED', NULL, NULL, NULL, NULL, NULL, NULL, 3, 1, 'ok', 'Staff User', 3, '2026-06-02 01:49:16', '2026-06-04 01:20:13', 'Staff User', '44939834', NULL, '2026-06-02', NULL, '2026-06-02', 'Testing event', '2026-06-02', NULL),
+(9, 400, NULL, 'OUT', 'GIVEAWAY', 1, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 'APPROVED', NULL, NULL, NULL, NULL, NULL, NULL, 3, 1, 'ok', 'Staff User', 3, '2026-06-02 01:59:40', '2026-06-02 02:00:10', 'Staff User', '44939834', NULL, NULL, NULL, NULL, 'Testing event', '2026-06-02', NULL),
+(10, 400, NULL, 'OUT', 'GIVEAWAY', 1, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 'APPROVED', NULL, NULL, NULL, NULL, NULL, NULL, 3, 2, NULL, 'Staff User', 3, '2026-06-03 07:32:02', '2026-06-03 07:49:02', 'Staff User', '44939834', NULL, NULL, NULL, NULL, 'testing', '2026-06-04', NULL),
+(11, 294, NULL, 'OUT', 'BORROW', 1, 1, 0, '2026-06-03 07:58:04', 'returns/jKCEN7viU0YJiSSP0h7KTcxRm9d4uJX7fUaH4ylR.jpg', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'baik', NULL, 0, NULL, 'APPROVED', NULL, NULL, NULL, NULL, NULL, NULL, 3, 4, NULL, 'Staff User', 3, '2026-06-03 07:32:02', '2026-06-03 07:58:04', 'Staff User', '44939834', NULL, '2026-06-03', NULL, '2026-06-05', 'testing', '2026-06-04', NULL),
+(12, 72, NULL, 'OUT', 'BORROW', 1, 1, 0, '2026-06-04 01:09:20', 'images/return/5d2d84b7-b14f-405c-9cda-f3d4b7aeab36.jpg', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'baik', NULL, 0, NULL, 'APPROVED', NULL, 'bolehhhh', NULL, NULL, NULL, NULL, 4, 4, 'lklm', 'Super Administrator', 3, '2026-06-04 00:40:37', '2026-06-04 01:09:20', 'Super Administrator', '35610885', 1, '2026-06-04', NULL, '2026-06-05', 'cghgjgjk', '2026-06-04', NULL),
+(13, 72, NULL, 'OUT', 'BORROW', 2, 2, 0, '2026-06-04 00:48:09', 'forced-by-admin', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'baik', NULL, 0, NULL, 'APPROVED', NULL, '', NULL, NULL, NULL, NULL, 4, 4, 'pinjem ya', 'Super Administrator', 3, '2026-06-04 00:47:06', '2026-06-04 00:48:09', 'Super Administrator', '35610885', 1, '2026-06-04', NULL, '2026-06-05', 'minjam', '2026-06-04', NULL),
+(14, 400, 37, 'OUT', 'GIVEAWAY', 1, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 'REJECTED', 'ga cukup rek', 'ok', 'ga cukup rek', NULL, NULL, NULL, 4, 2, 'yyyyy', 'Super Administrator', 3, '2026-06-04 00:48:32', '2026-06-04 00:54:19', 'Super Administrator', '35610885', 0, NULL, '2026-06-04', NULL, 'iujknkkjjnn', '2026-06-04', NULL),
+(15, 400, 44, 'OUT', 'GIVEAWAY', 3, 0, 0, '2026-06-04 01:08:52', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 'APPROVED', NULL, NULL, 'Ya boleh kok', NULL, NULL, NULL, 4, 2, 'Mau bos boleh ga?', 'Super Administrator', 3, '2026-06-04 01:08:13', '2026-06-04 01:08:52', 'Super Administrator', '35610885', 0, NULL, '2026-06-04', NULL, 'Mau', '2026-06-04', NULL),
+(17, 400, 38, 'OUT', 'GIVEAWAY', 1, 0, 0, '2026-06-04 01:58:23', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 'APPROVED', NULL, NULL, NULL, NULL, NULL, NULL, 4, 2, NULL, 'Super Administrator', 3, '2026-06-04 01:51:29', '2026-06-04 01:58:23', 'Super Administrator', '35610885', 0, NULL, '2026-06-04', NULL, 'asdadsad', '2026-06-04', NULL),
+(18, 400, 40, 'OUT', 'GIVEAWAY', 1, 0, 0, '2026-06-04 02:08:15', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 'APPROVED', NULL, NULL, NULL, NULL, NULL, NULL, 4, 4, 'asas', 'Super Administrator', 3, '2026-06-04 02:05:07', '2026-06-04 02:08:15', 'Super Administrator', '35610885', 0, NULL, '2026-06-04', NULL, 'ASAASA', '2026-06-04', NULL),
+(19, 400, 45, 'OUT', 'GIVEAWAY', 1, 0, 0, '2026-06-04 17:35:56', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 'APPROVED', NULL, '', NULL, NULL, NULL, NULL, 4, 4, NULL, 'Super Administrator', 3, '2026-06-04 17:35:47', '2026-06-04 17:35:56', 'Super Administrator', '35610885', 0, NULL, '2026-06-05', NULL, 'Yup', '2026-06-06', NULL),
+(20, 124, NULL, 'OUT', 'BORROW', 1, 0, 0, NULL, NULL, 'images/handover/172e34c7-20cb-4385-b2d9-55192ed41b7f.jpg', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 'APPROVED', NULL, '', NULL, NULL, NULL, NULL, 4, 4, 'yaya', 'Super Administrator', 3, '2026-06-04 18:59:02', '2026-06-04 19:00:04', 'Super Administrator', '35610885', 1, '2026-06-05', NULL, '2026-06-06', 'Program', '2026-06-06', NULL),
+(21, 72, NULL, 'OUT', 'BORROW', 1, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 'WAITING_HANDOVER', NULL, '', NULL, NULL, NULL, NULL, 4, 5, 'yayaya\n', 'Super Administrator', 3, '2026-06-10 01:11:38', '2026-06-10 01:12:51', 'Super Administrator', '35610885', 1, '2026-06-10', NULL, '2026-06-11', 'Testing', '2026-06-10', NULL),
+(23, 72, NULL, 'OUT', 'BORROW', 1, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 'WAITING_HANDOVER', NULL, '', NULL, '', NULL, NULL, 4, 4, NULL, 'Super Administrator', 3, '2026-06-10 03:22:42', '2026-06-10 03:22:56', 'Super Administrator', '35610885', 1, '2026-06-10', NULL, '2026-06-11', 'Test FInal', '2026-06-10', NULL),
+(24, 50, NULL, 'OUT', 'BORROW', 1, 1, 0, '2026-06-10 03:33:12', 'storage/returns/d86ed2ae-555b-4c3b-9cd9-ceb7c771894a.jpg', '[\"storage/handovers/588d48ea-60af-43cc-848f-a8f49927c804.jpg\"]', NULL, 'Super Administrator', '2026-06-10 10:32:15', NULL, NULL, NULL, 'baik', NULL, 0, NULL, 'APPROVED', NULL, '', NULL, '', NULL, NULL, 4, 4, NULL, 'Super Administrator', 3, '2026-06-10 03:31:50', '2026-06-10 03:33:12', 'Super Administrator', '35610885', 1, '2026-06-10', NULL, '2026-06-11', 'Test Final Fix', '2026-06-10', NULL),
+(25, 72, NULL, 'OUT', 'BORROW', 1, 1, 0, '2026-06-10 03:36:10', 'storage/returns/9ed00b1d-9083-4923-a4d9-dbe18bdb8a29.jpg', '[\"storage/handovers/605fd641-31db-44af-b809-a19a23fd36b0.jpg\"]', NULL, 'Super Administrator', '2026-06-10 10:35:10', NULL, NULL, NULL, 'baik', NULL, 0, NULL, 'APPROVED', NULL, '', NULL, '', NULL, NULL, 4, 4, NULL, 'Super Administrator', 3, '2026-06-10 03:34:17', '2026-06-10 03:36:10', 'Super Administrator', '35610885', 1, '2026-06-10', NULL, '2026-06-11', 'rt', '2026-06-10', NULL),
+(26, 400, 38, 'OUT', 'GIVEAWAY', 1, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 'PENDING_STAFF_INVENTORY', NULL, NULL, NULL, NULL, NULL, NULL, 4, NULL, NULL, 'Super Administrator', 3, '2026-06-10 05:46:41', '2026-06-10 05:46:41', 'Super Administrator', '35610885', 0, NULL, '2026-06-10', NULL, 'adlahkd', '2026-06-10', NULL);
 
 -- --------------------------------------------------------
 
@@ -675,7 +719,7 @@ CREATE TABLE `units` (
   `name` varchar(255) NOT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `units`
@@ -731,24 +775,24 @@ CREATE TABLE `users` (
   `poin` int NOT NULL DEFAULT '0',
   `email_verified_at` datetime DEFAULT NULL,
   `password` varchar(255) NOT NULL,
-  `role` varchar(255) NOT NULL,
+  `role` varchar(10) DEFAULT 'staff',
   `division_id` bigint DEFAULT NULL,
   `remember_token` varchar(100) DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `users`
 --
 
 INSERT INTO `users` (`id`, `name`, `nrp`, `email`, `poin`, `email_verified_at`, `password`, `role`, `division_id`, `remember_token`, `created_at`, `updated_at`) VALUES
-(4, 'Super Administrator', '35610885', 'superadmin@wms.com', 400, NULL, '$2y$12$X2dRJ8Lk7hvYkgFj1MdVUe3QlpWWMxIs3PaSJV0M4oUuXz4H5rBS.', 'Super Admin', 3, NULL, '2026-05-26 09:46:53', '2026-06-10 08:33:44'),
-(8, 'User', '1234567', 'user@wms.com', 1000, NULL, '$2a$11$noAkg5VFdn8DfhSfbVb/q.kNXwc70.nhIPQ7g9wI8EyG7nf3UeKRS', 'User', 3, NULL, '2026-06-10 08:41:21', '2026-06-10 08:41:21'),
-(9, 'Staff Inventoris', '1209384123', 'inventoris@wms.com', 1000, NULL, '$2a$11$o/aqo6ddPkU/4Dq/CUrR9OMu.U0TfZSbGAqDjF/l.jjopu8vNj7T2', 'Staff Inventoris', 3, NULL, '2026-06-10 08:41:42', '2026-06-10 08:41:42'),
-(10, 'PIC Studio', '10239842103', 'studio@wms.com', 1000, NULL, '$2a$11$wMDE.KubMumYvf45jXEiJeo1hCz9a2GI8kDlJdvUywrBoLvmyJ/HW', 'PIC Studio', 3, NULL, '2026-06-10 08:42:01', '2026-06-10 08:42:01'),
-(11, 'Team Leader', '124928310123', 'tl@wms.com', 1000, NULL, '$2a$11$kWRMEQrLlkN6OpZFP3NspOojIiA0Q0TfuP7PdyWFDbQHcc8lbctFu', 'Team Leader Infrastructure', 3, NULL, '2026-06-10 08:42:43', '2026-06-10 08:42:43'),
-(12, 'Manager', '10923841203', 'manager@wms.com', 1000, NULL, '$2a$11$bm9PM/bqABSOQkIOzbmwCeYEVV7j47xEOWEimSqazU13HAbXJJO.q', 'Manager', 3, NULL, '2026-06-10 08:43:45', '2026-06-10 08:43:45');
+(1, 'Admin User', '73216958', 'admin@wms.com', 1000, '2026-05-11 11:30:04', '$2y$12$6frRu6KhnRFsPL8sXW7ls.4QQk9rtkvkgxoFYp/tqp9/5zZHcEE.m', 'admin', 3, 'tupohEJ7W6UHk61RcHxSCWsrMtF71Ut35MCUqFMMNMf3zv6Ykmtieo1jPEV6', '2026-05-11 11:30:04', '2026-05-26 09:46:53'),
+(2, 'Manager User', '44920801', 'manager@wms.com', 1000, '2026-05-11 11:30:04', '$2y$12$JCmEGC2gvkTljXwVWKizbuxsCoVxVOHmIdAtS7KwohAJAa7IeGuGK', 'manager', 3, 'qxl2W9eeqk', '2026-05-11 11:30:04', '2026-05-26 09:46:53'),
+(3, 'Staff User', '44727320', 'staff@wms.com', 1000, '2026-05-11 11:30:05', '$2y$12$n6yveeCHq3V/57rF7HbMyOAzuCa7WIXOkkQkBjkxT0B77Vaoa1Oy.', 'staff', 3, 'ljf4NYEGgb', '2026-05-11 11:30:05', '2026-05-26 09:46:53'),
+(4, 'Super Administrator', '35610885', 'superadmin@wms.com', 400, NULL, '$2y$12$X2dRJ8Lk7hvYkgFj1MdVUe3QlpWWMxIs3PaSJV0M4oUuXz4H5rBS.', 'superadmin', 3, NULL, '2026-05-26 09:46:53', '2026-05-26 09:46:53'),
+(5, 'Dzaky', '12098213', 'tester@tester.com', 1000, NULL, '$2a$11$hWecE2pogdAr9UY28T/VP.RVf5ig13n4bjydfzaxTI587t6X8KLAm', 'admin', 5, NULL, '2026-06-10 01:10:16', '2026-06-10 02:50:04'),
+(6, 'User', '1340120938', 'user@wms.com', 1000, NULL, '$2a$11$/YIY4ZhN/svsgPjWHwjyK.aA5Nqs9bXnsBTyN4uKy.fze4NXzUAzS', 'User', 2, NULL, '2026-06-10 03:03:39', '2026-06-10 03:03:39');
 
 -- --------------------------------------------------------
 
@@ -761,26 +805,18 @@ CREATE TABLE `user_admin_roles` (
   `UserId` bigint NOT NULL,
   `AdminRoleId` char(36) CHARACTER SET ascii COLLATE ascii_general_ci NOT NULL,
   `CreatedAt` datetime(6) NOT NULL,
-  `CreatedBy` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `CreatedBy` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `CategoryId` bigint DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `user_admin_roles`
 --
 
 INSERT INTO `user_admin_roles` (`Id`, `UserId`, `AdminRoleId`, `CreatedAt`, `CreatedBy`, `CategoryId`) VALUES
-('0de70338-8d3e-4f84-91ff-1ddbeb4b9f9a', 4, '0aa48329-85e7-480d-9e62-21cd0dec8e86', '2026-06-10 06:38:44.561251', 'Super Administrator', NULL),
-('17a73985-9334-4708-a4c6-90559bbac39d', 11, '6969448e-153b-43fc-8be0-1dda5927a8a1', '2026-06-10 08:45:34.155718', 'Super Administrator', 4),
-('32a3c3d6-6fe5-4bf3-b6f3-3f6b1ae8cee0', 9, '063e920c-626c-4fa8-a8b9-35900bb7b7b7', '2026-06-10 08:45:23.814723', 'Super Administrator', NULL),
-('4362467e-54cf-49cc-8617-84977d335143', 11, '6969448e-153b-43fc-8be0-1dda5927a8a1', '2026-06-10 08:45:34.154226', 'Super Administrator', 8),
-('5f91abd4-693d-48aa-a45a-1a44da1f45bc', 11, '6969448e-153b-43fc-8be0-1dda5927a8a1', '2026-06-10 08:45:34.157419', 'Super Administrator', 6),
-('7c4290eb-8aab-4db0-ad90-f38ee1360bd8', 12, 'd941584b-880a-4d31-aa4c-ca04a29a43d4', '2026-06-10 08:45:02.836662', 'Super Administrator', NULL),
-('7e73df52-cf3c-49b4-bce7-b318edad0152', 11, '6969448e-153b-43fc-8be0-1dda5927a8a1', '2026-06-10 08:45:34.154973', 'Super Administrator', 5),
-('8c3e60fc-3896-4747-9cb1-5fcf4c3b9a10', 11, '6969448e-153b-43fc-8be0-1dda5927a8a1', '2026-06-10 08:45:34.156322', 'Super Administrator', 3),
-('a071b065-b89a-4a7c-91b9-a7ec124614a6', 10, 'ec5f41d3-cec6-4d33-a220-81a18c9e1cfd', '2026-06-10 08:45:12.791888', 'Super Administrator', 9),
-('af61ead0-3b81-4cfe-97a2-0f037df58243', 11, '6969448e-153b-43fc-8be0-1dda5927a8a1', '2026-06-10 08:45:34.156960', 'Super Administrator', 1),
-('f1ec177d-7625-49d3-b953-aa235337b791', 8, 'e6ad3624-7c19-48cb-a746-b0f58f13ad31', '2026-06-10 08:45:47.051160', 'Super Administrator', NULL);
+('36a2d501-7687-400c-a8e5-911a180e1bb6', 5, '063e920c-626c-4fa8-a8b9-35900bb7b7b7', '2026-06-10 01:10:41.028001', 'Super Administrator', NULL),
+('976f60fb-4160-41fb-8cc6-399d20e352dd', 1, 'ec5f41d3-cec6-4d33-a220-81a18c9e1cfd', '2026-06-10 01:13:52.888094', 'Super Administrator', NULL),
+('ef3351b4-1c3a-4312-a707-f84f4cc17ef9', 3, 'e6ad3624-7c19-48cb-a746-b0f58f13ad31', '2026-06-10 02:46:46.316230', 'Super Administrator', NULL);
 
 -- --------------------------------------------------------
 
@@ -791,7 +827,7 @@ INSERT INTO `user_admin_roles` (`Id`, `UserId`, `AdminRoleId`, `CreatedAt`, `Cre
 CREATE TABLE `__efmigrationshistory` (
   `MigrationId` varchar(150) NOT NULL,
   `ProductVersion` varchar(32) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `__efmigrationshistory`
@@ -928,7 +964,7 @@ ALTER TABLE `categories`
 -- AUTO_INCREMENT for table `divisions`
 --
 ALTER TABLE `divisions`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT for table `locations`
@@ -958,7 +994,7 @@ ALTER TABLE `profile_requests`
 -- AUTO_INCREMENT for table `stock_logs`
 --
 ALTER TABLE `stock_logs`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
+  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
 
 --
 -- AUTO_INCREMENT for table `transactions`
@@ -976,7 +1012,7 @@ ALTER TABLE `units`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- Constraints for dumped tables
@@ -1034,160 +1070,10 @@ ALTER TABLE `user_admin_roles`
   ADD CONSTRAINT `FK_user_admin_roles_categories_CategoryId` FOREIGN KEY (`CategoryId`) REFERENCES `categories` (`id`) ON DELETE RESTRICT,
   ADD CONSTRAINT `FK_user_admin_roles_users_UserId` FOREIGN KEY (`UserId`) REFERENCES `users` (`id`) ON DELETE RESTRICT;
 
---
--- Dumping data for table `categories` (New from clean)
---
 
-INSERT INTO `categories` (`id`,`name`,`description`,`created_at`,`updated_at`) VALUES
-  (1 'Makanan'    NULL '2026-05-11 12:17:24' '2026-05-11 12:17:24'),
-  (3 'Game'       NULL '2026-05-11 13:40:10' '2026-05-11 13:40:10'),
-  (4 'Facility'   NULL '2026-05-11 13:40:10' '2026-05-11 13:40:10'),
-  (5 'ATK'        NULL '2026-05-11 13:40:10' '2026-05-11 13:40:10'),
-  (6 'Merchandise'NULL '2026-05-11 13:40:10' '2026-05-11 13:40:10'),
-  (8 'Alat Musik' NULL '2026-05-11 13:40:11' '2026-05-11 13:40:11');
-
---
--- Dumping data for table `divisions` (New from clean)
---
-
-INSERT INTO `divisions` (`id`,`name`,`description`,`created_at`,`updated_at`) VALUES
-  (1'CCS' NULL'2026-05-26 09:46:46''2026-05-26 09:46:46'),
-  (2'CFA' NULL'2026-05-26 09:46:46''2026-05-26 09:46:46'),
-  (3'CHCU'NULL'2026-05-26 09:46:46''2026-05-26 09:46:46'),
-  (4'CRA' NULL'2026-05-26 09:46:46''2026-05-26 09:46:46'),
-  (5'CST' NULL'2026-05-26 09:46:46''2026-05-26 09:46:46'),
-  (6'DAD' NULL'2026-05-26 09:46:46''2026-05-26 09:46:46'),
-  (7'GLG' NULL'2026-05-26 09:46:46''2026-05-26 09:46:46'),
-  (8'MKT' NULL'2026-05-26 09:46:46''2026-05-26 09:46:46'),
-  (9'PIN' NULL'2026-05-26 09:46:46''2026-05-26 09:46:46'),
-  (10'PRT' NULL'2026-05-26 09:46:46''2026-05-26 09:46:46'),
-  (11'SOD' NULL'2026-05-26 09:46:46''2026-05-26 09:46:46'),
-  (12'SVC' NULL'2026-05-26 09:46:46''2026-05-26 09:46:46'),
-  (13'TMO' NULL'2026-05-26 09:46:46''2026-05-26 09:46:46'),
-  (14'TSO' NULL'2026-05-26 09:46:46''2026-05-26 09:46:46');
-
---
--- Dumping data for table `locations` (New from clean)
---
-
-INSERT INTO `locations` (`id`,`name`,`description`,`created_at`,`updated_at`) VALUES
-  (1'Gudang'      'Gudang lt 1''2026-05-11 12:57:18''2026-05-11 12:57:18'),
-  (2'Storage Room'NULL         '2026-05-11 13:40:10''2026-05-11 13:40:10'),
-  (3'ATK'         NULL         '2026-05-11 13:40:10''2026-05-11 13:40:10'),
-  (4'Makeup Room' NULL         '2026-05-11 13:40:10''2026-05-11 13:40:10'),
-  (5'Merchandise' NULL         '2026-05-11 13:40:11''2026-05-11 13:40:11'),
-  (6'7.1.12.2'    NULL         '2026-05-11 13:40:11''2026-05-11 13:40:11'),
-  (7'7.1.12.3'    NULL         '2026-05-11 13:40:11''2026-05-11 13:40:11'),
-  (8'7.1.11.1'    NULL         '2026-05-11 13:40:11''2026-05-11 13:40:11'),
-  (9'7.1.11.2'    NULL         '2026-05-11 13:40:11''2026-05-11 13:40:11'),
-  (10'7.1.11.3'    NULL         '2026-05-11 13:40:11''2026-05-11 13:40:11'),
-  (11'7.1.11.5'    NULL         '2026-05-11 13:40:11''2026-05-11 13:40:11');
-
---
--- Dumping data for table `units` (New from clean)
---
-
-INSERT INTO `units` (`id`,`name`,`created_at`,`updated_at`) VALUES
-  (1'Mix (4 Bungkus Kecil, 1 Pack Besar, 3 Roll Bekas)''2026-05-26 09:46:41''2026-05-26 09:46:41'),
-  (2'Pack Jaring'                                       '2026-05-26 09:46:41''2026-05-26 09:46:41'),
-  (3'Pcs'                                               '2026-05-26 09:46:41''2026-05-26 09:46:41'),
-  (4'2M X 1M'                                           '2026-05-26 09:46:41''2026-05-26 09:46:41'),
-  (5'Pasang'                                            '2026-05-26 09:46:41''2026-05-26 09:46:41'),
-  (6'Bungkus'                                           '2026-05-26 09:46:41''2026-05-26 09:46:41'),
-  (7'Pack'                                              '2026-05-26 09:46:41''2026-05-26 09:46:41'),
-  (8'Sachet'                                            '2026-05-26 09:46:41''2026-05-26 09:46:41'),
-  (9'Sachet Kecil'                                      '2026-05-26 09:46:41''2026-05-26 09:46:41'),
-  (10'Box'                                               '2026-05-26 09:46:41''2026-05-26 09:46:41'),
-  (11'Lembar'                                            '2026-05-26 09:46:41''2026-05-26 09:46:41'),
-  (12'Buah'                                              '2026-05-26 09:46:41''2026-05-26 09:46:41'),
-  (13'Toples'                                            '2026-05-26 09:46:42''2026-05-26 09:46:42'),
-  (14'Set'                                               '2026-05-26 09:46:42''2026-05-26 09:46:42'),
-  (15'7 Pack (Warna-warni), 1 Pack Besar (Biru), 14 Roll''2026-05-26 09:46:42''2026-05-26 09:46:42'),
-  (16'Bundle'                                            '2026-05-26 09:46:42''2026-05-26 09:46:42'),
-  (17'Map'                                               '2026-05-26 09:46:42''2026-05-26 09:46:42'),
-  (18'Ikat'                                              '2026-05-26 09:46:42''2026-05-26 09:46:42'),
-  (19'Plastik'                                           '2026-05-26 09:46:42''2026-05-26 09:46:42'),
-  (20'Unit'                                              '2026-05-26 09:46:42''2026-05-26 09:46:42'),
-  (21'Board'                                             '2026-05-26 09:46:43''2026-05-26 09:46:43'),
-  (22'Roll'                                              '2026-05-26 09:46:43''2026-05-26 09:46:43'),
-  (23'Pax'                                               '2026-05-26 09:46:43''2026-05-26 09:46:43'),
-  (24'Parts'                                             '2026-05-26 09:46:43''2026-05-26 09:46:43'),
-  (25'Blok'                                              '2026-05-26 09:46:43''2026-05-26 09:46:43'),
-  (26'Stel'                                              '2026-05-26 09:46:43''2026-05-26 09:46:43'),
-  (27'Kaleng'                                            '2026-05-26 09:46:43''2026-05-26 09:46:43'),
-  (28'5'                                                 '2026-05-26 09:46:43''2026-05-26 09:46:43'),
-  (29'Buku'                                              '2026-05-26 09:46:43''2026-05-26 09:46:43'),
-  (30'Kantong'                                           '2026-05-26 09:46:44''2026-05-26 09:46:44'),
-  (31'kg'                                                '2026-05-26 09:46:46''2026-05-26 09:46:46'),
-  (32'liter'                                             '2026-05-26 09:46:46''2026-05-26 09:46:46'),
-  (33'meter'                                             '2026-05-26 09:46:46''2026-05-26 09:46:46');
-
---
--- Dumping data for table `users` (New from clean)
---
-
-INSERT INTO `users` (`id`,`name`,`nrp`,`email`,`poin`,`email_verified_at`,`password`,`role`,`division_id`,`remember_token`,`created_at`,`updated_at`) VALUES
-  (1'Admin User'        '73216958''admin@wms.com'     1000'2026-05-11 11:30:04''$2y$12$6frRu6KhnRFsPL8sXW7ls.4QQk9rtkvkgxoFYp/tqp9/5zZHcEE.m''admin'      3'tupohEJ7W6UHk61RcHxSCWsrMtF71Ut35MCUqFMMNMf3zv6Ykmtieo1jPEV6''2026-05-11 11:30:04''2026-05-26 09:46:53'),
-  (2'Manager User'      '44920801''manager@wms.com'   1000'2026-05-11 11:30:04''$2y$12$JCmEGC2gvkTljXwVWKizbuxsCoVxVOHmIdAtS7KwohAJAa7IeGuGK' 'manager'    3'qxl2W9eeqk'                                                   '2026-05-11 11:30:04''2026-05-26 09:46:53'),
-  (3'Staff User'        '44727320''staff@wms.com'     1000'2026-05-11 11:30:05''$2y$12$n6yveeCHq3V/57rF7HbMyOAzuCa7WIXOkkQkBjkxT0B77Vaoa1Oy.''staff'      3'ljf4NYEGgb'                                                   '2026-05-11 11:30:05''2026-05-26 09:46:53'),
-  (4'Super Administrator''35610885''superadmin@wms.com' 1000'2026-05-11 11:30:05''$2y$12$X2dRJ8Lk7hvYkgFj1MdVUe3QlpWWMxIs3PaSJV0M4oUuXz4H5rBS.''superadmin' 3NULL                                                           '2026-05-26 09:46:53''2026-05-26 09:46:53');
-
---
--- Dumping data for table `transactions` (New from clean)
---
-
-INSERT INTO `transactions` (`id`,`product_id`,`product_variant_id`,`type`,`request_type`,`quantity`,`returned_quantity`,`pending_return_quantity`,`returned_at`,`return_photo`,`handover_photo`,`handover_notes`,`handover_recipient_name`,`handover_timestamp`,`documentation_photo`,`documentation_notes`,`documentation_uploaded_at`,`return_status`,`return_reason`,`is_return_draft`,`return_condition`,`status`,`rejection_reason`,`admin_notes`,`manager_notes`,`staff_inventory_notes`,`last_revision_stage`,`return_rejection_reason`,`requester_id`,`approver_id`,`notes`,`used_by`,`division_id`,`created_at`,`updated_at`,`applicant_name`,`applicant_nrp`,`borrow_duration_days`,`borrow_start_date`,`pickup_date`,`expected_return_date`,`event_name`,`event_date`,`documentation_link`) VALUES
-  (11NULL'IN''BORROW'500NULLNULLNULLNULLNULLNULLNULLNULLNULLNULLNULL0NULL'APPROVED'NULLNULLNULLNULLNULLNULL11NULLNULLNULL'2026-05-11 12:16:11''2026-05-11 12:16:20'NULLNULLNULLNULLNULLNULLNULLNULLNULL),
-  (22NULL'IN''BORROW'5000NULLNULLNULLNULLNULLNULLNULLNULLNULLNULLNULL0NULL'APPROVED'NULLNULLNULLNULLNULLNULL11NULLNULLNULL'2026-05-11 12:19:00''2026-05-11 12:20:54'NULLNULLNULLNULLNULLNULLNULLNULLNULL),
-  (32NULL'IN''BORROW'1000NULLNULLNULLNULLNULLNULLNULLNULLNULLNULLNULL0NULL'APPROVED'NULLNULLNULLNULLNULLNULL11NULLNULLNULL'2026-05-11 12:20:13''2026-05-11 12:21:00'NULLNULLNULLNULLNULLNULLNULLNULLNULL),
-  (42NULL'IN''BORROW'300NULLNULLNULLNULLNULLNULLNULLNULLNULLNULLNULL0NULL'APPROVED'NULLNULLNULLNULLNULLNULL11NULLNULLNULL'2026-05-11 12:20:41''2026-05-11 12:20:57'NULLNULLNULLNULLNULLNULLNULLNULLNULL),
-  (5294NULL'OUT''BORROW'110'2026-06-04 01:09:38''images/return/48e38a67-f012-4238-870d-7320c7e2b043.jpg'NULLNULLNULLNULLNULLNULLNULL'baik'NULL0NULL'APPROVED'NULL'halo boleh ya'NULLNULLNULLNULL34'ok''Staff User'3'2026-06-02 01:10:48''2026-06-04 01:09:38''Staff User''44939834'NULL'2026-06-11'NULL'2026-06-11''Testing event''2026-06-16'NULL),
-  (650NULL'OUT''BORROW'110'2026-06-04 01:20:18''images/return/06ccdaca-6200-4016-9933-4973629acf8b.jpeg'NULLNULLNULLNULLNULLNULLNULL'baik'NULL0NULL'APPROVED'NULLNULLNULLNULLNULLNULL34'oko''Staff User'3'2026-06-02 01:23:02''2026-06-04 01:20:18''Staff User''44939834'NULL'2026-06-16'NULL'2026-06-16''Testing event''2026-06-16'NULL),
-  (7152NULL'OUT''BORROW'100NULLNULLNULLNULLNULLNULLNULLNULLNULLNULLNULL0NULL'PENDING_MANAGER'NULLNULLNULLNULLNULLNULL3NULL'ok''Staff User'3'2026-06-02 01:37:30''2026-06-02 01:55:55''Staff User''44939834'NULL'2026-06-02'NULL'2026-06-02''Testing event''2026-06-02'NULL),
-  (8231NULL'OUT''BORROW'110'2026-06-04 01:20:13''images/return/4f5ce0b3-d253-4863-ab05-14355afe9b59.jpg'NULLNULLNULLNULLNULLNULLNULL'baik'NULL0NULL'APPROVED'NULLNULLNULLNULLNULLNULL31'ok''Staff User'3'2026-06-02 01:49:16''2026-06-04 01:20:13''Staff User''44939834'NULL'2026-06-02'NULL'2026-06-02''Testing event''2026-06-02'NULL),
-  (9400NULL'OUT''GIVEAWAY'100NULLNULLNULLNULLNULLNULLNULLNULLNULLNULLNULL0NULL'APPROVED'NULLNULLNULLNULLNULLNULL31'ok''Staff User'3'2026-06-02 01:59:40''2026-06-02 02:00:10''Staff User''44939834'NULLNULLNULLNULL'Testing event''2026-06-02'NULL),
-  (10400NULL'OUT''GIVEAWAY'100NULLNULLNULLNULLNULLNULLNULLNULLNULLNULLNULL0NULL'APPROVED'NULLNULLNULLNULLNULLNULL32NULL'Staff User'3'2026-06-03 07:32:02''2026-06-03 07:49:02''Staff User''44939834'NULLNULLNULLNULL'testing''2026-06-04'NULL),
-  (11294NULL'OUT''BORROW'110'2026-06-03 07:58:04''returns/jKCEN7viU0YJiSSP0h7KTcxRm9d4uJX7fUaH4ylR.jpg'NULLNULLNULLNULLNULLNULLNULL'baik'NULL0NULL'APPROVED'NULLNULLNULLNULLNULLNULL34NULL'Staff User'3'2026-06-03 07:32:02''2026-06-03 07:58:04''Staff User''44939834'NULL'2026-06-03'NULL'2026-06-05''testing''2026-06-04'NULL),
-  (1272NULL'OUT''BORROW'110'2026-06-04 01:09:20''images/return/5d2d84b7-b14f-405c-9cda-f3d4b7aeab36.jpg'NULLNULLNULLNULLNULLNULLNULL'baik'NULL0NULL'APPROVED'NULL'bolehhhh'NULLNULLNULLNULL44'lklm''Super Administrator'3'2026-06-04 00:40:37''2026-06-04 01:09:20''Super Administrator''35610885'1'2026-06-04'NULL'2026-06-05''cghgjgjk''2026-06-04'NULL),
-  (1372NULL'OUT''BORROW'220'2026-06-04 00:48:09''forced-by-admin'NULLNULLNULLNULLNULLNULLNULL'baik'NULL0NULL'APPROVED'NULL''NULLNULLNULLNULL44'pinjem ya''Super Administrator'3'2026-06-04 00:47:06''2026-06-04 00:48:09''Super Administrator''35610885'1'2026-06-04'NULL'2026-06-05''minjam''2026-06-04'NULL),
-  (1440037'OUT''GIVEAWAY'100NULLNULLNULLNULLNULLNULLNULLNULLNULLNULLNULL0NULL'REJECTED''ga cukup rek''ok''ga cukup rek'NULLNULLNULL42'yyyyy''Super Administrator'3'2026-06-04 00:48:32''2026-06-04 00:54:19''Super Administrator''35610885'0NULL'2026-06-04'NULL'iujknkkjjnn''2026-06-04'NULL),
-  (1540044'OUT''GIVEAWAY'300'2026-06-04 01:08:52'NULLNULLNULLNULLNULLNULLNULLNULLNULLNULL0NULL'APPROVED'NULLNULL'Ya boleh kok'NULLNULLNULL42'Mau bos boleh ga?''Super Administrator'3'2026-06-04 01:08:13''2026-06-04 01:08:52''Super Administrator''35610885'0NULL'2026-06-04'NULL'Mau''2026-06-04'NULL),
-  (1740038'OUT''GIVEAWAY'100'2026-06-04 01:58:23'NULLNULLNULLNULLNULLNULLNULLNULLNULLNULL0NULL'APPROVED'NULLNULLNULLNULLNULLNULL42NULL'Super Administrator'3'2026-06-04 01:51:29''2026-06-04 01:58:23''Super Administrator''35610885'0NULL'2026-06-04'NULL'asdadsad''2026-06-04'NULL),
-  (1840040'OUT''GIVEAWAY'100'2026-06-04 02:08:15'NULLNULLNULLNULLNULLNULLNULLNULLNULLNULL0NULL'APPROVED'NULLNULLNULLNULLNULLNULL44'asas''Super Administrator'3'2026-06-04 02:05:07''2026-06-04 02:08:15''Super Administrator''35610885'0NULL'2026-06-04'NULL'ASAASA''2026-06-04'NULL),
-  (1940045'OUT''GIVEAWAY'100'2026-06-04 17:35:56'NULLNULLNULLNULLNULLNULLNULLNULLNULLNULL0NULL'APPROVED'NULL''NULLNULLNULLNULL44NULL'Super Administrator'3'2026-06-04 17:35:47''2026-06-04 17:35:56''Super Administrator''35610885'0NULL'2026-06-05'NULL'Yup''2026-06-06'NULL),
-  (20124NULL'OUT''BORROW'100NULLNULL'images/handover/172e34c7-20cb-4385-b2d9-55192ed41b7f.jpg'NULLNULLNULLNULLNULLNULLNULLNULL0NULL'APPROVED'NULL''NULLNULLNULLNULL44'yaya''Super Administrator'3'2026-06-04 18:59:02''2026-06-04 19:00:04''Super Administrator''35610885'1'2026-06-05'NULL'2026-06-06''Program''2026-06-06'NULL);
-
---
--- Dumping data for table `stock_logs` (New from clean)
---
-
-INSERT INTO `stock_logs` (`id`,`transaction_id`,`product_id`,`stock_before`,`stock_after`,`created_at`,`updated_at`) VALUES
-  (1 5 294 2 1'2026-06-04 00:35:39''2026-06-04 00:35:39'),
-  (212  72 5 4'2026-06-04 00:40:48''2026-06-04 00:40:48'),
-  (313  72 4 2'2026-06-04 00:47:59''2026-06-04 00:47:59'),
-  (413  72 2 4'2026-06-04 00:48:09''2026-06-04 00:48:09'),
-  (514 4002726'2026-06-04 00:48:41''2026-06-04 00:48:41'),
-  (615 4002623'2026-06-04 01:08:22''2026-06-04 01:08:22'),
-  (715 4002320'2026-06-04 01:08:52''2026-06-04 01:08:52'),
-  (812  72 4 5'2026-06-04 01:09:20''2026-06-04 01:09:20'),
-  (9 5 294 1 2'2026-06-04 01:09:38''2026-06-04 01:09:38'),
-  (10 8 2312526'2026-06-04 01:20:13''2026-06-04 01:20:13'),
-  (11 6  504142'2026-06-04 01:20:18''2026-06-04 01:20:18'),
-  (1317 4002019'2026-06-04 01:52:03''2026-06-04 01:52:03'),
-  (1417 4001918'2026-06-04 01:58:22''2026-06-04 01:58:22'),
-  (1518 4001817'2026-06-04 02:08:15''2026-06-04 02:08:15'),
-  (1619 4001716'2026-06-04 17:35:56''2026-06-04 17:35:56'),
-  (1720 124 1 0'2026-06-04 18:59:29''2026-06-04 18:59:29');
-
---
--- Dumping data for table `admin_roles` (New from clean)
---
-
-INSERT INTO `admin_roles` (`Id`, `RoleName`, `Description`, `IsActive`, `CreatedAt`, `CreatedBy`, `UpdatedAt`, `UpdatedBy`) VALUES
-  ('063e920c-626c-4fa8-a8b9-35900bb7b7b7' 'Staff Inventoris' 'Default role for Staff Inventoris' 1 '2026-06-09 03:57:53.286081' 'System' '2026-06-09 03:57:53.286081' 'System'),
-  ('6969448e-153b-43fc-8be0-1dda5927a8a1' 'Team Leader Infrastructure' 'Default role for Team Leader Infrastructure' 1 '2026-06-09 03:57:53.272759' 'System' '2026-06-09 03:57:53.272760' 'System'),
-  ('d941584b-880a-4d31-aa4c-ca04a29a43d4' 'Manager' 'Default role for Manager' 1 '2026-06-09 03:57:53.280862' 'System' '2026-06-09 03:57:53.280862' 'System'),
-  ('ec5f41d3-cec6-4d33-a220-81a18c9e1cfd' 'PIC Studio' 'Default role for PIC Studio' 1 '2026-06-09 03:57:53.187149' 'System' '2026-06-09 03:57:53.187244' 'System');
+-- New data for user_admin_roles
+INSERT INTO `user_admin_roles` VALUES
+  ('6134fa61-54c8-4d16-8964-0b6ed05badbd',4,'0aa48329-85e7-480d-9e62-21cd0dec8e86','2026-06-10 02:42:39.861960','Super Administrator',NULL);
 
 COMMIT;
 

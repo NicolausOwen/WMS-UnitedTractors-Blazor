@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using UT_WMSDotnet.Data;
 
@@ -11,9 +12,11 @@ using UT_WMSDotnet.Data;
 namespace ut_wms_asp.net.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260610110633_AddOriginalFieldsToTransaction")]
+    partial class AddOriginalFieldsToTransaction
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -412,9 +415,6 @@ namespace ut_wms_asp.net.Migrations
                     b.Property<DateTime?>("expected_return_date")
                         .HasColumnType("date");
 
-                    b.Property<DateTime?>("handover_approved_at")
-                        .HasColumnType("datetime(6)");
-
                     b.Property<string>("handover_notes")
                         .HasColumnType("text");
 
@@ -427,10 +427,6 @@ namespace ut_wms_asp.net.Migrations
 
                     b.Property<DateTime?>("handover_timestamp")
                         .HasColumnType("datetime(6)");
-
-                    b.Property<string>("handover_uploaded_by")
-                        .HasMaxLength(10)
-                        .HasColumnType("varchar(10)");
 
                     b.Property<int?>("is_return_draft")
                         .HasColumnType("int");

@@ -1,4 +1,4 @@
-﻿@page "/Profile"
+@page "/Profile"
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
 @using UT_WMSDotnet.Models
@@ -55,7 +55,7 @@
                                 Informasi Profil
                             </h2>
                             <p class="text-[0.72rem] text-[#a09e99] mb-4">
-                                Perbarui informasi profil dan alamat email akun Anda.
+                                Perbarui informasi profil dan alamat email akun Anda. <span class="text-red-500 font-semibold">* Wajib diisi</span>
                             </p>
                         </header>
 
@@ -76,7 +76,7 @@
 
                         <form @onsubmit="SubmitProfileRequest" class="mt-6 space-y-4">
                             <div>
-                                <label class="block text-[0.68rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5" for="name">Nama</label>
+                                <label class="block text-[0.68rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5" for="name">Nama <span class="text-red-500">*</span></label>
                                 <input 
                                     id="name" 
                                     @bind="ProfileModel.name"
@@ -87,7 +87,7 @@
                             </div>
 
                             <div>
-                                <label class="block text-[0.68rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5" for="nrp">NRP (Nomor Registrasi Pokok)</label>
+                                <label class="block text-[0.68rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5" for="nrp">NRP (Nomor Registrasi Pokok) <span class="text-red-500">*</span></label>
                                 <input 
                                     id="nrp" 
                                     @bind="ProfileModel.nrp"
@@ -97,7 +97,7 @@
                             </div>
 
                             <div>
-                                <label class="block text-[0.68rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5" for="division_id">Divisi</label>
+                                <label class="block text-[0.68rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5" for="division_id">Divisi <span class="text-red-500">*</span></label>
                                 <select 
                                     id="division_id" 
                                     @bind="ProfileModel.division_id"
@@ -114,7 +114,7 @@
                             </div>
 
                             <div>
-                                <label class="block text-[0.68rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5" for="email">Email</label>
+                                <label class="block text-[0.68rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5" for="email">Email <span class="text-red-500">*</span></label>
                                 <input 
                                     id="email" 
                                     @bind="ProfileModel.email"
@@ -152,13 +152,13 @@
                                 Perbarui Password
                             </h2>
                             <p class="text-[0.72rem] text-[#a09e99] mb-4">
-                                Pastikan akun Anda menggunakan password yang panjang dan acak untuk tetap aman.
+                                Pastikan akun Anda menggunakan password yang panjang dan acak untuk tetap aman. <span class="text-red-500 font-semibold">* Wajib diisi</span>
                             </p>
                         </header>
 
                         <form @onsubmit="ChangePassword" class="mt-6 space-y-4">
                             <div>
-                                <label class="block text-[0.68rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5" for="update_password_current_password">Password Saat Ini</label>
+                                <label class="block text-[0.68rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5" for="update_password_current_password">Password Saat Ini <span class="text-red-500">*</span></label>
                                 <input 
                                     id="update_password_current_password" 
                                     @bind="PasswordModel.old_password"
@@ -169,7 +169,7 @@
                             </div>
 
                             <div>
-                                <label class="block text-[0.68rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5" for="update_password_password">Password Baru</label>
+                                <label class="block text-[0.68rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5" for="update_password_password">Password Baru <span class="text-red-500">*</span></label>
                                 <input 
                                     id="update_password_password" 
                                     @bind="PasswordModel.new_password"
@@ -180,7 +180,7 @@
                             </div>
 
                             <div>
-                                <label class="block text-[0.68rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5" for="update_password_password_confirmation">Konfirmasi Password Baru</label>
+                                <label class="block text-[0.68rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5" for="update_password_password_confirmation">Konfirmasi Password Baru <span class="text-red-500">*</span></label>
                                 <input 
                                     id="update_password_password_confirmation" 
                                     @bind="PasswordModel.confirm_password"
@@ -242,7 +242,7 @@
                                 </p>
 
                                 <div class="mt-6">
-                                    <label class="block text-[0.68rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5" for="delete_password">Password</label>
+                                    <label class="block text-[0.68rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5" for="delete_password">Password <span class="text-red-500">*</span></label>
                                     <input
                                         id="delete_password"
                                         @bind="DeletePassword"
