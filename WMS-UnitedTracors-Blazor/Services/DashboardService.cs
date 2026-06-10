@@ -122,4 +122,83 @@ public class DashboardService
 
         return await activeBorrowsQuery.ToListAsync();
     }
+
+    public class ActionItemModel
+    {
+        public string Type { get; set; } = "";
+        public string Title { get; set; } = "";
+        public string BadgeClass { get; set; } = "";
+        public string Badge { get; set; } = "";
+        public string Description { get; set; } = "";
+        public DateTime Date { get; set; }
+        public string BtnUrl { get; set; } = "";
+        public string BtnText { get; set; } = "";
+    }
+
+    public async Task<List<ActionItemModel>> GetUserActionItemsAsync(int userId)
+    {
+        var actionItems = new List<ActionItemModel>();
+        
+        var pendingTransactions = await _context.Transactions
+            .Include(t => t.Product)
+            .Where(t => t.requester_id == userId && 
+                        (t.status == WorkflowStatuses.WaitingHandover || 
+                         t.status == WorkflowStatuses.WaitingAdminHandover ||
+                         t.status == WorkflowStatuses.Revision ||
+                         t.status == WorkflowStatuses.RevisionByStaffInventory ||
+                         t.status == WorkflowStatuses.RevisionByAdmin ||
+                         t.status == WorkflowStatuses.RevisionByManager ||
+                         (t.request_type == "BORROW" && t.status == WorkflowStatuses.Approved && t.returned_quantity < t.quantity)))
+            .OrderByDescending(t => t.updated_at)
+            .ToListAsync();
+
+        foreach (var t in pendingTransactions)
+        {
+            if (t.status == WorkflowStatuses.WaitingHandover || t.status == WorkflowStatuses.WaitingAdminHandover)
+            {
+                actionItems.Add(new ActionItemModel
+                {
+                    Type = "handover",
+                    Title = t.event_name ?? "Request Barang",
+                    BadgeClass = "bg-[#fef3c7] text-[#d97706]",
+                    Badge = "Menunggu Serah Terima",
+                    Description = $"Upload bukti serah terima untuk {t.quantity}x {(t.Product != null ? t.Product.name : "")}",
+                    Date = t.created_at,
+                    BtnUrl = "Tracking",
+                    BtnText = "Upload Bukti"
+                });
+            }
+            else if (t.status == WorkflowStatuses.Revision || t.status == WorkflowStatuses.RevisionByStaffInventory || t.status == WorkflowStatuses.RevisionByAdmin || t.status == WorkflowStatuses.RevisionByManager)
+            {
+                actionItems.Add(new ActionItemModel
+                {
+                    Type = "revision",
+                    Title = t.event_name ?? "Request Barang",
+                    BadgeClass = "bg-[#fef0f0] text-[#d94040]",
+                    Badge = "Butuh Revisi",
+                    Description = $"Revisi request {(t.Product != null ? t.Product.name : "")}. Alasan: {t.rejection_reason}",
+                    Date = t.created_at,
+                    BtnUrl = "Tracking",
+                    BtnText = "Revisi"
+                });
+            }
+            else if (t.request_type == "BORROW" && t.status == WorkflowStatuses.Approved && t.returned_quantity < t.quantity)
+            {
+                bool isOverdue = t.expected_return_date < DateTime.Today;
+                actionItems.Add(new ActionItemModel
+                {
+                    Type = "return",
+                    Title = t.event_name ?? "Peminjaman Barang",
+                    BadgeClass = isOverdue ? "bg-[#fef0f0] text-[#d94040]" : "bg-[#f0f9ff] text-[#0284c7]",
+                    Badge = isOverdue ? "Overdue" : "Dipinjam",
+                    Description = $"Kembalikan {t.quantity - (t.returned_quantity ?? 0)}x {(t.Product != null ? t.Product.name : "")}. {(t.expected_return_date.HasValue ? "Tenggat: " + t.expected_return_date.Value.ToString("dd MMM yyyy") : "")}",
+                    Date = t.created_at,
+                    BtnUrl = "Tracking",
+                    BtnText = "Kembalikan"
+                });
+            }
+        }
+        
+        return actionItems;
+    }
 }

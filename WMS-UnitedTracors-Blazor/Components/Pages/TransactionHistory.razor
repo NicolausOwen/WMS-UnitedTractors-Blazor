@@ -1,4 +1,4 @@
-@page "/TransactionHistory"
+﻿@page "/TransactionHistory"
 @page "/Transactions/History"
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
@@ -10,7 +10,7 @@
 @inject AuthenticationStateProvider AuthStateProvider
 @rendermode InteractiveServer
 
-<PageTitle>Transaction History</PageTitle>
+<PageTitle>WMS - Transaction History</PageTitle>
 
 <div class="py-8 md:py-12 bg-[#f5f4f0] min-h-screen font-sans">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -21,41 +21,69 @@
         </div>
 
         <div class="bg-white rounded-xl border border-[#e5e3dc] overflow-hidden shadow-sm mb-8">
-            <div class="p-6">
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:items-end gap-4">
-                    <div class="flex-1 min-w-[150px]">
-                        <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Start Date</label>
-                        <input type="date" @bind="StartDate" class="block w-full px-3 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
-                    </div>
-                    <div class="flex-1 min-w-[150px]">
-                        <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">End Date</label>
-                        <input type="date" @bind="EndDate" class="block w-full px-3 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
-                    </div>
-                    <div class="min-w-[150px]">
-                        <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Filter Type</label>
-                        <select @bind="FilterType" @bind:after="OnFilterTypeChanged" class="block w-full px-3 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
-                            <option value="">All Types</option>
-                            <option value="IN">STOCK IN</option>
-                            <option value="OUT">STOCK OUT</option>
-                        </select>
-                    </div>
-                    @if (FilterType == "OUT")
+            @* Collapsible Header *@
+            <div @onclick="ToggleFilters" 
+                 role="button"
+                 tabindex="0"
+                 class="@(ShowFilters ? "border-b border-[#e5e3dc]" : "") px-5 py-3.5 bg-[#faf9f5] flex items-center justify-between cursor-pointer select-none hover:bg-[#f3f2eb] transition duration-150 group outline-none focus:bg-[#f3f2eb]">
+                <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4 text-[#8a8880] group-hover:text-gray-700 transition" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 0 1-.659 1.591l-5.432 5.432a2.25 2.25 0 0 0-.659 1.591v2.927a2.25 2.25 0 0 1-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 0 0-.659-1.591L3.659 7.409A2.25 2.25 0 0 1 3 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0 1 12 3Z"/>
+                    </svg>
+                    <span class="text-[0.68rem] font-extrabold text-[#5a5855] group-hover:text-gray-900 tracking-wider uppercase transition">Filter Pencarian</span>
+                    @if(HasActiveFilters)
                     {
-                        <div class="min-w-[150px]">
-                            <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Request Type</label>
-                            <select @bind="FilterRequestType" @bind:after="OnFilterRequestTypeChanged" class="block w-full px-3 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
-                                <option value="">All Request Types</option>
-                                <option value="GIVEAWAY">Diminta / Giveaway</option>
-                                <option value="BORROW">Dipinjam / Borrow</option>
-                            </select>
-                        </div>
+                        <span class="px-2 py-0.5 rounded text-[9px] font-extrabold bg-[#fff8e6] text-[#b37a00] border border-[#ffe099] uppercase tracking-wider">
+                            Aktif: @GetActiveFiltersText()
+                        </span>
                     }
-                    <div class="flex gap-2">
-                        <button type="button" @onclick="() => LoadData(1)" class="px-6 py-2 bg-[#1a1a1a] text-white text-sm font-bold rounded-lg hover:bg-[#333] transition">Apply</button>
-                        <button type="button" @onclick="ResetFilters" class="px-6 py-2 bg-white border border-[#e5e3dc] text-gray-700 text-sm font-bold rounded-lg hover:bg-gray-50 transition">Reset</button>
-                    </div>
+                </div>
+                <div class="text-[#8a8880] group-hover:text-gray-700 transition">
+                    <svg class="w-4 h-4 transition-transform duration-200 @(!ShowFilters ? "rotate-180" : "")" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5"/>
+                    </svg>
                 </div>
             </div>
+
+            @* Collapsible Content *@
+            @if (ShowFilters)
+            {
+                <div class="px-5 py-4 bg-white transition-all duration-200">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:items-end gap-4">
+                        <div class="flex-1 min-w-[150px]">
+                            <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Start Date</label>
+                            <input type="date" @bind="StartDate" class="block w-full px-3 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
+                        </div>
+                        <div class="flex-1 min-w-[150px]">
+                            <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">End Date</label>
+                            <input type="date" @bind="EndDate" class="block w-full px-3 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
+                        </div>
+                        <div class="min-w-[150px]">
+                            <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Filter Type</label>
+                            <select @bind="FilterType" @bind:after="OnFilterTypeChanged" class="block w-full px-3 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
+                                <option value="">All Types</option>
+                                <option value="IN">STOCK IN</option>
+                                <option value="OUT">STOCK OUT</option>
+                            </select>
+                        </div>
+                        @if (FilterType == "OUT")
+                        {
+                            <div class="min-w-[150px]">
+                                <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Request Type</label>
+                                <select @bind="FilterRequestType" @bind:after="OnFilterRequestTypeChanged" class="block w-full px-3 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
+                                    <option value="">All Request Types</option>
+                                    <option value="GIVEAWAY">Diminta / Giveaway</option>
+                                    <option value="BORROW">Dipinjam / Borrow</option>
+                                </select>
+                            </div>
+                        }
+                        <div class="flex gap-2 w-full lg:w-auto justify-end">
+                            <button type="button" @onclick="() => LoadData(1)" class="px-5 py-2 bg-[#e8a000] text-[#1a1a1a] text-xs font-bold rounded-lg transition active:scale-95 cursor-pointer whitespace-nowrap hover:bg-[#d49300]">Apply</button>
+                            <button type="button" @onclick="ResetFilters" class="px-5 py-2 bg-white border border-[#e5e3dc] text-[#3a3835] text-xs font-bold rounded-lg cursor-pointer hover:bg-gray-50 transition">Reset</button>
+                        </div>
+                    </div>
+                </div>
+            }
         </div>
 
         @if (!string.IsNullOrEmpty(SuccessMessage))
@@ -420,6 +448,23 @@
     private DateTime? StartDate;
     private DateTime? EndDate;
 
+    private bool ShowFilters = false;
+    private bool HasActiveFilters => StartDate.HasValue || EndDate.HasValue || !string.IsNullOrEmpty(FilterType) || !string.IsNullOrEmpty(FilterRequestType);
+    
+    private string GetActiveFiltersText()
+    {
+        var active = new List<string>();
+        if (StartDate.HasValue || EndDate.HasValue) active.Add("Tanggal");
+        if (!string.IsNullOrEmpty(FilterType)) active.Add("Tipe");
+        if (!string.IsNullOrEmpty(FilterRequestType)) active.Add("Kategori");
+        return string.Join(", ", active);
+    }
+    
+    private void ToggleFilters()
+    {
+        ShowFilters = !ShowFilters;
+    }
+
     private int CurrentUserId = 0;
     private string? UserRole;
     
@@ -443,6 +488,7 @@
         }
 
         Divisions = await DivisionService.GetAllDivisionsAsync();
+        ShowFilters = HasActiveFilters;
         await LoadData(1);
     }
 

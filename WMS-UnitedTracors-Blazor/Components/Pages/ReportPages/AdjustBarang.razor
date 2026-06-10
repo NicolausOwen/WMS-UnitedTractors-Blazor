@@ -1,4 +1,4 @@
-@page "/Reports/AdjustBarang"
+﻿@page "/Reports/AdjustBarang"
 @using UT_WMSDotnet.Models
 @using WMS_UnitedTracors_Blazor.Services
 @using Microsoft.EntityFrameworkCore
@@ -7,7 +7,7 @@
 @inject IJSRuntime JSRuntime
 @rendermode InteractiveServer
 
-<PageTitle>Laporan Adjust Barang (Stock In)</PageTitle>
+<PageTitle>WMS - Update Barang</PageTitle>
 
 <div class="py-12 bg-[#f5f4f0] min-h-screen font-sans">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -18,7 +18,7 @@
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
                     Back to Dashboard
                 </a>
-                <h1 class="text-[1.6rem] font-bold text-[#1a1a1a] leading-none tracking-tight">Laporan <span class="text-[#e8a000]">Update Stok</span></h1>
+                <h1 class="text-[1.6rem] font-bold text-[#1a1a1a] leading-none tracking-tight">Update <span class="text-[#e8a000]">Barang</span></h1>
                 <div class="text-[0.72rem] font-medium text-[#a09e99] mt-1">Daftar penyesuaian stok masuk/keluar (STOCK IN/OUT)</div>
             </div>
             <a href="/api/pdf/adjust?start=@StartDate?.ToString("yyyy-MM-dd")&end=@EndDate?.ToString("yyyy-MM-dd")" target="_blank" class="inline-flex items-center gap-2 px-4 py-2.5 bg-[#e8a000] hover:bg-[#d49300] text-[#1a1a1a] text-sm font-bold rounded-lg shadow-sm transition">
