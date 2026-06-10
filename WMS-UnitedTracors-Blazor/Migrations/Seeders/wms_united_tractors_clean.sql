@@ -1,5 +1,5 @@
 -- =============================================================
--- WMS United Tractors — Database Seeder (T-SQL / SQL Server)
+-- WMS United Tractors â€” Database Seeder (T-SQL / SQL Server)
 -- Database : ut_wms_db
 -- Generated: 2026-06-05
 -- =============================================================
@@ -29,16 +29,7 @@ CREATE TABLE `__efmigrationshistory` (
   CONSTRAINT `PK___efmigrationshistory` PRIMARY KEY (`MigrationId`)
 );
 
-INSERT INTO `__efmigrationshistory` (`MigrationId`, `ProductVersion`) VALUES
-('20260522095935_SyncWithSqlDump', '9.0.0'),
-('20260527063537_AddProductDescriptionAndVariants', '9.0.0'),
-('20260604021546_AddTransactionsTable', '9.0.0'),
-('20260605013419_AddHandoverFields', '9.0.0'),
-('20260608062936_UpdateDatabase', '9.0.0'),
-('20260608081019_AddAdminRoles', '9.0.0'),
-('20260609013724_AddCategoryIdToUserAdminRole', '9.0.0'),
-('20260609063238_FixTransactionStatusColumn', '9.0.0'),
-('20260609090000_AddGiveawayWorkflowFields', '9.0.0');
+-- (no seed data)
 
 -- =============================================================
 -- TABLE: categories
@@ -673,22 +664,22 @@ CREATE TABLE `transactions` (
   `pending_return_quantity`int           NOT NULL DEFAULT 0,
   `returned_at`            DATETIME     NULL,
   `return_photo`           VARCHAR(255) NULL,
-  `handover_photo`         TEXT NULL,
+  `handover_photo`         VARCHAR(255) NULL,
   `handover_notes`         TEXT NULL,
   `handover_recipient_name`VARCHAR(255) NULL,
   `handover_timestamp`     DATETIME     NULL,
-  `documentation_photo`    TEXT NULL,
+  `documentation_photo`    VARCHAR(255) NULL,
   `documentation_notes`    TEXT NULL,
   `documentation_uploaded_at` DATETIME  NULL,
   `return_status`          VARCHAR(255) NULL,
   `return_reason`          TEXT NULL,
   `is_return_draft`        TINYINT(1)           NOT NULL DEFAULT 0,
   `return_condition`       VARCHAR(6)   NULL,
-  `status`                 VARCHAR(50)  NOT NULL DEFAULT 'PENDING',
+  `status`                 VARCHAR(25)  NOT NULL DEFAULT 'PENDING',
   `rejection_reason`       TEXT NULL,
   `admin_notes`            TEXT NULL,
   `manager_notes`          TEXT NULL,
-  `staff_inventory_notes`  VARCHAR(500) NULL,
+  `staff_inventory_notes`  TEXT NULL,
   `last_revision_stage`    VARCHAR(50)  NULL,
   `return_rejection_reason`TEXT NULL,
   `requester_id`           bigint        NOT NULL,
@@ -711,7 +702,7 @@ CREATE TABLE `transactions` (
   CONSTRAINT `CK_transactions_type`                  CHECK       (`type`             IN ('IN','OUT')),
   CONSTRAINT `CK_transactions_request_type`          CHECK       (`request_type`     IN ('BORROW','GIVEAWAY')),
   CONSTRAINT `CK_transactions_return_condition`      CHECK       (`return_condition`  IN ('BAIK','RUSAK','HILANG')),
-  CONSTRAINT `CK_transactions_status`                CHECK       (`status`           IN ('PENDING','PENDING_STAFF_INVENTORY','PENDING_ADMIN','PENDING_MANAGER','WAITING_HANDOVER','WAITING_ADMIN_HANDOVER','WAITING_DOCUMENTATION','DOCUMENTATION_OVERDUE','APPROVED','COMPLETED','REJECTED','REVISION','REVISION_BY_STAFF_INVENTORY','REVISION_BY_ADMIN','REVISION_BY_MANAGER')),
+  CONSTRAINT `CK_transactions_status`                CHECK       (`status`           IN ('PENDING','PENDING_MANAGER','WAITING_HANDOVER','WAITING_ADMIN_HANDOVER','APPROVED','REJECTED','REVISION')),
   CONSTRAINT `FK_transactions_product_id`            FOREIGN KEY (`product_id`)         REFERENCES `products`         (`id`),
   CONSTRAINT `FK_transactions_product_variant_id`    FOREIGN KEY (`product_variant_id`) REFERENCES `product_variants` (`id`),
   CONSTRAINT `FK_transactions_requester_id`          FOREIGN KEY (`requester_id`)       REFERENCES `users`            (`id`),
@@ -790,8 +781,8 @@ INSERT INTO `stock_logs` (`id`,`transaction_id`,`product_id`,`stock_before`,`sto
 
 -- =============================================================
 -- Normalisasi produk berdasarkan kategori
---   Merchandise, ATK, Makanan, Facility → giveaway, value=50, is_returnable=0
---   Alat Musik, Elektronik, Game        → pinjam, value=0, is_returnable=1
+--   Merchandise, ATK, Makanan, Facility â†’ giveaway, value=50, is_returnable=0
+--   Alat Musik, Elektronik, Game        â†’ pinjam, value=0, is_returnable=1
 -- =============================================================
 
 UPDATE `products` p
@@ -815,7 +806,6 @@ CREATE TABLE `admin_roles` (
   `Id` char(36) COLLATE ascii_general_ci NOT NULL,
   `RoleName` varchar(255) CHARACTER SET utf8mb4 NOT NULL,
   `Description` varchar(500) CHARACTER SET utf8mb4 NULL,
-  `Permissions` text CHARACTER SET utf8mb4 NULL,
   `IsActive` tinyint(1) NOT NULL,
   `CreatedAt` datetime(6) NOT NULL,
   `CreatedBy` varchar(100) CHARACTER SET utf8mb4 NULL,
@@ -846,3 +836,49 @@ CREATE TABLE `user_admin_roles` (
 CREATE INDEX `IX_user_admin_roles_AdminRoleId` ON `user_admin_roles` (`AdminRoleId`);
 CREATE INDEX `IX_user_admin_roles_UserId` ON `user_admin_roles` (`UserId`);
 CREATE INDEX `IX_user_admin_roles_CategoryId` ON `user_admin_roles` (`CategoryId`);
+
+-- =============================================================
+-- APPENDED FROM SEED
+-- =============================================================
+INSERT INTO `admin_roles` VALUES 
+  ('0aa48329-85e7-480d-9e62-21cd0dec8e86','Super Admin','Default role for Super Admin','[\"request.create\",\"tracking.view\",\"approval.stage1\",\"approval.stage2\",\"approval.manager\",\"approval.handover\",\"approval.return\",\"dashboard.view\",\"products.manage\",\"masterdata.manage\",\"reports.view\",\"scanner.use\",\"users.manage\",\"roles.manage\"]',1,'2026-06-10 02:37:39.813699','System','2026-06-10 02:55:59.610173','Super Administrator'),
+  ('e6ad3624-7c19-48cb-a746-b0f58f13ad31','User','Default role for User','[\"dashboard.view\",\"request.create\",\"tracking.view\"]',1,'2026-06-10 02:37:39.857361','System','2026-06-10 02:46:42.014613','Super Administrator');
+
+INSERT INTO `products` VALUES 
+  (295,'GME-260511-0088','TYPE_CODE_128','Rubik Speed Cube',NULL,NULL,0.00,NULL,NULL,3,8,NULL,2,2,3,1,0,'2026-05-11 13:46:24','2026-05-26 09:46:52'),
+  (296,'GME-260511-0089','TYPE_CODE_128','Puzzle Kayu',NULL,NULL,0.00,NULL,NULL,3,8,NULL,25,25,14,1,0,'2026-05-11 13:46:24','2026-05-26 09:46:52'),
+  (297,'GME-260511-0090','TYPE_CODE_128','Games Balok Kayu Set',NULL,NULL,0.00,NULL,NULL,3,8,NULL,1,1,14,1,0,'2026-05-11 13:46:24','2026-05-26 09:46:52'),
+  (298,'GME-260511-0091','TYPE_CODE_128','Baffling Steel Puzzle',NULL,NULL,0.00,NULL,NULL,3,8,NULL,1,1,3,1,0,'2026-05-11 13:46:24','2026-05-26 09:46:52'),
+  (299,'FCY-260511-0061','TYPE_CODE_128','Properti Balon dan Sarung Tangan',NULL,NULL,50.00,NULL,NULL,4,9,NULL,1,1,30,0,0,'2026-05-11 13:46:24','2026-05-26 09:46:52'),
+  (300,'ETK-260511-0008','TYPE_CODE_128','Yi CamCase',NULL,NULL,0.00,NULL,NULL,9,7,NULL,2,2,3,1,0,'2026-05-11 13:46:24','2026-05-26 09:46:52'),
+  (301,'ETK-260511-0009','TYPE_CODE_128','Canon G1X + 15-60mm',NULL,NULL,0.00,NULL,NULL,9,9,NULL,1,1,3,1,0,'2026-05-11 13:46:24','2026-05-26 09:46:52'),
+  (302,'ETK-260511-0010','TYPE_CODE_128','Microphone Podcast Set',NULL,NULL,0.00,NULL,NULL,9,10,NULL,1,1,14,1,0,'2026-05-11 13:46:24','2026-05-26 09:46:52'),
+  (303,'ETK-260511-0011','TYPE_CODE_128','TP Link Router',NULL,NULL,0.00,NULL,NULL,9,9,NULL,1,1,3,1,0,'2026-05-11 13:46:24','2026-05-26 09:46:52'),
+  (304,'ETK-260511-0012','TYPE_CODE_128','Handy Cam + Charger + Bag',NULL,NULL,0.00,NULL,NULL,9,8,NULL,3,3,14,1,0,'2026-05-11 13:46:24','2026-05-26 09:46:52'),
+  (305,'ETK-260511-0013','TYPE_CODE_128','Videomic Rode',NULL,NULL,0.00,NULL,NULL,9,11,NULL,2,2,3,1,0,'2026-05-11 13:46:24','2026-05-26 09:46:52'),
+  (306,'ETK-260511-0014','TYPE_CODE_128','DJI Mavic Mini (NEW)',NULL,NULL,0.00,NULL,NULL,9,11,NULL,2,2,3,1,0,'2026-05-11 13:46:24','2026-05-26 09:46:52'),
+  (307,'FCY-260511-0062','TYPE_CODE_128','Zomei Professional Tripod',NULL,NULL,50.00,NULL,NULL,4,11,NULL,2,2,3,0,0,'2026-05-11 13:46:24','2026-05-26 09:46:52'),
+  (308,'ETK-260511-0015','TYPE_CODE_128','Camcorder AVCAM Panasonic',NULL,NULL,0.00,NULL,NULL,9,9,NULL,1,1,3,1,0,'2026-05-11 13:46:24','2026-05-26 09:46:52'),
+  (309,'ETK-260511-0016','TYPE_CODE_128','Microphone Podcast',NULL,NULL,0.00,NULL,NULL,9,7,NULL,2,2,3,1,0,'2026-05-11 13:46:24','2026-05-26 09:46:52'),
+  (310,'ETK-260511-0017','TYPE_CODE_128','Godox Minimaster',NULL,NULL,0.00,NULL,NULL,9,7,NULL,2,2,3,1,0,'2026-05-11 13:46:24','2026-05-26 09:46:52'),
+  (311,'ETK-260511-0018','TYPE_CODE_128','Studio Flash (Godox)',NULL,NULL,0.00,NULL,NULL,9,7,NULL,1,1,3,1,0,'2026-05-11 13:46:24','2026-05-26 09:46:52'),
+  (312,'ETK-260511-0019','TYPE_CODE_128','Alctron Audio Interface',NULL,NULL,0.00,NULL,NULL,9,8,NULL,2,2,3,1,0,'2026-05-11 13:46:24','2026-05-26 09:46:52'),
+  (400,'MHE-260511-0033','TYPE_CODE_128','Baju Polo',NULL,NULL,50.00,'/images/products/aObBuQFVHxEkNi17CtlIu3mnPT49HOnmBNMD8OFX.jpg','[\"/images/products/aObBuQFVHxEkNi17CtlIu3mnPT49HOnmBNMD8OFX.jpg\", \"/images/products/ceuQ2P6dcE8Ro4Sd97ulhldhS8i7ub5Cv4m06sWb.jpg\"]',6,4,NULL,16,1,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (410,'MHE-260511-0034','TYPE_CODE_128','Celana Training',NULL,NULL,50.00,NULL,NULL,6,4,NULL,2,1,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (413,'MHE-260511-0035','TYPE_CODE_128','Kemeja UT',NULL,NULL,50.00,'/images/products/HZpVxqrwZZOE9xef7B8aYouG1q7N4Lt0XzEq33LK.jpg','[\"/images/products/HZpVxqrwZZOE9xef7B8aYouG1q7N4Lt0XzEq33LK.jpg\"]',6,4,NULL,110,5,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (415,'MHE-260511-0036','TYPE_CODE_128','Kaos UT',NULL,NULL,50.00,NULL,NULL,6,4,NULL,17,3,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (429,'MHE-260511-0037','TYPE_CODE_128','Merch Assessment - Tumbler Corkcilcke',NULL,NULL,50.00,'/images/products/8jZaNApx2sjjOOF4A6sJCBwn54J1HvdX5CiqAtm1.jpg','[\"/images/products/8jZaNApx2sjjOOF4A6sJCBwn54J1HvdX5CiqAtm1.jpg\"]',6,4,NULL,4,2,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52'),
+  (431,'MHE-260511-0038','TYPE_CODE_128','RACER',NULL,NULL,50.00,NULL,NULL,6,4,NULL,86,12,3,0,0,'2026-05-11 13:46:23','2026-05-26 09:46:52');
+
+INSERT INTO `user_admin_roles` VALUES 
+  ('36a2d501-7687-400c-a8e5-911a180e1bb6',5,'063e920c-626c-4fa8-a8b9-35900bb7b7b7','2026-06-10 01:10:41.028001','Super Administrator',NULL),
+  ('6134fa61-54c8-4d16-8964-0b6ed05badbd',4,'0aa48329-85e7-480d-9e62-21cd0dec8e86','2026-06-10 02:42:39.861960','Super Administrator',NULL),
+  ('976f60fb-4160-41fb-8cc6-399d20e352dd',1,'ec5f41d3-cec6-4d33-a220-81a18c9e1cfd','2026-06-10 01:13:52.888094','Super Administrator',NULL),
+  ('ef3351b4-1c3a-4312-a707-f84f4cc17ef9',3,'e6ad3624-7c19-48cb-a746-b0f58f13ad31','2026-06-10 02:46:46.316230','Super Administrator',NULL);
+
+INSERT INTO `users` VALUES 
+  (5,'Dzaky','12098213','tester@tester.com',1000,NULL,'$2a$11$hWecE2pogdAr9UY28T/VP.RVf5ig13n4bjydfzaxTI587t6X8KLAm','admin',5,NULL,'2026-06-10 01:10:16','2026-06-10 02:50:04'),
+  (6,'User','1340120938','user@wms.com',1000,NULL,'$2a$11$/YIY4ZhN/svsgPjWHwjyK.aA5Nqs9bXnsBTyN4uKy.fze4NXzUAzS','User',2,NULL,'2026-06-10 03:03:39','2026-06-10 03:03:39');
+
+
+
