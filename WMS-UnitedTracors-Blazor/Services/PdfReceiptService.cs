@@ -6,6 +6,7 @@ using System.Linq;
 using UT_WMSDotnet.Models;
 using System;
 using System.Collections.Generic;
+using System.Text.Json;
 
 namespace WMS_UnitedTracors_Blazor.Services
 {
@@ -66,6 +67,24 @@ namespace WMS_UnitedTracors_Blazor.Services
                 proofLabel: "Bukti Serah Terima");
         }
 
+        public byte[] GenerateReceiptDocumentation(List<Transaction> items, string wwwrootPath)
+        {
+            var firstItem = items.First();
+            string title = "Form Dokumentasi Giveaway CorpU";
+            return GenerateDocument(items, firstItem, title, wwwrootPath,
+                sig1Title: "Pemohon",
+                sig1Name: !string.IsNullOrEmpty(firstItem.applicant_name) ? firstItem.applicant_name : (firstItem.Requester?.name ?? "-"),
+                sig1Role: "Associate CorpU",
+                sig2Title: "Mengetahui",
+                sig2Name: "Ilona Kirana Saradella",
+                sig2Role: "Team Leader KM & Infrastructure",
+                sig3Title: "Arsip CorpU",
+                sig3Name: "Ahmad Anwari",
+                sig3Role: "CorpU Dept Head",
+                proofImagePath: ResolveProofImagePath(firstItem.documentation_photo, wwwrootPath),
+                proofLabel: "Bukti Dokumentasi");
+        }
+
         public byte[] GenerateReceipt(List<Transaction> items, string wwwrootPath)
         {
             var firstItem = items.First();
@@ -105,7 +124,24 @@ namespace WMS_UnitedTracors_Blazor.Services
         {
             if (string.IsNullOrWhiteSpace(stored)) return null;
             if (stored == "forced-by-admin") return null;
-            var rel = stored.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
+
+            var resolved = stored.Trim();
+            if (resolved.StartsWith("["))
+            {
+                try
+                {
+                    var parsed = JsonSerializer.Deserialize<List<string>>(resolved);
+                    resolved = parsed?.FirstOrDefault(x => !string.IsNullOrWhiteSpace(x)) ?? string.Empty;
+                }
+                catch
+                {
+                    resolved = string.Empty;
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(resolved)) return null;
+
+            var rel = resolved.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
             var full = Path.Combine(wwwrootPath, rel);
             var ext = Path.GetExtension(full).ToLowerInvariant();
             if (ext != ".jpg" && ext != ".jpeg" && ext != ".png" && ext != ".webp") return null;
