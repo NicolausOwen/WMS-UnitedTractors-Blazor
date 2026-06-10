@@ -274,7 +274,7 @@ app.MapGet("/api/pdf/receipt/{groupId}", async (string groupId, WMS_UnitedTracor
     if (!transactions.Any()) return Results.NotFound();
     
     var pdfBytes = pdfService.GenerateReceipt(transactions, env.WebRootPath);
-    return Results.File(pdfBytes, "application/pdf", $"Receipt_{DateTime.Now:yyyyMMdd_HHmmss}.pdf");
+    return Results.File(pdfBytes, "application/pdf", enableRangeProcessing: true);
 });
 
 app.MapGet("/api/pdf/receipt-request/{groupId}", async (string groupId, WMS_UnitedTracors_Blazor.Services.TransactionService transactionService, WMS_UnitedTracors_Blazor.Services.PdfReceiptService pdfService, IWebHostEnvironment env) =>
@@ -283,7 +283,7 @@ app.MapGet("/api/pdf/receipt-request/{groupId}", async (string groupId, WMS_Unit
     if (!transactions.Any()) return Results.NotFound();
     
     var pdfBytes = pdfService.GenerateReceiptRequest(transactions, env.WebRootPath);
-    return Results.File(pdfBytes, "application/pdf", $"Request_Receipt_{DateTime.Now:yyyyMMdd_HHmmss}.pdf");
+    return Results.File(pdfBytes, "application/pdf", enableRangeProcessing: true);
 });
 
 app.MapGet("/api/pdf/receipt-approval/{groupId}", async (string groupId, WMS_UnitedTracors_Blazor.Services.TransactionService transactionService, WMS_UnitedTracors_Blazor.Services.PdfReceiptService pdfService, IWebHostEnvironment env) =>
@@ -292,7 +292,7 @@ app.MapGet("/api/pdf/receipt-approval/{groupId}", async (string groupId, WMS_Uni
     if (!transactions.Any()) return Results.NotFound();
     
     var pdfBytes = pdfService.GenerateReceiptApproval(transactions, env.WebRootPath);
-    return Results.File(pdfBytes, "application/pdf", $"Approval_Receipt_{DateTime.Now:yyyyMMdd_HHmmss}.pdf");
+    return Results.File(pdfBytes, "application/pdf", enableRangeProcessing: true);
 });
 
 app.MapGet("/api/pdf/receipt-handover/{groupId}", async (string groupId, WMS_UnitedTracors_Blazor.Services.TransactionService transactionService, WMS_UnitedTracors_Blazor.Services.PdfReceiptService pdfService, IWebHostEnvironment env) =>
@@ -301,7 +301,16 @@ app.MapGet("/api/pdf/receipt-handover/{groupId}", async (string groupId, WMS_Uni
     if (!transactions.Any()) return Results.NotFound();
     
     var pdfBytes = pdfService.GenerateReceiptHandover(transactions, env.WebRootPath);
-    return Results.File(pdfBytes, "application/pdf", $"Handover_Receipt_{DateTime.Now:yyyyMMdd_HHmmss}.pdf");
+    return Results.File(pdfBytes, "application/pdf", enableRangeProcessing: true);
+});
+
+app.MapGet("/api/pdf/receipt-documentation/{groupId}", async (string groupId, WMS_UnitedTracors_Blazor.Services.TransactionService transactionService, WMS_UnitedTracors_Blazor.Services.PdfReceiptService pdfService, IWebHostEnvironment env) =>
+{
+    var transactions = await transactionService.GetTransactionsByGroupIdAsync(groupId);
+    if (!transactions.Any()) return Results.NotFound();
+
+    var pdfBytes = pdfService.GenerateReceiptDocumentation(transactions, env.WebRootPath);
+    return Results.File(pdfBytes, "application/pdf", enableRangeProcessing: true);
 });
 
 app.MapGet("/api/pdf/receipt-return/{groupId}", async (string groupId, WMS_UnitedTracors_Blazor.Services.TransactionService transactionService, WMS_UnitedTracors_Blazor.Services.PdfReceiptService pdfService, IWebHostEnvironment env) =>
@@ -310,7 +319,7 @@ app.MapGet("/api/pdf/receipt-return/{groupId}", async (string groupId, WMS_Unite
     if (!transactions.Any()) return Results.NotFound();
     
     var pdfBytes = pdfService.GenerateReturnReceipt(transactions, env.WebRootPath);
-    return Results.File(pdfBytes, "application/pdf", $"Return_Receipt_{DateTime.Now:yyyyMMdd_HHmmss}.pdf");
+    return Results.File(pdfBytes, "application/pdf", enableRangeProcessing: true);
 });
 
 // =======================
