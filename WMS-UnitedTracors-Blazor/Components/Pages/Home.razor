@@ -561,6 +561,117 @@
     </div>
 }
 
+@* Riwayat Peminjam Modal *@
+@if (ShowBorrowHistoryModal && SelectedProduct != null)
+{
+    <div class="fixed inset-0 flex items-center justify-center p-4 bg-black/65 backdrop-blur-sm" style="z-index: 999;" role="dialog" aria-modal="true">
+        <div class="fixed inset-0" @onclick="CloseBorrowHistoryModal"></div>
+        <div class="relative w-full max-w-2xl bg-white rounded-xl shadow-2xl flex flex-col max-h-[80vh] border border-[#e5e3dc]" @onclick:stopPropagation>
+            <div class="px-5 py-4 border-b border-[#f0ede5] bg-[#faf9f5] flex items-center justify-between rounded-t-xl shrink-0">
+                <div>
+                    <h3 class="text-sm font-bold text-[#1a1a1a]">Riwayat Peminjam / Requester</h3>
+                    <p class="text-[0.72rem] text-[#8a8880] mt-0.5">@SelectedProduct.name</p>
+                </div>
+                <button type="button" @onclick="CloseBorrowHistoryModal" class="text-[#a09e99] hover:text-[#1a1a1a] transition p-1 bg-[#f0ede5] rounded-full shrink-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto">
+                @if (IsProductHistoryLoading)
+                {
+                    <div class="flex justify-center items-center py-16">
+                        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-[#e8a000]"></div>
+                    </div>
+                }
+                else if (ProductRequestHistory == null || !ProductRequestHistory.Any())
+                {
+                    <div class="flex flex-col items-center justify-center py-16 text-center px-6">
+                        <svg class="w-10 h-10 text-[#d1cec7] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                        <p class="text-sm font-semibold text-[#8a8880]">Belum ada riwayat</p>
+                        <p class="text-xs text-[#a09e99] mt-1">Barang ini belum pernah dipinjam atau di-request.</p>
+                    </div>
+                }
+                else
+                {
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-[#f5f4f0] border-b border-[#e5e3dc] sticky top-0">
+                                <th class="px-5 py-3 text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8780]">Peminjam / Requester</th>
+                                <th class="px-5 py-3 text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8780]">Divisi</th>
+                                <th class="px-5 py-3 text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8780]">Tipe</th>
+                                <th class="px-5 py-3 text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8780]">Qty</th>
+                                <th class="px-5 py-3 text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8780]">Status</th>
+                                <th class="px-5 py-3 text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8780]">Tanggal</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-[#f0ede5]">
+                            @foreach (var tx in ProductRequestHistory)
+                            {
+                                <tr class="hover:bg-[#faf9f5] transition-colors">
+                                    <td class="px-5 py-3 align-middle">
+                                        <div class="text-xs font-semibold text-[#1a1a1a]">@(tx.applicant_name ?? tx.Requester?.name ?? "-")</div>
+                                        @if (!string.IsNullOrEmpty(tx.event_name))
+                                        {
+                                            <div class="text-[10px] text-[#8a8880] mt-0.5 italic">@tx.event_name</div>
+                                        }
+                                    </td>
+                                    <td class="px-5 py-3 align-middle">
+                                        <span class="text-xs text-[#5a5855]">@(tx.Division?.name ?? "-")</span>
+                                    </td>
+                                    <td class="px-5 py-3 align-middle">
+                                        @if (tx.request_type == "BORROW")
+                                        {
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-100">Pinjam</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-100">Minta/Ambil</span>
+                                        }
+                                    </td>
+                                    <td class="px-5 py-3 align-middle">
+                                        <span class="text-xs font-bold text-[#1a1a1a]">@tx.quantity</span>
+                                    </td>
+                                    <td class="px-5 py-3 align-middle">
+                                        @{
+                                            var (badge, bgColor, txtColor, borderColor) = tx.status switch {
+                                                "APPROVED" or "COMPLETED" => ("Disetujui", "#eef9f0", "#1a7a30", "#b8e8c0"),
+                                                "REJECTED" => ("Ditolak", "#fef0f0", "#d94040", "#f8c0c0"),
+                                                "REVISION" or "REVISION_BY_STAFF_INVENTORY" or "REVISION_BY_ADMIN" or "REVISION_BY_MANAGER" => ("Revisi", "#fffbeb", "#d97706", "#fde68a"),
+                                                "PENDING_STAFF_INVENTORY" or "PENDING_ADMIN" or "PENDING" => ("Menunggu", "#fff8e6", "#b37a00", "#ffe099"),
+                                                "WAITING_HANDOVER" or "WAITING_ADMIN_HANDOVER" => ("Serah Terima", "#e0f2fe", "#1a6b8a", "#bae6fd"),
+                                                "WAITING_DOCUMENTATION" => ("Dok. User", "#e8f5e9", "#2e7d32", "#c8e6c9"),
+                                                _ => (tx.status, "#f5f4f0", "#5a5855", "#e5e3dc")
+                                            };
+                                        }
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold"
+                                              style="background:@bgColor;color:@txtColor;border:1px solid @borderColor">@badge</span>
+                                    </td>
+                                    <td class="px-5 py-3 align-middle">
+                                        <span class="text-xs text-[#8a8880]">@tx.created_at.ToString("dd MMM yyyy")</span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </div>
+
+            <div class="px-5 py-3 border-t border-[#f0ede5] bg-[#faf9f5] flex items-center justify-between rounded-b-xl shrink-0">
+                <span class="text-[0.65rem] text-[#8a8880]">
+                    @if (ProductRequestHistory != null)
+                    {
+                        @($"Total: {ProductRequestHistory.Count} transaksi")
+                    }
+                </span>
+                <button type="button" @onclick="CloseBorrowHistoryModal" class="px-4 py-1.5 bg-white border border-[#e5e3dc] hover:bg-[#f0ede5] text-[#3a3835] text-xs font-bold rounded-lg transition">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
 @* Add to Cart Modal (Olshop Style) Blazor Port *@
 @if (ShowProductModal && SelectedProduct != null)
 {
@@ -636,6 +747,12 @@
                                 </div>
 
                                 <div class="h-px w-full bg-[#f0ede5]"></div>
+
+                                <button type="button" @onclick="OpenBorrowHistoryModal" @onclick:stopPropagation="true"
+                                        class="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#f5f4f0] border border-[#e5e3dc] hover:bg-[#e8a000] hover:border-[#e8a000] text-[#3a3835] hover:text-[#1a1a1a] text-xs font-bold rounded-xl transition">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                    Lihat Riwayat Peminjam / Requester
+                                </button>
 
                                 @* Types / Variants *@
                                 @if (SelectedProduct.ProductVariants != null && SelectedProduct.ProductVariants.Any())
@@ -782,6 +899,9 @@
     
     private bool ShowProductModal = false;
     private bool ShowCartModal = false;
+    private bool ShowBorrowHistoryModal = false;
+    private List<Transaction>? ProductRequestHistory;
+    private bool IsProductHistoryLoading = false;
     private string? CartToast;
     private Product? SelectedProduct;
     private int SelectedQuantity = 1;
@@ -1096,6 +1216,34 @@
     {
         ShowProductModal = false;
         SelectedProduct = null;
+    }
+
+    private async Task OpenBorrowHistoryModal()
+    {
+        if (SelectedProduct == null) return;
+        IsProductHistoryLoading = true;
+        ProductRequestHistory = null;
+        ShowBorrowHistoryModal = true;
+        StateHasChanged();
+        try
+        {
+            ProductRequestHistory = await TransactionService.GetProductRequestHistoryAsync(SelectedProduct.id);
+        }
+        catch
+        {
+            ProductRequestHistory = new List<Transaction>();
+        }
+        finally
+        {
+            IsProductHistoryLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void CloseBorrowHistoryModal()
+    {
+        ShowBorrowHistoryModal = false;
+        ProductRequestHistory = null;
     }
 
     private string NormalizeImagePath(string? image)

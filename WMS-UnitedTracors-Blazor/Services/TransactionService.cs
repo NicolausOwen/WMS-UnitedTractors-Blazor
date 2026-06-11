@@ -320,6 +320,16 @@ public class TransactionService
         return (transactions, totalItems, totalPages);
     }
 
+    public async Task<List<Transaction>> GetProductRequestHistoryAsync(int productId)
+    {
+        return await _context.Transactions
+            .Include(t => t.Requester)
+            .Include(t => t.Division)
+            .Where(t => t.product_id == productId && t.type == "OUT")
+            .OrderByDescending(t => t.created_at)
+            .ToListAsync();
+    }
+
     public async Task<string?> ReturnItemAsync(ReturnItemViewModel model, bool asDraft = false)
     {
         var transaction = await _context.Transactions
