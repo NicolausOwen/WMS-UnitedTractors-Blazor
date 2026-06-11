@@ -1,4 +1,4 @@
-﻿@page "/Product"
+@page "/Product"
 @using UT_WMSDotnet.Models
 @using WMS_UnitedTracors_Blazor.Services
 @inject ProductService ProductService
@@ -91,6 +91,10 @@
                             <th class="px-6 py-3 text-[0.68rem] font-semibold tracking-wider uppercase text-[#c8c5bc] hover:bg-gray-800 hover:text-white transition">Points</th>
                             <th class="px-6 py-3 text-[0.68rem] font-semibold tracking-wider uppercase text-[#c8c5bc] hover:bg-gray-800 hover:text-white transition">Status</th>
                             <th class="px-6 py-3 text-[0.68rem] font-semibold tracking-wider uppercase text-[#c8c5bc] hover:bg-gray-800 hover:text-white transition">Updated</th>
+                            @if (IsSuperAdmin)
+                            {
+                                <th class="px-6 py-3 text-[0.68rem] font-semibold tracking-wider uppercase text-[#c8c5bc] hover:bg-gray-800 hover:text-white transition text-center">Visibility</th>
+                            }
                             @if (IsAdmin)
                             {
                                 <th class="px-6 py-3 text-[0.68rem] font-semibold tracking-wider uppercase text-[#c8c5bc] w-32"></th>
@@ -101,7 +105,7 @@
                         @if (Products == null)
                         {
                             <tr>
-                                <td colspan="@(IsAdmin ? 9 : 8)" class="px-6 py-16 text-center">
+                                <td colspan="@(IsSuperAdmin ? 10 : (IsAdmin ? 9 : 8))" class="px-6 py-16 text-center">
                                     <div class="animate-pulse flex flex-col items-center">
                                         <div class="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
                                         <div class="h-3 bg-gray-200 rounded w-1/3"></div>
@@ -112,7 +116,7 @@
                         else if (!Products.Any())
                         {
                             <tr>
-                                <td colspan="@(IsAdmin ? 9 : 8)" class="px-6 py-16 text-center">
+                                <td colspan="@(IsSuperAdmin ? 10 : (IsAdmin ? 9 : 8))" class="px-6 py-16 text-center">
                                     <p class="text-sm text-gray-500">No products found.</p>
                                     <p class="text-xs text-gray-400 mt-1">Add a product to get started.</p>
                                 </td>
@@ -227,6 +231,14 @@
                                         <div class="text-xs text-gray-500">@product.updated_at.ToString("dd MMM yyyy")</div>
                                         <div class="text-[11px] text-gray-400">@product.updated_at.ToString("HH:mm")</div>
                                     </td>
+                                    @if (IsSuperAdmin)
+                                    {
+                                        <td class="px-6 py-4 whitespace-nowrap text-center">
+                                            <div class="inline-flex items-center justify-center cursor-pointer" @onclick="() => ToggleVisibility(product)">
+                                                <input type="checkbox" checked="@(product.is_hidden == 1)" class="w-4 h-4 text-red-600 bg-gray-100 border-gray-300 rounded focus:ring-red-500 pointer-events-none" />
+                                            </div>
+                                        </td>
+                                    }
                                     @if (IsAdmin)
                                     {
                                         <td class="px-6 py-4 whitespace-nowrap">
@@ -352,6 +364,14 @@
                                     }
                                 </div>
                                 <div class="flex items-center gap-2">
+                                    @if (IsSuperAdmin)
+                                    {
+                                        <label class="flex items-center gap-1.5 cursor-pointer" @onclick="() => ToggleVisibility(product)">
+                                            <input type="checkbox" checked="@(product.is_hidden == 1)" class="w-4 h-4 text-red-600 bg-gray-100 border-gray-300 rounded focus:ring-red-500 pointer-events-none" />
+                                            <span class="text-[10px] text-gray-500 font-bold uppercase">Hide</span>
+                                        </label>
+                                        <span class="w-px h-4 bg-gray-200 mx-1"></span>
+                                    }
                                     @if (IsAdmin)
                                     {
                                         <a href="/editproduct/@product.id" class="text-xs font-bold text-gray-600 hover:text-gray-900 px-3 py-1.5 rounded-lg bg-white border border-gray-200 hover:bg-gray-100 transition shadow-sm">
@@ -426,6 +446,7 @@
     private string? SuccessMessage;
     private string? ErrorMessage;
     private bool IsAdmin = false;
+    private bool IsSuperAdmin = false;
 
     private bool ShowImageModal = false;
     private string? ModalImageUrl;
@@ -554,6 +575,9 @@
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         
         IsAdmin = authState.User.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ProductsManage);
+        
+        var role = authState.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+        IsSuperAdmin = role == "superadmin" || string.Equals(role, "Super Admin", StringComparison.OrdinalIgnoreCase);
 
         var catResult = await CategoryService.GetCategoriesAsync(1, 100);
         Categories = catResult.Categories;
@@ -576,7 +600,7 @@
             while (_needsFetch)
             {
                 _needsFetch = false;
-                var result = await ProductService.GetProductsAsync(SelectedCategoryId, SearchQuery, CurrentPage, PageSize);
+                var result = await ProductService.GetProductsAsync(SelectedCategoryId, SearchQuery, CurrentPage, PageSize, includeHidden: IsAdmin);
                 Products = result.Products;
                 TotalItems = result.TotalItems;
                 TotalPages = result.TotalPages;
@@ -637,6 +661,26 @@
             {
                 ErrorMessage = "Gagal menghapus produk.";
             }
+        }
+    }
+
+    private async Task ToggleVisibility(Product product)
+    {
+        bool newStatus = product.is_hidden == 0;
+        var success = await ProductService.ToggleProductVisibilityAsync(product.id, newStatus);
+        if (success)
+        {
+            product.is_hidden = newStatus ? 1 : 0;
+            StateHasChanged();
+        }
+        else
+        {
+            ErrorMessage = "Failed to update product visibility.";
+            _ = Task.Delay(3000).ContinueWith(_ =>
+            {
+                ErrorMessage = null;
+                InvokeAsync(StateHasChanged);
+            });
         }
     }
 }

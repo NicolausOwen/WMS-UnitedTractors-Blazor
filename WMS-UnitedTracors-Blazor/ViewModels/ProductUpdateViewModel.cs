@@ -54,5 +54,7 @@ public class ProductUpdateViewModel
 
     public bool is_returnable { get; set; }
 
+    public bool is_hidden { get; set; }
+
     public List<ProductVariantViewModel> variants { get; set; } = new();
 }

@@ -16,7 +16,7 @@ public class ProductService
         _env = env;
     }
 
-    public async Task<(List<Product> Products, int TotalItems, int TotalPages)> GetProductsAsync(int? category, string? search, int page = 1, int pageSize = 10)
+    public async Task<(List<Product> Products, int TotalItems, int TotalPages)> GetProductsAsync(int? category, string? search, int page = 1, int pageSize = 10, bool includeHidden = false)
     {
         var query = _context.Products
             .AsNoTracking()
@@ -25,6 +25,11 @@ public class ProductService
             .Include(p => p.Unit)
             .OrderByDescending(p => p.created_at)
             .AsQueryable();
+
+        if (!includeHidden)
+        {
+            query = query.Where(p => p.is_hidden == 0);
+        }
 
         if (category.HasValue)
         {
@@ -181,6 +186,7 @@ public class ProductService
                     color = v.color,
                     size = v.size,
                     stock = v.stock,
+                    is_hidden = v.is_hidden ? 1 : 0,
                     image = vImagePath,
                     created_at = DateTime.UtcNow,
                     updated_at = DateTime.UtcNow
@@ -300,6 +306,7 @@ public class ProductService
         product.current_stock = model.current_stock;
         product.initial_stock = model.initial_stock;
         product.is_returnable = model.is_returnable ? 1 : 0;
+        product.is_hidden = model.is_hidden ? 1 : 0;
         product.description = model.description;
         product.transaction_type = string.IsNullOrWhiteSpace(model.transaction_type) ? null : model.transaction_type;
         product.updated_at = DateTime.UtcNow;
@@ -348,6 +355,7 @@ public class ProductService
                     existing.color = vm.color;
                     existing.size = vm.size;
                     existing.stock = vm.stock;
+                    existing.is_hidden = vm.is_hidden ? 1 : 0;
                     existing.updated_at = DateTime.UtcNow;
                     if (vImagePath != null)
                     {
@@ -372,6 +380,7 @@ public class ProductService
                     color = vm.color,
                     size = vm.size,
                     stock = vm.stock,
+                    is_hidden = vm.is_hidden ? 1 : 0,
                     image = vImagePath,
                     created_at = DateTime.UtcNow,
                     updated_at = DateTime.UtcNow
@@ -447,5 +456,30 @@ public class ProductService
         }
 
         return await query.OrderBy(p => p.name).ToListAsync();
+    }
+
+    public async Task<bool> ToggleProductVisibilityAsync(int id, bool isHidden)
+    {
+        var product = await _context.Products.FindAsync(id);
+        if (product != null)
+        {
+            product.is_hidden = isHidden ? 1 : 0;
+            product.updated_at = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+            return true;
+        }
+        return false;
+    }
+    public async Task<bool> ToggleVariantVisibilityAsync(int variantId, bool isHidden)
+    {
+        var variant = await _context.ProductVariants.FindAsync(variantId);
+        if (variant != null)
+        {
+            variant.is_hidden = isHidden ? 1 : 0;
+            variant.updated_at = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+            return true;
+        }
+        return false;
     }
 }

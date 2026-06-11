@@ -8,12 +8,10 @@ namespace WMS_UnitedTracors_Blazor.Services;
 public class ApprovalService
 {
     private readonly ApplicationDbContext _context;
-    private readonly IEmailService _emailService;
 
-    public ApprovalService(ApplicationDbContext context, IEmailService emailService)
+    public ApprovalService(ApplicationDbContext context)
     {
         _context = context;
-        _emailService = emailService;
     }
 
     public async Task<(Dictionary<string, List<Transaction>> GroupedApprovals, List<Transaction> PendingReturns, List<ProfileRequest> PendingProfileRequests, Dictionary<string, List<Transaction>> GroupedHandovers)> GetApprovalsAsync(int currentUserId, string? userRole)
@@ -677,12 +675,10 @@ public class ApprovalService
         return null;
     }
 
-    private async Task NotifyUserAsync(Transaction transaction, string subject, string message)
+    private Task NotifyUserAsync(Transaction transaction, string subject, string message)
     {
-        if (transaction.Requester != null && !string.IsNullOrWhiteSpace(transaction.Requester.email))
-        {
-            await _emailService.SendEmailAsync(transaction.Requester.email, subject, message);
-        }
+        // Email notifications removed - no-op stub
+        return Task.CompletedTask;
     }
 
     // Status revisi & catatan ditentukan oleh TAHAP (status sebelum aksi), bukan role.
