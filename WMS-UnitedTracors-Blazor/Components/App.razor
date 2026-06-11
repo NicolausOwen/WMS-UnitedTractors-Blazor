@@ -141,6 +141,28 @@
         document.addEventListener('keydown', function (e) {
             if (e.key == 'Escape') utCloseDrawer();
         });
+
+        // ── Scroll Active Step Into View ────────────────────────────
+        window.scrollActiveStepIntoView = function() {
+            setTimeout(() => {
+                const activeSteps = document.querySelectorAll('.step-active, .step-warning');
+                activeSteps.forEach(el => {
+                    const container = el.closest('.stepper-container') || el.closest('.overflow-x-auto') || el.closest('.overflow-x-hidden');
+                    if (container) {
+                        const containerRect = container.getBoundingClientRect();
+                        const elRect = el.getBoundingClientRect();
+                        const elWidth = elRect.width;
+                        const containerWidth = containerRect.width;
+                        const relativeLeft = elRect.left - containerRect.left + container.scrollLeft;
+                        
+                        container.scrollTo({
+                            left: relativeLeft - (containerWidth / 2) + (elWidth / 2),
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            }, 300);
+        };
     </script>
 </body>
 </html>

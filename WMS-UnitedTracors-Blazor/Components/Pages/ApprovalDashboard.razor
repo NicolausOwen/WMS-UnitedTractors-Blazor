@@ -968,10 +968,6 @@
         GroupedHandovers = data.GroupedHandovers;
         
         ExpandedGroups.Clear();
-        if (GroupedApprovals != null && GroupedApprovals.Any())
-        {
-            ExpandedGroups.Add(GroupedApprovals.First().Key);
-        }
         
         Decisions.Clear();
         Reasons.Clear();

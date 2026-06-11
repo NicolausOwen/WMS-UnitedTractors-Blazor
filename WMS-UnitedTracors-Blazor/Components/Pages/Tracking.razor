@@ -199,7 +199,7 @@
                             </div>
 
                             @* Breadcrumbs / Stepper UI (Group Level) *@
-                            <div class="w-full lg:w-auto mt-4 lg:mt-0 flex items-center lg:justify-end flex-1 lg:pr-8 overflow-x-auto" style="scrollbar-width: none;">
+                            <div class="w-full lg:w-auto mt-4 lg:mt-0 flex items-center flex-1 lg:pr-8 overflow-x-hidden stepper-container" style="scrollbar-width: none;">
                                 <nav class="flex" aria-label="Breadcrumb">
                                     <ol role="list" class="flex items-center space-x-2">
                                         @{ var steps = GetGroupSteps(groupItems); }
@@ -211,7 +211,7 @@
                                                     @if (i > 0) {
                                                         <svg class="h-3.5 w-3.5 text-[#d1cec7] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
                                                     }
-                                                    <div class="flex items-center gap-1.5 @(i > 0 ? "ml-2" : "")">
+                                                    <div class="flex items-center gap-1.5 @(i > 0 ? "ml-2" : "") @(step.Status == "ACTIVE" ? "step-active" : "") @(step.Status == "WARNING" ? "step-warning" : "")">
                                                         @if (step.Status == "DONE") {
                                                             <div class="w-3.5 h-3.5 rounded-full bg-[#1a7a30] flex items-center justify-center shrink-0">
                                                                 <svg class="w-2 h-2 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
@@ -1050,40 +1050,11 @@
 
         GroupedUsages = finalGrouped;
 
-        // Auto expand logic
+        // Default state: semua grup collapse, biarkan user expand manual.
         ExpandedGroupIds.Clear();
-        foreach (var kvp in GroupedUsages)
-        {
-            var firstItem = kvp.Value.First();
-            if (firstItem.request_type == "GIVEAWAY")
-            {
-                if (firstItem.status == "PENDING_STAFF_INVENTORY" ||
-                    firstItem.status == "PENDING_ADMIN" ||
-                    firstItem.status == "PENDING_MANAGER" ||
-                    firstItem.status == "REVISION" ||
-                    firstItem.status == "REVISION_BY_STAFF_INVENTORY" ||
-                    firstItem.status == "REVISION_BY_ADMIN" ||
-                    firstItem.status == "REVISION_BY_MANAGER" ||
-                    firstItem.status == "WAITING_HANDOVER" ||
-                    firstItem.status == "WAITING_DOCUMENTATION" ||
-                    firstItem.status == "DOCUMENTATION_OVERDUE")
-                {
-                    ExpandedGroupIds.Add(kvp.Key);
-                }
-            }
-            else
-            {
-                var totalItems = kvp.Value.Sum(i => i.quantity);
-                var totalReturned = kvp.Value.Sum(i => i.returned_quantity);
-                if (firstItem.status == "PENDING" || firstItem.status == "REVISION" || firstItem.status == "REVISION_BY_ADMIN" || totalReturned < totalItems)
-                {
-                    ExpandedGroupIds.Add(kvp.Key);
-                }
-            }
-        }
     }
 
-    private void ToggleGroup(string groupId)
+    private async Task ToggleGroup(string groupId)
     {
         if (ExpandedGroupIds.Contains(groupId))
         {
@@ -1092,6 +1063,15 @@
         else
         {
             ExpandedGroupIds.Add(groupId);
+            await JSRuntime.InvokeVoidAsync("scrollActiveStepIntoView");
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JSRuntime.InvokeVoidAsync("scrollActiveStepIntoView");
         }
     }
 
