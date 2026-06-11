@@ -1,0 +1,207 @@
+@using UT_WMSDotnet.Models
+@using WMS_UnitedTracors_Blazor.Services
+@inject TransactionService TransactionService
+
+@if (_product != null)
+{
+    <div class="fixed inset-0 z-[9999] flex" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 bg-[#1a1a1a]/60 backdrop-blur-sm" @onclick="Close"></div>
+        <div class="fixed inset-0 z-10 overflow-y-auto flex items-center justify-center p-4" @onclick="Close">
+            <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl border border-[#e5e3dc]" @onclick:stopPropagation="true">
+
+                @* Header *@
+                <div class="px-5 py-4 border-b border-[#f0ede5] flex items-start justify-between gap-3">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="p-2 bg-[#f0ede5] rounded-lg shrink-0">
+                            <svg class="w-4 h-4 text-[#5a5855]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                        </div>
+                        <div class="min-w-0">
+                            <h3 class="font-bold text-[#1a1a1a] text-sm">Riwayat Peminjam</h3>
+                            <p class="text-xs text-[#8a8880] truncate mt-0.5">@_product.name</p>
+                        </div>
+                    </div>
+                    <button type="button" @onclick="Close" class="text-[#a09e99] hover:text-[#1a1a1a] transition p-1 bg-[#f5f4f0] rounded-full shrink-0">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+
+                @* Body *@
+                <div class="p-4">
+                    @if (_loading)
+                    {
+                        <div class="py-12 flex flex-col items-center gap-3 text-[#8a8880]">
+                            <svg class="w-6 h-6 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                            </svg>
+                            <span class="text-sm font-medium">Memuat riwayat...</span>
+                        </div>
+                    }
+                    else if (!_items.Any())
+                    {
+                        <div class="py-12 text-center">
+                            <svg class="w-10 h-10 mx-auto text-[#d1cec7] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            <p class="text-sm text-[#8a8880] font-medium">Belum ada riwayat permintaan untuk barang ini.</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="space-y-2">
+                            @foreach (var t in _items)
+                            {
+                                <div class="flex items-start gap-3 p-3 bg-[#f9f8f6] rounded-xl border border-[#f0ede5] hover:border-[#e5e3dc] transition">
+                                    @* Initials avatar *@
+                                    <div class="w-8 h-8 rounded-full bg-[#e8a000] flex items-center justify-center text-[0.65rem] font-bold text-[#1a1a1a] shrink-0">
+                                        @GetInitials(t.applicant_name ?? t.Requester?.name)
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center justify-between gap-2 flex-wrap">
+                                            <span class="text-xs font-bold text-[#1a1a1a] truncate">@(t.applicant_name ?? t.Requester?.name ?? "-")</span>
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border @StatusColor(t.status) shrink-0">
+                                                @StatusLabel(t.status)
+                                            </span>
+                                        </div>
+                                        <div class="flex flex-wrap gap-x-4 gap-y-0.5 mt-1">
+                                            @if (!string.IsNullOrEmpty(t.applicant_nrp))
+                                            {
+                                                <span class="text-[10px] text-[#8a8880]">NRP: @t.applicant_nrp</span>
+                                            }
+                                            @if (t.Division != null)
+                                            {
+                                                <span class="text-[10px] text-[#8a8880]">@t.Division.name</span>
+                                            }
+                                        </div>
+                                        <div class="flex flex-wrap gap-x-4 gap-y-0.5 mt-1.5">
+                                            @if (!string.IsNullOrEmpty(t.event_name))
+                                            {
+                                                <span class="text-[10px] text-[#5a5855]">
+                                                    <span class="text-[#a09e99]">Event:</span> @t.event_name
+                                                </span>
+                                            }
+                                            @if (t.event_date.HasValue)
+                                            {
+                                                <span class="text-[10px] text-[#a09e99]">@t.event_date.Value.ToString("dd MMM yyyy")</span>
+                                            }
+                                            <span class="text-[10px] text-[#a09e99]">@t.quantity unit</span>
+                                            <span class="text-[10px] text-[#a09e99]">@t.created_at.ToString("dd MMM yyyy")</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        @* Pagination *@
+                        @if (_totalPages > 1)
+                        {
+                            <div class="mt-4 flex items-center justify-between">
+                                <span class="text-[11px] text-[#8a8880] font-medium">@_totalItems riwayat ditemukan</span>
+                                <div class="flex items-center gap-1 bg-[#f9f8f6] p-1 rounded-lg border border-[#e5e3dc]">
+                                    <button @onclick="() => LoadPage(_page - 1)" disabled="@(_page == 1)"
+                                            class="w-7 h-7 flex items-center justify-center rounded text-[#5a5855] hover:bg-white disabled:opacity-30 transition">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                                    </button>
+                                    @for (int i = Math.Max(1, _page - 2); i <= Math.Min(_totalPages, _page + 2); i++)
+                                    {
+                                        int p = i;
+                                        <button @onclick="() => LoadPage(p)"
+                                                class="w-7 h-7 flex items-center justify-center rounded text-[11px] font-bold transition @(_page == p ? "bg-[#1a1a1a] text-white" : "text-[#5a5855] hover:bg-white")">
+                                            @p
+                                        </button>
+                                    }
+                                    <button @onclick="() => LoadPage(_page + 1)" disabled="@(_page == _totalPages)"
+                                            class="w-7 h-7 flex items-center justify-center rounded text-[#5a5855] hover:bg-white disabled:opacity-30 transition">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="mt-3 text-right">
+                                <span class="text-[11px] text-[#8a8880] font-medium">@_totalItems riwayat ditemukan</span>
+                            </div>
+                        }
+                    }
+                </div>
+
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private Product? _product;
+    private List<Transaction> _items = new();
+    private bool _loading = false;
+    private int _page = 1;
+    private int _totalPages = 0;
+    private int _totalItems = 0;
+
+    public async Task Open(Product product)
+    {
+        _product = product;
+        _page = 1;
+        await LoadPage(1);
+        StateHasChanged();
+    }
+
+    public void Close()
+    {
+        _product = null;
+        _items = new();
+        StateHasChanged();
+    }
+
+    private async Task LoadPage(int page)
+    {
+        if (_product == null) return;
+        _loading = true;
+        StateHasChanged();
+        var (items, total, totalPages) = await TransactionService.GetProductRequestHistoryPagedAsync(_product.id, page);
+        _items = items;
+        _totalItems = total;
+        _totalPages = totalPages;
+        _page = page;
+        _loading = false;
+        StateHasChanged();
+    }
+
+    private static string GetInitials(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "?";
+        var parts = name.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length >= 2
+            ? $"{parts[0][0]}{parts[1][0]}".ToUpper()
+            : name[..Math.Min(2, name.Length)].ToUpper();
+    }
+
+    private static string StatusLabel(string? status) => status switch
+    {
+        "PENDING_STAFF_INVENTORY" => "Menunggu Staff",
+        "PENDING_ADMIN"           => "Menunggu Admin",
+        "PENDING_MANAGER"         => "Menunggu Manager",
+        "APPROVED"                => "Disetujui",
+        "REJECTED"                => "Ditolak",
+        "REVISION" or "REVISION_BY_STAFF_INVENTORY" or "REVISION_BY_ADMIN" or "REVISION_BY_MANAGER" => "Revisi",
+        "WAITING_HANDOVER" or "WAITING_HANDOVER_CONFIRM" or "WAITING_ADMIN_HANDOVER" => "Serah Terima",
+        "WAITING_DOCUMENTATION" or "DOCUMENTATION_OVERDUE" => "Dokumentasi",
+        "COMPLETED"               => "Selesai",
+        _                         => status ?? "-"
+    };
+
+    private static string StatusColor(string? status) => status switch
+    {
+        "APPROVED"  => "bg-green-50 text-green-700 border-green-200",
+        "REJECTED"  => "bg-red-50 text-red-700 border-red-200",
+        "COMPLETED" => "bg-blue-50 text-blue-700 border-blue-200",
+        "REVISION" or "REVISION_BY_STAFF_INVENTORY" or "REVISION_BY_ADMIN" or "REVISION_BY_MANAGER"
+                    => "bg-yellow-50 text-yellow-700 border-yellow-200",
+        "WAITING_HANDOVER" or "WAITING_HANDOVER_CONFIRM" or "WAITING_ADMIN_HANDOVER"
+                    => "bg-orange-50 text-orange-700 border-orange-200",
+        _           => "bg-[#f0ede5] text-[#5a5855] border-[#e5e3dc]"
+    };
+}

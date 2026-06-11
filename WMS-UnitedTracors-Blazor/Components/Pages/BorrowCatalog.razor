@@ -6,6 +6,7 @@
 @implements IDisposable
 @inject ProductService ProductService
 @inject CartService CartService
+@inject TransactionService TransactionService
 @inject AuthenticationStateProvider AuthStateProvider
 @inject IJSRuntime JSRuntime
 @rendermode InteractiveServer
@@ -77,9 +78,6 @@
                                     <span class="px-2 py-0.5 bg-[#fef0f0] border border-[#f8c0c0] text-[#d94040] text-[0.6rem] font-bold rounded shadow-sm tracking-wider uppercase">Habis</span>
                                 </div>
                             }
-                            <div class="absolute top-2 right-2">
-                                <span class="px-2 py-0.5 bg-blue-50 border border-blue-200 text-blue-700 text-[0.6rem] font-bold rounded shadow-sm">Pinjam</span>
-                            </div>
                         </div>
                         <div class="p-3.5 flex flex-col flex-grow">
                             <div class="flex items-center justify-between gap-1 mb-1.5">
@@ -131,15 +129,22 @@
 @* Product Detail Modal *@
 @if (ShowProductModal && SelectedProduct != null)
 {
-    <div class="fixed inset-0 z-[70] flex" role="dialog" aria-modal="true">
+    <div class="fixed inset-0 z-[215] flex" role="dialog" aria-modal="true">
         <div class="fixed inset-0 backdrop-blur-sm bg-[#1a1a1a]/65" @onclick="CloseProductModal"></div>
         <div class="fixed inset-0 z-10 overflow-y-auto flex items-end sm:items-center justify-center sm:p-4" @onclick="CloseProductModal">
             <div class="relative transform overflow-hidden rounded-t-2xl sm:rounded-xl bg-white text-left shadow-2xl w-full max-w-5xl sm:my-8 border-t sm:border border-[#e5e3dc]" @onclick:stopPropagation="true">
                 <div class="px-5 py-4 border-b border-[#f0ede5] flex items-center justify-between sticky top-0 bg-white z-10">
                     <h3 class="font-bold text-[#1a1a1a] text-sm">Detail Produk</h3>
-                    <button type="button" @onclick="CloseProductModal" class="text-[#a09e99] hover:text-[#1a1a1a] transition p-1 bg-[#f5f4f0] rounded-full">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                    </button>
+                    <div class="flex items-center gap-2">
+                        <button type="button" @onclick="() => HistoryModalRef?.Open(SelectedProduct!)"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#f5f4f0] hover:bg-[#e8e5df] border border-[#e5e3dc] text-[#5a5855] text-[11px] font-semibold rounded-lg transition">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                            Riwayat Peminjam
+                        </button>
+                        <button type="button" @onclick="CloseProductModal" class="text-[#a09e99] hover:text-[#1a1a1a] transition p-1 bg-[#f5f4f0] rounded-full">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
                 </div>
                 <div class="px-5 py-4 pb-20 sm:pb-4">
                     @if (!string.IsNullOrEmpty(ModalError))
@@ -180,7 +185,6 @@
                             <div>
                                 <h4 class="text-base font-bold text-[#1a1a1a] leading-tight mb-1">@SelectedProduct.name</h4>
                                 <code class="text-[0.65rem] font-medium text-[#8a8880] bg-[#f0ede5] px-1.5 py-0.5 rounded">@SelectedProduct.sku</code>
-                                <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-100">Pinjam</span>
                             </div>
 
                             <div class="h-px bg-[#f0ede5]"></div>
@@ -252,6 +256,7 @@
 
 @* Shared cart checkout widget *@
 <CartCheckout @ref="CartCheckoutRef" />
+<ProductHistoryModal @ref="HistoryModalRef" />
 
 @code {
     private List<Product>? Products;
@@ -272,6 +277,7 @@
     private string? ModalError;
 
     private CartCheckout? CartCheckoutRef;
+    private ProductHistoryModal? HistoryModalRef;
 
     protected override async Task OnInitializedAsync()
     {

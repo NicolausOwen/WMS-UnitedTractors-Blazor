@@ -168,7 +168,7 @@
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
             Katalog Pinjam
         </a>
-        <a href="/Catalog/Giveaway" class="inline-flex items-center gap-2 px-[1.1rem] py-[0.6rem] bg-purple-600 hover:bg-purple-700 active:scale-[0.98] text-white text-[0.75rem] font-bold tracking-[0.06em] uppercase rounded-lg transition">
+        <a href="/Catalog/Giveaway" class="inline-flex items-center gap-2 px-[1.1rem] py-[0.6rem] bg-[#3b82f6] hover:bg-[#2563eb] active:scale-[0.98] text-white text-[0.75rem] font-bold tracking-[0.06em] uppercase rounded-lg transition">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
             Katalog Ambil
         </a>
@@ -276,25 +276,25 @@
 
     @* Catalog shortcut cards *@
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-        <a href="/Catalog/Borrow" class="flex items-center gap-4 p-5 bg-white border border-blue-100 hover:border-blue-400 rounded-xl shadow-sm hover:shadow-md transition-all group">
-            <div class="p-3 bg-blue-50 rounded-xl text-blue-600 group-hover:bg-blue-100 transition">
+        <a href="/Catalog/Borrow" class="flex items-center gap-4 p-5 bg-blue-50 border border-blue-200 hover:border-blue-400 hover:bg-blue-100 rounded-xl shadow-sm hover:shadow-md transition-all group">
+            <div class="p-3 bg-blue-600 rounded-xl text-white group-hover:bg-blue-700 transition">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
             </div>
             <div>
-                <h4 class="font-bold text-[#1a1a1a] text-sm group-hover:text-blue-600 transition">Katalog Pinjam</h4>
-                <p class="text-xs text-[#8a8880] mt-0.5">Lihat & tambahkan barang pinjaman ke keranjang</p>
+                <h4 class="font-bold text-blue-900 text-sm group-hover:text-blue-700 transition">Katalog Pinjam</h4>
+                <p class="text-xs text-blue-600 mt-0.5">Lihat & tambahkan barang pinjaman ke keranjang</p>
             </div>
-            <svg class="w-5 h-5 text-[#d1cec7] ml-auto group-hover:text-blue-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            <svg class="w-5 h-5 text-blue-300 ml-auto group-hover:text-blue-500 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
         </a>
-        <a href="/Catalog/Giveaway" class="flex items-center gap-4 p-5 bg-white border border-purple-100 hover:border-purple-400 rounded-xl shadow-sm hover:shadow-md transition-all group">
-            <div class="p-3 bg-purple-50 rounded-xl text-purple-600 group-hover:bg-purple-100 transition">
+        <a href="/Catalog/Giveaway" class="flex items-center gap-4 p-5 bg-purple-50 border border-purple-200 hover:border-purple-400 hover:bg-purple-100 rounded-xl shadow-sm hover:shadow-md transition-all group">
+            <div class="p-3 bg-purple-600 rounded-xl text-white group-hover:bg-purple-700 transition">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
             </div>
             <div>
-                <h4 class="font-bold text-[#1a1a1a] text-sm group-hover:text-purple-600 transition">Katalog Ambil / Giveaway</h4>
-                <p class="text-xs text-[#8a8880] mt-0.5">Lihat & tambahkan merchandise ke keranjang</p>
+                <h4 class="font-bold text-purple-900 text-sm group-hover:text-purple-700 transition">Katalog Ambil / Giveaway</h4>
+                <p class="text-xs text-purple-600 mt-0.5">Lihat & tambahkan merchandise ke keranjang</p>
             </div>
-            <svg class="w-5 h-5 text-[#d1cec7] ml-auto group-hover:text-purple-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            <svg class="w-5 h-5 text-purple-300 ml-auto group-hover:text-purple-500 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
         </a>
     </div>
 
@@ -672,9 +672,9 @@
 @* Add to Cart Modal (Olshop Style) Blazor Port *@
 @if (ShowProductModal && SelectedProduct != null)
 {
-    <div id="addToCartModal" class="fixed inset-0 z-[70] flex" role="dialog" aria-modal="true">
+    <div id="addToCartModal" class="fixed inset-0 z-[215] flex" role="dialog" aria-modal="true">
         <div class="fixed inset-0 backdrop-blur-sm transition-opacity bg-[#1a1a1a]/65" @onclick="CloseProductModal"></div>
-        <div class="fixed inset-0 z-10 overflow-y-auto md:pl-[var(--ut-sidebar-w)] transition-all flex items-end sm:items-center justify-center sm:p-4 text-center" @onclick="CloseProductModal">
+        <div class="fixed inset-0 z-10 overflow-y-auto transition-all flex items-end sm:items-center justify-center sm:p-4 text-center" @onclick="CloseProductModal">
             <div class="relative transform overflow-hidden rounded-t-2xl sm:rounded-xl bg-white text-left shadow-2xl transition-all w-full max-w-5xl sm:my-8 border-t sm:border border-[#e5e3dc]" @onclick:stopPropagation="true">
                 <div class="px-5 py-4 border-b border-[#f0ede5] flex items-center justify-between sticky top-0 bg-white z-10">
                     <h3 class="font-bold text-[#1a1a1a] text-sm" id="addToCartTitle">Detail Produk</h3>

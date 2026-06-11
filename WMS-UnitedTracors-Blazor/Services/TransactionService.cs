@@ -349,6 +349,22 @@ public class TransactionService
             .ToListAsync();
     }
 
+    public async Task<(List<Transaction> Items, int TotalItems, int TotalPages)> GetProductRequestHistoryPagedAsync(
+        int productId, int page = 1, int pageSize = 8)
+    {
+        using var _context = _factory.CreateDbContext();
+        var query = _context.Transactions
+            .Include(t => t.Requester)
+            .Include(t => t.Division)
+            .Where(t => t.product_id == productId && t.type == "OUT")
+            .OrderByDescending(t => t.created_at);
+
+        int totalItems = await query.CountAsync();
+        int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+        var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+        return (items, totalItems, totalPages);
+    }
+
     public async Task<string?> ReturnItemAsync(ReturnItemViewModel model, bool asDraft = false)
     {
         using var _context = _factory.CreateDbContext();
