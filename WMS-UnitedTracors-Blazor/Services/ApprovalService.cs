@@ -8,10 +8,12 @@ namespace WMS_UnitedTracors_Blazor.Services;
 public class ApprovalService
 {
     private readonly ApplicationDbContext _context;
+    private readonly IEmailService _emailService;
 
-    public ApprovalService(ApplicationDbContext context)
+    public ApprovalService(ApplicationDbContext context, IEmailService emailService)
     {
         _context = context;
+        _emailService = emailService;
     }
 
     public async Task<(Dictionary<string, List<Transaction>> GroupedApprovals, List<Transaction> PendingReturns, List<ProfileRequest> PendingProfileRequests, Dictionary<string, List<Transaction>> GroupedHandovers)> GetApprovalsAsync(int currentUserId, string? userRole)
@@ -158,6 +160,7 @@ public class ApprovalService
             transaction.rejection_reason = null;
             _context.Transactions.Update(transaction);
             await _context.SaveChangesAsync();
+            _ = NotifyUserAsync(transaction, "Update Request WMS", "Request Anda telah disetujui pada tahap Staff Inventoris dan sedang menunggu tahap selanjutnya.");
             return null;
         }
 
@@ -239,6 +242,12 @@ public class ApprovalService
 
                 await _context.SaveChangesAsync();
                 await dbTransaction.CommitAsync();
+
+                var msg = transaction.type == "OUT" && transaction.request_type == "BORROW" 
+                    ? "Request peminjaman Anda telah disetujui secara final. Silakan proses serah terima." 
+                    : "Request Anda telah disetujui secara final.";
+                _ = NotifyUserAsync(transaction, "Update Request WMS", msg);
+
                 return null;
             }
             catch (Exception ex)
@@ -286,6 +295,9 @@ public class ApprovalService
 
         _context.Transactions.Update(transaction);
         await _context.SaveChangesAsync();
+        
+        _ = NotifyUserAsync(transaction, "Request Ditolak WMS", $"Request Anda telah ditolak. Alasan: {rejectionReason}");
+        
         return null;
     }
 
@@ -452,6 +464,12 @@ public class ApprovalService
         }
 
         await _context.SaveChangesAsync();
+
+        if (matched.Any())
+        {
+            _ = NotifyUserAsync(matched.First(), "Serah Terima Selesai", "Proses serah terima barang peminjaman Anda telah diverifikasi oleh Admin.");
+        }
+
         return null;
     }
 
@@ -485,6 +503,20 @@ public class ApprovalService
         }
 
         await _context.SaveChangesAsync();
+
+        if (matched.Any())
+        {
+            var firstMatched = matched.First();
+            if (isApproved)
+            {
+                _ = NotifyUserAsync(firstMatched, "Konfirmasi Serah Terima", "Bukti serah terima Anda telah dikonfirmasi dan sedang menunggu verifikasi final dari Admin.");
+            }
+            else
+            {
+                _ = NotifyUserAsync(firstMatched, "Penolakan Serah Terima", $"Bukti serah terima Anda ditolak. Alasan: {rejectionReason}");
+            }
+        }
+
         return null;
     }
 
@@ -510,6 +542,12 @@ public class ApprovalService
         }
 
         await _context.SaveChangesAsync();
+
+        if (matched.Any())
+        {
+            _ = NotifyUserAsync(matched.First(), "Serah Terima Ditolak Admin", $"Proses serah terima Anda ditolak oleh Admin. Alasan: {rejectionReason}");
+        }
+
         return null;
     }
 
@@ -631,7 +669,20 @@ public class ApprovalService
         transaction.last_revision_stage = null;
         _context.Transactions.Update(transaction);
         await _context.SaveChangesAsync();
+
+        string stage = transaction.status == WorkflowStatuses.PendingAdmin ? "Staff Inventoris" :
+                       transaction.status == WorkflowStatuses.PendingManager ? "Admin" : "Manager (Final, silakan proses pengambilan/serah terima)";
+        _ = NotifyUserAsync(transaction, "Update Request WMS", $"Request Giveaway Anda telah disetujui oleh {stage}.");
+
         return null;
+    }
+
+    private async Task NotifyUserAsync(Transaction transaction, string subject, string message)
+    {
+        if (transaction.Requester != null && !string.IsNullOrWhiteSpace(transaction.Requester.email))
+        {
+            await _emailService.SendEmailAsync(transaction.Requester.email, subject, message);
+        }
     }
 
     // Status revisi & catatan ditentukan oleh TAHAP (status sebelum aksi), bukan role.
@@ -671,6 +722,7 @@ public class ApprovalService
         _context.Transactions.Update(transaction);
 
         await _context.SaveChangesAsync();
+        _ = NotifyUserAsync(transaction, "Serah Terima Selesai", "Proses serah terima barang peminjaman Anda telah diverifikasi oleh Admin.");
         return null;
     }
 
@@ -691,6 +743,7 @@ public class ApprovalService
         _context.Transactions.Update(transaction);
 
         await _context.SaveChangesAsync();
+        _ = NotifyUserAsync(transaction, "Serah Terima Ditolak Admin", $"Proses serah terima Anda ditolak oleh Admin. Alasan: {rejectionReason}");
         return null;
     }
 }
