@@ -164,6 +164,14 @@
     
     @* Quick Actions *@
     <div class="flex flex-wrap items-center gap-3 mb-8">
+        <a href="/Catalog/Borrow" class="inline-flex items-center gap-2 px-[1.1rem] py-[0.6rem] bg-[#3b82f6] hover:bg-[#2563eb] active:scale-[0.98] text-white text-[0.75rem] font-bold tracking-[0.06em] uppercase rounded-lg transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+            Katalog Pinjam
+        </a>
+        <a href="/Catalog/Giveaway" class="inline-flex items-center gap-2 px-[1.1rem] py-[0.6rem] bg-purple-600 hover:bg-purple-700 active:scale-[0.98] text-white text-[0.75rem] font-bold tracking-[0.06em] uppercase rounded-lg transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+            Katalog Ambil
+        </a>
         @if (userPrincipal.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.TrackingView)) {
         <a href="Tracking" class="inline-flex items-center gap-2 px-[1.1rem] py-[0.6rem] bg-[#1a1a1a] hover:bg-[#333333] active:scale-[0.98] text-white text-[0.75rem] font-bold tracking-[0.06em] uppercase rounded-lg transition">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
@@ -266,6 +274,32 @@
         </div>
     }
 
+    @* Catalog shortcut cards *@
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+        <a href="/Catalog/Borrow" class="flex items-center gap-4 p-5 bg-white border border-blue-100 hover:border-blue-400 rounded-xl shadow-sm hover:shadow-md transition-all group">
+            <div class="p-3 bg-blue-50 rounded-xl text-blue-600 group-hover:bg-blue-100 transition">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+            </div>
+            <div>
+                <h4 class="font-bold text-[#1a1a1a] text-sm group-hover:text-blue-600 transition">Katalog Pinjam</h4>
+                <p class="text-xs text-[#8a8880] mt-0.5">Lihat & tambahkan barang pinjaman ke keranjang</p>
+            </div>
+            <svg class="w-5 h-5 text-[#d1cec7] ml-auto group-hover:text-blue-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </a>
+        <a href="/Catalog/Giveaway" class="flex items-center gap-4 p-5 bg-white border border-purple-100 hover:border-purple-400 rounded-xl shadow-sm hover:shadow-md transition-all group">
+            <div class="p-3 bg-purple-50 rounded-xl text-purple-600 group-hover:bg-purple-100 transition">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+            </div>
+            <div>
+                <h4 class="font-bold text-[#1a1a1a] text-sm group-hover:text-purple-600 transition">Katalog Ambil / Giveaway</h4>
+                <p class="text-xs text-[#8a8880] mt-0.5">Lihat & tambahkan merchandise ke keranjang</p>
+            </div>
+            <svg class="w-5 h-5 text-[#d1cec7] ml-auto group-hover:text-purple-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </a>
+    </div>
+
+    @* NOTE: old catalog section removed — use /Catalog/Borrow and /Catalog/Giveaway *@
+    @if (false) {
     <div class="bg-white border border-[#e5e3dc] rounded-xl overflow-hidden shadow-sm">
         @* Header *@
         <div class="px-6 py-4 border-b border-[#f0ede5] flex flex-col gap-4">
@@ -391,16 +425,7 @@
         }
     </div>
 
-    @if (TotalPages > 1)
-    {
-        <div class="mt-4 shadow-sm border border-[#e5e3dc] rounded-xl overflow-hidden bg-white flex items-center justify-between px-6 py-4">
-            <span class="text-sm text-gray-500 font-medium">Showing page @CurrentPage of @TotalPages</span>
-            <div class="flex gap-2">
-                <button disabled="@(CurrentPage == 1)" @onclick="() => LoadData(CurrentPage - 1)" class="px-3 py-1.5 border border-[#e5e3dc] rounded-md text-sm font-semibold hover:bg-gray-50 disabled:opacity-50 transition">Previous</button>
-                <button disabled="@(CurrentPage == TotalPages)" @onclick="() => LoadData(CurrentPage + 1)" class="px-3 py-1.5 border border-[#e5e3dc] rounded-md text-sm font-semibold hover:bg-gray-50 disabled:opacity-50 transition">Next</button>
-            </div>
-        </div>
-    }
+    } @* end @if(false) - old catalog section *@
 
     @* Footer *@
     <div class="flex items-center justify-between mt-8 pt-6 border-t border-[#e5e3dc] text-[0.72rem] text-[#8a8880]">
@@ -413,26 +438,11 @@
 
 </div>
 
-@* Toast konfirmasi tambah ke keranjang *@
-@if (!string.IsNullOrEmpty(CartToast))
-{
-    <div class="fixed bottom-44 sm:bottom-28 right-8 z-50 bg-[#1a7a30] text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2 max-w-xs">
-        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-        <span class="truncate">@CartToast</span>
-    </div>
-}
+@* Cart widget — floating button + checkout modal *@
+<CartCheckout />
 
-@* Floating Cart Button *@
-@if(userPrincipal.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.TrackingView)) {
-<button type="button" @onclick='() => ShowCartModal = true' class="fixed bottom-24 sm:bottom-8 right-8 z-50 flex items-center justify-center w-[3.5rem] h-[3.5rem] bg-[#e8a000] hover:bg-[#d49300] active:scale-[0.95] rounded-full shadow-2xl transition-transform border-4 border-white" title="View Cart">
-    <svg class="w-7 h-7 text-[#1a1a1a]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
-    @if(CartService.Items.Any()) {
-        <span id="cartBadge" class="absolute -top-1.5 -right-1.5 inline-flex items-center justify-center min-w-[1.4rem] h-[1.4rem] px-1 bg-[#d94040] text-white text-[0.7rem] font-bold rounded-full shadow-sm border-2 border-white">@CartService.Items.Sum(i => i.Quantity)</span>
-    }
-</button>
-}
 
-@if (ShowCartModal)
+@if (false)
 {
     <div id="borrowModal" class="fixed inset-0 z-[60] flex" role="dialog" aria-modal="true">
         <div class="fixed inset-0 backdrop-blur-sm transition-opacity bg-[#1a1a1a]/65" @onclick="() => ShowCartModal = false"></div>
@@ -491,19 +501,6 @@
                                                     </button>
                                                 </div>
                                             </div>
-                                            @if (item.RequestType == "BORROW")
-                                            {
-                                                <div class="flex gap-2">
-                                                    <input type="date" @bind="item.BorrowStartDate" min="@TodayDateString" class="w-full px-2 py-1.5 text-[10px] bg-white border border-[#e5e3dc] rounded outline-none focus:border-[#e8a000]" title="Tanggal Pinjam">
-                                                    <input type="date" @bind="item.ExpectedReturnDate" class="w-full px-2 py-1.5 text-[10px] bg-white border border-[#e5e3dc] rounded outline-none focus:border-[#e8a000]" title="Tanggal Kembali">
-                                                </div>
-                                            }
-                                            @if (item.RequestType == "GIVEAWAY")
-                                            {
-                                                <div>
-                                                    <input type="date" @bind="item.PickupDate" min="@TodayDateString" class="w-full px-2 py-1.5 text-[10px] bg-white border border-[#e5e3dc] rounded outline-none focus:border-[#e8a000]" title="Tanggal Pengambilan">
-                                                </div>
-                                            }
                                         </div>
                                     }
                                 </div>
@@ -1339,10 +1336,7 @@
                 BaseCredit = SelectedProduct.value,
                 MaxStock = maxStock,
                 UnitName = SelectedProduct.Unit?.name ?? "unit",
-                ProductVariantId = SelectedVariantId,
-                BorrowStartDate = SelectedRequestType == "BORROW" ? SelectedStartDate : null,
-                ExpectedReturnDate = SelectedRequestType == "BORROW" ? SelectedEndDate : null,
-                PickupDate = SelectedRequestType == "GIVEAWAY" ? SelectedPickupDate : null
+                ProductVariantId = SelectedVariantId
             });
             var addedName = SelectedProduct.name;
             CloseProductModal();
@@ -1410,46 +1404,37 @@
             }
 
 
-            // Validasi tanggal peminjaman untuk item BORROW
-            foreach (var item in CartService.Items.Where(i => i.RequestType == "BORROW"))
+            // Validasi tanggal peminjaman (transaction-level)
+            if (CartService.Items.Any(i => i.RequestType == "BORROW"))
             {
-                if (!item.BorrowStartDate.HasValue || !item.ExpectedReturnDate.HasValue)
+                if (!CartService.BorrowStartDate.HasValue || !CartService.BorrowEndDate.HasValue)
                 {
-                    ErrorMessage = $"Tanggal pinjam dan tanggal kembali harus diisi untuk item: {item.Name}.";
+                    ErrorMessage = "Tanggal pinjam dan tanggal kembali harus diisi untuk item BORROW.";
                     return;
                 }
-
-                if (item.BorrowStartDate.Value.Date < DateTime.Today)
+                if (CartService.BorrowStartDate.Value.Date < DateTime.Today)
                 {
-                    ErrorMessage = $"Tanggal pengambilan tidak boleh di masa lalu untuk item: {item.Name}.";
+                    ErrorMessage = "Tanggal peminjaman tidak boleh di masa lalu.";
                     return;
                 }
-
-                if (item.ExpectedReturnDate.Value.Date <= item.BorrowStartDate.Value.Date)
+                if (CartService.BorrowEndDate.Value.Date <= CartService.BorrowStartDate.Value.Date)
                 {
-                    ErrorMessage = $"Tanggal pengembalian tidak boleh sebelum atau sama dengan tanggal pengambilan untuk item: {item.Name}.";
+                    ErrorMessage = "Tanggal pengembalian tidak boleh sebelum atau sama dengan tanggal peminjaman.";
                     return;
                 }
             }
 
-            // Validasi tanggal pengambilan untuk item GIVEAWAY
-            foreach (var item in CartService.Items.Where(i => i.RequestType == "GIVEAWAY"))
+            // Validasi tanggal pengambilan (transaction-level)
+            if (CartService.Items.Any(i => i.RequestType == "GIVEAWAY"))
             {
-                if (!item.PickupDate.HasValue)
+                if (!CartService.GiveawayPickupDate.HasValue)
                 {
-                    ErrorMessage = $"Tanggal pengambilan harus diisi untuk item: {item.Name}.";
+                    ErrorMessage = "Tanggal pengambilan harus diisi untuk item GIVEAWAY.";
                     return;
                 }
-
-                if (item.PickupDate < DateTime.Today)
+                if (CartService.GiveawayPickupDate < DateTime.Today)
                 {
-                    ErrorMessage = $"Tanggal pengambilan tidak boleh di masa lalu untuk item: {item.Name}.";
-                    return;
-                }
-
-                if (EventDate.HasValue && EventDate.Value.Date < item.PickupDate.Value.Date)
-                {
-                    ErrorMessage = $"Tanggal event tidak boleh lebih kecil dari tanggal pengambilan untuk item: {item.Name}.";
+                    ErrorMessage = "Tanggal pengambilan tidak boleh di masa lalu.";
                     return;
                 }
             }
@@ -1470,10 +1455,7 @@
                     sku = i.Sku,
                     quantity = i.Quantity,
                     request_type = i.RequestType,
-                    product_variant_id = i.ProductVariantId,
-                    borrow_start_date = i.BorrowStartDate,
-                    expected_return_date = i.ExpectedReturnDate,
-                    pickup_date = i.PickupDate
+                    product_variant_id = i.ProductVariantId
                 }).ToList()
             };
 

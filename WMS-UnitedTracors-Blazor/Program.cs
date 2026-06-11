@@ -34,7 +34,7 @@ builder.Services.AddScoped<WMS_UnitedTracors_Blazor.Services.PdfReceiptService>(
 builder.Services.AddScoped<WMS_UnitedTracors_Blazor.Services.AdminRoleService>();
 
 // Database setup
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
+builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
 {
     var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
         ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
@@ -198,7 +198,8 @@ if (app.Environment.IsDevelopment() ||
 
     try
     {
-        var context = services.GetRequiredService<ApplicationDbContext>();
+        var dbFactory = services.GetRequiredService<IDbContextFactory<ApplicationDbContext>>();
+        var context = dbFactory.CreateDbContext();
 
         // Temporary Migration History Fix for pre-existing tables
         try

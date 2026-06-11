@@ -405,6 +405,9 @@ namespace ut_wms_asp.net.Migrations
                     b.Property<DateTime?>("event_date")
                         .HasColumnType("date");
 
+                    b.Property<DateTime?>("event_end_date")
+                        .HasColumnType("date");
+
                     b.Property<string>("event_name")
                         .HasMaxLength(255)
                         .HasColumnType("varchar(255)");

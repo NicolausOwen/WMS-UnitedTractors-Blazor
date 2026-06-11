@@ -11,20 +11,21 @@ namespace WMS_UnitedTracors_Blazor.Services;
 
 public class AdminRoleService
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IDbContextFactory<ApplicationDbContext> _factory;
 
-    public AdminRoleService(ApplicationDbContext context)
+    public AdminRoleService(IDbContextFactory<ApplicationDbContext> factory)
     {
-        _context = context;
+        _factory = factory;
     }
 
     public async Task<(List<AdminRoleDto> Roles, int TotalItems, int TotalPages)> GetAdminRolesAsync(
         string? searchQuery, 
         string? sortColumn = "RoleName", 
         bool sortDescending = false, 
-        int page = 1, 
+        int page = 1,
         int pageSize = 10)
     {
+        using var _context = _factory.CreateDbContext();
         var query = _context.AdminRoles.AsQueryable();
 
         // Search
@@ -75,6 +76,7 @@ public class AdminRoleService
 
     public async Task<AdminRoleDto?> GetAdminRoleByIdAsync(Guid id)
     {
+        using var _context = _factory.CreateDbContext();
         var role = await _context.AdminRoles.FindAsync(id);
         if (role == null) return null;
 
@@ -96,6 +98,7 @@ public class AdminRoleService
 
     public async Task<List<UserAssignmentDto>> GetAssignedUsersAsync(Guid roleId)
     {
+        using var _context = _factory.CreateDbContext();
         return await _context.UserAdminRoles
             .Where(uar => uar.AdminRoleId == roleId)
             .Include(uar => uar.User)
@@ -116,6 +119,7 @@ public class AdminRoleService
 
     public async Task<List<UserAssignmentDto>> GetUnassignedUsersAsync(Guid roleId)
     {
+        using var _context = _factory.CreateDbContext();
         var assignedUserIds = await _context.UserAdminRoles
             .Where(uar => uar.AdminRoleId == roleId)
             .Select(uar => uar.UserId)
@@ -138,6 +142,7 @@ public class AdminRoleService
 
     public async Task<string?> CreateAdminRoleAsync(AdminRoleViewModel model, string createdBy)
     {
+        using var _context = _factory.CreateDbContext();
         if (await _context.AdminRoles.AnyAsync(r => r.RoleName == model.RoleName))
         {
             return "Role Name sudah digunakan.";
@@ -162,6 +167,7 @@ public class AdminRoleService
 
     public async Task<string?> UpdateAdminRoleAsync(Guid id, AdminRoleViewModel model, string updatedBy)
     {
+        using var _context = _factory.CreateDbContext();
         if (await _context.AdminRoles.AnyAsync(r => r.RoleName == model.RoleName && r.Id != id))
         {
             return "Role Name sudah digunakan.";
@@ -183,6 +189,7 @@ public class AdminRoleService
 
     public async Task<string?> DeleteAdminRoleAsync(Guid id)
     {
+        using var _context = _factory.CreateDbContext();
         var role = await _context.AdminRoles.FindAsync(id);
         if (role == null) return "Role tidak ditemukan.";
 
@@ -199,6 +206,7 @@ public class AdminRoleService
 
     public async Task<string?> AssignUserToRoleAsync(Guid roleId, int userId, List<int>? categoryIds, string createdBy)
     {
+        using var _context = _factory.CreateDbContext();
         if (categoryIds == null || !categoryIds.Any())
         {
             var isAssigned = await _context.UserAdminRoles.AnyAsync(uar => uar.AdminRoleId == roleId && uar.UserId == userId && uar.CategoryId == null);
@@ -240,6 +248,7 @@ public class AdminRoleService
 
     public async Task<string?> RemoveUserFromRoleAsync(Guid roleId, int userId, int? categoryId)
     {
+        using var _context = _factory.CreateDbContext();
         var mapping = await _context.UserAdminRoles.FirstOrDefaultAsync(uar => uar.AdminRoleId == roleId && uar.UserId == userId && uar.CategoryId == categoryId);
         if (mapping == null) return "User tidak terasosiasi dengan Role dan Kategori ini.";
 
@@ -253,6 +262,7 @@ public class AdminRoleService
     /// <summary>Daftar permission key yang dimiliki sebuah role (dari kolom JSON).</summary>
     public async Task<List<string>> GetRolePermissionsAsync(Guid roleId)
     {
+        using var _context = _factory.CreateDbContext();
         var role = await _context.AdminRoles.FindAsync(roleId);
         if (role == null || string.IsNullOrWhiteSpace(role.Permissions)) return new List<string>();
         try
@@ -264,6 +274,7 @@ public class AdminRoleService
 
     public async Task<string?> UpdateRolePermissionsAsync(Guid roleId, List<string> permissions, string updatedBy)
     {
+        using var _context = _factory.CreateDbContext();
         var role = await _context.AdminRoles.FindAsync(roleId);
         if (role == null) return "Role tidak ditemukan.";
 
@@ -280,6 +291,7 @@ public class AdminRoleService
     /// <summary>Resolusi permission efektif seorang user (berdasarkan User.role → AdminRole).</summary>
     public async Task<HashSet<string>> GetUserPermissionsAsync(int userId)
     {
+        using var _context = _factory.CreateDbContext();
         var user = await _context.Users.FindAsync(userId);
         if (user == null) return new HashSet<string>();
         var role = await _context.AdminRoles.FirstOrDefaultAsync(r => r.RoleName == user.role && r.IsActive);
@@ -289,6 +301,7 @@ public class AdminRoleService
     /// <summary>Nama role aktif untuk dropdown (Manage Users).</summary>
     public async Task<List<string>> GetActiveRoleNamesAsync()
     {
+        using var _context = _factory.CreateDbContext();
         return await _context.AdminRoles
             .Where(r => r.IsActive)
             .OrderBy(r => r.RoleName)

@@ -7,15 +7,16 @@ namespace WMS_UnitedTracors_Blazor.Services;
 
 public class CategoryService
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IDbContextFactory<ApplicationDbContext> _factory;
 
-    public CategoryService(ApplicationDbContext context)
+    public CategoryService(IDbContextFactory<ApplicationDbContext> factory)
     {
-        _context = context;
+        _factory = factory;
     }
 
     public async Task<(List<CategoryDto> Categories, int TotalItems, int TotalPages)> GetCategoriesAsync(int page = 1, int pageSize = 10)
     {
+        using var _context = _factory.CreateDbContext();
         var query = _context.Categories.AsQueryable();
         
         int totalItems = await query.CountAsync();
@@ -39,6 +40,7 @@ public class CategoryService
 
     public async Task<string?> CreateCategoryAsync(CategoryViewModel model)
     {
+        using var _context = _factory.CreateDbContext();
         if (await _context.Categories.AnyAsync(c => c.name == model.name))
         {
             return "Nama kategori sudah ada.";
@@ -60,6 +62,7 @@ public class CategoryService
 
     public async Task<string?> UpdateCategoryAsync(int id, CategoryViewModel model)
     {
+        using var _context = _factory.CreateDbContext();
         if (await _context.Categories.AnyAsync(c => c.name == model.name && c.id != id))
         {
             return "Nama kategori sudah digunakan oleh kategori lain.";
@@ -80,6 +83,7 @@ public class CategoryService
 
     public async Task<bool> DeleteCategoryAsync(int id)
     {
+        using var _context = _factory.CreateDbContext();
         var category = await _context.Categories.FindAsync(id);
         if (category != null)
         {

@@ -7,20 +7,22 @@ namespace WMS_UnitedTracors_Blazor.Services;
 
 public class ProfileService
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IDbContextFactory<ApplicationDbContext> _factory;
 
-    public ProfileService(ApplicationDbContext context)
+    public ProfileService(IDbContextFactory<ApplicationDbContext> factory)
     {
-        _context = context;
+        _factory = factory;
     }
 
     public async Task<User?> GetUserProfileAsync(int userId)
     {
+        using var _context = _factory.CreateDbContext();
         return await _context.Users.Include(u => u.Division).FirstOrDefaultAsync(u => u.id == userId);
     }
 
     public async Task<string?> SubmitProfileRequestAsync(int userId, ProfileViewModel model)
     {
+        using var _context = _factory.CreateDbContext();
         var user = await _context.Users.FindAsync(userId);
         if (user == null) return "User not found.";
 
@@ -52,6 +54,7 @@ public class ProfileService
 
     public async Task<string?> ChangePasswordAsync(int userId, ChangePasswordViewModel model)
     {
+        using var _context = _factory.CreateDbContext();
         var user = await _context.Users.FindAsync(userId);
         if (user == null) return "User not found.";
 
@@ -69,6 +72,7 @@ public class ProfileService
 
     public async Task<string?> DeleteAccountAsync(int userId, string password)
     {
+        using var _context = _factory.CreateDbContext();
         var user = await _context.Users.FindAsync(userId);
         if (user == null) return "User not found.";
 

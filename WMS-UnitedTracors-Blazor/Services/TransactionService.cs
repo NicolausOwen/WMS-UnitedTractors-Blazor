@@ -11,12 +11,12 @@ namespace WMS_UnitedTracors_Blazor.Services;
 
 public class TransactionService
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IDbContextFactory<ApplicationDbContext> _factory;
     private readonly IWebHostEnvironment _env;
 
-    public TransactionService(ApplicationDbContext context, IWebHostEnvironment env)
+    public TransactionService(IDbContextFactory<ApplicationDbContext> factory, IWebHostEnvironment env)
     {
-        _context = context;
+        _factory = factory;
         _env = env;
     }
 
@@ -62,6 +62,7 @@ public class TransactionService
 
     public async Task<string?> StoreTransactionAsync(TransactionRequestViewModel model, int currentUserId)
     {
+        using var _context = _factory.CreateDbContext();
         var items = new List<TransactionItemViewModel>();
         if (model.items != null && model.items.Any())
         {
@@ -81,9 +82,12 @@ public class TransactionService
             return "Item transaksi harus diisi.";
         }
 
+        bool hasBorrowItems = items.Any(i => (i.request_type ?? "BORROW") == "BORROW");
+        bool hasGiveawayItems = items.Any(i => (i.request_type ?? "BORROW") == "GIVEAWAY");
+
         if (model.type == "OUT")
         {
-            if (string.IsNullOrEmpty(model.event_name) || !model.event_date.HasValue || 
+            if (string.IsNullOrEmpty(model.event_name) || !model.event_date.HasValue ||
                 string.IsNullOrEmpty(model.applicant_name) || !model.division_id.HasValue || model.division_id.Value <= 0)
             {
                 return "Detail event, pemohon, dan divisi wajib diisi untuk transaksi OUT.";
@@ -92,6 +96,35 @@ public class TransactionService
             if (model.event_date.Value.Date < DateTime.Today)
             {
                 return "Tanggal event tidak boleh sebelum hari ini.";
+            }
+
+            if (model.event_end_date.HasValue && model.event_end_date.Value.Date < model.event_date.Value.Date)
+            {
+                return "Tanggal akhir event tidak boleh sebelum tanggal mulai event.";
+            }
+
+            if (hasBorrowItems)
+            {
+                if (!model.borrow_start_date.HasValue || !model.borrow_end_date.HasValue)
+                {
+                    return "Tanggal pinjam dan tanggal kembali wajib diisi untuk item pinjaman.";
+                }
+                if (model.borrow_start_date.Value.Date < DateTime.Today)
+                {
+                    return "Tanggal pinjam tidak boleh sebelum hari ini.";
+                }
+                if (model.borrow_end_date.Value.Date <= model.borrow_start_date.Value.Date)
+                {
+                    return "Tanggal kembali harus lebih besar dari tanggal pinjam.";
+                }
+            }
+
+            if (hasGiveawayItems && model.giveaway_pickup_date.HasValue)
+            {
+                if (model.giveaway_pickup_date.Value.Date < DateTime.Today)
+                {
+                    return "Tanggal pengambilan tidak boleh sebelum hari ini.";
+                }
             }
         }
 
@@ -110,41 +143,24 @@ public class TransactionService
             var reqType = item.request_type ?? "BORROW";
             if (reqType == "BORROW")
             {
-                if (!item.borrow_start_date.HasValue || !item.expected_return_date.HasValue)
+                var borrowStart = item.borrow_start_date ?? model.borrow_start_date;
+                var borrowEnd = item.expected_return_date ?? model.borrow_end_date;
+
+                if (!borrowStart.HasValue || !borrowEnd.HasValue)
                 {
                     return $"Tanggal pinjam dan tanggal kembali wajib diisi untuk SKU: {item.sku}.";
                 }
 
-                if (item.borrow_start_date.Value.Date < DateTime.Today)
-                {
-                    return $"Tanggal pinjam tidak boleh sebelum hari ini untuk SKU: {item.sku}.";
-                }
-
-                if (item.expected_return_date <= item.borrow_start_date)
-                {
-                    return $"Tanggal kembali harus lebih besar dari tanggal pinjam untuk SKU: {item.sku}.";
-                }
-
-                var duration = (int)(item.expected_return_date.Value.Date - item.borrow_start_date.Value.Date).TotalDays;
+                var duration = (int)(borrowEnd.Value.Date - borrowStart.Value.Date).TotalDays;
                 if (duration <= 0) duration = 1;
                 item.borrow_duration_days = duration;
-
-                if (item.borrow_duration_days <= 0)
-                {
-                    return $"Durasi peminjaman untuk SKU {item.sku} tidak valid.";
-                }
+                item.borrow_start_date = borrowStart;
+                item.expected_return_date = borrowEnd;
             }
             else if (reqType == "GIVEAWAY")
             {
-                if (item.pickup_date.HasValue && item.pickup_date.Value.Date < DateTime.Today)
-                {
-                    return $"Tanggal pengambilan tidak boleh sebelum hari ini untuk SKU: {item.sku}.";
-                }
-
-                if (item.pickup_date.HasValue && model.event_date.HasValue && model.event_date.Value.Date < item.pickup_date.Value.Date)
-                {
-                    return $"Tanggal event tidak boleh lebih kecil dari tanggal pengambilan untuk SKU: {item.sku}.";
-                }
+                var pickupDate = item.pickup_date ?? model.giveaway_pickup_date;
+                item.pickup_date = pickupDate;
             }
         }
 
@@ -216,6 +232,7 @@ public class TransactionService
                     applicant_nrp = model.applicant_nrp,
                     event_name = model.event_name,
                     event_date = model.event_date,
+                    event_end_date = model.event_end_date,
                     documentation_link = model.documentation_link,
                     borrow_duration_days = (reqType == "BORROW") ? (item.borrow_duration_days ?? 0) : 0,
                     borrow_start_date = item.borrow_start_date,
@@ -236,16 +253,17 @@ public class TransactionService
     }
 
     public async Task<(List<Transaction> Transactions, int TotalItems, int TotalPages)> GetHistoryAsync(
-        int currentUserId, 
-        string? userRole, 
-        string? type, 
-        DateTime? start_date, 
-        DateTime? end_date, 
-        int page, 
+        int currentUserId,
+        string? userRole,
+        string? type,
+        DateTime? start_date,
+        DateTime? end_date,
+        int page,
         int pageSize = 15,
         string? requestType = null,
         bool? isReturned = null)
     {
+        using var _context = _factory.CreateDbContext();
         var query = _context.Transactions
             .Include(t => t.Product)
             .Include(t => t.ProductVariant)
@@ -322,6 +340,7 @@ public class TransactionService
 
     public async Task<List<Transaction>> GetProductRequestHistoryAsync(int productId)
     {
+        using var _context = _factory.CreateDbContext();
         return await _context.Transactions
             .Include(t => t.Requester)
             .Include(t => t.Division)
@@ -332,6 +351,7 @@ public class TransactionService
 
     public async Task<string?> ReturnItemAsync(ReturnItemViewModel model, bool asDraft = false)
     {
+        using var _context = _factory.CreateDbContext();
         var transaction = await _context.Transactions
             .Include(t => t.Product)
             .FirstOrDefaultAsync(t => t.id == model.transaction_id);
@@ -418,6 +438,7 @@ public class TransactionService
 
     public async Task<string?> ForceReturnTransactionAsync(int transactionId, int returnQty, string status, string? reason, int adminId)
     {
+        using var _context = _factory.CreateDbContext();
         // Force return adalah override admin: langsung selesai tanpa approval & tanpa foto.
         var transaction = await _context.Transactions.Include(t => t.Product).FirstOrDefaultAsync(t => t.id == transactionId);
         if (transaction == null) return "Transaction not found.";
@@ -521,6 +542,7 @@ public class TransactionService
         string? recipientName = null,
         DateTime? handoverTimestamp = null)
     {
+        using var _context = _factory.CreateDbContext();
         if (transactionIds == null || !transactionIds.Any())
             return "Tidak ada item yang menunggu serah terima.";
 
@@ -587,6 +609,7 @@ public class TransactionService
 
     public async Task<string?> SubmitHandoverAsync(List<int> transactionIds)
     {
+        using var _context = _factory.CreateDbContext();
         if (transactionIds == null || !transactionIds.Any())
             return "Tidak ada item serah terima.";
 
@@ -654,6 +677,7 @@ public class TransactionService
 
     public async Task<string?> ConfirmHandoverReceiptByUserAsync(string groupId, int currentUserId, bool isApproved, string? rejectionReason)
     {
+        using var _context = _factory.CreateDbContext();
         if (!isApproved && string.IsNullOrWhiteSpace(rejectionReason)) return "Alasan penolakan wajib diisi.";
 
         var query = await _context.Transactions
@@ -703,6 +727,7 @@ public class TransactionService
         IReadOnlyList<Microsoft.AspNetCore.Components.Forms.IBrowserFile> photos,
         string? notes)
     {
+        using var _context = _factory.CreateDbContext();
         if (transactionIds == null || !transactionIds.Any())
             return "Tidak ada item dokumentasi.";
 
@@ -760,6 +785,7 @@ public class TransactionService
     /// <summary>Submit satu draft pengembalian ke admin: is_return_draft 1 -> 0 (menunggu ACC).</summary>
     public async Task<string?> SubmitReturnDraftAsync(int id)
     {
+        using var _context = _factory.CreateDbContext();
         var transaction = await _context.Transactions.FindAsync(id);
         if (transaction == null) return "Transaction not found.";
         if (transaction.is_return_draft != 1 || (transaction.pending_return_quantity ?? 0) <= 0)
@@ -777,6 +803,7 @@ public class TransactionService
 
     public async Task<string?> CancelReturnDraftAsync(int id)
     {
+        using var _context = _factory.CreateDbContext();
         var transaction = await _context.Transactions.FindAsync(id);
         if (transaction != null && transaction.is_return_draft == 1)
         {
@@ -796,6 +823,7 @@ public class TransactionService
 
     public async Task<string?> SubmitReturnBatchAsync(string groupId)
     {
+        using var _context = _factory.CreateDbContext();
         var transactions = await _context.Transactions
             .Where(t => t.status == WorkflowStatuses.Approved && t.type == "OUT" && t.request_type == "BORROW" &&
                         t.pending_return_quantity > 0 && t.is_return_draft == 1)
@@ -820,6 +848,7 @@ public class TransactionService
 
     public async Task<string?> UpdateRevisionAsync(int id, TransactionRequestViewModel model)
     {
+        using var _context = _factory.CreateDbContext();
         var transaction = await _context.Transactions.Include(t => t.Product).Include(t => t.Requester).FirstOrDefaultAsync(t => t.id == id);
         if (transaction == null || !WorkflowStatuses.IsRevision(transaction.status)) return "Request is not in revision state.";
 
@@ -881,6 +910,7 @@ public class TransactionService
 
     public async Task<string?> CancelRevisionAsync(int id)
     {
+        using var _context = _factory.CreateDbContext();
         var transaction = await _context.Transactions.Include(t => t.Product).Include(t => t.Requester).FirstOrDefaultAsync(t => t.id == id);
         if (transaction == null || !WorkflowStatuses.IsRevision(transaction.status)) return "Request is not in revision state.";
 
@@ -916,6 +946,7 @@ public class TransactionService
 
     public async Task<int> MarkGiveawayDocumentationOverdueAsync()
     {
+        using var _context = _factory.CreateDbContext();
         var now = DateTime.Today;
         var transactions = await _context.Transactions
             .Where(t =>
@@ -955,6 +986,7 @@ public class TransactionService
 
     public async Task<string?> DeleteTransactionAsync(int id)
     {
+        using var _context = _factory.CreateDbContext();
         var transaction = await _context.Transactions.Include(t => t.Product).Include(t => t.Requester).FirstOrDefaultAsync(t => t.id == id);
         if (transaction == null) return "Transaction not found.";
 
@@ -978,6 +1010,7 @@ public class TransactionService
 
     public async Task<List<Transaction>> GetTransactionsByGroupIdAsync(string groupId)
     {
+        using var _context = _factory.CreateDbContext();
         var allTransactions = await _context.Transactions
             .Include(t => t.Product)
             .ThenInclude(p => p!.Unit)
@@ -991,7 +1024,15 @@ public class TransactionService
 
     public async Task<string?> SubmitHandoverBatchAsync(string groupId, string? photoPath, string? notes)
     {
-        var transactions = await GetTransactionsByGroupIdAsync(groupId);
+        using var _context = _factory.CreateDbContext();
+        var allTransactions = await _context.Transactions
+            .Include(t => t.Product)
+            .ThenInclude(p => p!.Unit)
+            .Include(t => t.Requester)
+            .Include(t => t.Approver)
+            .Include(t => t.Division)
+            .ToListAsync();
+        var transactions = allTransactions.Where(t => t.group_id == groupId).ToList();
         var matched = transactions.Where(t => t.status == "WAITING_HANDOVER" && t.type == "OUT" && (t.request_type == "GIVEAWAY" || t.request_type == "BORROW")).ToList();
 
         if (matched.Count == 0) return "Tidak ada transaksi serah terima yang menunggu bukti pada event ini.";
@@ -1010,6 +1051,7 @@ public class TransactionService
 
     public async Task ProcessScannerTransactionAsync(UT_WMSDotnet.ViewModels.ScannerTransactionViewModel model, int userId)
         {
+            using var _context = _factory.CreateDbContext();
             if (model.Type == "OUT" && model.EventDate.HasValue && model.EventDate.Value.Date < DateTime.Today)
                 throw new Exception("Tanggal event tidak boleh sebelum hari ini.");
 

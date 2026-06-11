@@ -7,20 +7,22 @@ namespace WMS_UnitedTracors_Blazor.Services;
 
 public class DivisionService
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IDbContextFactory<ApplicationDbContext> _factory;
 
-    public DivisionService(ApplicationDbContext context)
+    public DivisionService(IDbContextFactory<ApplicationDbContext> factory)
     {
-        _context = context;
+        _factory = factory;
     }
 
     public async Task<List<Division>> GetAllDivisionsAsync()
     {
+        using var _context = _factory.CreateDbContext();
         return await _context.Divisions.OrderBy(d => d.name).ToListAsync();
     }
 
     public async Task<(List<DivisionDto> Divisions, int TotalItems, int TotalPages)> GetDivisionsAsync(int page = 1, int pageSize = 10)
     {
+        using var _context = _factory.CreateDbContext();
         var query = _context.Divisions.AsQueryable();
 
         int totalItems = await query.CountAsync();
@@ -59,6 +61,7 @@ public class DivisionService
 
     public async Task<string?> CreateDivisionAsync(DivisionViewModel model)
     {
+        using var _context = _factory.CreateDbContext();
         if (await _context.Divisions.AnyAsync(d => d.name == model.name))
             return "Nama divisi sudah ada.";
 
@@ -77,6 +80,7 @@ public class DivisionService
 
     public async Task<string?> UpdateDivisionAsync(int id, DivisionViewModel model)
     {
+        using var _context = _factory.CreateDbContext();
         if (await _context.Divisions.AnyAsync(d => d.name == model.name && d.id != id))
             return "Nama divisi sudah digunakan.";
 
@@ -94,6 +98,7 @@ public class DivisionService
 
     public async Task<bool> DeleteDivisionAsync(int id)
     {
+        using var _context = _factory.CreateDbContext();
         var division = await _context.Divisions.FindAsync(id);
         if (division != null)
         {

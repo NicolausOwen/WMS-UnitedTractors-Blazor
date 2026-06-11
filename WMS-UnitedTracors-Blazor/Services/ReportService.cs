@@ -30,11 +30,11 @@ public class ExecutiveSummaryDto
 
 public class ReportService
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IDbContextFactory<ApplicationDbContext> _factory;
 
-    public ReportService(ApplicationDbContext context)
+    public ReportService(IDbContextFactory<ApplicationDbContext> factory)
     {
-        _context = context;
+        _factory = factory;
     }
 
     private Tuple<DateTime, DateTime> ApplyDateFilter(DateTime? startDateParam, DateTime? endDateParam)
@@ -45,7 +45,7 @@ public class ReportService
         return new Tuple<DateTime, DateTime>(startDate, endDate);
     }
 
-    private IQueryable<Transaction> GetFilteredQuery(string type, string? requestType, DateTime startDate, DateTime endDate, int? divisionId, string? status)
+    private IQueryable<Transaction> GetFilteredQuery(ApplicationDbContext _context, string type, string? requestType, DateTime startDate, DateTime endDate, int? divisionId, string? status)
     {
         var query = _context.Transactions
             .Include(t => t.Product)
@@ -74,6 +74,7 @@ public class ReportService
 
     public async Task<Dictionary<string, ReportSummaryDto>> GetSummaryAsync(DateTime? startDateParam, DateTime? endDateParam)
     {
+        using var _context = _factory.CreateDbContext();
         var dates = ApplyDateFilter(startDateParam, endDateParam);
         var startDate = dates.Item1;
         var endDate = dates.Item2;
@@ -95,8 +96,9 @@ public class ReportService
 
     public async Task<(List<Transaction> Transactions, int TotalItems, int TotalPages)> GetReportDataAsync(string type, string? requestType, DateTime? startDateParam, DateTime? endDateParam, int? divisionId, string? status, int page = 1, int pageSize = 20)
     {
+        using var _context = _factory.CreateDbContext();
         var dates = ApplyDateFilter(startDateParam, endDateParam);
-        var query = GetFilteredQuery(type, requestType, dates.Item1, dates.Item2, divisionId, status);
+        var query = GetFilteredQuery(_context, type, requestType, dates.Item1, dates.Item2, divisionId, status);
 
         int totalItems = await query.CountAsync();
         int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
@@ -112,6 +114,7 @@ public class ReportService
     
     public async Task<ExecutiveSummaryDto> GetExecutiveSummaryAsync(DateTime? startDateParam, DateTime? endDateParam)
     {
+        using var _context = _factory.CreateDbContext();
         var dates = ApplyDateFilter(startDateParam, endDateParam);
         var startDate = dates.Item1;
         var endDate = dates.Item2;
@@ -166,6 +169,7 @@ public class ReportService
 
     public async Task<List<Transaction>> GetTransactionsForReportAsync(DateTime startDate, DateTime endDate, string filterType)
         {
+            using var _context = _factory.CreateDbContext();
             var query = _context.Transactions
                 .Include(t => t.Product)
                 .ThenInclude(p => p!.Unit)

@@ -1444,6 +1444,9 @@
             CartService.EventDate = usage.event_date;
             CartService.Notes = usage.notes;
             CartService.DocumentationLink = usage.documentation_link;
+            CartService.BorrowStartDate = usage.borrow_start_date;
+            CartService.BorrowEndDate = usage.expected_return_date;
+            CartService.GiveawayPickupDate = usage.pickup_date;
 
             CartService.AddToCart(new CartItem
             {
@@ -1454,10 +1457,7 @@
                 BaseCredit = usage.Product.value,
                 MaxStock = usage.Product.current_stock,
                 UnitName = usage.Product.Unit?.name ?? "unit",
-                ProductVariantId = usage.product_variant_id,
-                BorrowStartDate = usage.borrow_start_date,
-                ExpectedReturnDate = usage.expected_return_date,
-                PickupDate = usage.pickup_date
+                ProductVariantId = usage.product_variant_id
             });
         }
         
@@ -1717,6 +1717,9 @@
                 CartService.EventDate = item.event_date;
                 CartService.Notes = item.notes;
                 CartService.DocumentationLink = item.documentation_link;
+                CartService.BorrowStartDate = item.borrow_start_date;
+                CartService.BorrowEndDate = item.expected_return_date;
+                CartService.GiveawayPickupDate = item.pickup_date;
 
                 CartService.AddToCart(new CartItem
                 {
@@ -1727,10 +1730,7 @@
                     BaseCredit = item.Product.value,
                     MaxStock = item.Product.current_stock,
                     UnitName = item.Product.Unit?.name ?? "unit",
-                    ProductVariantId = item.product_variant_id,
-                    BorrowStartDate = item.borrow_start_date,
-                    ExpectedReturnDate = item.expected_return_date,
-                    PickupDate = item.pickup_date
+                    ProductVariantId = item.product_variant_id
                 });
                 cartModified = true;
             }

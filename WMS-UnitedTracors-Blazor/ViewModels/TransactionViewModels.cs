@@ -56,6 +56,15 @@ public class TransactionRequestViewModel
 
     public DateTime? event_date { get; set; }
 
+    public DateTime? event_end_date { get; set; }
+
+    // Transaction-level borrow dates (shared across all BORROW items)
+    public DateTime? borrow_start_date { get; set; }
+    public DateTime? borrow_end_date { get; set; }
+
+    // Transaction-level giveaway pickup date (shared across all GIVEAWAY items)
+    public DateTime? giveaway_pickup_date { get; set; }
+
     [StringLength(500)]
     public string? documentation_link { get; set; }
 }
