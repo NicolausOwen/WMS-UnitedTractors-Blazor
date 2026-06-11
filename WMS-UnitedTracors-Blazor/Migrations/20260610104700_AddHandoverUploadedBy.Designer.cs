@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using UT_WMSDotnet.Data;
 
@@ -11,9 +12,11 @@ using UT_WMSDotnet.Data;
 namespace ut_wms_asp.net.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260610104700_AddHandoverUploadedBy")]
+    partial class AddHandoverUploadedBy
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -446,12 +449,6 @@ namespace ut_wms_asp.net.Migrations
                     b.Property<string>("notes")
                         .HasMaxLength(500)
                         .HasColumnType("varchar(500)");
-
-                    b.Property<DateTime?>("original_pickup_date")
-                        .HasColumnType("date");
-
-                    b.Property<int?>("original_quantity")
-                        .HasColumnType("int");
 
                     b.Property<int?>("pending_return_quantity")
                         .HasColumnType("int");

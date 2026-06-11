@@ -32,6 +32,8 @@ public class Transaction
     public string? request_type { get; set; }
 
     public int? quantity { get; set; } = 0;
+
+    public int? original_quantity { get; set; }
  
     public int? returned_quantity { get; set; } = 0;
  
@@ -52,6 +54,11 @@ public class Transaction
     public string? handover_recipient_name { get; set; }
 
     public DateTime? handover_timestamp { get; set; }
+
+    [MaxLength(10)]
+    public string? handover_uploaded_by { get; set; }
+
+    public DateTime? handover_approved_at { get; set; }
 
     [Column(TypeName = "text")]
     public string? documentation_photo { get; set; }
@@ -128,6 +135,9 @@ public class Transaction
 
     [Column(TypeName = "date")]
     public DateTime? pickup_date { get; set; }
+
+    [Column(TypeName = "date")]
+    public DateTime? original_pickup_date { get; set; }
 
     [StringLength(255)]
     public string? event_name { get; set; }

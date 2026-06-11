@@ -7,6 +7,7 @@ public static class WorkflowStatuses
     public const string PendingAdmin = "PENDING_ADMIN";
     public const string PendingManager = "PENDING_MANAGER";
     public const string WaitingHandover = "WAITING_HANDOVER";
+    public const string WaitingHandoverConfirm = "WAITING_HANDOVER_CONFIRM";
     public const string WaitingAdminHandover = "WAITING_ADMIN_HANDOVER";
     public const string WaitingDocumentation = "WAITING_DOCUMENTATION";
     public const string DocumentationOverdue = "DOCUMENTATION_OVERDUE";
@@ -34,6 +35,7 @@ public static class WorkflowStatuses
         IsGiveawayApprovalPending(status) ||
         IsRevision(status) ||
         status == WaitingHandover ||
+        status == WaitingHandoverConfirm ||
         status == WaitingAdminHandover ||
         status == WaitingDocumentation ||
         status == DocumentationOverdue;

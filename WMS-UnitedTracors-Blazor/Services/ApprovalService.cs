@@ -31,8 +31,8 @@ public class ApprovalService
         bool isSuperAdmin = Permissions.All.All(p => perms.Contains(p));
         bool hasApprovalPerms = perms.Contains(Permissions.ApprovalStage1) || 
                                 perms.Contains(Permissions.ApprovalStage2) || 
-                                perms.Contains(Permissions.ApprovalManager) || 
                                 perms.Contains(Permissions.ApprovalHandover) || 
+                                perms.Contains(Permissions.ApprovalHandoverFinal) || 
                                 perms.Contains(Permissions.ApprovalReturn) ||
                                 perms.Contains(Permissions.UsersManage);
 
@@ -102,7 +102,7 @@ public class ApprovalService
                 .ToListAsync();
         }
 
-        if (perms.Contains(Permissions.ApprovalHandover))
+        if (perms.Contains(Permissions.ApprovalHandover) || perms.Contains(Permissions.ApprovalHandoverFinal))
         {
             var handoversQ = _context.Transactions
                 .Include(t => t.Product)
@@ -111,7 +111,12 @@ public class ApprovalService
                 .Where(t =>
                     t.type == "OUT" &&
                     (t.request_type == "BORROW" || t.request_type == "GIVEAWAY") &&
-                    (t.status == WorkflowStatuses.WaitingHandover || t.status == WorkflowStatuses.WaitingAdminHandover));
+                    (
+                        (perms.Contains(Permissions.ApprovalHandover) && 
+                            (t.status == WorkflowStatuses.WaitingHandover || 
+                            (t.status == WorkflowStatuses.WaitingHandoverConfirm && t.handover_uploaded_by == "USER"))) ||
+                        (perms.Contains(Permissions.ApprovalHandoverFinal) && t.status == WorkflowStatuses.WaitingAdminHandover)
+                    ));
 
             if (!isGlobalAdmin && allowedCategoryIds != null)
             {
@@ -286,10 +291,15 @@ public class ApprovalService
 
     public async Task<string?> RequestRevisionAsync(int id, string revisionReason, int currentUserId, string? userRole)
     {
-        return await RequestRevisionAsync(id, revisionReason, currentUserId, userRole, null);
+        return await RequestRevisionAsync(id, revisionReason, currentUserId, userRole, null, null);
     }
 
     public async Task<string?> RequestRevisionAsync(int id, string revisionReason, int currentUserId, string? userRole, int? revisedQuantity)
+    {
+        return await RequestRevisionAsync(id, revisionReason, currentUserId, userRole, revisedQuantity, null);
+    }
+
+    public async Task<string?> RequestRevisionAsync(int id, string revisionReason, int currentUserId, string? userRole, int? revisedQuantity, DateTime? revisedPickupDate)
     {
         var transaction = await _context.Transactions
             .Include(t => t.Product)
@@ -321,7 +331,30 @@ public class ApprovalService
                 _context.Users.Update(transaction.Requester);
             }
 
+            if (!transaction.original_quantity.HasValue)
+            {
+                transaction.original_quantity = transaction.quantity;
+            }
+
             transaction.quantity = revisedQuantity.Value;
+        }
+
+        if (transaction.request_type == "GIVEAWAY" && revisedPickupDate.HasValue)
+        {
+            var pickupDate = revisedPickupDate.Value.Date;
+
+            if (pickupDate < DateTime.Today)
+                return "Tanggal pengambilan revisi tidak boleh sebelum hari ini.";
+
+            if (transaction.event_date.HasValue && transaction.event_date.Value.Date < pickupDate)
+                return "Tanggal event tidak boleh lebih kecil dari tanggal pengambilan revisi.";
+
+            if (!transaction.original_pickup_date.HasValue)
+            {
+                transaction.original_pickup_date = transaction.pickup_date;
+            }
+
+            transaction.pickup_date = pickupDate;
         }
 
         var stageBefore = transaction.status;
@@ -400,7 +433,7 @@ public class ApprovalService
     public async Task<string?> ApproveHandoverBatchAsync(string groupId, int currentUserId, string? userRole)
     {
         var perms = await ResolvePermsAsync(currentUserId);
-        if (!perms.Contains(Permissions.ApprovalHandover)) return "Unauthorized action.";
+        if (!perms.Contains(Permissions.ApprovalHandoverFinal)) return "Unauthorized action.";
 
         var query = await _context.Transactions
             .Include(t => t.Product)
@@ -422,10 +455,43 @@ public class ApprovalService
         return null;
     }
 
-    public async Task<string?> RejectHandoverBatchAsync(string groupId, string rejectionReason, int currentUserId, string? userRole)
+    public async Task<string?> ConfirmHandoverBySiAsync(string groupId, int currentUserId, bool isApproved, string? rejectionReason)
     {
         var perms = await ResolvePermsAsync(currentUserId);
         if (!perms.Contains(Permissions.ApprovalHandover)) return "Unauthorized action.";
+        if (!isApproved && string.IsNullOrWhiteSpace(rejectionReason)) return "Alasan penolakan wajib diisi.";
+
+        var query = await _context.Transactions
+            .Where(t => t.status == WorkflowStatuses.WaitingHandoverConfirm && t.handover_uploaded_by == "USER" && t.type == "OUT" && t.request_type == "BORROW")
+            .ToListAsync();
+
+        var matched = query.Where(t => t.group_id == groupId).ToList();
+        if (matched.Count == 0) return "Tidak ada transaksi yang menunggu konfirmasi serah terima Anda.";
+
+        foreach (var item in matched)
+        {
+            if (isApproved)
+            {
+                item.status = WorkflowStatuses.WaitingAdminHandover;
+                item.rejection_reason = null;
+            }
+            else
+            {
+                item.status = WorkflowStatuses.WaitingHandover;
+                item.rejection_reason = rejectionReason;
+            }
+            item.updated_at = DateTime.UtcNow;
+            _context.Transactions.Update(item);
+        }
+
+        await _context.SaveChangesAsync();
+        return null;
+    }
+
+    public async Task<string?> RejectHandoverBatchAsync(string groupId, string rejectionReason, int currentUserId, string? userRole)
+    {
+        var perms = await ResolvePermsAsync(currentUserId);
+        if (!perms.Contains(Permissions.ApprovalHandoverFinal)) return "Unauthorized action.";
         if (string.IsNullOrWhiteSpace(rejectionReason)) return "Rejection reason is required.";
 
         var query = await _context.Transactions
@@ -587,4 +653,45 @@ public class ApprovalService
             default: t.admin_notes = notes; break; // PendingAdmin / legacy Pending
         }
     }
+
+    public async Task<string?> ApproveHandoverItemAsync(int transactionId, int currentUserId, string? userRole)
+    {
+        var perms = await ResolvePermsAsync(currentUserId);
+        if (!perms.Contains(Permissions.ApprovalHandover)) return "Unauthorized action.";
+
+        var transaction = await _context.Transactions
+            .Include(t => t.Product)
+            .FirstOrDefaultAsync(t => t.id == transactionId && t.status == WorkflowStatuses.WaitingAdminHandover && t.type == "OUT" && t.request_type == "BORROW");
+
+        if (transaction == null) return "Transaksi serah terima tidak ditemukan atau tidak sedang menunggu verifikasi.";
+
+        transaction.status = WorkflowStatuses.Approved;
+        transaction.approver_id = currentUserId;
+        transaction.updated_at = DateTime.UtcNow;
+        _context.Transactions.Update(transaction);
+
+        await _context.SaveChangesAsync();
+        return null;
+    }
+
+    public async Task<string?> RejectHandoverItemAsync(int transactionId, string rejectionReason, int currentUserId, string? userRole)
+    {
+        var perms = await ResolvePermsAsync(currentUserId);
+        if (!perms.Contains(Permissions.ApprovalHandover)) return "Unauthorized action.";
+        if (string.IsNullOrWhiteSpace(rejectionReason)) return "Rejection reason is required.";
+
+        var transaction = await _context.Transactions
+            .FirstOrDefaultAsync(t => t.id == transactionId && t.status == WorkflowStatuses.WaitingAdminHandover && t.type == "OUT" && t.request_type == "BORROW");
+
+        if (transaction == null) return "Transaksi serah terima tidak ditemukan atau tidak sedang menunggu verifikasi.";
+
+        transaction.status = WorkflowStatuses.WaitingHandover;
+        transaction.rejection_reason = rejectionReason;
+        transaction.updated_at = DateTime.UtcNow;
+        _context.Transactions.Update(transaction);
+
+        await _context.SaveChangesAsync();
+        return null;
+    }
 }
+

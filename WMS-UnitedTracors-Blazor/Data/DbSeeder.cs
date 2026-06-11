@@ -141,8 +141,8 @@ public class DbSeeder
         {
             ("Super Admin", Perms.All),
             ("Staff Inventoris", new[] { Perms.DashboardView, Perms.TrackingView, Perms.ApprovalStage1, Perms.ApprovalHandover, Perms.ProductsManage }),
-            ("PIC Studio", new[] { Perms.DashboardView, Perms.TrackingView, Perms.ApprovalStage2, Perms.ApprovalReturn, Perms.ProductsManage, Perms.MasterDataManage }),
-            ("Team Leader Infrastructure", new[] { Perms.DashboardView, Perms.TrackingView, Perms.ApprovalStage2, Perms.ApprovalReturn, Perms.ProductsManage, Perms.MasterDataManage }),
+            ("PIC Studio", new[] { Perms.DashboardView, Perms.TrackingView, Perms.ApprovalStage2, Perms.ApprovalHandoverFinal, Perms.ApprovalReturn, Perms.ProductsManage, Perms.MasterDataManage }),
+            ("Team Leader Infrastructure", new[] { Perms.DashboardView, Perms.TrackingView, Perms.ApprovalStage2, Perms.ApprovalHandoverFinal, Perms.ApprovalReturn, Perms.ProductsManage, Perms.MasterDataManage }),
             ("Manager", new[] { Perms.DashboardView, Perms.TrackingView, Perms.ApprovalManager, Perms.ReportsView }),
             ("User", new[] { Perms.DashboardView, Perms.RequestCreate, Perms.TrackingView }),
         };
@@ -172,6 +172,27 @@ public class DbSeeder
                 existing.UpdatedAt = DateTime.UtcNow;
             }
         }
+
+        // Idempotent merge for existing roles
+        var allRoles = await _context.AdminRoles.ToListAsync();
+        foreach (var role in allRoles)
+        {
+            if (!string.IsNullOrEmpty(role.Permissions))
+            {
+                try
+                {
+                    var rolePerms = System.Text.Json.JsonSerializer.Deserialize<List<string>>(role.Permissions) ?? new List<string>();
+                    if (rolePerms.Contains(Perms.ApprovalStage2) && !rolePerms.Contains(Perms.ApprovalHandoverFinal))
+                    {
+                        rolePerms.Add(Perms.ApprovalHandoverFinal);
+                        role.Permissions = System.Text.Json.JsonSerializer.Serialize(rolePerms);
+                        role.UpdatedAt = DateTime.UtcNow;
+                    }
+                }
+                catch { /* Ignore invalid JSON */ }
+            }
+        }
+
         await _context.SaveChangesAsync();
     }
 }

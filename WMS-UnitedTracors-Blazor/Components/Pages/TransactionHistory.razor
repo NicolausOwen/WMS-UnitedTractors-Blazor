@@ -506,6 +506,7 @@
                 .GroupBy(t => t.type == "OUT" ? TransactionService.CreateGroupId(t.created_at, t.requester_id, t.applicant_name ?? string.Empty) : t.id.ToString())
                 .ToDictionary(g => g.Key, g => g.ToList());
         }
+        ExpandedGroups.Clear();
         }
         finally
         {
