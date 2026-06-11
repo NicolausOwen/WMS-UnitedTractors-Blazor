@@ -13,11 +13,13 @@ public class TransactionService
 {
     private readonly ApplicationDbContext _context;
     private readonly IWebHostEnvironment _env;
+    private readonly IEmailService _emailService;
 
-    public TransactionService(ApplicationDbContext context, IWebHostEnvironment env)
+    public TransactionService(ApplicationDbContext context, IWebHostEnvironment env, IEmailService emailService)
     {
         _context = context;
         _env = env;
+        _emailService = emailService;
     }
 
     // Shared upload constraints for proof photos/PDFs (handover & return).
@@ -232,6 +234,26 @@ public class TransactionService
         }
 
         await _context.SaveChangesAsync();
+
+        if (model.type == "OUT")
+        {
+            var requester = await _context.Users.FindAsync(currentUserId);
+            if (requester != null && !string.IsNullOrWhiteSpace(requester.email))
+            {
+                _ = _emailService.SendEmailAsync(requester.email, "Request Berhasil Dibuat", "Pesanan Anda berhasil dibuat dan sedang menunggu persetujuan.");
+            }
+
+            var adminManagerEmails = await _context.Users
+                .Where(u => u.role == "Admin" || u.role == "Manager")
+                .Select(u => u.email)
+                .ToListAsync();
+
+            if (adminManagerEmails.Any())
+            {
+                _ = _emailService.SendEmailToMultipleAsync(adminManagerEmails, "Request Baru (WMS UT)", $"Ada request baru dari {model.applicant_name ?? requester?.name}. Silakan login ke sistem untuk melakukan persetujuan.");
+            }
+        }
+
         return null;
     }
 

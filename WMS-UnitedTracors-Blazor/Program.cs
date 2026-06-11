@@ -33,6 +33,9 @@ builder.Services.AddScoped<WMS_UnitedTracors_Blazor.Services.PdfReportService>()
 builder.Services.AddScoped<WMS_UnitedTracors_Blazor.Services.PdfReceiptService>();
 builder.Services.AddScoped<WMS_UnitedTracors_Blazor.Services.AdminRoleService>();
 
+builder.Services.Configure<WMS_UnitedTracors_Blazor.Services.SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
+builder.Services.AddScoped<WMS_UnitedTracors_Blazor.Services.IEmailService, WMS_UnitedTracors_Blazor.Services.EmailService>();
+
 // Database setup
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {

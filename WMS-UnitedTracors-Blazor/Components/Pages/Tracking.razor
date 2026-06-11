@@ -1184,7 +1184,7 @@
         {
             var handoverTimestamp = HandoverTimestampInput;
 
-            var err = await TransactionService.ConfirmHandoverAsync(HandoverTransactionIds, HandoverFile, HandoverNotes, HandoverRecipientName, handoverTimestamp);
+            var err = await TransactionService.ConfirmHandoverAsync(HandoverTransactionIds, HandoverFile, HandoverNotes, recipientName: HandoverRecipientName, handoverTimestamp: handoverTimestamp);
             if (err == null)
             {
                 SuccessMessage = HandoverRequestType == "GIVEAWAY"
