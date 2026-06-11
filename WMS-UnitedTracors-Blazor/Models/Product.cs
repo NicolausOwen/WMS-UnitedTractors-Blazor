@@ -50,6 +50,8 @@ public class Product
 
     public int min_stock { get; set; }
 
+    public int is_hidden { get; set; } = 0;
+
     public DateTime created_at { get; set; } = DateTime.UtcNow;
 
     public DateTime updated_at { get; set; } = DateTime.UtcNow;
