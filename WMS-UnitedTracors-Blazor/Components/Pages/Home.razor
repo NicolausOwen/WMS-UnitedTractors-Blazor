@@ -164,6 +164,14 @@
     
     @* Quick Actions *@
     <div class="flex flex-wrap items-center gap-3 mb-8">
+        <a href="/Catalog/Borrow" class="inline-flex items-center gap-2 px-[1.1rem] py-[0.6rem] bg-[#3b82f6] hover:bg-[#2563eb] active:scale-[0.98] text-white text-[0.75rem] font-bold tracking-[0.06em] uppercase rounded-lg transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+            Katalog Pinjam
+        </a>
+        <a href="/Catalog/Giveaway" class="inline-flex items-center gap-2 px-[1.1rem] py-[0.6rem] bg-purple-600 hover:bg-purple-700 active:scale-[0.98] text-white text-[0.75rem] font-bold tracking-[0.06em] uppercase rounded-lg transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+            Katalog Ambil
+        </a>
         @if (userPrincipal.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.TrackingView)) {
         <a href="Tracking" class="inline-flex items-center gap-2 px-[1.1rem] py-[0.6rem] bg-[#1a1a1a] hover:bg-[#333333] active:scale-[0.98] text-white text-[0.75rem] font-bold tracking-[0.06em] uppercase rounded-lg transition">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
@@ -266,6 +274,32 @@
         </div>
     }
 
+    @* Catalog shortcut cards *@
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+        <a href="/Catalog/Borrow" class="flex items-center gap-4 p-5 bg-white border border-blue-100 hover:border-blue-400 rounded-xl shadow-sm hover:shadow-md transition-all group">
+            <div class="p-3 bg-blue-50 rounded-xl text-blue-600 group-hover:bg-blue-100 transition">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+            </div>
+            <div>
+                <h4 class="font-bold text-[#1a1a1a] text-sm group-hover:text-blue-600 transition">Katalog Pinjam</h4>
+                <p class="text-xs text-[#8a8880] mt-0.5">Lihat & tambahkan barang pinjaman ke keranjang</p>
+            </div>
+            <svg class="w-5 h-5 text-[#d1cec7] ml-auto group-hover:text-blue-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </a>
+        <a href="/Catalog/Giveaway" class="flex items-center gap-4 p-5 bg-white border border-purple-100 hover:border-purple-400 rounded-xl shadow-sm hover:shadow-md transition-all group">
+            <div class="p-3 bg-purple-50 rounded-xl text-purple-600 group-hover:bg-purple-100 transition">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+            </div>
+            <div>
+                <h4 class="font-bold text-[#1a1a1a] text-sm group-hover:text-purple-600 transition">Katalog Ambil / Giveaway</h4>
+                <p class="text-xs text-[#8a8880] mt-0.5">Lihat & tambahkan merchandise ke keranjang</p>
+            </div>
+            <svg class="w-5 h-5 text-[#d1cec7] ml-auto group-hover:text-purple-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </a>
+    </div>
+
+    @* NOTE: old catalog section removed — use /Catalog/Borrow and /Catalog/Giveaway *@
+    @if (false) {
     <div class="bg-white border border-[#e5e3dc] rounded-xl overflow-hidden shadow-sm">
         @* Header *@
         <div class="px-6 py-4 border-b border-[#f0ede5] flex flex-col gap-4">
@@ -391,16 +425,7 @@
         }
     </div>
 
-    @if (TotalPages > 1)
-    {
-        <div class="mt-4 shadow-sm border border-[#e5e3dc] rounded-xl overflow-hidden bg-white flex items-center justify-between px-6 py-4">
-            <span class="text-sm text-gray-500 font-medium">Showing page @CurrentPage of @TotalPages</span>
-            <div class="flex gap-2">
-                <button disabled="@(CurrentPage == 1)" @onclick="() => LoadData(CurrentPage - 1)" class="px-3 py-1.5 border border-[#e5e3dc] rounded-md text-sm font-semibold hover:bg-gray-50 disabled:opacity-50 transition">Previous</button>
-                <button disabled="@(CurrentPage == TotalPages)" @onclick="() => LoadData(CurrentPage + 1)" class="px-3 py-1.5 border border-[#e5e3dc] rounded-md text-sm font-semibold hover:bg-gray-50 disabled:opacity-50 transition">Next</button>
-            </div>
-        </div>
-    }
+    } @* end @if(false) - old catalog section *@
 
     @* Footer *@
     <div class="flex items-center justify-between mt-8 pt-6 border-t border-[#e5e3dc] text-[0.72rem] text-[#8a8880]">
@@ -413,26 +438,11 @@
 
 </div>
 
-@* Toast konfirmasi tambah ke keranjang *@
-@if (!string.IsNullOrEmpty(CartToast))
-{
-    <div class="fixed bottom-44 sm:bottom-28 right-8 z-50 bg-[#1a7a30] text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2 max-w-xs">
-        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-        <span class="truncate">@CartToast</span>
-    </div>
-}
+@* Cart widget — floating button + checkout modal *@
+<CartCheckout />
 
-@* Floating Cart Button *@
-@if(userPrincipal.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.TrackingView)) {
-<button type="button" @onclick='() => ShowCartModal = true' class="fixed bottom-24 sm:bottom-8 right-8 z-50 flex items-center justify-center w-[3.5rem] h-[3.5rem] bg-[#e8a000] hover:bg-[#d49300] active:scale-[0.95] rounded-full shadow-2xl transition-transform border-4 border-white" title="View Cart">
-    <svg class="w-7 h-7 text-[#1a1a1a]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
-    @if(CartService.Items.Any()) {
-        <span id="cartBadge" class="absolute -top-1.5 -right-1.5 inline-flex items-center justify-center min-w-[1.4rem] h-[1.4rem] px-1 bg-[#d94040] text-white text-[0.7rem] font-bold rounded-full shadow-sm border-2 border-white">@CartService.Items.Sum(i => i.Quantity)</span>
-    }
-</button>
-}
 
-@if (ShowCartModal)
+@if (false)
 {
     <div id="borrowModal" class="fixed inset-0 z-[60] flex" role="dialog" aria-modal="true">
         <div class="fixed inset-0 backdrop-blur-sm transition-opacity bg-[#1a1a1a]/65" @onclick="() => ShowCartModal = false"></div>
@@ -491,19 +501,6 @@
                                                     </button>
                                                 </div>
                                             </div>
-                                            @if (item.RequestType == "BORROW")
-                                            {
-                                                <div class="flex gap-2">
-                                                    <input type="date" @bind="item.BorrowStartDate" min="@TodayDateString" class="w-full px-2 py-1.5 text-[10px] bg-white border border-[#e5e3dc] rounded outline-none focus:border-[#e8a000]" title="Tanggal Pinjam">
-                                                    <input type="date" @bind="item.ExpectedReturnDate" class="w-full px-2 py-1.5 text-[10px] bg-white border border-[#e5e3dc] rounded outline-none focus:border-[#e8a000]" title="Tanggal Kembali">
-                                                </div>
-                                            }
-                                            @if (item.RequestType == "GIVEAWAY")
-                                            {
-                                                <div>
-                                                    <input type="date" @bind="item.PickupDate" min="@TodayDateString" class="w-full px-2 py-1.5 text-[10px] bg-white border border-[#e5e3dc] rounded outline-none focus:border-[#e8a000]" title="Tanggal Pengambilan">
-                                                </div>
-                                            }
                                         </div>
                                     }
                                 </div>
@@ -556,6 +553,117 @@
                                  </button>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+}
+
+@* Riwayat Peminjam Modal *@
+@if (ShowBorrowHistoryModal && SelectedProduct != null)
+{
+    <div class="fixed inset-0 flex items-center justify-center p-4 bg-black/65 backdrop-blur-sm" style="z-index: 999;" role="dialog" aria-modal="true">
+        <div class="fixed inset-0" @onclick="CloseBorrowHistoryModal"></div>
+        <div class="relative w-full max-w-2xl bg-white rounded-xl shadow-2xl flex flex-col max-h-[80vh] border border-[#e5e3dc]" @onclick:stopPropagation>
+            <div class="px-5 py-4 border-b border-[#f0ede5] bg-[#faf9f5] flex items-center justify-between rounded-t-xl shrink-0">
+                <div>
+                    <h3 class="text-sm font-bold text-[#1a1a1a]">Riwayat Peminjam / Requester</h3>
+                    <p class="text-[0.72rem] text-[#8a8880] mt-0.5">@SelectedProduct.name</p>
+                </div>
+                <button type="button" @onclick="CloseBorrowHistoryModal" class="text-[#a09e99] hover:text-[#1a1a1a] transition p-1 bg-[#f0ede5] rounded-full shrink-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto">
+                @if (IsProductHistoryLoading)
+                {
+                    <div class="flex justify-center items-center py-16">
+                        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-[#e8a000]"></div>
+                    </div>
+                }
+                else if (ProductRequestHistory == null || !ProductRequestHistory.Any())
+                {
+                    <div class="flex flex-col items-center justify-center py-16 text-center px-6">
+                        <svg class="w-10 h-10 text-[#d1cec7] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                        <p class="text-sm font-semibold text-[#8a8880]">Belum ada riwayat</p>
+                        <p class="text-xs text-[#a09e99] mt-1">Barang ini belum pernah dipinjam atau di-request.</p>
+                    </div>
+                }
+                else
+                {
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-[#f5f4f0] border-b border-[#e5e3dc] sticky top-0">
+                                <th class="px-5 py-3 text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8780]">Peminjam / Requester</th>
+                                <th class="px-5 py-3 text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8780]">Divisi</th>
+                                <th class="px-5 py-3 text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8780]">Tipe</th>
+                                <th class="px-5 py-3 text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8780]">Qty</th>
+                                <th class="px-5 py-3 text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8780]">Status</th>
+                                <th class="px-5 py-3 text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8780]">Tanggal</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-[#f0ede5]">
+                            @foreach (var tx in ProductRequestHistory)
+                            {
+                                <tr class="hover:bg-[#faf9f5] transition-colors">
+                                    <td class="px-5 py-3 align-middle">
+                                        <div class="text-xs font-semibold text-[#1a1a1a]">@(tx.applicant_name ?? tx.Requester?.name ?? "-")</div>
+                                        @if (!string.IsNullOrEmpty(tx.event_name))
+                                        {
+                                            <div class="text-[10px] text-[#8a8880] mt-0.5 italic">@tx.event_name</div>
+                                        }
+                                    </td>
+                                    <td class="px-5 py-3 align-middle">
+                                        <span class="text-xs text-[#5a5855]">@(tx.Division?.name ?? "-")</span>
+                                    </td>
+                                    <td class="px-5 py-3 align-middle">
+                                        @if (tx.request_type == "BORROW")
+                                        {
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-100">Pinjam</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-100">Minta/Ambil</span>
+                                        }
+                                    </td>
+                                    <td class="px-5 py-3 align-middle">
+                                        <span class="text-xs font-bold text-[#1a1a1a]">@tx.quantity</span>
+                                    </td>
+                                    <td class="px-5 py-3 align-middle">
+                                        @{
+                                            var (badge, bgColor, txtColor, borderColor) = tx.status switch {
+                                                "APPROVED" or "COMPLETED" => ("Disetujui", "#eef9f0", "#1a7a30", "#b8e8c0"),
+                                                "REJECTED" => ("Ditolak", "#fef0f0", "#d94040", "#f8c0c0"),
+                                                "REVISION" or "REVISION_BY_STAFF_INVENTORY" or "REVISION_BY_ADMIN" or "REVISION_BY_MANAGER" => ("Revisi", "#fffbeb", "#d97706", "#fde68a"),
+                                                "PENDING_STAFF_INVENTORY" or "PENDING_ADMIN" or "PENDING" => ("Menunggu", "#fff8e6", "#b37a00", "#ffe099"),
+                                                "WAITING_HANDOVER" or "WAITING_ADMIN_HANDOVER" => ("Serah Terima", "#e0f2fe", "#1a6b8a", "#bae6fd"),
+                                                "WAITING_DOCUMENTATION" => ("Dok. User", "#e8f5e9", "#2e7d32", "#c8e6c9"),
+                                                _ => (tx.status, "#f5f4f0", "#5a5855", "#e5e3dc")
+                                            };
+                                        }
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold"
+                                              style="background:@bgColor;color:@txtColor;border:1px solid @borderColor">@badge</span>
+                                    </td>
+                                    <td class="px-5 py-3 align-middle">
+                                        <span class="text-xs text-[#8a8880]">@tx.created_at.ToString("dd MMM yyyy")</span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </div>
+
+            <div class="px-5 py-3 border-t border-[#f0ede5] bg-[#faf9f5] flex items-center justify-between rounded-b-xl shrink-0">
+                <span class="text-[0.65rem] text-[#8a8880]">
+                    @if (ProductRequestHistory != null)
+                    {
+                        @($"Total: {ProductRequestHistory.Count} transaksi")
+                    }
+                </span>
+                <button type="button" @onclick="CloseBorrowHistoryModal" class="px-4 py-1.5 bg-white border border-[#e5e3dc] hover:bg-[#f0ede5] text-[#3a3835] text-xs font-bold rounded-lg transition">
+                    Tutup
+                </button>
             </div>
         </div>
     </div>
@@ -637,6 +745,12 @@
 
                                 <div class="h-px w-full bg-[#f0ede5]"></div>
 
+                                <button type="button" @onclick="OpenBorrowHistoryModal" @onclick:stopPropagation="true"
+                                        class="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#f5f4f0] border border-[#e5e3dc] hover:bg-[#e8a000] hover:border-[#e8a000] text-[#3a3835] hover:text-[#1a1a1a] text-xs font-bold rounded-xl transition">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                    Lihat Riwayat Peminjam / Requester
+                                </button>
+
                                 @* Types / Variants *@
                                 @if (SelectedProduct.ProductVariants != null && SelectedProduct.ProductVariants.Any())
                                 {
@@ -680,7 +794,7 @@
                                 @* Transaction Settings *@
                                  <div class="grid grid-cols-2 gap-4">
                                      <div>
-                                         <label class="block text-xs font-semibold text-[#5a5855] mb-1">Tipe Transaksi <span class="text-red-500">*</span></label>
+                                         <label class="block text-xs font-semibold text-[#5a5855] mb-1">Tipe Transaksi</label>
                                          <select @bind="SelectedRequestType" class="w-full border border-[#e5e3dc] rounded-lg px-3 py-2 text-sm text-[#5a5855] font-semibold bg-white outline-none focus:border-[#e8a000]">
                                              @if (SelectedProduct.is_returnable == 1) {
                                                  @* Barang returnable: hanya untuk dipinjam (tanpa poin) *@
@@ -782,6 +896,9 @@
     
     private bool ShowProductModal = false;
     private bool ShowCartModal = false;
+    private bool ShowBorrowHistoryModal = false;
+    private List<Transaction>? ProductRequestHistory;
+    private bool IsProductHistoryLoading = false;
     private string? CartToast;
     private Product? SelectedProduct;
     private int SelectedQuantity = 1;
@@ -1098,6 +1215,34 @@
         SelectedProduct = null;
     }
 
+    private async Task OpenBorrowHistoryModal()
+    {
+        if (SelectedProduct == null) return;
+        IsProductHistoryLoading = true;
+        ProductRequestHistory = null;
+        ShowBorrowHistoryModal = true;
+        StateHasChanged();
+        try
+        {
+            ProductRequestHistory = await TransactionService.GetProductRequestHistoryAsync(SelectedProduct.id);
+        }
+        catch
+        {
+            ProductRequestHistory = new List<Transaction>();
+        }
+        finally
+        {
+            IsProductHistoryLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void CloseBorrowHistoryModal()
+    {
+        ShowBorrowHistoryModal = false;
+        ProductRequestHistory = null;
+    }
+
     private string NormalizeImagePath(string? image)
     {
         if (string.IsNullOrWhiteSpace(image))
@@ -1191,10 +1336,7 @@
                 BaseCredit = SelectedProduct.value,
                 MaxStock = maxStock,
                 UnitName = SelectedProduct.Unit?.name ?? "unit",
-                ProductVariantId = SelectedVariantId,
-                BorrowStartDate = SelectedRequestType == "BORROW" ? SelectedStartDate : null,
-                ExpectedReturnDate = SelectedRequestType == "BORROW" ? SelectedEndDate : null,
-                PickupDate = SelectedRequestType == "GIVEAWAY" ? SelectedPickupDate : null
+                ProductVariantId = SelectedVariantId
             });
             var addedName = SelectedProduct.name;
             CloseProductModal();
@@ -1262,46 +1404,37 @@
             }
 
 
-            // Validasi tanggal peminjaman untuk item BORROW
-            foreach (var item in CartService.Items.Where(i => i.RequestType == "BORROW"))
+            // Validasi tanggal peminjaman (transaction-level)
+            if (CartService.Items.Any(i => i.RequestType == "BORROW"))
             {
-                if (!item.BorrowStartDate.HasValue || !item.ExpectedReturnDate.HasValue)
+                if (!CartService.BorrowStartDate.HasValue || !CartService.BorrowEndDate.HasValue)
                 {
-                    ErrorMessage = $"Tanggal pinjam dan tanggal kembali harus diisi untuk item: {item.Name}.";
+                    ErrorMessage = "Tanggal pinjam dan tanggal kembali harus diisi untuk item BORROW.";
                     return;
                 }
-
-                if (item.BorrowStartDate.Value.Date < DateTime.Today)
+                if (CartService.BorrowStartDate.Value.Date < DateTime.Today)
                 {
-                    ErrorMessage = $"Tanggal pengambilan tidak boleh di masa lalu untuk item: {item.Name}.";
+                    ErrorMessage = "Tanggal peminjaman tidak boleh di masa lalu.";
                     return;
                 }
-
-                if (item.ExpectedReturnDate.Value.Date <= item.BorrowStartDate.Value.Date)
+                if (CartService.BorrowEndDate.Value.Date <= CartService.BorrowStartDate.Value.Date)
                 {
-                    ErrorMessage = $"Tanggal pengembalian tidak boleh sebelum atau sama dengan tanggal pengambilan untuk item: {item.Name}.";
+                    ErrorMessage = "Tanggal pengembalian tidak boleh sebelum atau sama dengan tanggal peminjaman.";
                     return;
                 }
             }
 
-            // Validasi tanggal pengambilan untuk item GIVEAWAY
-            foreach (var item in CartService.Items.Where(i => i.RequestType == "GIVEAWAY"))
+            // Validasi tanggal pengambilan (transaction-level)
+            if (CartService.Items.Any(i => i.RequestType == "GIVEAWAY"))
             {
-                if (!item.PickupDate.HasValue)
+                if (!CartService.GiveawayPickupDate.HasValue)
                 {
-                    ErrorMessage = $"Tanggal pengambilan harus diisi untuk item: {item.Name}.";
+                    ErrorMessage = "Tanggal pengambilan harus diisi untuk item GIVEAWAY.";
                     return;
                 }
-
-                if (item.PickupDate < DateTime.Today)
+                if (CartService.GiveawayPickupDate < DateTime.Today)
                 {
-                    ErrorMessage = $"Tanggal pengambilan tidak boleh di masa lalu untuk item: {item.Name}.";
-                    return;
-                }
-
-                if (EventDate.HasValue && EventDate.Value.Date < item.PickupDate.Value.Date)
-                {
-                    ErrorMessage = $"Tanggal event tidak boleh lebih kecil dari tanggal pengambilan untuk item: {item.Name}.";
+                    ErrorMessage = "Tanggal pengambilan tidak boleh di masa lalu.";
                     return;
                 }
             }
@@ -1322,10 +1455,7 @@
                     sku = i.Sku,
                     quantity = i.Quantity,
                     request_type = i.RequestType,
-                    product_variant_id = i.ProductVariantId,
-                    borrow_start_date = i.BorrowStartDate,
-                    expected_return_date = i.ExpectedReturnDate,
-                    pickup_date = i.PickupDate
+                    product_variant_id = i.ProductVariantId
                 }).ToList()
             };
 
@@ -1379,4 +1509,3 @@
         }
     }
 }
-

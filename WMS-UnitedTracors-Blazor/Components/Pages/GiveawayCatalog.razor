@@ -1,0 +1,447 @@
+@page "/Catalog/Giveaway"
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@using UT_WMSDotnet.Models
+@using WMS_UnitedTracors_Blazor.Services
+@implements IDisposable
+@inject ProductService ProductService
+@inject CartService CartService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject IJSRuntime JSRuntime
+@rendermode InteractiveServer
+
+<PageTitle>WMS - Katalog Ambil</PageTitle>
+
+<div class="w-full min-h-screen bg-[#f5f4f0] px-4 md:px-10 py-6 pb-28 md:pb-12 font-sans">
+
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-[#1a1a1a]">Katalog Ambil / Giveaway</h1>
+        <p class="text-sm text-[#8a8880] mt-1">Barang yang dapat diambil (merchandise / souvenir)</p>
+    </div>
+
+    <div class="bg-white border border-[#e5e3dc] rounded-xl overflow-hidden shadow-sm">
+        <div class="px-6 py-4 border-b border-[#f0ede5] flex flex-col gap-4">
+            <div class="w-full sm:w-64 shrink-0 relative">
+                <input type="text"
+                       @bind="SearchQuery"
+                       @bind:event="oninput"
+                       placeholder="Cari nama barang atau SKU..."
+                       class="w-full pl-10 pr-4 py-2 bg-[#f9f8f6] border border-[#e5e3dc] rounded-full text-sm font-semibold text-[#5a5855] focus:outline-none focus:ring-2 focus:ring-[#e8a000] focus:bg-white transition-all" />
+                <svg class="w-4 h-4 text-[#8a8880] absolute left-3.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            </div>
+
+            @if (Categories != null && Categories.Any())
+            {
+                <div class="flex items-center gap-2 overflow-x-auto pb-1">
+                    <button @onclick="() => FilterByCategory(null)"
+                            class="px-3 py-1 bg-white border border-[#e5e3dc] hover:border-[#1a1a1a] text-xs font-semibold text-[#5a5855] hover:text-[#1a1a1a] rounded-full transition cursor-pointer shrink-0 @(!SelectedCategoryId.HasValue ? "!bg-[#1a1a1a] !border-[#1a1a1a] !text-white" : "")">
+                        Semua
+                    </button>
+                    @foreach (var cat in Categories)
+                    {
+                        <button @onclick="() => FilterByCategory(cat.id)"
+                                class="px-3 py-1 bg-white border border-[#e5e3dc] hover:border-[#1a1a1a] text-xs font-semibold text-[#5a5855] hover:text-[#1a1a1a] rounded-full transition cursor-pointer shrink-0 @(SelectedCategoryId == cat.id ? "!bg-[#1a1a1a] !border-[#1a1a1a] !text-white" : "")">
+                            @cat.name
+                        </button>
+                    }
+                </div>
+            }
+        </div>
+
+        @if (Products == null)
+        {
+            <div class="px-6 py-16 text-center text-[#8a8880]">Loading...</div>
+        }
+        else if (!Products.Any())
+        {
+            <div class="px-6 py-16 text-center">
+                <p class="text-sm text-[#8a8880]">Tidak ada barang yang ditemukan.</p>
+            </div>
+        }
+        else
+        {
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 p-4">
+                @foreach (var product in Products)
+                {
+                    <div @onclick="() => OpenProductModal(product)"
+                         class="bg-white border border-[#e5e3dc] rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 hover:border-[#e8a000] transition-all duration-300 flex flex-col group cursor-pointer">
+                        <div class="aspect-square relative bg-[#f5f4f0] flex items-center justify-center overflow-hidden border-b border-[#f0ede5]">
+                            <img src="@GetProductImage(product)" alt="@product.name"
+                                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                 onerror="this.onerror=null;this.src='https://placehold.co/600x400?text=No+Picture';">
+                            @if (product.current_stock <= 0)
+                            {
+                                <div class="absolute top-2 left-2">
+                                    <span class="px-2 py-0.5 bg-[#fef0f0] border border-[#f8c0c0] text-[#d94040] text-[0.6rem] font-bold rounded shadow-sm tracking-wider uppercase">Habis</span>
+                                </div>
+                            }
+                            <div class="absolute top-2 right-2">
+                                <span class="px-2 py-0.5 bg-purple-50 border border-purple-200 text-purple-700 text-[0.6rem] font-bold rounded shadow-sm">Ambil</span>
+                            </div>
+                        </div>
+                        <div class="p-3.5 flex flex-col flex-grow">
+                            <div class="flex items-center justify-between gap-1 mb-1.5">
+                                <span class="text-[0.65rem] font-bold text-[#8a8880] truncate group-hover:text-[#e8a000] transition-colors">
+                                    @(product.Category?.name ?? "--")
+                                </span>
+                                <code class="text-[0.55rem] text-[#8a8880] bg-[#f0ede5] px-1.5 py-0.5 rounded">@product.sku</code>
+                            </div>
+                            <h4 class="text-base font-extrabold text-[#1a1a1a] leading-snug line-clamp-4 mb-3 flex-grow group-hover:text-[#e8a000] transition-colors" title="@product.name">
+                                @product.name
+                            </h4>
+                            <div class="mt-auto border-t border-transparent pt-1 flex items-center justify-between">
+                                <span class="font-bold text-[#e8a000] text-sm">@product.value <span class="font-normal text-[0.65rem] text-[#8a8880]">pts</span></span>
+                                <span class="font-bold @(product.current_stock <= 0 ? "text-[#d94040]" : "text-[#1a7a30]") text-sm">
+                                    @product.current_stock <span class="font-normal text-[0.65rem] text-[#8a8880]">@(product.Unit?.name ?? "unit")</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            @if (TotalPages > 1)
+            {
+                <div class="px-6 py-4 border-t border-[#f0ede5] flex justify-center">
+                    <div class="flex items-center gap-1 bg-[#f9f8f6] p-1.5 rounded-lg border border-[#e5e3dc]">
+                        <button @onclick="() => LoadProducts(CurrentPage - 1)" disabled="@(CurrentPage == 1)"
+                                class="w-8 h-8 flex items-center justify-center rounded text-[#5a5855] hover:bg-white disabled:opacity-30 transition-all">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                        </button>
+                        @for (int i = 1; i <= TotalPages; i++)
+                        {
+                            int p = i;
+                            <button @onclick="() => LoadProducts(p)"
+                                    class="w-8 h-8 flex items-center justify-center rounded text-xs font-bold transition-all @(CurrentPage == p ? "bg-[#1a1a1a] text-white" : "text-[#5a5855] hover:bg-white")">
+                                @p
+                            </button>
+                        }
+                        <button @onclick="() => LoadProducts(CurrentPage + 1)" disabled="@(CurrentPage == TotalPages)"
+                                class="w-8 h-8 flex items-center justify-center rounded text-[#5a5855] hover:bg-white disabled:opacity-30 transition-all">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                        </button>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@* Product Detail Modal *@
+@if (ShowProductModal && SelectedProduct != null)
+{
+    <div class="fixed inset-0 z-[70] flex" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 backdrop-blur-sm bg-[#1a1a1a]/65" @onclick="CloseProductModal"></div>
+        <div class="fixed inset-0 z-10 overflow-y-auto flex items-end sm:items-center justify-center sm:p-4" @onclick="CloseProductModal">
+            <div class="relative transform overflow-hidden rounded-t-2xl sm:rounded-xl bg-white text-left shadow-2xl w-full max-w-5xl sm:my-8 border-t sm:border border-[#e5e3dc]" @onclick:stopPropagation="true">
+                <div class="px-5 py-4 border-b border-[#f0ede5] flex items-center justify-between sticky top-0 bg-white z-10">
+                    <h3 class="font-bold text-[#1a1a1a] text-sm">Detail Produk</h3>
+                    <button type="button" @onclick="CloseProductModal" class="text-[#a09e99] hover:text-[#1a1a1a] transition p-1 bg-[#f5f4f0] rounded-full">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+                <div class="px-5 py-4 pb-20 sm:pb-4">
+                    @if (!string.IsNullOrEmpty(ModalError))
+                    {
+                        <div class="mb-4 flex items-center gap-2 bg-[#fef0f0] border border-[#f8c0c0] text-[#d94040] px-4 py-3 rounded-lg text-sm font-semibold">
+                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                            @ModalError
+                        </div>
+                    }
+                    <div class="grid grid-cols-1 lg:grid-cols-[0.85fr_1.15fr] gap-5">
+                        <div class="space-y-4">
+                            <div class="relative w-full aspect-square bg-[#f5f4f0] rounded-xl overflow-hidden border border-[#e5e3dc] cursor-crosshair"
+                                 onmousemove="const r=this.getBoundingClientRect();const x=(event.clientX-r.left)/r.width*100;const y=(event.clientY-r.top)/r.height*100;const i=this.querySelector('img');i.style.transformOrigin=`${x}% ${y}%`;i.style.transform='scale(2)';"
+                                 onmouseleave="const i=this.querySelector('img');i.style.transformOrigin='center';i.style.transform='scale(1)';">
+                                <img src="@GetImageUrl(SelectedMainImage)" class="w-full h-full object-cover transition-transform duration-200" onerror="this.onerror=null;this.src='https://placehold.co/600x400?text=No+Picture';">
+                            </div>
+                            @if (ModalImages.Count > 1)
+                            {
+                                <div class="flex gap-2 overflow-x-auto pb-2">
+                                    @foreach (var img in ModalImages)
+                                    {
+                                        <button type="button" @onclick="() => SelectedMainImage = img" class="relative w-16 h-16 rounded-lg overflow-hidden shrink-0 border-2 transition-colors @(SelectedMainImage == img ? "border-[#e8a000]" : "border-transparent opacity-70 hover:opacity-100")">
+                                            <img src="@GetImageUrl(img)" class="w-full h-full object-cover" />
+                                        </button>
+                                    }
+                                </div>
+                            }
+                            @if (!string.IsNullOrEmpty(SelectedProduct.description))
+                            {
+                                <div class="bg-[#f9f8f6] border border-[#e5e3dc] rounded-xl p-4">
+                                    <h5 class="text-xs font-bold text-[#1a1a1a] mb-1.5">Deskripsi Produk</h5>
+                                    <p class="text-xs text-[#5a5855] leading-relaxed whitespace-pre-wrap">@SelectedProduct.description</p>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="flex flex-col gap-4">
+                            <div>
+                                <div class="flex justify-between items-start gap-4 mb-1">
+                                    <h4 class="text-base font-bold text-[#1a1a1a] leading-tight">@SelectedProduct.name</h4>
+                                    <div class="text-right shrink-0">
+                                        <span class="text-xs text-[#8a8880]">Kredit</span>
+                                        <div class="font-bold text-[#e8a000] text-lg leading-none">@SelectedProduct.value <span class="text-[0.6rem] font-normal text-[#8a8880] ml-0.5">pts</span></div>
+                                    </div>
+                                </div>
+                                <code class="text-[0.65rem] font-medium text-[#8a8880] bg-[#f0ede5] px-1.5 py-0.5 rounded">@SelectedProduct.sku</code>
+                                <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-100">Ambil</span>
+                            </div>
+
+                            <div class="h-px bg-[#f0ede5]"></div>
+
+                            @if (SelectedProduct.ProductVariants != null && SelectedProduct.ProductVariants.Any())
+                            {
+                                var colors = SelectedProduct.ProductVariants.Select(v => v.color).Where(c => !string.IsNullOrEmpty(c)).Distinct().ToList();
+                                var sizes = SelectedProduct.ProductVariants.Select(v => v.size).Where(s => !string.IsNullOrEmpty(s)).Distinct().ToList();
+
+                                <div class="border-b border-[#f0ede5] pb-4 flex flex-row gap-6">
+                                    @if (colors.Any())
+                                    {
+                                        <div class="flex-1">
+                                            <label class="block text-xs font-semibold text-[#5a5855] mb-2">Jenis / Tipe</label>
+                                            <div class="flex flex-wrap gap-2">
+                                                @foreach (var c in colors)
+                                                {
+                                                    bool avail = SelectedProduct.ProductVariants.Any(v => v.color == c && (string.IsNullOrEmpty(SelectedVariantSize) || v.size == SelectedVariantSize));
+                                                    <button type="button" @onclick="() => SelectColor(c!)" class="px-3 py-1.5 border rounded-lg text-xs font-semibold transition-all @(SelectedVariantColor == c ? "bg-[#e8a000] border-[#e8a000] text-[#1a1a1a]" : avail ? "bg-white border-[#e5e3dc] text-[#5a5855] hover:border-[#1a1a1a]" : "bg-gray-100 border-[#e5e3dc] text-gray-400 opacity-50")">@c</button>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                    @if (sizes.Any())
+                                    {
+                                        <div class="flex-1">
+                                            <label class="block text-xs font-semibold text-[#5a5855] mb-2">Ukuran</label>
+                                            <div class="flex flex-wrap gap-2">
+                                                @foreach (var s in sizes)
+                                                {
+                                                    bool avail = SelectedProduct.ProductVariants.Any(v => v.size == s && (string.IsNullOrEmpty(SelectedVariantColor) || v.color == SelectedVariantColor));
+                                                    <button type="button" @onclick="() => SelectSize(s!)" class="px-3 py-1.5 border rounded-lg text-xs font-semibold transition-all @(SelectedVariantSize == s ? "bg-[#e8a000] border-[#e8a000] text-[#1a1a1a]" : avail ? "bg-white border-[#e5e3dc] text-[#5a5855] hover:border-[#1a1a1a]" : "bg-gray-100 border-[#e5e3dc] text-gray-400 opacity-50")">@s</button>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+
+                            <div>
+                                <label class="block text-xs font-semibold text-[#5a5855] mb-1">Jumlah <span class="text-red-500">*</span></label>
+                                <div class="flex items-center border border-[#e5e3dc] rounded-lg overflow-hidden bg-white w-32">
+                                    <button type="button" @onclick="() => { if(SelectedQuantity > 1) SelectedQuantity--; }" class="w-8 h-9 flex items-center justify-center text-[#5a5855] hover:bg-[#f5f4f0] transition">-</button>
+                                    <input type="number" @bind="SelectedQuantity" @bind:event="oninput" min="1" max="@GetMaxStock()" class="flex-1 text-center py-1.5 text-sm outline-none bg-transparent">
+                                    <button type="button" @onclick="() => { if(SelectedQuantity < GetMaxStock()) SelectedQuantity++; }" class="w-8 h-9 flex items-center justify-center text-[#5a5855] hover:bg-[#f5f4f0] transition">+</button>
+                                </div>
+                                <p class="text-[0.65rem] text-[#8a8880] mt-1">Sisa @GetMaxStock() @(SelectedProduct.Unit?.name ?? "unit")</p>
+                            </div>
+
+                            <div class="rounded-2xl border border-[#e5e3dc] bg-[#f9f8f6] p-4 shadow-sm mt-auto">
+                                <div class="flex items-center justify-between gap-4">
+                                    <div>
+                                        <span class="text-[0.65rem] text-[#8a8880] font-semibold uppercase tracking-wider">Total Kredit</span>
+                                        <div class="text-xl font-extrabold text-[#1a1a1a]">@(SelectedProduct.value * SelectedQuantity) <span class="text-[0.65rem] font-normal text-[#8a8880]">pts</span></div>
+                                    </div>
+                                    <button type="button" @onclick="AddToCart" disabled="@(GetMaxStock() <= 0)"
+                                            class="px-6 py-3 bg-[#e8a000] hover:bg-[#d49300] active:scale-[0.98] text-[#1a1a1a] text-sm font-bold rounded-2xl transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                                        + Keranjang
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<CartCheckout @ref="CartCheckoutRef" />
+
+@code {
+    private List<Product>? Products;
+    private List<Category>? Categories;
+    private int? SelectedCategoryId;
+    private string SearchQuery = "";
+    private int CurrentPage = 1;
+    private int TotalPages = 0;
+
+    private bool ShowProductModal = false;
+    private Product? SelectedProduct;
+    private int SelectedQuantity = 1;
+    private string SelectedMainImage = "";
+    private List<string> ModalImages = new();
+    private int? SelectedVariantId;
+    private string? SelectedVariantColor;
+    private string? SelectedVariantSize;
+    private string? ModalError;
+
+    private CartCheckout? CartCheckoutRef;
+
+    protected override async Task OnInitializedAsync()
+    {
+        CartService.OnChange += StateHasChanged;
+        await LoadProducts(1);
+        Categories = await ProductService.GetCategoriesForCatalogAsync(0);
+    }
+
+    public void Dispose() => CartService.OnChange -= StateHasChanged;
+
+    private async Task LoadProducts(int page)
+    {
+        CurrentPage = page;
+        var (products, _, totalPages) = await ProductService.GetCatalogProductsAsync(0, SelectedCategoryId, SearchQuery, page, 15);
+        Products = products;
+        TotalPages = totalPages;
+    }
+
+    private async Task FilterByCategory(int? catId)
+    {
+        SelectedCategoryId = catId;
+        await LoadProducts(1);
+    }
+
+    private void OpenProductModal(Product product)
+    {
+        ModalError = null;
+        SelectedProduct = product;
+        SelectedQuantity = 1;
+        ModalImages.Clear();
+
+        if (!string.IsNullOrEmpty(product.image))
+            ModalImages.Add(NormalizeImage(product.image));
+
+        if (!string.IsNullOrEmpty(product.images))
+        {
+            try
+            {
+                var extra = System.Text.Json.JsonSerializer.Deserialize<List<string>>(product.images);
+                if (extra != null) ModalImages.AddRange(extra.Select(NormalizeImage));
+            }
+            catch { }
+        }
+        ModalImages = ModalImages.Where(i => !string.IsNullOrEmpty(i)).Distinct().ToList();
+        SelectedMainImage = ModalImages.FirstOrDefault() ?? "";
+
+        SelectedVariantColor = null;
+        SelectedVariantSize = null;
+        SelectedVariantId = null;
+
+        if (product.ProductVariants != null && product.ProductVariants.Any())
+        {
+            var first = product.ProductVariants.First();
+            SelectedVariantColor = first.color;
+            SelectedVariantSize = first.size;
+            SelectedVariantId = first.id;
+            if (!string.IsNullOrEmpty(first.image))
+                SelectedMainImage = NormalizeImage(first.image);
+        }
+        ShowProductModal = true;
+    }
+
+    private void CloseProductModal()
+    {
+        ShowProductModal = false;
+        SelectedProduct = null;
+    }
+
+    private void SelectColor(string color)
+    {
+        SelectedVariantColor = color;
+        if (SelectedProduct?.ProductVariants != null &&
+            !SelectedProduct.ProductVariants.Any(v => v.color == color && v.size == SelectedVariantSize))
+        {
+            SelectedVariantSize = SelectedProduct.ProductVariants.FirstOrDefault(v => v.color == color)?.size;
+        }
+        UpdateVariant();
+    }
+
+    private void SelectSize(string size)
+    {
+        SelectedVariantSize = size;
+        if (SelectedProduct?.ProductVariants != null &&
+            !SelectedProduct.ProductVariants.Any(v => v.size == size && v.color == SelectedVariantColor))
+        {
+            SelectedVariantColor = SelectedProduct.ProductVariants.FirstOrDefault(v => v.size == size)?.color;
+        }
+        UpdateVariant();
+    }
+
+    private void UpdateVariant()
+    {
+        if (SelectedProduct?.ProductVariants == null) return;
+        var v = SelectedProduct.ProductVariants.FirstOrDefault(v =>
+            v.color == SelectedVariantColor && v.size == SelectedVariantSize)
+            ?? SelectedProduct.ProductVariants.FirstOrDefault(v => v.color == SelectedVariantColor)
+            ?? SelectedProduct.ProductVariants.First();
+        SelectedVariantColor = v.color;
+        SelectedVariantSize = v.size;
+        SelectedVariantId = v.id;
+        if (!string.IsNullOrEmpty(v.image)) SelectedMainImage = NormalizeImage(v.image);
+        SelectedQuantity = 1;
+    }
+
+    private int GetMaxStock()
+    {
+        if (SelectedVariantId.HasValue && SelectedProduct?.ProductVariants != null)
+        {
+            var v = SelectedProduct.ProductVariants.FirstOrDefault(v => v.id == SelectedVariantId.Value);
+            if (v != null) return v.stock;
+        }
+        return SelectedProduct?.current_stock ?? 0;
+    }
+
+    private void AddToCart()
+    {
+        if (SelectedProduct == null || SelectedQuantity <= 0) return;
+        int maxStock = GetMaxStock();
+        if (SelectedQuantity > maxStock) { ModalError = "Stok tidak mencukupi."; return; }
+
+        CartService.AddToCart(new CartItem
+        {
+            Sku = SelectedProduct.sku ?? "",
+            Name = SelectedProduct.name ?? "",
+            Quantity = SelectedQuantity,
+            RequestType = "GIVEAWAY",
+            BaseCredit = SelectedProduct.value,
+            MaxStock = maxStock,
+            UnitName = SelectedProduct.Unit?.name ?? "unit",
+            ProductVariantId = SelectedVariantId
+        });
+
+        var name = SelectedProduct.name;
+        CloseProductModal();
+        CartCheckoutRef?.ShowToast($"\"{name}\" ditambahkan ke keranjang.");
+    }
+
+    private string GetProductImage(Product p)
+    {
+        if (!string.IsNullOrEmpty(p.image)) return GetImageUrl(p.image);
+        if (!string.IsNullOrEmpty(p.images))
+        {
+            try
+            {
+                var list = System.Text.Json.JsonSerializer.Deserialize<List<string>>(p.images);
+                if (list?.Any() == true) return GetImageUrl(list[0]);
+            }
+            catch { }
+        }
+        return "https://placehold.co/600x400?text=No+Picture";
+    }
+
+    private string NormalizeImage(string? img)
+    {
+        if (string.IsNullOrWhiteSpace(img)) return "";
+        var s = img.Trim();
+        if (s.StartsWith("/")) s = s[1..];
+        return s;
+    }
+
+    private string GetImageUrl(string? img)
+    {
+        var n = NormalizeImage(img);
+        if (string.IsNullOrEmpty(n)) return "";
+        if (n.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || n.StartsWith("https://", StringComparison.OrdinalIgnoreCase)) return n;
+        if (n.StartsWith("images/", StringComparison.OrdinalIgnoreCase) || n.StartsWith("storage/", StringComparison.OrdinalIgnoreCase)) return "/" + n;
+        return $"/storage/{n}";
+    }
+}

@@ -1,0 +1,375 @@
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@using UT_WMSDotnet.Models
+@using WMS_UnitedTracors_Blazor.Services
+@inject CartService CartService
+@inject TransactionService TransactionService
+@inject UserService UserService
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthStateProvider
+@implements IDisposable
+
+@* Toast *@
+@if (!string.IsNullOrEmpty(CartToast))
+{
+    <div class="fixed bottom-44 sm:bottom-28 right-8 z-[250] bg-[#1a7a30] text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2 max-w-xs">
+        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+        <span class="truncate">@CartToast</span>
+    </div>
+}
+
+@* Floating Cart Button *@
+<button type="button" @onclick='() => ShowCartModal = true'
+        class="fixed bottom-24 sm:bottom-8 right-8 z-[200] flex items-center justify-center w-[3.5rem] h-[3.5rem] bg-[#e8a000] hover:bg-[#d49300] active:scale-[0.95] rounded-full shadow-2xl transition-transform border-4 border-white"
+        title="Keranjang">
+    <svg class="w-7 h-7 text-[#1a1a1a]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+    </svg>
+    @if (CartService.Items.Any())
+    {
+        <span class="absolute -top-1.5 -right-1.5 inline-flex items-center justify-center min-w-[1.4rem] h-[1.4rem] px-1 bg-[#d94040] text-white text-[0.7rem] font-bold rounded-full shadow-sm border-2 border-white">
+            @CartService.Items.Sum(i => i.Quantity)
+        </span>
+    }
+</button>
+
+@* Cart Modal (2-toko style) *@
+@if (ShowCartModal)
+{
+    <div class="fixed inset-0 z-[220] flex" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 backdrop-blur-sm bg-[#1a1a1a]/65" @onclick="CloseCartModal"></div>
+        <div class="fixed inset-0 z-10 overflow-y-auto" @onclick="CloseCartModal">
+            <div class="flex min-h-full items-center justify-center p-4 sm:p-0">
+                <div class="relative transform overflow-hidden rounded-xl bg-white text-left shadow-2xl transition-all sm:my-8 w-full sm:max-w-xl border border-[#e5e3dc]" @onclick:stopPropagation="true">
+
+                    <div class="bg-white px-6 pt-6 pb-4">
+                        <div class="flex items-center justify-between mb-5">
+                            <h3 class="font-syne text-[1.05rem] font-bold text-[#1a1a1a]">Keranjang Permintaan</h3>
+                            <button type="button" @onclick="CloseCartModal" class="text-[#a09e99] hover:text-gray-700 transition p-1">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                            </button>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(ErrorMessage))
+                        {
+                            <div class="mb-4 flex items-center gap-2 bg-[#fef0f0] border border-[#f8c0c0] text-[#d94040] px-4 py-3 rounded-lg text-sm font-semibold">
+                                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                @ErrorMessage
+                            </div>
+                        }
+
+                        @if (!CartService.Items.Any())
+                        {
+                            <div class="text-center py-8">
+                                <svg class="w-12 h-12 mx-auto text-[#d1cec7] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                                <p class="text-sm text-[#8a8880] font-medium">Keranjang kosong.</p>
+                                <p class="text-xs text-[#a09e99] mt-1">Tambahkan barang dari katalog Pinjam atau Ambil.</p>
+                            </div>
+                        }
+                        else
+                        {
+                            @* ── BORROW SECTION ── *@
+                            @if (BorrowItems.Any())
+                            {
+                                <div class="mb-4 border border-blue-100 rounded-xl overflow-hidden">
+                                    <div class="bg-blue-50 px-4 py-2 flex items-center gap-2 border-b border-blue-100">
+                                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+                                        <span class="text-xs font-bold text-blue-700 uppercase tracking-wider">Pinjam</span>
+                                        <span class="ml-auto text-[10px] text-blue-500 font-medium">@BorrowItems.Count() item</span>
+                                    </div>
+                                    <div class="p-3 bg-white space-y-2">
+                                        @foreach (var item in BorrowItems)
+                                        {
+                                            <div class="flex items-center justify-between gap-2">
+                                                <div class="min-w-0 flex-1">
+                                                    <p class="text-xs font-bold text-[#1a1a1a] truncate">@item.Name</p>
+                                                    <p class="text-[10px] text-[#8a8880]">@item.Sku</p>
+                                                </div>
+                                                <div class="flex items-center border border-[#e5e3dc] rounded-lg overflow-hidden bg-white h-7 shrink-0">
+                                                    <button type="button" @onclick="() => { if(item.Quantity > 1) { item.Quantity--; CartService.NotifyChange(); } }" class="w-6 h-full flex items-center justify-center text-xs text-[#5a5855] hover:bg-[#f5f4f0] transition font-bold">-</button>
+                                                    <span class="w-8 text-center text-xs font-bold">@item.Quantity</span>
+                                                    <button type="button" @onclick="() => { if(item.Quantity < item.MaxStock) { item.Quantity++; CartService.NotifyChange(); } }" class="w-6 h-full flex items-center justify-center text-xs text-[#5a5855] hover:bg-[#f5f4f0] transition font-bold">+</button>
+                                                </div>
+                                                <button type="button" @onclick="() => CartService.RemoveItem(item)" class="p-1 text-[#d94040] hover:bg-[#fef0f0] rounded transition shrink-0">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                                </button>
+                                            </div>
+                                        }
+                                        <div class="grid grid-cols-2 gap-2 pt-2 border-t border-[#f0ede5] mt-2">
+                                            <div>
+                                                <label class="block text-[0.6rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1">Tgl Pinjam <span class="text-red-500">*</span></label>
+                                                <input type="date" @bind="CartService.BorrowStartDate" min="@TodayDateString"
+                                                       class="w-full px-2 py-1.5 text-[10px] bg-[#f5f4f0] border border-[#e5e3dc] rounded-lg outline-none focus:border-[#e8a000]">
+                                            </div>
+                                            <div>
+                                                <label class="block text-[0.6rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1">Tgl Kembali <span class="text-red-500">*</span></label>
+                                                <input type="date" @bind="CartService.BorrowEndDate"
+                                                       class="w-full px-2 py-1.5 text-[10px] bg-[#f5f4f0] border border-[#e5e3dc] rounded-lg outline-none focus:border-[#e8a000]">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+
+                            @* ── GIVEAWAY SECTION ── *@
+                            @if (GiveawayItems.Any())
+                            {
+                                <div class="mb-4 border border-purple-100 rounded-xl overflow-hidden">
+                                    <div class="bg-purple-50 px-4 py-2 flex items-center gap-2 border-b border-purple-100">
+                                        <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                                        <span class="text-xs font-bold text-purple-700 uppercase tracking-wider">Ambil / Giveaway</span>
+                                        <span class="ml-auto text-[10px] text-purple-500 font-medium">@GiveawayItems.Count() item</span>
+                                    </div>
+                                    <div class="p-3 bg-white space-y-2">
+                                        @foreach (var item in GiveawayItems)
+                                        {
+                                            <div class="flex items-center justify-between gap-2">
+                                                <div class="min-w-0 flex-1">
+                                                    <p class="text-xs font-bold text-[#1a1a1a] truncate">@item.Name</p>
+                                                    <p class="text-[10px] text-[#8a8880]">@item.Sku</p>
+                                                </div>
+                                                <div class="flex items-center border border-[#e5e3dc] rounded-lg overflow-hidden bg-white h-7 shrink-0">
+                                                    <button type="button" @onclick="() => { if(item.Quantity > 1) { item.Quantity--; CartService.NotifyChange(); } }" class="w-6 h-full flex items-center justify-center text-xs text-[#5a5855] hover:bg-[#f5f4f0] transition font-bold">-</button>
+                                                    <span class="w-8 text-center text-xs font-bold">@item.Quantity</span>
+                                                    <button type="button" @onclick="() => { if(item.Quantity < item.MaxStock) { item.Quantity++; CartService.NotifyChange(); } }" class="w-6 h-full flex items-center justify-center text-xs text-[#5a5855] hover:bg-[#f5f4f0] transition font-bold">+</button>
+                                                </div>
+                                                <button type="button" @onclick="() => CartService.RemoveItem(item)" class="p-1 text-[#d94040] hover:bg-[#fef0f0] rounded transition shrink-0">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                                </button>
+                                            </div>
+                                        }
+                                        <div class="pt-2 border-t border-[#f0ede5] mt-2">
+                                            <label class="block text-[0.6rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1">Tanggal Pengambilan</label>
+                                            <input type="date" @bind="CartService.GiveawayPickupDate" min="@TodayDateString"
+                                                   class="w-full px-2 py-1.5 text-[10px] bg-[#f5f4f0] border border-[#e5e3dc] rounded-lg outline-none focus:border-[#e8a000]">
+                                        </div>
+                                        <div class="flex items-center justify-between pt-2 border-t border-[#f0ede5]">
+                                            <span class="text-[0.6rem] font-bold tracking-wider uppercase text-[#8a8880]">Total Kredit</span>
+                                            <span class="text-sm font-bold text-[#e8a000]">@GiveawayItems.Sum(i => i.Quantity * i.BaseCredit) <span class="text-[10px] font-normal text-[#8a8880]">pts</span></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+
+                            @* ── SHARED EVENT INFO ── *@
+                            <div class="space-y-3">
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Nama Pemohon</label>
+                                        <input type="text" readonly value="@ApplicantName" class="w-full px-3 py-2 text-xs bg-[#ecebe8] border border-[#e5e3dc] rounded-lg outline-none text-[#5a5855] cursor-not-allowed">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">NRP</label>
+                                        <input type="text" readonly value="@ApplicantNrp" class="w-full px-3 py-2 text-xs bg-[#ecebe8] border border-[#e5e3dc] rounded-lg outline-none text-[#5a5855] cursor-not-allowed">
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Nama Event / Program <span class="text-red-500">*</span></label>
+                                    <input type="text" @bind="CartService.EventName" placeholder="Nama event atau program" class="w-full px-3 py-2 text-xs bg-[#f5f4f0] border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none text-[#1a1a1a]">
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Tanggal Mulai Event <span class="text-red-500">*</span></label>
+                                        <input type="date" @bind="CartService.EventStartDate" min="@TodayDateString" class="w-full px-3 py-2 text-xs bg-[#f5f4f0] border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none text-[#1a1a1a]">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Tanggal Selesai Event</label>
+                                        <input type="date" @bind="CartService.EventEndDate" class="w-full px-3 py-2 text-xs bg-[#f5f4f0] border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none text-[#1a1a1a]">
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Catatan Tambahan</label>
+                                    <textarea @bind="CartService.Notes" rows="2" placeholder="Opsional..." class="w-full px-3 py-2 text-xs bg-[#f5f4f0] border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none text-[#1a1a1a] resize-none"></textarea>
+                                </div>
+                                <p class="text-[10px] text-gray-500">* Wajib diisi</p>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="px-6 py-4 flex flex-row-reverse gap-3 bg-[#faf9f5] border-t border-[#f0ede5]">
+                        @if (CartService.Items.Any())
+                        {
+                            <button type="button" @onclick="SubmitRequest" disabled="@IsSubmitting"
+                                    class="px-5 py-2.5 bg-[#e8a000] hover:bg-[#d49300] active:scale-[0.98] text-[#1a1a1a] text-xs font-bold tracking-wider rounded-lg transition cursor-pointer disabled:opacity-60">
+                                @(IsSubmitting ? "Memproses..." : "Submit Request")
+                            </button>
+                        }
+                        <button type="button" @onclick="CloseCartModal" class="px-5 py-2.5 bg-white border border-[#e5e3dc] hover:bg-[#f0ede5] text-[#3a3835] text-xs font-bold rounded-lg transition cursor-pointer">
+                            Tutup
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public EventCallback<string> OnToast { get; set; }
+
+    private bool ShowCartModal = false;
+    private bool IsSubmitting = false;
+    private string? ErrorMessage;
+    private string? CartToast;
+
+    private string? ApplicantName;
+    private string? ApplicantNrp;
+    private int? UserDivisionId;
+    private int CurrentUserId;
+
+    private string TodayDateString => DateTime.Today.ToString("yyyy-MM-dd");
+    private IEnumerable<CartItem> BorrowItems => CartService.Items.Where(i => i.RequestType == "BORROW");
+    private IEnumerable<CartItem> GiveawayItems => CartService.Items.Where(i => i.RequestType == "GIVEAWAY");
+
+    protected override async Task OnInitializedAsync()
+    {
+        CartService.OnChange += StateHasChanged;
+
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            var idClaim = user.FindFirst(ClaimTypes.NameIdentifier);
+            if (idClaim != null && int.TryParse(idClaim.Value, out int id))
+                CurrentUserId = id;
+
+            ApplicantName = user.Identity.Name;
+
+            if (CurrentUserId > 0)
+            {
+                var profile = await UserService.GetUserByIdAsync(CurrentUserId);
+                if (profile != null)
+                {
+                    ApplicantNrp = profile.nrp;
+                    UserDivisionId = profile.division_id;
+                }
+            }
+        }
+    }
+
+    public void Dispose() => CartService.OnChange -= StateHasChanged;
+
+    private void CloseCartModal()
+    {
+        ShowCartModal = false;
+        ErrorMessage = null;
+    }
+
+    public void ShowToast(string message)
+    {
+        CartToast = message;
+        _ = ClearToastAfterDelay();
+    }
+
+    private async Task ClearToastAfterDelay()
+    {
+        await Task.Delay(2500);
+        CartToast = null;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task SubmitRequest()
+    {
+        try
+        {
+            ErrorMessage = null;
+
+            if (!CartService.Items.Any())
+            {
+                ErrorMessage = "Keranjang kosong.";
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(ApplicantName))
+            {
+                ErrorMessage = "Tidak dapat mengidentifikasi pemohon.";
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(CartService.EventName))
+            {
+                ErrorMessage = "Nama Event/Program wajib diisi.";
+                return;
+            }
+            if (!CartService.EventStartDate.HasValue)
+            {
+                ErrorMessage = "Tanggal Mulai Event wajib diisi.";
+                return;
+            }
+            if (CartService.EventStartDate.Value.Date < DateTime.Today)
+            {
+                ErrorMessage = "Tanggal Event tidak boleh sebelum hari ini.";
+                return;
+            }
+            if (CartService.Items.Any(i => i.RequestType == "BORROW"))
+            {
+                if (!CartService.BorrowStartDate.HasValue || !CartService.BorrowEndDate.HasValue)
+                {
+                    ErrorMessage = "Tanggal pinjam dan tanggal kembali wajib diisi untuk item pinjaman.";
+                    return;
+                }
+                if (CartService.BorrowStartDate.Value.Date < DateTime.Today)
+                {
+                    ErrorMessage = "Tanggal pinjam tidak boleh sebelum hari ini.";
+                    return;
+                }
+                if (CartService.BorrowEndDate.Value.Date <= CartService.BorrowStartDate.Value.Date)
+                {
+                    ErrorMessage = "Tanggal kembali harus setelah tanggal pinjam.";
+                    return;
+                }
+            }
+
+            IsSubmitting = true;
+            StateHasChanged();
+
+            var req = new UT_WMSDotnet.ViewModels.TransactionRequestViewModel
+            {
+                type = "OUT",
+                applicant_name = ApplicantName,
+                applicant_nrp = ApplicantNrp,
+                division_id = UserDivisionId,
+                event_name = CartService.EventName,
+                event_date = CartService.EventStartDate,
+                event_end_date = CartService.EventEndDate,
+                borrow_start_date = CartService.BorrowStartDate,
+                borrow_end_date = CartService.BorrowEndDate,
+                giveaway_pickup_date = CartService.GiveawayPickupDate,
+                notes = CartService.Notes,
+                documentation_link = CartService.DocumentationLink,
+                items = CartService.Items.Select(i => new UT_WMSDotnet.ViewModels.TransactionItemViewModel
+                {
+                    sku = i.Sku,
+                    quantity = i.Quantity,
+                    request_type = i.RequestType,
+                    product_variant_id = i.ProductVariantId
+                }).ToList()
+            };
+
+            var error = await TransactionService.StoreTransactionAsync(req, CurrentUserId);
+            if (error == null)
+            {
+                CartService.ClearCart();
+                ShowCartModal = false;
+                ErrorMessage = null;
+                await Task.Delay(300);
+                Navigation.NavigateTo("/Tracking");
+            }
+            else
+            {
+                ErrorMessage = error;
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Terjadi kesalahan: {ex.Message}";
+        }
+        finally
+        {
+            IsSubmitting = false;
+        }
+    }
+}

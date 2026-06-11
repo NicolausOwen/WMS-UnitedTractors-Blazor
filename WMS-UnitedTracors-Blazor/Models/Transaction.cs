@@ -13,7 +13,7 @@ public class Transaction
     {
         get
         {
-            var raw = $"{created_at:yyyy-MM-dd HH:mm}_{requester_id}_{applicant_name ?? ""}";
+            var raw = $"{created_at:yyyy-MM-dd HH:mm}_{requester_id}_{applicant_name ?? ""}_{request_type ?? ""}";
             using var md5 = System.Security.Cryptography.MD5.Create();
             var hashBytes = md5.ComputeHash(System.Text.Encoding.UTF8.GetBytes(raw));
             return BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
@@ -144,6 +144,9 @@ public class Transaction
 
     [Column(TypeName = "date")]
     public DateTime? event_date { get; set; }
+
+    [Column(TypeName = "date")]
+    public DateTime? event_end_date { get; set; }
 
     [StringLength(500)]
     public string? documentation_link { get; set; }

@@ -173,9 +173,6 @@
                     // Tombol upload hanya saat menunggu bukti dari user (WAITING_HANDOVER), bukan saat menunggu verifikasi admin.
                     var canHandover = hasBorrow && borrowItemsOnly.Any(i => i.status == "WAITING_HANDOVER")
                                       && firstItem.requester_id == CurrentUserId;
-                    // User needs to confirm receipt when SI uploaded the proof (WAITING_HANDOVER_CONFIRM)
-                    // handover_uploaded_by may be "SI" or null (if SI didn't explicitly set it)
-                    // TrackingService already ensures regular users only see their own requests
                     var isWaitingUserConfirm = hasBorrow && borrowItemsOnly.Any(i =>
                         i.status == "WAITING_HANDOVER_CONFIRM" &&
                         (i.handover_uploaded_by == "SI" || string.IsNullOrEmpty(i.handover_uploaded_by)));
@@ -695,12 +692,26 @@
                                                                             <span class="inline-flex items-center gap-1 bg-purple-50/50 text-purple-700 px-1 py-0.5 rounded border border-purple-100 text-[9px] font-semibold">
                                                                                 Pengambilan: @(usage.pickup_date?.ToString("dd MMM yyyy") ?? "-")
                                                                             </span>
+                                                                            @if (usage.original_pickup_date.HasValue && usage.original_pickup_date.Value.Date != usage.pickup_date?.Date)
+                                                                            {
+                                                                                <span class="inline-flex items-center gap-1 bg-rose-50 text-rose-700 px-1 py-0.5 rounded border border-rose-100 text-[9px] font-semibold">
+                                                                                    Revisi: @usage.original_pickup_date.Value.ToString("dd MMM yyyy") -> @(usage.pickup_date?.ToString("dd MMM yyyy") ?? "-")
+                                                                                </span>
+                                                                            }
                                                                         }
                                                                     </div>
                                                                 </td>
                                                                 <td class="px-4 py-3 align-middle text-xs">
                                                                     <span class="font-bold text-[#1a1a1a]">@usage.quantity</span>
                                                                     <span class="text-gray-500 text-[11px]">@(usage.Product?.Unit?.name ?? "unit")</span>
+                                                                    @if (usage.original_quantity.HasValue && usage.original_quantity.Value != usage.quantity)
+                                                                    {
+                                                                        <div class="mt-1">
+                                                                            <span class="inline-flex items-center gap-1 bg-rose-50 text-rose-700 px-1 py-0.5 rounded border border-rose-100 text-[9px] font-semibold">
+                                                                                Revisi qty: @usage.original_quantity.Value -> @usage.quantity
+                                                                            </span>
+                                                                        </div>
+                                                                    }
                                                                 </td>
                                                                 <td class="px-4 py-3 align-middle">
                                                                     @if(usage.status == "PENDING" || usage.status == "PENDING_ADMIN") {
@@ -733,15 +744,23 @@
                                                                         }
                                                                     } else if (usage.status == "REJECTED") {
                                                                         <span class="inline-flex items-center px-1.5 py-0.5 border border-[#f8c0c0] rounded text-[9px] font-bold bg-[#fef0f0] text-[#d94040]">Ditolak</span>
+                                                                        @if (!string.IsNullOrEmpty(usage.rejection_reason))
+                                                                        {
+                                                                            <div class="text-[10px] text-[#d94040] mt-1 italic font-semibold">"@usage.rejection_reason"</div>
+                                                                        }
                                                                     } else if (usage.status == "REVISION" || usage.status == "REVISION_BY_STAFF_INVENTORY" || usage.status == "REVISION_BY_ADMIN" || usage.status == "REVISION_BY_MANAGER") {
-                                                                        <span class="inline-flex items-center px-1.5 py-0.5 border border-[#fde68a] rounded text-[9px] font-bold bg-[#fffbeb] text-[#d97706]">Butuh Revisi</span>
+                                                                        <div class="space-y-1">
+                                                                            <span class="inline-flex items-center px-1.5 py-0.5 border border-[#fde68a] rounded text-[9px] font-bold bg-[#fffbeb] text-[#d97706]">Butuh Revisi</span>
+                                                                            <div class="text-[10px] font-semibold text-[#b45309]">Oleh @GetRevisionActorLabel(usage)</div>
+                                                                        </div>
                                                                     }
                                                                 </td>
                                                                 <td class="px-4 py-3 align-middle text-[11px] text-gray-500 space-y-0.5">
                                                                     @if (!string.IsNullOrEmpty(usage.notes)) { <div><span class="font-bold text-gray-400">User:</span> @usage.notes</div> }
-                                                                    @if (!string.IsNullOrEmpty(usage.staff_inventory_notes)) { <div><span class="font-bold text-[#e8a000]">Staff Inv:</span> @usage.staff_inventory_notes</div> }
-                                                                    @if (!string.IsNullOrEmpty(usage.admin_notes)) { <div><span class="font-bold text-[#e8a000]">Admin:</span> @usage.admin_notes</div> }
-                                                                    @if (string.IsNullOrEmpty(usage.notes) && string.IsNullOrEmpty(usage.staff_inventory_notes) && string.IsNullOrEmpty(usage.admin_notes)) { <span class="text-gray-300">-</span> }
+                                                                    @if (!string.IsNullOrEmpty(usage.staff_inventory_notes) && !ShouldHideRevisionNoteInNotesColumn(usage, usage.staff_inventory_notes, WorkflowStatuses.RevisionByStaffInventory)) { <div><span class="font-bold text-[#e8a000]">Staff Inv:</span> @usage.staff_inventory_notes</div> }
+                                                                    @if (!string.IsNullOrEmpty(usage.admin_notes) && !ShouldHideRevisionNoteInNotesColumn(usage, usage.admin_notes, WorkflowStatuses.RevisionByAdmin)) { <div><span class="font-bold text-[#e8a000]">Admin:</span> @usage.admin_notes</div> }
+                                                                    @if (!string.IsNullOrEmpty(usage.manager_notes) && !ShouldHideRevisionNoteInNotesColumn(usage, usage.manager_notes, WorkflowStatuses.RevisionByManager)) { <div><span class="font-bold text-[#e8a000]">Manager:</span> @usage.manager_notes</div> }
+                                                                    @if (string.IsNullOrEmpty(usage.notes) && !HasVisibleInternalNotes(usage)) { <span class="text-gray-300">-</span> }
                                                                 </td>
                                                                 <td class="px-4 py-3 align-middle text-right">
                                                                     @{
@@ -818,6 +837,12 @@
                                                             else if (usage.request_type == "GIVEAWAY")
                                                             {
                                                                 <span><span class="font-bold">Pengambilan:</span> @(usage.pickup_date?.ToString("dd MMM yyyy") ?? "-")</span>
+                                                                @if (usage.original_pickup_date.HasValue && usage.original_pickup_date.Value.Date != usage.pickup_date?.Date)
+                                                                {
+                                                                    <span class="block mt-1 text-[10px] font-semibold text-rose-600">
+                                                                        Revisi: @usage.original_pickup_date.Value.ToString("dd MMM yyyy") -> @(usage.pickup_date?.ToString("dd MMM yyyy") ?? "-")
+                                                                    </span>
+                                                                }
                                                             }
                                                         </div>
 
@@ -857,17 +882,19 @@
                                                                     <span class="inline-flex items-center px-1.5 py-0.5 border border-[#f8c0c0] rounded text-[9px] font-bold bg-[#fef0f0] text-[#d94040]">Ditolak</span>
                                                                 } else if (usage.status == "REVISION" || usage.status == "REVISION_BY_STAFF_INVENTORY" || usage.status == "REVISION_BY_ADMIN" || usage.status == "REVISION_BY_MANAGER") {
                                                                     <span class="inline-flex items-center px-1.5 py-0.5 border border-[#fde68a] rounded text-[9px] font-bold bg-[#fffbeb] text-[#d97706]">Butuh Revisi</span>
+                                                                    <div class="text-[10px] font-semibold text-[#b45309] mt-1">Oleh @GetRevisionActorLabel(usage)</div>
                                                                 }
                                                             </div>
                                                         </div>
 
                                                         <!-- Notes for mobile -->
-                                                        @if (!string.IsNullOrEmpty(usage.notes) || !string.IsNullOrEmpty(usage.staff_inventory_notes) || !string.IsNullOrEmpty(usage.admin_notes))
+                                                        @if (!string.IsNullOrEmpty(usage.notes) || HasVisibleInternalNotes(usage))
                                                         {
                                                             <div class="bg-[#faf9f5] p-2.5 rounded-lg text-[10px] space-y-1 border border-[#e5e3dc]/50">
                                                                 @if (!string.IsNullOrEmpty(usage.notes)) { <div><span class="font-bold text-gray-400">User:</span> @usage.notes</div> }
-                                                                @if (!string.IsNullOrEmpty(usage.staff_inventory_notes)) { <div><span class="font-bold text-[#e8a000]">Staff Inv:</span> @usage.staff_inventory_notes</div> }
-                                                                @if (!string.IsNullOrEmpty(usage.admin_notes)) { <div><span class="font-bold text-[#e8a000]">Admin:</span> @usage.admin_notes</div> }
+                                                                @if (!string.IsNullOrEmpty(usage.staff_inventory_notes) && !ShouldHideRevisionNoteInNotesColumn(usage, usage.staff_inventory_notes, WorkflowStatuses.RevisionByStaffInventory)) { <div><span class="font-bold text-[#e8a000]">Staff Inv:</span> @usage.staff_inventory_notes</div> }
+                                                                @if (!string.IsNullOrEmpty(usage.admin_notes) && !ShouldHideRevisionNoteInNotesColumn(usage, usage.admin_notes, WorkflowStatuses.RevisionByAdmin)) { <div><span class="font-bold text-[#e8a000]">Admin:</span> @usage.admin_notes</div> }
+                                                                @if (!string.IsNullOrEmpty(usage.manager_notes) && !ShouldHideRevisionNoteInNotesColumn(usage, usage.manager_notes, WorkflowStatuses.RevisionByManager)) { <div><span class="font-bold text-[#e8a000]">Manager:</span> @usage.manager_notes</div> }
                                                             </div>
                                                         }
 
@@ -1268,51 +1295,11 @@
 
         GroupedUsages = finalGrouped;
 
-        // Auto expand logic
+        // Default state: semua grup collapse, biarkan user expand manual.
         ExpandedGroupIds.Clear();
-        foreach (var kvp in GroupedUsages)
-        {
-            var firstItem = kvp.Value.First();
-            if (firstItem.request_type == "GIVEAWAY")
-            {
-                if (firstItem.status == "PENDING_STAFF_INVENTORY" ||
-                    firstItem.status == "PENDING_ADMIN" ||
-                    firstItem.status == "PENDING_MANAGER" ||
-                    firstItem.status == "REVISION" ||
-                    firstItem.status == "REVISION_BY_STAFF_INVENTORY" ||
-                    firstItem.status == "REVISION_BY_ADMIN" ||
-                    firstItem.status == "REVISION_BY_MANAGER" ||
-                    firstItem.status == "WAITING_HANDOVER" ||
-                    firstItem.status == "WAITING_DOCUMENTATION" ||
-                    firstItem.status == "DOCUMENTATION_OVERDUE")
-                {
-                    ExpandedGroupIds.Add(kvp.Key);
-                }
-            }
-            else
-            {
-                var totalItems = kvp.Value.Sum(i => i.quantity);
-                var totalReturned = kvp.Value.Sum(i => i.returned_quantity);
-                var borrowStatus = firstItem.status;
-                // Auto-expand any active/action-required BORROW group
-                if (borrowStatus == "PENDING" ||
-                    borrowStatus == "PENDING_STAFF_INVENTORY" ||
-                    borrowStatus == "PENDING_ADMIN" ||
-                    borrowStatus == "REVISION" ||
-                    borrowStatus == "REVISION_BY_STAFF_INVENTORY" ||
-                    borrowStatus == "REVISION_BY_ADMIN" ||
-                    borrowStatus == "WAITING_HANDOVER" ||
-                    borrowStatus == "WAITING_HANDOVER_CONFIRM" ||
-                    borrowStatus == "WAITING_ADMIN_HANDOVER" ||
-                    totalReturned < totalItems)
-                {
-                    ExpandedGroupIds.Add(kvp.Key);
-                }
-            }
-        }
     }
 
-    private void ToggleGroup(string groupId)
+    private async Task ToggleGroup(string groupId)
     {
         if (ExpandedGroupIds.Contains(groupId))
         {
@@ -1321,6 +1308,15 @@
         else
         {
             ExpandedGroupIds.Add(groupId);
+            await JSRuntime.InvokeVoidAsync("scrollActiveStepIntoView");
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JSRuntime.InvokeVoidAsync("scrollActiveStepIntoView");
         }
     }
 
@@ -1434,11 +1430,11 @@
             var handoverTimestamp = HandoverTimestampInput;
 
             var err = await TransactionService.ConfirmHandoverAsync(
-                HandoverTransactionIds, 
-                HandoverFile, 
-                HandoverNotes, 
-                "USER",
-                HandoverRecipientName, 
+                HandoverTransactionIds,
+                HandoverFile,
+                HandoverNotes,
+                null,
+                HandoverRecipientName,
                 handoverTimestamp);
             if (err == null)
             {
@@ -1452,38 +1448,6 @@
             {
                 ErrorMessage = err;
             }
-        }
-        finally
-        {
-            IsSubmitting = false;
-        }
-    }
-
-    private async Task ConfirmHandoverReceiptByUser(List<Transaction> borrowItems, bool isApproved)
-    {
-        if (IsSubmitting) return;
-        var groupId = borrowItems.FirstOrDefault(i => i.status == "WAITING_HANDOVER_CONFIRM")?.group_id;
-        if (string.IsNullOrEmpty(groupId)) return;
-
-        IsSubmitting = true;
-        ErrorMessage = null;
-        SuccessMessage = null;
-        try
-        {
-            var err = await TransactionService.ConfirmHandoverReceiptByUserAsync(groupId, CurrentUserId, isApproved, null);
-            if (err == null)
-            {
-                SuccessMessage = isApproved ? "Konfirmasi penerimaan berhasil." : "Penerimaan ditolak.";
-                await LoadData();
-            }
-            else
-            {
-                ErrorMessage = err;
-            }
-        }
-        catch (Exception ex)
-        {
-            ErrorMessage = "Terjadi kesalahan saat konfirmasi penerimaan: " + ex.Message;
         }
         finally
         {
@@ -1586,6 +1550,38 @@
         catch (Exception ex)
         {
             ErrorMessage = "Terjadi kesalahan saat submit serah terima: " + ex.Message;
+        }
+        finally
+        {
+            IsSubmitting = false;
+        }
+    }
+
+    private async Task ConfirmHandoverReceiptByUser(List<Transaction> borrowItems, bool isApproved)
+    {
+        if (IsSubmitting) return;
+        var groupId = borrowItems.FirstOrDefault(i => i.status == "WAITING_HANDOVER_CONFIRM")?.group_id;
+        if (string.IsNullOrEmpty(groupId)) return;
+
+        IsSubmitting = true;
+        ErrorMessage = null;
+        SuccessMessage = null;
+        try
+        {
+            var err = await TransactionService.ConfirmHandoverReceiptByUserAsync(groupId, CurrentUserId, isApproved, null);
+            if (err == null)
+            {
+                SuccessMessage = isApproved ? "Konfirmasi penerimaan berhasil." : "Penerimaan ditolak.";
+                await LoadData();
+            }
+            else
+            {
+                ErrorMessage = err;
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Terjadi kesalahan saat konfirmasi penerimaan: " + ex.Message;
         }
         finally
         {
@@ -1725,6 +1721,9 @@
             CartService.EventDate = usage.event_date;
             CartService.Notes = usage.notes;
             CartService.DocumentationLink = usage.documentation_link;
+            CartService.BorrowStartDate = usage.borrow_start_date;
+            CartService.BorrowEndDate = usage.expected_return_date;
+            CartService.GiveawayPickupDate = usage.pickup_date;
 
             CartService.AddToCart(new CartItem
             {
@@ -1735,10 +1734,7 @@
                 BaseCredit = usage.Product.value,
                 MaxStock = usage.Product.current_stock,
                 UnitName = usage.Product.Unit?.name ?? "unit",
-                ProductVariantId = usage.product_variant_id,
-                BorrowStartDate = usage.borrow_start_date,
-                ExpectedReturnDate = usage.expected_return_date,
-                PickupDate = usage.pickup_date
+                ProductVariantId = usage.product_variant_id
             });
         }
         
@@ -1750,6 +1746,49 @@
     {
         public string Name { get; set; } = "";
         public string Status { get; set; } = "";
+    }
+
+    private static bool IsRevisionStatus(string? status) =>
+        status == WorkflowStatuses.Revision ||
+        status == WorkflowStatuses.RevisionByStaffInventory ||
+        status == WorkflowStatuses.RevisionByAdmin ||
+        status == WorkflowStatuses.RevisionByManager;
+
+    private static string GetRevisionActorLabel(Transaction transaction) =>
+        transaction.status switch
+        {
+            WorkflowStatuses.RevisionByStaffInventory => "Staff Inventori",
+            WorkflowStatuses.RevisionByManager => "Manager",
+            WorkflowStatuses.RevisionByAdmin => "Admin",
+            WorkflowStatuses.Revision => transaction.last_revision_stage switch
+            {
+                "STAFF_INVENTORY" => "Staff Inventori",
+                "MANAGER" => "Manager",
+                "ADMIN" => "Admin",
+                _ => "Admin"
+            },
+            _ => "Approver"
+        };
+
+    private static bool ShouldHideRevisionNoteInNotesColumn(Transaction transaction, string? note, string revisionStatus)
+    {
+        if (!IsRevisionStatus(transaction.status) || transaction.status != revisionStatus)
+            return false;
+
+        return !string.IsNullOrWhiteSpace(note) &&
+               string.Equals(note?.Trim(), transaction.rejection_reason?.Trim(), StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool HasVisibleInternalNotes(Transaction transaction)
+    {
+        var hasStaffNote = !string.IsNullOrEmpty(transaction.staff_inventory_notes) &&
+            !ShouldHideRevisionNoteInNotesColumn(transaction, transaction.staff_inventory_notes, WorkflowStatuses.RevisionByStaffInventory);
+        var hasAdminNote = !string.IsNullOrEmpty(transaction.admin_notes) &&
+            !ShouldHideRevisionNoteInNotesColumn(transaction, transaction.admin_notes, WorkflowStatuses.RevisionByAdmin);
+        var hasManagerNote = !string.IsNullOrEmpty(transaction.manager_notes) &&
+            !ShouldHideRevisionNoteInNotesColumn(transaction, transaction.manager_notes, WorkflowStatuses.RevisionByManager);
+
+        return hasStaffNote || hasAdminNote || hasManagerNote;
     }
 
     private List<TrackingStep> GetGroupSteps(List<Transaction> groupItems)
@@ -1955,6 +1994,9 @@
                 CartService.EventDate = item.event_date;
                 CartService.Notes = item.notes;
                 CartService.DocumentationLink = item.documentation_link;
+                CartService.BorrowStartDate = item.borrow_start_date;
+                CartService.BorrowEndDate = item.expected_return_date;
+                CartService.GiveawayPickupDate = item.pickup_date;
 
                 CartService.AddToCart(new CartItem
                 {
@@ -1965,10 +2007,7 @@
                     BaseCredit = item.Product.value,
                     MaxStock = item.Product.current_stock,
                     UnitName = item.Product.Unit?.name ?? "unit",
-                    ProductVariantId = item.product_variant_id,
-                    BorrowStartDate = item.borrow_start_date,
-                    ExpectedReturnDate = item.expected_return_date,
-                    PickupDate = item.pickup_date
+                    ProductVariantId = item.product_variant_id
                 });
                 cartModified = true;
             }

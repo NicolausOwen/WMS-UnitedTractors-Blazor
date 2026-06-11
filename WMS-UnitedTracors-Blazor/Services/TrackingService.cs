@@ -9,11 +9,11 @@ namespace WMS_UnitedTracors_Blazor.Services;
 
 public class TrackingService
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IDbContextFactory<ApplicationDbContext> _factory;
 
-    public TrackingService(ApplicationDbContext context)
+    public TrackingService(IDbContextFactory<ApplicationDbContext> factory)
     {
-        _context = context;
+        _factory = factory;
     }
 
     public async Task<List<Transaction>> GetTrackingDataAsync(
@@ -22,9 +22,10 @@ public class TrackingService
         string? returnStatus, 
         DateTime? dateFrom, 
         DateTime? dateTo, 
-        int currentUserId, 
+        int currentUserId,
         string? userRole)
     {
+        using var _context = _factory.CreateDbContext();
         var baseQuery = _context.Transactions
             .Include(t => t.Product).ThenInclude(p => p!.Category)
             .Include(t => t.Product).ThenInclude(p => p!.Unit)

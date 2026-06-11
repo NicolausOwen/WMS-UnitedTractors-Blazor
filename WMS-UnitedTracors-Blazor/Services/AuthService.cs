@@ -9,20 +9,21 @@ namespace WMS_UnitedTracors_Blazor.Services;
 
 public class AuthService
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IDbContextFactory<ApplicationDbContext> _factory;
 
-    public AuthService(ApplicationDbContext context)
+    public AuthService(IDbContextFactory<ApplicationDbContext> factory)
     {
-        _context = context;
+        _factory = factory;
     }
 
     public async Task<(ClaimsPrincipal? Principal, string? ErrorMessage)> LoginAsync(string email, string password)
     {
+        using var _context = _factory.CreateDbContext();
         var user = await _context.Users.Include(u => u.Division).FirstOrDefaultAsync(u => u.email == email);
 
         if (user != null && BCrypt.Net.BCrypt.Verify(password, user.password))
         {
-            var principal = await CreateClaimsPrincipalAsync(user);
+            var principal = await CreateClaimsPrincipalAsync(_context, user);
             return (principal, null);
         }
 
@@ -31,6 +32,7 @@ public class AuthService
 
     public async Task<(ClaimsPrincipal? Principal, string? ErrorMessage)> MicrosoftLoginAsync(string email, string? name)
     {
+        using var _context = _factory.CreateDbContext();
         if (email.Contains("#EXT#"))
         {
             var beforeExt = email.Substring(0, email.IndexOf("#EXT#"));
@@ -71,11 +73,11 @@ public class AuthService
             await _context.SaveChangesAsync();
         }
 
-        var principal = await CreateClaimsPrincipalAsync(user);
+        var principal = await CreateClaimsPrincipalAsync(_context, user);
         return (principal, null);
     }
 
-    private async Task<ClaimsPrincipal> CreateClaimsPrincipalAsync(User user)
+    private async Task<ClaimsPrincipal> CreateClaimsPrincipalAsync(ApplicationDbContext _context, User user)
     {
         var claims = new List<Claim>
         {

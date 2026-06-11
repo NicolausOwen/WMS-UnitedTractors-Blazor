@@ -7,15 +7,16 @@ namespace WMS_UnitedTracors_Blazor.Services;
 
 public class LocationService
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IDbContextFactory<ApplicationDbContext> _factory;
 
-    public LocationService(ApplicationDbContext context)
+    public LocationService(IDbContextFactory<ApplicationDbContext> factory)
     {
-        _context = context;
+        _factory = factory;
     }
 
     public async Task<(List<LocationDto> Locations, int TotalItems, int TotalPages)> GetLocationsAsync(int page = 1, int pageSize = 10)
     {
+        using var _context = _factory.CreateDbContext();
         var query = _context.Locations.AsQueryable();
 
         int totalItems = await query.CountAsync();
@@ -45,6 +46,7 @@ public class LocationService
 
     public async Task<string?> CreateLocationAsync(LocationViewModel model)
     {
+        using var _context = _factory.CreateDbContext();
         if (await _context.Locations.AnyAsync(l => l.name == model.name))
             return "Nama lokasi sudah ada.";
 
@@ -63,6 +65,7 @@ public class LocationService
 
     public async Task<string?> UpdateLocationAsync(int id, LocationViewModel model)
     {
+        using var _context = _factory.CreateDbContext();
         if (await _context.Locations.AnyAsync(l => l.name == model.name && l.id != id))
             return "Nama lokasi sudah digunakan.";
 
@@ -80,6 +83,7 @@ public class LocationService
 
     public async Task<bool> DeleteLocationAsync(int id)
     {
+        using var _context = _factory.CreateDbContext();
         var location = await _context.Locations.FindAsync(id);
         if (location != null)
         {

@@ -7,11 +7,11 @@ namespace WMS_UnitedTracors_Blazor.Services;
 
 public class DashboardService
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IDbContextFactory<ApplicationDbContext> _factory;
 
-    public DashboardService(ApplicationDbContext context)
+    public DashboardService(IDbContextFactory<ApplicationDbContext> factory)
     {
-        _context = context;
+        _factory = factory;
     }
 
     public class DashboardData
@@ -39,6 +39,7 @@ public class DashboardService
 
     public async Task<DashboardData> GetDashboardDataAsync(int? category, string? search = null, int page = 1, int pageSize = 15)
     {
+        using var _context = _factory.CreateDbContext();
         var widgetTotalItems = await _context.Products.CountAsync();
         var pendingApprovals = await _context.Transactions.CountAsync(t =>
             t.status == WorkflowStatuses.Pending ||
@@ -107,6 +108,7 @@ public class DashboardService
 
     public async Task<List<Transaction>> GetActiveBorrowsAsync(int currentUserId, string? userRole)
     {
+        using var _context = _factory.CreateDbContext();
         var activeBorrowsQuery = _context.Transactions
             .Include(t => t.Product)
             .Include(t => t.Requester)
@@ -144,8 +146,9 @@ public class DashboardService
 
     public async Task<List<ActionItemModel>> GetUserActionItemsAsync(int userId)
     {
+        using var _context = _factory.CreateDbContext();
         var actionItems = new List<ActionItemModel>();
-        
+
         var pendingTransactions = await _context.Transactions
             .Include(t => t.Product)
             .Where(t => t.requester_id == userId && 

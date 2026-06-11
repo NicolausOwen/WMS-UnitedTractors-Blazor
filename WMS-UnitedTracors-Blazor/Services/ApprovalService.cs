@@ -7,15 +7,16 @@ namespace WMS_UnitedTracors_Blazor.Services;
 
 public class ApprovalService
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IDbContextFactory<ApplicationDbContext> _factory;
 
-    public ApprovalService(ApplicationDbContext context)
+    public ApprovalService(IDbContextFactory<ApplicationDbContext> factory)
     {
-        _context = context;
+        _factory = factory;
     }
 
     public async Task<(Dictionary<string, List<Transaction>> GroupedApprovals, List<Transaction> PendingReturns, List<ProfileRequest> PendingProfileRequests, Dictionary<string, List<Transaction>> GroupedHandovers)> GetApprovalsAsync(int currentUserId, string? userRole)
     {
+        using var _context = _factory.CreateDbContext();
         var query = _context.Transactions
             .Include(t => t.Product)
             .Include(t => t.Requester)
@@ -23,8 +24,8 @@ public class ApprovalService
             .OrderByDescending(t => t.created_at)
             .AsQueryable();
 
-        var perms = await ResolvePermsAsync(currentUserId);
-        
+        var perms = await ResolvePermsAsync(_context, currentUserId);
+
         List<int>? allowedCategoryIds = null;
         bool isGlobalAdmin = true;
 
@@ -137,14 +138,15 @@ public class ApprovalService
 
     public async Task<string?> ApproveAsync(int id, string? notes, int currentUserId, string? userRole)
     {
+        using var _context = _factory.CreateDbContext();
         var transaction = await _context.Transactions.Include(t => t.Product).Include(t => t.Requester).FirstOrDefaultAsync(t => t.id == id);
         if (transaction == null) return "Transaction not found.";
-        var perms = await ResolvePermsAsync(currentUserId);
+        var perms = await ResolvePermsAsync(_context, currentUserId);
         if (!CanApprove(transaction, perms)) return "Transaction is no longer pending or is not assigned to your approval stage.";
 
         if (transaction.request_type == "GIVEAWAY")
         {
-            return await ApproveGiveawayAsync(transaction, notes, currentUserId, perms);
+            return await ApproveGiveawayAsync(_context, transaction, notes, currentUserId, perms);
         }
 
         // BORROW stage 1: Staff Inventoris menyetujui -> lanjut ke tahap Admin (belum potong stok).
@@ -251,9 +253,10 @@ public class ApprovalService
 
     public async Task<string?> RejectAsync(int id, string rejectionReason, int currentUserId, string? userRole)
     {
+        using var _context = _factory.CreateDbContext();
         var transaction = await _context.Transactions.Include(t => t.Product).Include(t => t.Requester).FirstOrDefaultAsync(t => t.id == id);
         if (transaction == null) return "Transaction not found.";
-        var perms = await ResolvePermsAsync(currentUserId);
+        var perms = await ResolvePermsAsync(_context, currentUserId);
         if (!CanApprove(transaction, perms)) return "Transaction is no longer pending or is not assigned to your approval stage.";
 
         if (perms.Contains(Permissions.ApprovalManager) && transaction.Product != null && transaction.Product.is_returnable == 1)
@@ -301,12 +304,13 @@ public class ApprovalService
 
     public async Task<string?> RequestRevisionAsync(int id, string revisionReason, int currentUserId, string? userRole, int? revisedQuantity, DateTime? revisedPickupDate)
     {
+        using var _context = _factory.CreateDbContext();
         var transaction = await _context.Transactions
             .Include(t => t.Product)
             .Include(t => t.Requester)
             .FirstOrDefaultAsync(t => t.id == id);
         if (transaction == null) return "Transaction not found.";
-        var perms = await ResolvePermsAsync(currentUserId);
+        var perms = await ResolvePermsAsync(_context, currentUserId);
         if (!CanApprove(transaction, perms)) return "Transaction is no longer pending or is not assigned to your approval stage.";
 
         if (perms.Contains(Permissions.ApprovalManager) && transaction.Product != null && transaction.Product.is_returnable == 1)
@@ -374,10 +378,11 @@ public class ApprovalService
 
     public async Task<string?> ApproveReturnAsync(int id, int currentUserId, string? userRole)
     {
+        using var _context = _factory.CreateDbContext();
         var transaction = await _context.Transactions.Include(t => t.Product).FirstOrDefaultAsync(t => t.id == id);
         if (transaction == null) return "Transaction not found.";
-        
-        var perms = await ResolvePermsAsync(currentUserId);
+
+        var perms = await ResolvePermsAsync(_context, currentUserId);
         if (!perms.Contains(Permissions.ApprovalReturn)) return "Unauthorized action.";
         
         if (transaction.status != WorkflowStatuses.Approved || transaction.pending_return_quantity <= 0 || transaction.is_return_draft != 0)
@@ -432,7 +437,8 @@ public class ApprovalService
 
     public async Task<string?> ApproveHandoverBatchAsync(string groupId, int currentUserId, string? userRole)
     {
-        var perms = await ResolvePermsAsync(currentUserId);
+        using var _context = _factory.CreateDbContext();
+        var perms = await ResolvePermsAsync(_context, currentUserId);
         if (!perms.Contains(Permissions.ApprovalHandoverFinal)) return "Unauthorized action.";
 
         var query = await _context.Transactions
@@ -457,7 +463,8 @@ public class ApprovalService
 
     public async Task<string?> ConfirmHandoverBySiAsync(string groupId, int currentUserId, bool isApproved, string? rejectionReason)
     {
-        var perms = await ResolvePermsAsync(currentUserId);
+        using var _context = _factory.CreateDbContext();
+        var perms = await ResolvePermsAsync(_context, currentUserId);
         if (!perms.Contains(Permissions.ApprovalHandover)) return "Unauthorized action.";
         if (!isApproved && string.IsNullOrWhiteSpace(rejectionReason)) return "Alasan penolakan wajib diisi.";
 
@@ -490,7 +497,8 @@ public class ApprovalService
 
     public async Task<string?> RejectHandoverBatchAsync(string groupId, string rejectionReason, int currentUserId, string? userRole)
     {
-        var perms = await ResolvePermsAsync(currentUserId);
+        using var _context = _factory.CreateDbContext();
+        var perms = await ResolvePermsAsync(_context, currentUserId);
         if (!perms.Contains(Permissions.ApprovalHandoverFinal)) return "Unauthorized action.";
         if (string.IsNullOrWhiteSpace(rejectionReason)) return "Rejection reason is required.";
 
@@ -515,10 +523,11 @@ public class ApprovalService
 
     public async Task<string?> RejectReturnAsync(int id, string? rejectionReason, int currentUserId, string? userRole)
     {
+        using var _context = _factory.CreateDbContext();
         var transaction = await _context.Transactions.FirstOrDefaultAsync(t => t.id == id);
         if (transaction == null) return "Transaction not found.";
-        
-        var perms = await ResolvePermsAsync(currentUserId);
+
+        var perms = await ResolvePermsAsync(_context, currentUserId);
         if (!perms.Contains(Permissions.ApprovalReturn)) return "Unauthorized action.";
         
         if (transaction.status != WorkflowStatuses.Approved || transaction.pending_return_quantity <= 0 || transaction.is_return_draft != 0)
@@ -535,10 +544,11 @@ public class ApprovalService
 
     public async Task<string?> ApproveProfileRequestAsync(int id, int currentUserId, string? userRole)
     {
+        using var _context = _factory.CreateDbContext();
         var request = await _context.ProfileRequests.FirstOrDefaultAsync(pr => pr.id == id);
         if (request == null) return "Profile request not found.";
-        
-        var perms = await ResolvePermsAsync(currentUserId);
+
+        var perms = await ResolvePermsAsync(_context, currentUserId);
         if (!perms.Contains(Permissions.UsersManage)) return "Unauthorized action.";
         
         if (request.status != "PENDING") return "Profile request is not pending.";
@@ -564,10 +574,11 @@ public class ApprovalService
 
     public async Task<string?> RejectProfileRequestAsync(int id, int currentUserId, string? userRole)
     {
+        using var _context = _factory.CreateDbContext();
         var request = await _context.ProfileRequests.FirstOrDefaultAsync(pr => pr.id == id);
         if (request == null) return "Profile request not found.";
-        
-        var perms = await ResolvePermsAsync(currentUserId);
+
+        var perms = await ResolvePermsAsync(_context, currentUserId);
         if (!perms.Contains(Permissions.UsersManage)) return "Unauthorized action.";
         
         if (request.status != "PENDING") return "Profile request is not pending.";
@@ -582,7 +593,7 @@ public class ApprovalService
     }
 
     /// <summary>Resolusi permission efektif user (User.role -> AdminRole, dengan fallback role lama).</summary>
-    private async Task<HashSet<string>> ResolvePermsAsync(int userId)
+    private async Task<HashSet<string>> ResolvePermsAsync(ApplicationDbContext _context, int userId)
     {
         var user = await _context.Users.FindAsync(userId);
         if (user == null) return new HashSet<string>();
@@ -605,7 +616,7 @@ public class ApprovalService
                (transaction.status == WorkflowStatuses.Pending && (perms.Contains(Permissions.ApprovalStage1) || perms.Contains(Permissions.ApprovalStage2)));
     }
 
-    private async Task<string?> ApproveGiveawayAsync(Transaction transaction, string? notes, int currentUserId, HashSet<string> perms)
+    private async Task<string?> ApproveGiveawayAsync(ApplicationDbContext _context, Transaction transaction, string? notes, int currentUserId, HashSet<string> perms)
     {
         switch (transaction.status)
         {
@@ -656,7 +667,8 @@ public class ApprovalService
 
     public async Task<string?> ApproveHandoverItemAsync(int transactionId, int currentUserId, string? userRole)
     {
-        var perms = await ResolvePermsAsync(currentUserId);
+        using var _context = _factory.CreateDbContext();
+        var perms = await ResolvePermsAsync(_context, currentUserId);
         if (!perms.Contains(Permissions.ApprovalHandover)) return "Unauthorized action.";
 
         var transaction = await _context.Transactions
@@ -676,7 +688,8 @@ public class ApprovalService
 
     public async Task<string?> RejectHandoverItemAsync(int transactionId, string rejectionReason, int currentUserId, string? userRole)
     {
-        var perms = await ResolvePermsAsync(currentUserId);
+        using var _context = _factory.CreateDbContext();
+        var perms = await ResolvePermsAsync(_context, currentUserId);
         if (!perms.Contains(Permissions.ApprovalHandover)) return "Unauthorized action.";
         if (string.IsNullOrWhiteSpace(rejectionReason)) return "Rejection reason is required.";
 

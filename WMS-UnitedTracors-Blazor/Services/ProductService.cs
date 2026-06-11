@@ -7,17 +7,18 @@ namespace WMS_UnitedTracors_Blazor.Services;
 
 public class ProductService
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IDbContextFactory<ApplicationDbContext> _factory;
     private readonly IWebHostEnvironment _env;
 
-    public ProductService(ApplicationDbContext context, IWebHostEnvironment env)
+    public ProductService(IDbContextFactory<ApplicationDbContext> factory, IWebHostEnvironment env)
     {
-        _context = context;
+        _factory = factory;
         _env = env;
     }
 
     public async Task<(List<Product> Products, int TotalItems, int TotalPages)> GetProductsAsync(int? category, string? search, int page = 1, int pageSize = 10)
     {
+        using var _context = _factory.CreateDbContext();
         var query = _context.Products
             .AsNoTracking()
             .Include(p => p.Category)
@@ -47,13 +48,60 @@ public class ProductService
         return (products, totalItems, totalPages);
     }
 
+    public async Task<(List<Product> Products, int TotalItems, int TotalPages)> GetCatalogProductsAsync(
+        int isReturnable, int? categoryId, string? search, int page = 1, int pageSize = 15)
+    {
+        using var _context = _factory.CreateDbContext();
+        var query = _context.Products
+            .AsNoTracking()
+            .Include(p => p.Category)
+            .Include(p => p.Unit)
+            .Include(p => p.ProductVariants)
+            .Where(p => p.is_returnable == isReturnable)
+            .OrderBy(p => p.name)
+            .AsQueryable();
+
+        if (categoryId.HasValue)
+            query = query.Where(p => p.category_id == categoryId.Value);
+
+        if (!string.IsNullOrWhiteSpace(search))
+            query = query.Where(p => p.name.Contains(search) || p.sku.Contains(search));
+
+        int total = await query.CountAsync();
+        int totalPages = (int)Math.Ceiling(total / (double)pageSize);
+
+        var products = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return (products, total, totalPages);
+    }
+
+    public async Task<List<UT_WMSDotnet.Models.Category>> GetCategoriesForCatalogAsync(int isReturnable)
+    {
+        using var _context = _factory.CreateDbContext();
+        var categoryIds = await _context.Products
+            .Where(p => p.is_returnable == isReturnable && p.category_id != null)
+            .Select(p => p.category_id!.Value)
+            .Distinct()
+            .ToListAsync();
+
+        return await _context.Categories
+            .Where(c => categoryIds.Contains(c.id))
+            .OrderBy(c => c.name)
+            .ToListAsync();
+    }
+
     public async Task<Product?> GetProductByIdAsync(int id)
     {
+        using var _context = _factory.CreateDbContext();
         return await _context.Products.Include(p => p.Unit).Include(p => p.ProductVariants).FirstOrDefaultAsync(p => p.id == id);
     }
 
     public async Task<string?> CreateProductAsync(ProductCreateViewModel model)
     {
+        using var _context = _factory.CreateDbContext();
         if (await _context.Products.AnyAsync(p => p.name == model.name))
         {
             return "Nama produk ini sudah ada di dalam sistem. Gunakan nama lain.";
@@ -195,6 +243,7 @@ public class ProductService
 
     public async Task<string?> UpdateProductAsync(int id, ProductUpdateViewModel model)
     {
+        using var _context = _factory.CreateDbContext();
         var product = await _context.Products.Include(p => p.ProductVariants).FirstOrDefaultAsync(p => p.id == id);
         if (product == null) return "Produk tidak ditemukan.";
 
@@ -387,6 +436,7 @@ public class ProductService
 
     public async Task<bool> DeleteProductAsync(int id)
     {
+        using var _context = _factory.CreateDbContext();
         var product = await _context.Products.Include(p => p.ProductVariants).FirstOrDefaultAsync(p => p.id == id);
         if (product != null)
         {
@@ -422,6 +472,7 @@ public class ProductService
 
     public async Task<List<Product>> GetProductsByTypeAsync(string type, int id)
     {
+        using var _context = _factory.CreateDbContext();
         var query = _context.Products
             .Include(p => p.Category)
             .Include(p => p.Location)

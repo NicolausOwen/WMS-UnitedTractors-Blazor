@@ -7,20 +7,22 @@ namespace WMS_UnitedTracors_Blazor.Services;
 
 public class UserService
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IDbContextFactory<ApplicationDbContext> _factory;
 
-    public UserService(ApplicationDbContext context)
+    public UserService(IDbContextFactory<ApplicationDbContext> factory)
     {
-        _context = context;
+        _factory = factory;
     }
 
     public async Task<User?> GetUserByIdAsync(int id)
     {
+        using var _context = _factory.CreateDbContext();
         return await _context.Users.Include(u => u.Division).FirstOrDefaultAsync(u => u.id == id);
     }
 
     public async Task<(List<User> Users, List<Division> Divisions, int TotalItems, int TotalPages)> GetUsersAsync(string? searchQuery, int page = 1, int pageSize = 10)
     {
+        using var _context = _factory.CreateDbContext();
         var query = _context.Users.Include(u => u.Division).AsQueryable();
 
         if (!string.IsNullOrEmpty(searchQuery))
@@ -44,6 +46,7 @@ public class UserService
 
     public async Task<string?> CreateUserAsync(UserCreateViewModel model)
     {
+        using var _context = _factory.CreateDbContext();
         if (await _context.Users.AnyAsync(u => u.email == model.email))
             return "Email sudah digunakan.";
 
@@ -70,6 +73,7 @@ public class UserService
 
     public async Task<string?> UpdateUserAsync(int id, UserUpdateViewModel model, int currentUserId, string? currentUserRole)
     {
+        using var _context = _factory.CreateDbContext();
         var user = await _context.Users.FindAsync(id);
         if (user == null) return "User tidak ditemukan.";
 
@@ -109,6 +113,7 @@ public class UserService
 
     public async Task<string?> DeleteUserAsync(int id, int currentUserId)
     {
+        using var _context = _factory.CreateDbContext();
         if (id == currentUserId)
             return "You cannot delete your own account.";
 

@@ -7,15 +7,16 @@ namespace WMS_UnitedTracors_Blazor.Services;
 
 public class UnitService
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IDbContextFactory<ApplicationDbContext> _factory;
 
-    public UnitService(ApplicationDbContext context)
+    public UnitService(IDbContextFactory<ApplicationDbContext> factory)
     {
-        _context = context;
+        _factory = factory;
     }
 
     public async Task<(List<UnitDto> Units, int TotalItems, int TotalPages)> GetUnitsAsync(int page = 1, int pageSize = 10)
     {
+        using var _context = _factory.CreateDbContext();
         var query = _context.Units.AsQueryable();
 
         int totalItems = await query.CountAsync();
@@ -44,6 +45,7 @@ public class UnitService
 
     public async Task<string?> CreateUnitAsync(UnitViewModel model)
     {
+        using var _context = _factory.CreateDbContext();
         if (await _context.Units.AnyAsync(u => u.name == model.name))
             return "Nama satuan sudah ada.";
 
@@ -61,6 +63,7 @@ public class UnitService
 
     public async Task<string?> UpdateUnitAsync(int id, UnitViewModel model)
     {
+        using var _context = _factory.CreateDbContext();
         if (await _context.Units.AnyAsync(u => u.name == model.name && u.id != id))
             return "Nama satuan sudah digunakan.";
 
@@ -77,6 +80,7 @@ public class UnitService
 
     public async Task<bool> DeleteUnitAsync(int id)
     {
+        using var _context = _factory.CreateDbContext();
         var unit = await _context.Units.FindAsync(id);
         if (unit != null)
         {
