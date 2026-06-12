@@ -262,7 +262,7 @@
                                         </div>
                                         <div class="flex items-center gap-1.5">
                                             <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                                            @(isGiveaway ? "Request" : "Pinjam"): @firstItem.created_at.ToString("dd MMM yyyy")
+                                            Tanggal Event: @(firstItem.event_date?.ToString("dd MMM yyyy") ?? "-")
                                         </div>
                                     </div>
                                 </div>
@@ -288,7 +288,7 @@
                                         
                                         <div class="relative flex flex-col space-y-6 my-2 pl-2">
                                             <!-- Vertical connecting line -->
-                                            <div class="absolute left-4 top-2 bottom-2 w-0.5 bg-gray-200 z-0"></div>
+                                            <div class="absolute top-2 bottom-2 bg-gray-300 z-0" style="width: 2px; left: 15px;"></div>
 
                                             @{ var steps = GetGroupSteps(groupItems); }
                                             @for (int i = 0; i < steps.Count; i++)
@@ -296,22 +296,26 @@
                                                 var step = steps[i];
                                                 <div class="flex items-start gap-4 relative z-10">
                                                     <!-- Circle indicator wrapper -->
-                                                    <div class="w-4 h-4 flex items-center justify-center shrink-0 mt-0.5 bg-white rounded-full">
+                                                    <div class="w-4 h-4 flex items-center justify-center shrink-0 mt-0.5 bg-white border rounded-full z-10
+                                                        @(step.Status == "DONE" ? "border-emerald-600" :
+                                                          step.Status == "ACTIVE" ? "border-blue-600 animate-pulse" :
+                                                          step.Status == "WARNING" ? "border-rose-600" :
+                                                          "border-gray-300")">
                                                         @if (step.Status == "DONE") {
-                                                            <div class="w-4 h-4 rounded-full bg-[#1a7a30] flex items-center justify-center shrink-0">
+                                                            <div class="w-full h-full rounded-full bg-[#1a7a30] flex items-center justify-center shrink-0">
                                                                 <svg class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
                                                             </div>
                                                         } else if (step.Status == "ACTIVE") {
-                                                            <span class="relative flex h-3.5 w-3.5 items-center justify-center">
+                                                            <span class="relative flex h-2 w-2 items-center justify-center">
                                                                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                                                                <span class="relative inline-flex rounded-full h-3 w-3 bg-blue-600"></span>
+                                                                <span class="relative inline-flex rounded-full h-2 w-2 bg-blue-600"></span>
                                                             </span>
                                                         } else if (step.Status == "WARNING") {
-                                                            <div class="w-4 h-4 rounded-full bg-[#d94040] flex items-center justify-center shrink-0">
+                                                            <div class="w-full h-full rounded-full bg-[#d94040] flex items-center justify-center shrink-0">
                                                                 <svg class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                                                             </div>
                                                         } else {
-                                                            <div class="w-2.5 h-2.5 rounded-full bg-gray-300"></div>
+                                                            <div class="w-1.5 h-1.5 rounded-full bg-gray-300"></div>
                                                         }
                                                     </div>
                                                     <!-- Text Info -->
@@ -338,56 +342,69 @@
                                     <div class="lg:col-span-3 space-y-4">
                                         
                                         <!-- PDF Bookkeeping Download Checklist (Dipindahkan & Dipercantik) -->
-                                        @if (isGiveaway)
-                                        {
-                                            var requestReceiptReady = giveawayItemsOnly.Any(i =>
-                                                i.status == WorkflowStatuses.PendingAdmin ||
-                                                i.status == WorkflowStatuses.PendingManager ||
-                                                i.status == WorkflowStatuses.WaitingHandover ||
-                                                i.status == WorkflowStatuses.WaitingAdminHandover ||
-                                                i.status == WorkflowStatuses.WaitingDocumentation ||
-                                                i.status == WorkflowStatuses.DocumentationOverdue ||
-                                                i.status == WorkflowStatuses.Completed ||
-                                                i.status == WorkflowStatuses.Approved ||
-                                                i.status == WorkflowStatuses.RevisionByAdmin ||
-                                                i.status == WorkflowStatuses.RevisionByManager);
+                                        @{
+                                            var requestReceiptReady = isGiveaway
+                                                ? giveawayItemsOnly.Any(i =>
+                                                    i.status == WorkflowStatuses.PendingAdmin ||
+                                                    i.status == WorkflowStatuses.PendingManager ||
+                                                    i.status == WorkflowStatuses.WaitingHandover ||
+                                                    i.status == WorkflowStatuses.WaitingAdminHandover ||
+                                                    i.status == WorkflowStatuses.WaitingDocumentation ||
+                                                    i.status == WorkflowStatuses.DocumentationOverdue ||
+                                                    i.status == WorkflowStatuses.Completed ||
+                                                    i.status == WorkflowStatuses.Approved ||
+                                                    i.status == WorkflowStatuses.RevisionByAdmin ||
+                                                    i.status == WorkflowStatuses.RevisionByManager)
+                                                : borrowItemsOnly.Any(i =>
+                                                    i.status == WorkflowStatuses.PendingAdmin ||
+                                                    i.status == WorkflowStatuses.Pending ||
+                                                    i.status == WorkflowStatuses.WaitingHandover ||
+                                                    i.status == WorkflowStatuses.WaitingAdminHandover ||
+                                                    i.status == WorkflowStatuses.Approved ||
+                                                    i.status == WorkflowStatuses.RevisionByAdmin ||
+                                                    i.status == WorkflowStatuses.RevisionByStaffInventory ||
+                                                    i.status == WorkflowStatuses.WaitingHandoverConfirm);
 
-                                            var handoverReceiptReady = giveawayItemsOnly.Any(i => TransactionService.HasStoredFiles(i.handover_photo));
-                                            var documentationReceiptReady = giveawayItemsOnly.Any(i => TransactionService.HasStoredFiles(i.documentation_photo));
+                                            var handoverReceiptReady = groupItems.Any(i => TransactionService.HasStoredFiles(i.handover_photo));
+                                            var documentationReceiptReady = isGiveaway && giveawayItemsOnly.Any(i => TransactionService.HasStoredFiles(i.documentation_photo));
+                                            var returnReceiptReady = !isGiveaway && borrowItemsOnly.Any(i => i.returned_quantity > 0 || (i.pending_return_quantity > 0 && i.is_return_draft == 0));
+                                        }
 
-                                            <div class="bg-white p-4 rounded-xl border border-[#e5e3dc] shadow-sm flex flex-wrap gap-2.5 items-center">
-                                                <span class="text-[0.65rem] font-bold uppercase tracking-wider text-[#8a8780] mr-2 block w-full sm:w-auto">Dokumen Pembukuan (PDF):</span>
+                                        <div class="bg-white p-4 rounded-xl border border-[#e5e3dc] shadow-sm flex flex-wrap gap-2.5 items-center">
+                                            <span class="text-[0.65rem] font-bold uppercase tracking-wider text-[#8a8780] mr-2 block w-full sm:w-auto">Dokumen Pembukuan (PDF):</span>
 
-                                                @if (requestReceiptReady)
-                                                {
-                                                    <a href="/api/pdf/receipt-request/@firstItem.group_id" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-700 rounded-lg text-xs font-semibold transition shadow-sm">
-                                                        <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                                                        1. Bukti Pengajuan
-                                                    </a>
-                                                }
-                                                else
-                                                {
-                                                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100/50 border border-gray-200/50 text-gray-400 rounded-lg text-xs font-semibold cursor-not-allowed" title="Bisa diakses setelah permohonan giveaway di-acc oleh staff inventoris.">
-                                                        <svg class="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                                                        1. Bukti Pengajuan
-                                                    </span>
-                                                }
+                                            @if (requestReceiptReady)
+                                            {
+                                                <a href="/api/pdf/receipt-request/@firstItem.group_id" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-700 rounded-lg text-xs font-semibold transition shadow-sm">
+                                                    <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                                    1. Bukti Pengajuan
+                                                </a>
+                                            }
+                                            else
+                                            {
+                                                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100/50 border border-gray-200/50 text-gray-400 rounded-lg text-xs font-semibold cursor-not-allowed" title="Bisa diakses setelah permohonan disetujui/diproses.">
+                                                    <svg class="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                                    1. Bukti Pengajuan
+                                                </span>
+                                            }
 
-                                                @if (handoverReceiptReady)
-                                                {
-                                                    <a href="/api/pdf/receipt-handover/@firstItem.group_id" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-700 rounded-lg text-xs font-semibold transition shadow-sm">
-                                                        <svg class="w-3.5 h-3.5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                                                        2. Bukti Penyerahan
-                                                    </a>
-                                                }
-                                                else
-                                                {
-                                                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100/50 border border-gray-200/50 text-gray-400 rounded-lg text-xs font-semibold cursor-not-allowed" title="Bisa diakses setelah staff inventoris mengunggah bukti penyerahan.">
-                                                        <svg class="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                                                        2. Bukti Penyerahan
-                                                    </span>
-                                                }
+                                            @if (handoverReceiptReady)
+                                            {
+                                                <a href="/api/pdf/receipt-handover/@firstItem.group_id" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-700 rounded-lg text-xs font-semibold transition shadow-sm">
+                                                    <svg class="w-3.5 h-3.5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                                    2. Bukti Penyerahan
+                                                </a>
+                                            }
+                                            else
+                                            {
+                                                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100/50 border border-gray-200/50 text-gray-400 rounded-lg text-xs font-semibold cursor-not-allowed" title="Bisa diakses setelah bukti penyerahan diunggah.">
+                                                    <svg class="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                                    2. Bukti Penyerahan
+                                                </span>
+                                            }
 
+                                            @if (isGiveaway)
+                                            {
                                                 @if (documentationReceiptReady)
                                                 {
                                                     <a href="/api/pdf/receipt-documentation/@firstItem.group_id" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 rounded-lg text-xs font-semibold transition shadow-sm">
@@ -397,13 +414,30 @@
                                                 }
                                                 else
                                                 {
-                                                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100/50 border border-gray-200/50 text-gray-400 rounded-lg text-xs font-semibold cursor-not-allowed" title="Bisa diakses setelah user mengunggah dokumentasi setelah event selesai.">
+                                                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100/50 border border-gray-200/50 text-gray-400 rounded-lg text-xs font-semibold cursor-not-allowed" title="Bisa diakses setelah user mengunggah dokumentasi.">
                                                         <svg class="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                                                         3. Bukti Dokumentasi
                                                     </span>
                                                 }
-                                            </div>
-                                        }
+                                            }
+                                            else
+                                            {
+                                                @if (returnReceiptReady)
+                                                {
+                                                    <a href="/api/pdf/receipt-return/@firstItem.group_id" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 rounded-lg text-xs font-semibold transition shadow-sm">
+                                                        <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                                        3. Bukti Pengembalian
+                                                    </a>
+                                                }
+                                                else
+                                                {
+                                                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100/50 border border-gray-200/50 text-gray-400 rounded-lg text-xs font-semibold cursor-not-allowed" title="Bisa diakses setelah barang dikembalikan.">
+                                                        <svg class="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                                        3. Bukti Pengembalian
+                                                    </span>
+                                                }
+                                            }
+                                        </div>
 
                                         <!-- Informasi Detail & Tombol Aksi Utama -->
                                         <div class="bg-white p-5 rounded-2xl border border-[#e5e3dc] shadow-sm space-y-4">
@@ -425,10 +459,12 @@
                                                         </span>
                                                     </div>
                                                     <div class="bg-[#fafbfb] p-3 rounded-xl border border-[#e5e3dc]/50">
-                                                        <span class="block text-[10px] font-bold text-[#8a8880] uppercase tracking-wider">Status Dokumentasi</span>
-                                                        <span class="text-xs font-bold flex items-center gap-1.5 mt-1.5 @(status == "DOCUMENTATION_OVERDUE" ? "text-[#d94040]" : status == "WAITING_DOCUMENTATION" ? "text-blue-600" : "text-[#1a7a30]")">
-                                                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                                                            @(status == "DOCUMENTATION_OVERDUE" ? "Dokumentasi Overdue" : status == "WAITING_DOCUMENTATION" ? "Menunggu Dokumentasi" : "Dokumentasi Lengkap")
+                                                        <span class="block text-[10px] font-bold text-[#8a8880] uppercase tracking-wider">Total Credit</span>
+                                                        <span class="text-xs font-bold text-[#e8a000] flex items-center gap-1.5 mt-1.5">
+                                                            <svg class="w-4 h-4 text-[#e8a000]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                            </svg>
+                                                            @(groupItems.Sum(i => (i.quantity ?? 0) * (i.Product?.value ?? 0)).ToString("N0")) pts
                                                         </span>
                                                     </div>
                                                 }
@@ -445,7 +481,7 @@
                                                         <span class="block text-[10px] font-bold text-[#8a8880] uppercase tracking-wider">Progress Return</span>
                                                         <span class="text-xs font-bold text-[#1a1a1a] flex items-center gap-1.5 mt-1.5">
                                                             <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                                            @totalReturned/@totalItems Item Kembali
+                                                            @(borrowItemsOnly.Count(i => (i.returned_quantity ?? 0) >= (i.quantity ?? 0)))/@(borrowItemsOnly.Count) Item Kembali
                                                         </span>
                                                     </div>
                                                     <div class="bg-[#fafbfc] p-3 rounded-xl border border-[#e5e3dc]/50">
@@ -651,6 +687,10 @@
 
                                         <!-- Daftar Produk (Hybrid View) -->
                                         <div>
+                                            @{
+                                                var showAllProducts = ShowAllProductsGroupIds.Contains(groupId);
+                                                var productsToRender = showAllProducts ? groupItems : groupItems.Take(3).ToList();
+                                            }
                                             <!-- Desktop View (Tabel Minimalis Kompak) -->
                                             <div class="hidden md:block overflow-hidden rounded-xl border border-[#e5e3dc] shadow-sm bg-white">
                                                 <table class="w-full text-left border-collapse">
@@ -664,7 +704,7 @@
                                                         </tr>
                                                     </thead>
                                                     <tbody class="divide-y divide-[#e5e3dc]">
-                                                        @foreach(var usage in groupItems)
+                                                        @foreach(var usage in productsToRender)
                                                         {
                                                             <tr class="hover:bg-[#faf9f5] transition-colors">
                                                                 <td class="px-4 py-3 align-middle">
@@ -681,24 +721,9 @@
                                                                     </div>
                                                                     <div class="flex items-center gap-2 mt-0.5 flex-wrap">
                                                                         <code class="text-[9px] text-gray-500 font-mono">@(usage.Product?.sku ?? "-")</code>
-                                                                        @if (usage.request_type == "BORROW")
-                                                                        {
-                                                                            <span class="inline-flex items-center gap-1 bg-blue-50/50 text-blue-700 px-1 py-0.5 rounded border border-blue-100 text-[9px] font-semibold">
-                                                                                Pinjam: @(usage.borrow_start_date?.ToString("dd MMM yyyy") ?? "-") s/d @(usage.expected_return_date?.ToString("dd MMM yyyy") ?? "-")
-                                                                            </span>
-                                                                        }
-                                                                        else if (usage.request_type == "GIVEAWAY")
-                                                                        {
-                                                                            <span class="inline-flex items-center gap-1 bg-purple-50/50 text-purple-700 px-1 py-0.5 rounded border border-purple-100 text-[9px] font-semibold">
-                                                                                Pengambilan: @(usage.pickup_date?.ToString("dd MMM yyyy") ?? "-")
-                                                                            </span>
-                                                                            @if (usage.original_pickup_date.HasValue && usage.original_pickup_date.Value.Date != usage.pickup_date?.Date)
-                                                                            {
-                                                                                <span class="inline-flex items-center gap-1 bg-rose-50 text-rose-700 px-1 py-0.5 rounded border border-rose-100 text-[9px] font-semibold">
-                                                                                    Revisi: @usage.original_pickup_date.Value.ToString("dd MMM yyyy") -> @(usage.pickup_date?.ToString("dd MMM yyyy") ?? "-")
-                                                                                </span>
-                                                                            }
-                                                                        }
+                                                                        <span class="inline-flex items-center gap-1 bg-amber-50 text-amber-700 px-1 py-0.5 rounded border border-amber-200 text-[9px] font-semibold">
+                                                                            Credit/Item: @(usage.Product?.value.ToString("N0") ?? "0") pts
+                                                                        </span>
                                                                     </div>
                                                                 </td>
                                                                 <td class="px-4 py-3 align-middle text-xs">
@@ -801,11 +826,19 @@
                                                         }
                                                     </tbody>
                                                 </table>
+                                                @if (groupItems.Count > 3)
+                                                {
+                                                    <div class="border-t border-[#e5e3dc] bg-gray-50/50 p-2.5 text-center">
+                                                        <button type="button" @onclick="() => ToggleShowAllProducts(groupId)" class="text-xs font-bold text-[#e8a000] hover:text-[#d49300] transition active:scale-95 cursor-pointer">
+                                                            @(showAllProducts ? "See Less" : $"See More ({groupItems.Count - 3} more items...)")
+                                                        </button>
+                                                    </div>
+                                                }
                                             </div>
 
                                             <!-- Mobile View (Daftar Kartu Produk Responsif) -->
                                             <div class="block md:hidden space-y-3">
-                                                @foreach(var usage in groupItems)
+                                                @foreach(var usage in productsToRender)
                                                 {
                                                     <div class="bg-white rounded-xl border border-[#e5e3dc] p-4 shadow-sm space-y-3">
                                                         <!-- Name, SKU, Qty -->
@@ -821,6 +854,9 @@
                                                                     }
                                                                 }
                                                                 <code class="block text-[9px] text-gray-500 font-mono mt-0.5">@(usage.Product?.sku ?? "-")</code>
+                                                                <span class="inline-flex items-center gap-1 bg-amber-50 text-amber-700 px-1 py-0.5 rounded border border-amber-200 text-[9px] font-semibold mt-1">
+                                                                    Credit/Item: @(usage.Product?.value.ToString("N0") ?? "0") pts
+                                                                </span>
                                                             </div>
                                                             <div class="text-right shrink-0">
                                                                 <span class="text-xs font-extrabold text-[#1a1a1a]">@usage.quantity</span>
@@ -830,11 +866,7 @@
 
                                                         <!-- Dates for mobile -->
                                                         <div class="text-[11px] text-gray-600">
-                                                            @if (usage.request_type == "BORROW")
-                                                            {
-                                                                <span><span class="font-bold">Masa Pinjam:</span> @(usage.borrow_start_date?.ToString("dd MMM yyyy") ?? "-") s/d @(usage.expected_return_date?.ToString("dd MMM yyyy") ?? "-")</span>
-                                                            }
-                                                            else if (usage.request_type == "GIVEAWAY")
+                                                            @if (usage.request_type == "GIVEAWAY")
                                                             {
                                                                 <span><span class="font-bold">Pengambilan:</span> @(usage.pickup_date?.ToString("dd MMM yyyy") ?? "-")</span>
                                                                 @if (usage.original_pickup_date.HasValue && usage.original_pickup_date.Value.Date != usage.pickup_date?.Date)
@@ -929,6 +961,14 @@
                                                                 }
                                                             </div>
                                                         }
+                                                    </div>
+                                                }
+                                                @if (groupItems.Count > 3)
+                                                {
+                                                    <div class="text-center pt-1">
+                                                        <button type="button" @onclick="() => ToggleShowAllProducts(groupId)" class="w-full py-2 bg-white border border-[#e5e3dc] rounded-xl text-xs font-bold text-[#e8a000] hover:text-[#d49300] transition cursor-pointer">
+                                                            @(showAllProducts ? "See Less" : $"See More ({groupItems.Count - 3} more items...)")
+                                                        </button>
                                                     </div>
                                                 }
                                             </div>
@@ -1151,6 +1191,7 @@
     private List<Division> Divisions = new();
     private Dictionary<string, List<Transaction>> GroupedUsages = new();
     private HashSet<string> ExpandedGroupIds = new();
+    private HashSet<string> ShowAllProductsGroupIds = new();
     private string ActiveTrackingTab = "borrow";
 
     private string? ProductSearch;
@@ -1227,6 +1268,11 @@
                 CurrentUserId = id;
             }
             UserRole = user.FindFirst(ClaimTypes.Role)?.Value; userPrincipal = user;
+
+            if (string.Equals(UserRole, "manager", StringComparison.OrdinalIgnoreCase))
+            {
+                ActiveTrackingTab = "giveaway";
+            }
         }
 
         Divisions = await DivisionService.GetAllDivisionsAsync();
@@ -1297,6 +1343,7 @@
 
         // Default state: semua grup collapse, biarkan user expand manual.
         ExpandedGroupIds.Clear();
+        ShowAllProductsGroupIds.Clear();
     }
 
     private async Task ToggleGroup(string groupId)
@@ -1309,6 +1356,18 @@
         {
             ExpandedGroupIds.Add(groupId);
             await JSRuntime.InvokeVoidAsync("scrollActiveStepIntoView");
+        }
+    }
+
+    private void ToggleShowAllProducts(string groupId)
+    {
+        if (ShowAllProductsGroupIds.Contains(groupId))
+        {
+            ShowAllProductsGroupIds.Remove(groupId);
+        }
+        else
+        {
+            ShowAllProductsGroupIds.Add(groupId);
         }
     }
 
