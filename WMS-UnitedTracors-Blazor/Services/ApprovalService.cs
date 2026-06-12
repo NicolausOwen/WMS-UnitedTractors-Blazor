@@ -8,10 +8,12 @@ namespace WMS_UnitedTracors_Blazor.Services;
 public class ApprovalService
 {
     private readonly ApplicationDbContext _context;
+    private readonly IEmailService _emailService;
 
-    public ApprovalService(ApplicationDbContext context)
+    public ApprovalService(ApplicationDbContext context, IEmailService emailService)
     {
         _context = context;
+        _emailService = emailService;
     }
 
     public async Task<(Dictionary<string, List<Transaction>> GroupedApprovals, List<Transaction> PendingReturns, List<ProfileRequest> PendingProfileRequests, Dictionary<string, List<Transaction>> GroupedHandovers)> GetApprovalsAsync(int currentUserId, string? userRole)
@@ -675,10 +677,40 @@ public class ApprovalService
         return null;
     }
 
-    private Task NotifyUserAsync(Transaction transaction, string subject, string message)
+    private async Task NotifyUserAsync(Transaction transaction, string subject, string message)
     {
-        // Email notifications removed - no-op stub
-        return Task.CompletedTask;
+        var requesterEmail = transaction.Requester?.email;
+        if (string.IsNullOrWhiteSpace(requesterEmail))
+        {
+            var user = await _context.Users.FindAsync(transaction.requester_id);
+            requesterEmail = user?.email;
+        }
+
+        if (!string.IsNullOrWhiteSpace(requesterEmail))
+        {
+            var htmlMessage = GetEmailTemplate(subject, message);
+            await _emailService.SendEmailAsync(requesterEmail, subject, htmlMessage);
+        }
+    }
+
+    private string GetEmailTemplate(string title, string message)
+    {
+        return $@"
+        <div style='font-family: ""Segoe UI"", Arial, sans-serif; background-color: #f4f4f5; padding: 40px 20px;'>
+            <div style='max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #e4e4e7;'>
+                <div style='background-color: #fdc300; padding: 25px; text-align: center; border-bottom: 4px solid #e8a000;'>
+                    <h1 style='color: #18181b; margin: 0; font-size: 24px; font-weight: 800; letter-spacing: 0.5px;'>UT WMS</h1>
+                </div>
+                <div style='padding: 35px 30px; color: #3f3f46; line-height: 1.6;'>
+                    <h2 style='color: #18181b; margin-top: 0; font-size: 20px; font-weight: 600;'>{title}</h2>
+                    <p style='font-size: 16px; margin-bottom: 0;'>{message}</p>
+                </div>
+                <div style='background-color: #fafafa; padding: 20px; text-align: center; font-size: 13px; color: #71717a; border-top: 1px solid #e4e4e7;'>
+                    <p style='margin: 0;'>Pesan ini dikirim secara otomatis oleh Sistem Manajemen Inventaris United Tractors.</p>
+                    <p style='margin: 5px 0 0 0;'>Mohon tidak membalas email ini.</p>
+                </div>
+            </div>
+        </div>";
     }
 
     // Status revisi & catatan ditentukan oleh TAHAP (status sebelum aksi), bukan role.

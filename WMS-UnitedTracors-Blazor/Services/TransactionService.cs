@@ -240,7 +240,9 @@ public class TransactionService
             var requester = await _context.Users.FindAsync(currentUserId);
             if (requester != null && !string.IsNullOrWhiteSpace(requester.email))
             {
-                _ = _emailService.SendEmailAsync(requester.email, "Request Berhasil Dibuat", "Pesanan Anda berhasil dibuat dan sedang menunggu persetujuan.");
+                string requesterMessage = "Pesanan Anda berhasil dibuat dan saat ini sedang menunggu persetujuan dari pihak terkait. Kami akan menginformasikan kembali jika status pesanan Anda telah diperbarui.";
+                string requesterHtml = GetEmailTemplate("Request Berhasil Dibuat", requesterMessage);
+                _ = _emailService.SendEmailAsync(requester.email, "Request Berhasil Dibuat", requesterHtml);
             }
 
             var adminManagerEmails = await _context.Users
@@ -250,11 +252,33 @@ public class TransactionService
 
             if (adminManagerEmails.Any())
             {
-                _ = _emailService.SendEmailToMultipleAsync(adminManagerEmails, "Request Baru (WMS UT)", $"Ada request baru dari {model.applicant_name ?? requester?.name}. Silakan login ke sistem untuk melakukan persetujuan.");
+                string adminMessage = $"Terdapat request peminjaman/pengambilan barang baru dari <strong>{model.applicant_name ?? requester?.name}</strong>. Silakan login ke sistem WMS untuk meninjau dan melakukan persetujuan.";
+                string adminHtml = GetEmailTemplate("Request Baru Menunggu Persetujuan", adminMessage);
+                _ = _emailService.SendEmailToMultipleAsync(adminManagerEmails, "Request Baru (WMS UT)", adminHtml);
             }
         }
 
         return null;
+    }
+
+    private string GetEmailTemplate(string title, string message)
+    {
+        return $@"
+        <div style='font-family: ""Segoe UI"", Arial, sans-serif; background-color: #f4f4f5; padding: 40px 20px;'>
+            <div style='max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #e4e4e7;'>
+                <div style='background-color: #fdc300; padding: 25px; text-align: center; border-bottom: 4px solid #e8a000;'>
+                    <h1 style='color: #18181b; margin: 0; font-size: 24px; font-weight: 800; letter-spacing: 0.5px;'>UT WMS</h1>
+                </div>
+                <div style='padding: 35px 30px; color: #3f3f46; line-height: 1.6;'>
+                    <h2 style='color: #18181b; margin-top: 0; font-size: 20px; font-weight: 600;'>{title}</h2>
+                    <p style='font-size: 16px; margin-bottom: 0;'>{message}</p>
+                </div>
+                <div style='background-color: #fafafa; padding: 20px; text-align: center; font-size: 13px; color: #71717a; border-top: 1px solid #e4e4e7;'>
+                    <p style='margin: 0;'>Pesan ini dikirim secara otomatis oleh Sistem Manajemen Inventaris United Tractors.</p>
+                    <p style='margin: 5px 0 0 0;'>Mohon tidak membalas email ini.</p>
+                </div>
+            </div>
+        </div>";
     }
 
     public async Task<(List<Transaction> Transactions, int TotalItems, int TotalPages)> GetHistoryAsync(
