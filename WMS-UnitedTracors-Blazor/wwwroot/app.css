@@ -862,6 +862,49 @@ body.ut-collapsed .ut-credit-pts {
   --tw-ring-color: rgb(254 243 199 / var(--tw-ring-opacity, 1));
 }
 
+/* ============================
+   Approval Dashboard Animations
+   ============================ */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.25s ease-out both;
+}
+
+.animate-slideUp {
+  animation: slideUp 0.3s cubic-bezier(0.2, 0, 0, 1) both;
+}
+
+/* Hide scrollbar on tab overflow container */
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
 .pointer-events-none {
   pointer-events: none;
 }

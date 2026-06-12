@@ -511,6 +511,7 @@ public class ProductService
 
     public async Task<bool> ToggleProductVisibilityAsync(int id, bool isHidden)
     {
+        using var _context = _factory.CreateDbContext();
         var product = await _context.Products.FindAsync(id);
         if (product != null)
         {
@@ -523,6 +524,7 @@ public class ProductService
     }
     public async Task<bool> ToggleVariantVisibilityAsync(int variantId, bool isHidden)
     {
+        using var _context = _factory.CreateDbContext();
         var variant = await _context.ProductVariants.FindAsync(variantId);
         if (variant != null)
         {
