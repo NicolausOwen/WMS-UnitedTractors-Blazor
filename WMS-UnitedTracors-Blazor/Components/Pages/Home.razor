@@ -1058,6 +1058,12 @@
         ModalImages = ModalImages.Where(i => !string.IsNullOrEmpty(i)).Distinct().ToList();
         SelectedMainImage = ModalImages.FirstOrDefault() ?? "https://placehold.co/600x400?text=No+Picture";
         
+        // Filter out hidden variants for catalog display
+        if (product.ProductVariants != null)
+        {
+            product.ProductVariants = product.ProductVariants.Where(v => v.is_hidden == 0).ToList();
+        }
+
         if (product.ProductVariants != null && product.ProductVariants.Any())
         {
             var firstVar = product.ProductVariants.First();

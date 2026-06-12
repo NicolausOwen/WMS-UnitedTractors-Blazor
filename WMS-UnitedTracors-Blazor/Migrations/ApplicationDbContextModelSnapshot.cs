@@ -180,6 +180,9 @@ namespace ut_wms_asp.net.Migrations
                     b.Property<int>("initial_stock")
                         .HasColumnType("int");
 
+                    b.Property<int>("is_hidden")
+                        .HasColumnType("int");
+
                     b.Property<int>("is_returnable")
                         .HasColumnType("int");
 
@@ -245,6 +248,9 @@ namespace ut_wms_asp.net.Migrations
                     b.Property<string>("image")
                         .HasMaxLength(255)
                         .HasColumnType("varchar(255)");
+
+                    b.Property<int>("is_hidden")
+                        .HasColumnType("int");
 
                     b.Property<int>("product_id")
                         .HasColumnType("int");

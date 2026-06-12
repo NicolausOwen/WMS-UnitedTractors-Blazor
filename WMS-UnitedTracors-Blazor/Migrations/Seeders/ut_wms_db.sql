@@ -1,3 +1,7 @@
+﻿SET SESSION sql_generate_invisible_primary_key = 0;
+SET SESSION sql_generate_invisible_primary_key = 0;
+
+SET FOREIGN_KEY_CHECKS = 0;
 -- phpMyAdmin SQL Dump
 -- version 5.2.3
 -- https://www.phpmyadmin.net/
@@ -27,6 +31,7 @@ SET time_zone = "+00:00";
 -- Table structure for table `admin_roles`
 --
 
+DROP TABLE IF EXISTS `admin_roles`;
 CREATE TABLE `admin_roles` (
   `Id` char(36) CHARACTER SET ascii COLLATE ascii_general_ci NOT NULL,
   `RoleName` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
@@ -37,6 +42,8 @@ CREATE TABLE `admin_roles` (
   `CreatedBy` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `UpdatedAt` datetime(6) NOT NULL,
   `UpdatedBy` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL
+,
+  PRIMARY KEY (`Id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -57,12 +64,15 @@ INSERT INTO `admin_roles` (`Id`, `RoleName`, `Description`, `Permissions`, `IsAc
 -- Table structure for table `categories`
 --
 
+DROP TABLE IF EXISTS `categories`;
 CREATE TABLE `categories` (
   `id` bigint NOT NULL,
   `name` varchar(255) NOT NULL,
   `description` varchar(255) DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL
+,
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -84,12 +94,15 @@ INSERT INTO `categories` (`id`, `name`, `description`, `created_at`, `updated_at
 -- Table structure for table `divisions`
 --
 
+DROP TABLE IF EXISTS `divisions`;
 CREATE TABLE `divisions` (
   `id` bigint NOT NULL,
   `name` varchar(255) NOT NULL,
   `description` varchar(255) DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL
+,
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -118,12 +131,15 @@ INSERT INTO `divisions` (`id`, `name`, `description`, `created_at`, `updated_at`
 -- Table structure for table `locations`
 --
 
+DROP TABLE IF EXISTS `locations`;
 CREATE TABLE `locations` (
   `id` bigint NOT NULL,
   `name` varchar(255) NOT NULL,
   `description` varchar(255) DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL
+,
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -149,6 +165,7 @@ INSERT INTO `locations` (`id`, `name`, `description`, `created_at`, `updated_at`
 -- Table structure for table `products`
 --
 
+DROP TABLE IF EXISTS `products`;
 CREATE TABLE `products` (
   `id` bigint NOT NULL,
   `sku` varchar(255) NOT NULL,
@@ -168,7 +185,8 @@ CREATE TABLE `products` (
   `is_returnable` tinyint(1) NOT NULL DEFAULT '1',
   `min_stock` int NOT NULL DEFAULT '0',
   `created_at` datetime DEFAULT NULL,
-  `updated_at` datetime DEFAULT NULL
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`)
 ) ;
 
 --
@@ -419,6 +437,7 @@ INSERT INTO `products` (`id`, `sku`, `barcode_type`, `name`, `description`, `tra
 -- Table structure for table `product_variants`
 --
 
+DROP TABLE IF EXISTS `product_variants`;
 CREATE TABLE `product_variants` (
   `id` bigint NOT NULL,
   `product_id` bigint NOT NULL,
@@ -429,6 +448,8 @@ CREATE TABLE `product_variants` (
   `stock` int NOT NULL DEFAULT '0',
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL
+,
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -569,6 +590,7 @@ INSERT INTO `product_variants` (`id`, `product_id`, `sku`, `color`, `size`, `ima
 -- Table structure for table `profile_requests`
 --
 
+DROP TABLE IF EXISTS `profile_requests`;
 CREATE TABLE `profile_requests` (
   `id` bigint NOT NULL,
   `user_id` bigint NOT NULL,
@@ -579,6 +601,8 @@ CREATE TABLE `profile_requests` (
   `status` varchar(50) NOT NULL DEFAULT 'PENDING',
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL
+,
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -587,6 +611,7 @@ CREATE TABLE `profile_requests` (
 -- Table structure for table `stock_logs`
 --
 
+DROP TABLE IF EXISTS `stock_logs`;
 CREATE TABLE `stock_logs` (
   `id` bigint NOT NULL,
   `transaction_id` bigint NOT NULL,
@@ -595,6 +620,8 @@ CREATE TABLE `stock_logs` (
   `stock_after` int NOT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL
+,
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -631,6 +658,7 @@ INSERT INTO `stock_logs` (`id`, `transaction_id`, `product_id`, `stock_before`, 
 -- Table structure for table `transactions`
 --
 
+DROP TABLE IF EXISTS `transactions`;
 CREATE TABLE `transactions` (
   `id` bigint NOT NULL,
   `product_id` bigint NOT NULL,
@@ -675,7 +703,8 @@ CREATE TABLE `transactions` (
   `expected_return_date` date DEFAULT NULL,
   `event_name` varchar(255) DEFAULT NULL,
   `event_date` date DEFAULT NULL,
-  `documentation_link` varchar(255) DEFAULT NULL
+  `documentation_link` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`)
 ) ;
 
 --
@@ -714,11 +743,14 @@ INSERT INTO `transactions` (`id`, `product_id`, `product_variant_id`, `type`, `r
 -- Table structure for table `units`
 --
 
+DROP TABLE IF EXISTS `units`;
 CREATE TABLE `units` (
   `id` bigint NOT NULL,
   `name` varchar(255) NOT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL
+,
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -767,6 +799,7 @@ INSERT INTO `units` (`id`, `name`, `created_at`, `updated_at`) VALUES
 -- Table structure for table `users`
 --
 
+DROP TABLE IF EXISTS `users`;
 CREATE TABLE `users` (
   `id` bigint NOT NULL,
   `name` varchar(255) NOT NULL,
@@ -780,6 +813,8 @@ CREATE TABLE `users` (
   `remember_token` varchar(100) DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL
+,
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -800,6 +835,7 @@ INSERT INTO `users` (`id`, `name`, `nrp`, `email`, `poin`, `email_verified_at`, 
 -- Table structure for table `user_admin_roles`
 --
 
+DROP TABLE IF EXISTS `user_admin_roles`;
 CREATE TABLE `user_admin_roles` (
   `Id` char(36) CHARACTER SET ascii COLLATE ascii_general_ci NOT NULL,
   `UserId` bigint NOT NULL,
@@ -807,6 +843,8 @@ CREATE TABLE `user_admin_roles` (
   `CreatedAt` datetime(6) NOT NULL,
   `CreatedBy` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `CategoryId` bigint DEFAULT NULL
+,
+  PRIMARY KEY (`Id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -824,9 +862,12 @@ INSERT INTO `user_admin_roles` (`Id`, `UserId`, `AdminRoleId`, `CreatedAt`, `Cre
 -- Table structure for table `__efmigrationshistory`
 --
 
+DROP TABLE IF EXISTS `__efmigrationshistory`;
 CREATE TABLE `__efmigrationshistory` (
   `MigrationId` varchar(150) NOT NULL,
   `ProductVersion` varchar(32) NOT NULL
+,
+  PRIMARY KEY (`MigrationId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -853,32 +894,27 @@ INSERT INTO `__efmigrationshistory` (`MigrationId`, `ProductVersion`) VALUES
 --
 -- Indexes for table `admin_roles`
 --
-ALTER TABLE `admin_roles`
-  ADD PRIMARY KEY (`Id`);
+
 
 --
 -- Indexes for table `categories`
 --
-ALTER TABLE `categories`
-  ADD PRIMARY KEY (`id`);
+
 
 --
 -- Indexes for table `divisions`
 --
-ALTER TABLE `divisions`
-  ADD PRIMARY KEY (`id`);
+
 
 --
 -- Indexes for table `locations`
 --
-ALTER TABLE `locations`
-  ADD PRIMARY KEY (`id`);
+
 
 --
 -- Indexes for table `products`
 --
 ALTER TABLE `products`
-  ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `UQ_products_sku` (`sku`),
   ADD KEY `IX_products_category_id` (`category_id`),
   ADD KEY `IX_products_location_id` (`location_id`),
@@ -888,7 +924,6 @@ ALTER TABLE `products`
 -- Indexes for table `product_variants`
 --
 ALTER TABLE `product_variants`
-  ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `UQ_product_variants_sku` (`sku`),
   ADD KEY `IX_product_variants_product_id` (`product_id`);
 
@@ -896,7 +931,6 @@ ALTER TABLE `product_variants`
 -- Indexes for table `profile_requests`
 --
 ALTER TABLE `profile_requests`
-  ADD PRIMARY KEY (`id`),
   ADD KEY `IX_profile_requests_user_id` (`user_id`),
   ADD KEY `IX_profile_requests_division_id` (`division_id`);
 
@@ -904,7 +938,6 @@ ALTER TABLE `profile_requests`
 -- Indexes for table `stock_logs`
 --
 ALTER TABLE `stock_logs`
-  ADD PRIMARY KEY (`id`),
   ADD KEY `IX_stock_logs_transaction_id` (`transaction_id`),
   ADD KEY `IX_stock_logs_product_id` (`product_id`);
 
@@ -912,7 +945,6 @@ ALTER TABLE `stock_logs`
 -- Indexes for table `transactions`
 --
 ALTER TABLE `transactions`
-  ADD PRIMARY KEY (`id`),
   ADD KEY `IX_transactions_product_id` (`product_id`),
   ADD KEY `IX_transactions_requester_id` (`requester_id`),
   ADD KEY `IX_transactions_approver_id` (`approver_id`),
@@ -923,14 +955,12 @@ ALTER TABLE `transactions`
 -- Indexes for table `units`
 --
 ALTER TABLE `units`
-  ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `UQ_units_name` (`name`);
 
 --
 -- Indexes for table `users`
 --
 ALTER TABLE `users`
-  ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `UQ_users_email` (`email`),
   ADD UNIQUE KEY `UQ_users_nrp` (`nrp`),
   ADD KEY `IX_users_division_id` (`division_id`);
@@ -939,7 +969,6 @@ ALTER TABLE `users`
 -- Indexes for table `user_admin_roles`
 --
 ALTER TABLE `user_admin_roles`
-  ADD PRIMARY KEY (`Id`),
   ADD KEY `IX_user_admin_roles_AdminRoleId` (`AdminRoleId`),
   ADD KEY `IX_user_admin_roles_UserId` (`UserId`),
   ADD KEY `IX_user_admin_roles_CategoryId` (`CategoryId`);
@@ -947,8 +976,7 @@ ALTER TABLE `user_admin_roles`
 --
 -- Indexes for table `__efmigrationshistory`
 --
-ALTER TABLE `__efmigrationshistory`
-  ADD PRIMARY KEY (`MigrationId`);
+
 
 --
 -- AUTO_INCREMENT for dumped tables
@@ -1080,3 +1108,11 @@ COMMIT;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+
+SET FOREIGN_KEY_CHECKS = 1;
+
+
+
+
+
+

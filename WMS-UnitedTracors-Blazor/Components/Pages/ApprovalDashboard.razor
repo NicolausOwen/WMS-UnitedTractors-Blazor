@@ -67,6 +67,21 @@
             </button>
         </div>
 
+        @if (ActiveTab == "new" || ActiveTab == "handovers")
+        {
+            <div class="flex items-center gap-2 mb-6">
+                <button @onclick='() => RequestTypeFilter = "all"' class="px-3 py-1.5 text-xs font-bold rounded-md transition-all @(RequestTypeFilter == "all" ? "bg-[#e8a000] text-[#1a1a1a]" : "bg-[#f5f4f0] text-[#8a8880] hover:bg-[#e5e3dc] hover:text-[#1a1a1a]")">
+                    All
+                </button>
+                <button @onclick='() => RequestTypeFilter = "borrow"' class="px-3 py-1.5 text-xs font-bold rounded-md transition-all @(RequestTypeFilter == "borrow" ? "bg-[#e8a000] text-[#1a1a1a]" : "bg-[#f5f4f0] text-[#8a8880] hover:bg-[#e5e3dc] hover:text-[#1a1a1a]")">
+                    Borrow
+                </button>
+                <button @onclick='() => RequestTypeFilter = "giveaway"' class="px-3 py-1.5 text-xs font-bold rounded-md transition-all @(RequestTypeFilter == "giveaway" ? "bg-[#e8a000] text-[#1a1a1a]" : "bg-[#f5f4f0] text-[#8a8880] hover:bg-[#e5e3dc] hover:text-[#1a1a1a]")">
+                    Giveaway
+                </button>
+            </div>
+        }
+
         @if (ActiveTab == "new")
         {
             @if (GroupedApprovals == null)
@@ -85,7 +100,7 @@
                 var borrowGroups = GroupedApprovals.Where(g => g.Value.FirstOrDefault()?.request_type == "BORROW").ToList();
                 var giveawayGroups = GroupedApprovals.Where(g => g.Value.FirstOrDefault()?.request_type == "GIVEAWAY").ToList();
 
-                @if (giveawayGroups.Count > 0)
+                @if (giveawayGroups.Count > 0 && (RequestTypeFilter == "all" || RequestTypeFilter == "giveaway"))
                 {
                     <div class="mb-8">
                         <h3 class="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wider">Giveaway Requests</h3>
@@ -98,7 +113,7 @@
                     </div>
                 }
 
-                @if (borrowGroups.Count > 0)
+                @if (borrowGroups.Count > 0 && (RequestTypeFilter == "all" || RequestTypeFilter == "borrow"))
                 {
                     <div class="mb-8">
                         <h3 class="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wider">Borrow Requests</h3>
@@ -131,8 +146,22 @@
             }
             else
             {
-                <div class="space-y-4">
-                    @foreach (var group in GroupedHandovers)
+                var filteredHandovers = GroupedHandovers.Where(g => 
+                    RequestTypeFilter == "all" || 
+                    (RequestTypeFilter == "borrow" && g.Value.FirstOrDefault()?.request_type == "BORROW") || 
+                    (RequestTypeFilter == "giveaway" && g.Value.FirstOrDefault()?.request_type == "GIVEAWAY")
+                ).ToList();
+
+                @if (filteredHandovers.Count == 0)
+                {
+                    <div class="bg-white p-12 rounded-xl border border-[#e5e3dc] text-center shadow-sm">
+                        <p class="text-sm font-bold text-[#8a8880] tracking-wide">No pending handovers for selected filter.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="space-y-4">
+                        @foreach (var group in filteredHandovers)
                     {
                         var firstItem = group.Value.First();
                         var isWaitingInput = group.Value.Any(i => i.status == WorkflowStatuses.WaitingHandover);
@@ -287,7 +316,8 @@
                             </div>
                         </div>
                     }
-                </div>
+                    </div>
+                }
             }
         }
         else if (ActiveTab == "returns")
@@ -967,6 +997,7 @@
     private int CurrentUserId = 0;
     private string? UserRole;
     private string ActiveTab = "new";
+    private string RequestTypeFilter = "all";
 
     private HashSet<string> ExpandedGroups = new();
     
