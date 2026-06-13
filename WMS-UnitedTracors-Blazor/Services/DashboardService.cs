@@ -55,7 +55,7 @@ public class DashboardService
             .Include(p => p.Category)
             .Include(p => p.Location)
             .Include(p => p.Unit)
-            .Include(p => p.ProductVariants)
+            .Include(p => p.ProductVariants.Where(v => v.is_hidden == 0))
             .Where(p => p.is_hidden == 0)
             .OrderBy(p => p.name)
             .AsQueryable();
