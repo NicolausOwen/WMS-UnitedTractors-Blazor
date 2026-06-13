@@ -111,46 +111,6 @@
             </div>
         }
 
-        <!-- Segmented Tab Controls (Premium Glassmorphic Look) -->
-        <div class="bg-[#ebeae4]/70 p-1.5 rounded-xl flex items-center gap-1.5 overflow-x-auto w-full mb-6 border border-[#e2e1da] scrollbar-none shadow-inner">
-            <button @onclick='() => ActiveTab = "new"' 
-                    class="px-4 py-2.5 text-xs sm:text-sm font-bold rounded-lg transition-all duration-300 flex items-center gap-2 shrink-0 select-none focus:outline-none @(ActiveTab == "new" ? "bg-white text-gray-900 shadow-sm border border-gray-200/50" : "text-[#6b665e] hover:text-gray-950 hover:bg-white/40")">
-                <svg class="w-4 h-4 shrink-0 @(ActiveTab == "new" ? "text-amber-500" : "")" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01m-.01 4h.01"/></svg>
-                <span>Permintaan Baru</span>
-                @if (GroupedApprovals?.Count > 0)
-                {
-                    <span class="ml-0.5 px-2 py-0.5 rounded-md text-[10px] font-black @(ActiveTab == "new" ? "bg-amber-500 text-gray-950" : "bg-gray-200 text-gray-700")">@GroupedApprovals.Count</span>
-                }
-            </button>
-            <button @onclick='() => ActiveTab = "handovers"' 
-                    class="px-4 py-2.5 text-xs sm:text-sm font-bold rounded-lg transition-all duration-300 flex items-center gap-2 shrink-0 select-none focus:outline-none @(ActiveTab == "handovers" ? "bg-white text-gray-900 shadow-sm border border-gray-200/50" : "text-[#6b665e] hover:text-gray-950 hover:bg-white/40")">
-                <svg class="w-4 h-4 shrink-0 @(ActiveTab == "handovers" ? "text-blue-500" : "")" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l-4-4m4 4l-4-4"/></svg>
-                <span>Serah Terima</span>
-                @if (GroupedHandovers?.Count > 0)
-                {
-                    <span class="ml-0.5 px-2 py-0.5 rounded-md text-[10px] font-black @(ActiveTab == "handovers" ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-700")">@GroupedHandovers.Count</span>
-                }
-            </button>
-            <button @onclick='() => ActiveTab = "returns"' 
-                    class="px-4 py-2.5 text-xs sm:text-sm font-bold rounded-lg transition-all duration-300 flex items-center gap-2 shrink-0 select-none focus:outline-none @(ActiveTab == "returns" ? "bg-white text-gray-900 shadow-sm border border-gray-200/50" : "text-[#6b665e] hover:text-gray-950 hover:bg-white/40")">
-                <svg class="w-4 h-4 shrink-0 @(ActiveTab == "returns" ? "text-emerald-500" : "")" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
-                <span>Pengembalian</span>
-                @if (PendingReturns?.Count > 0)
-                {
-                    <span class="ml-0.5 px-2 py-0.5 rounded-md text-[10px] font-black @(ActiveTab == "returns" ? "bg-emerald-500 text-white" : "bg-gray-200 text-gray-700")">@PendingReturns.Count</span>
-                }
-            </button>
-            <button @onclick='() => ActiveTab = "profiles"' 
-                    class="px-4 py-2.5 text-xs sm:text-sm font-bold rounded-lg transition-all duration-300 flex items-center gap-2 shrink-0 select-none focus:outline-none @(ActiveTab == "profiles" ? "bg-white text-gray-900 shadow-sm border border-gray-200/50" : "text-[#6b665e] hover:text-gray-950 hover:bg-white/40")">
-                <svg class="w-4 h-4 shrink-0 @(ActiveTab == "profiles" ? "text-rose-500" : "")" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                <span>Edit Profil</span>
-                @if (PendingProfileRequests?.Count > 0)
-                {
-                    <span class="ml-0.5 px-2 py-0.5 rounded-md text-[10px] font-black @(ActiveTab == "profiles" ? "bg-rose-500 text-white" : "bg-gray-200 text-gray-700")">@PendingProfileRequests.Count</span>
-                }
-            </button>
-        </div>
-
         @if (ActiveTab == "new")
         {
             @if (GroupedApprovals == null)
@@ -1100,110 +1060,84 @@
                                     </div>
                                 }
 
-                                <div class="p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                                    <!-- Left: Product Photo & Detail -->
-                                    <div class="flex items-center gap-4 w-full lg:w-auto min-w-0">
-                                        <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-xl border border-gray-200 overflow-hidden flex-shrink-0 bg-white shadow-sm flex items-center justify-center cursor-pointer hover:opacity-95 transition relative group" href="@ImageHelper.ResolveProduct(item.Product, "/img/logo.svg")" data-image-popup>
-                                            <img src="@ImageHelper.ResolveProduct(item.Product, "/img/logo.svg")" class="w-full h-full object-cover group-hover:scale-105 transition duration-350">
+                                <div class="p-4">
+                                    <!-- Row 1: Photo + Product Info (always horizontal) -->
+                                    <div class="flex items-start gap-3">
+                                        <div class="w-14 h-14 rounded-xl border border-gray-200 overflow-hidden shrink-0 bg-white shadow-sm flex items-center justify-center cursor-pointer hover:opacity-95 transition relative group" data-image-popup>
+                                            <img src="@ImageHelper.ResolveProduct(item.Product, "/img/logo.svg")" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" alt="@item.Product?.name">
                                         </div>
-                                        <div class="min-w-0 flex-1">
-                                            <div class="font-extrabold text-gray-900 text-sm sm:text-base leading-snug break-words">@(item.Product?.name)</div>
-                                            <div class="flex flex-wrap items-center gap-2 mt-1.5 font-semibold">
-                                                <code class="text-[9px] sm:text-[10px] text-gray-600 bg-gray-100 border border-gray-200 px-1.5 py-0.5 rounded font-mono">@(item.Product?.sku)</code>
+                                        <div class="flex-1 min-w-0 overflow-hidden">
+                                            <div class="font-extrabold text-gray-900 text-sm leading-snug truncate">@(item.Product?.name)</div>
+                                            <div class="flex flex-wrap items-center gap-1.5 mt-1">
+                                                <code class="text-[9px] text-gray-500 bg-gray-100 border border-gray-200 px-1.5 py-0.5 rounded font-mono">@(item.Product?.sku)</code>
                                                 @if (item.request_type == "GIVEAWAY")
                                                 {
-                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-extrabold bg-purple-50 text-purple-700 border border-purple-200 tracking-wider uppercase">
-                                                        GIVEAWAY
-                                                    </span>
-                                                    <span class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black bg-[#e8a000]/10 text-[#d49300] border border-[#e8a000]/25">
-                                                        @(((double)(item.Product?.value ?? 0)).ToString("N0")) Pts
-                                                    </span>
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-purple-50 text-purple-700 border border-purple-200 uppercase tracking-wide">GIVEAWAY</span>
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black bg-amber-50 text-amber-700 border border-amber-200">@(((double)(item.Product?.value ?? 0)).ToString("N0")) Pts</span>
                                                 }
                                                 else
                                                 {
-                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-extrabold bg-blue-50 text-blue-700 border border-blue-200 tracking-wider uppercase">
-                                                        BORROW
-                                                    </span>
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-blue-50 text-blue-700 border border-blue-200 uppercase tracking-wide">BORROW</span>
                                                 }
                                             </div>
-                                            
-                                            <!-- Date Info -->
-                                            <div class="mt-2 text-xs text-[#6b665e] flex items-center gap-1">
+                                            <div class="mt-1.5 text-[10px] text-[#6b665e] flex items-center gap-1 truncate">
                                                 @if (item.request_type == "BORROW")
                                                 {
-                                                    <svg class="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                                                    <span>Pinjam: <strong class="text-gray-900">@(item.borrow_start_date?.ToString("dd MMM yyyy") ?? "-")</strong> s/d <strong class="text-gray-900">@(item.expected_return_date?.ToString("dd MMM yyyy") ?? "-")</strong></span>
+                                                    <span>📅 @(item.borrow_start_date?.ToString("dd MMM") ?? "-") s/d @(item.expected_return_date?.ToString("dd MMM yyyy") ?? "-")</span>
                                                 }
                                                 else if (item.request_type == "GIVEAWAY")
                                                 {
-                                                    <svg class="w-3.5 h-3.5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-                                                    <span>Ambil: <strong class="text-gray-900">@(item.pickup_date?.ToString("dd MMM yyyy") ?? "-")</strong></span>
+                                                    <span>📦 Ambil: @(item.pickup_date?.ToString("dd MMM yyyy") ?? "-")</span>
                                                 }
                                             </div>
                                         </div>
                                     </div>
 
-                                    <!-- Middle: Quantities (Full-width on mobile) -->
-                                    <div class="w-full lg:w-auto grid grid-cols-2 gap-3 bg-[#faf9f5] p-3 rounded-xl border border-gray-155 shrink-0">
-                                        <div class="text-center lg:text-left lg:px-2">
-                                            <div class="text-[10px] text-[#8a8880] font-bold uppercase tracking-wider">Diminta</div>
-                                            <div class="text-base font-extrabold text-gray-900 mt-0.5">@item.quantity @(item.Product?.Unit?.name ?? "unit")</div>
+                                    <!-- Row 2: Qty Stats + Action Buttons -->
+                                    <div class="mt-3 flex items-center gap-2 flex-wrap">
+                                        <!-- Qty pills -->
+                                        <div class="flex items-center gap-1.5 bg-[#f5f4f0] border border-gray-200 rounded-lg px-2.5 py-1.5 shrink-0">
+                                            <span class="text-[10px] font-bold text-[#8a8880] uppercase tracking-wide">Minta</span>
+                                            <span class="text-sm font-extrabold text-gray-900">@item.quantity</span>
+                                            <span class="text-[10px] text-gray-500 font-medium">@(item.Product?.Unit?.name ?? "unit")</span>
                                         </div>
-                                        <div class="text-center lg:text-right lg:px-2 border-l border-gray-200">
-                                            <div class="text-[10px] text-[#8a8880] font-bold uppercase tracking-wider">Stok Tersedia</div>
-                                            <div class="text-base font-extrabold mt-0.5 flex items-center justify-center lg:justify-end gap-1.5 @(isShortage ? "text-red-600" : "text-emerald-700")">
-                                                <span>@(item.Product?.current_stock ?? 0) @(item.Product?.Unit?.name ?? "unit")</span>
-                                            </div>
+                                        <div class="flex items-center gap-1.5 border rounded-lg px-2.5 py-1.5 shrink-0 @(isShortage ? "bg-red-50 border-red-200" : "bg-emerald-50 border-emerald-200")">
+                                            <span class="text-[10px] font-bold uppercase tracking-wide @(isShortage ? "text-red-500" : "text-emerald-600")">Stok</span>
+                                            <span class="text-sm font-extrabold @(isShortage ? "text-red-600" : "text-emerald-700")">@(item.Product?.current_stock ?? 0)</span>
+                                            <span class="text-[10px] font-medium @(isShortage ? "text-red-500" : "text-emerald-600")">@(item.Product?.Unit?.name ?? "unit")</span>
                                         </div>
-                                    </div>
 
-                                    <!-- Right: Action Buttons / Draft Decision Info (Spans full-width on mobile) -->
-                                    <div class="w-full lg:w-48 shrink-0">
+                                        <!-- Spacer -->
+                                        <div class="flex-1"></div>
+
+                                        <!-- Action Area -->
                                         @if (!string.IsNullOrEmpty(decision))
                                         {
-                                            <!-- Draft Set State -->
-                                            <div class="flex flex-col gap-2">
-                                                <div class="px-3.5 py-2.5 rounded-xl text-xs font-bold border flex flex-col gap-1.5 @(decision == "APPROVE" ? "bg-emerald-500/10 text-emerald-800 border-emerald-300/60" : decision == "REJECT" ? "bg-red-500/10 text-red-800 border-red-300/60" : "bg-amber-500/10 text-amber-800 border-amber-300/60")">
-                                                    <div class="flex items-center gap-1.5">
-                                                        @if (decision == "APPROVE") { <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg> }
-                                                        else if (decision == "REJECT") { <svg class="w-4 h-4 text-red-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg> }
-                                                        else { <svg class="w-4 h-4 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg> }
-                                                        <span class="uppercase font-extrabold tracking-wider text-[10px]">@GetDecisionLabel(decision)</span>
-                                                    </div>
-                                                    
-                                                    @if (decision == "REVISE" && RevisedQuantities.TryGetValue(item.id, out var revisedQty) && revisedQty.HasValue)
-                                                    {
-                                                        <div class="text-[11px] font-extrabold mt-1 text-amber-900 bg-white/70 rounded-lg p-1.5 border border-amber-200">
-                                                            Qty Revisi: @revisedQty @(item.Product?.Unit?.name ?? "unit")
-                                                        </div>
-                                                    }
-                                                    @if (!string.IsNullOrWhiteSpace(Reasons.GetValueOrDefault(item.id)))
-                                                    {
-                                                        <div class="text-[10px] mt-1 text-gray-600 italic font-medium leading-relaxed" title="@Reasons[item.id]">
-                                                            "@Reasons[item.id]"
-                                                        </div>
-                                                    }
+                                            <div class="flex items-center gap-2">
+                                                <div class="px-2.5 py-1.5 rounded-lg text-[10px] font-bold border flex items-center gap-1.5 @(decision == "APPROVE" ? "bg-emerald-50 text-emerald-800 border-emerald-200" : decision == "REJECT" ? "bg-red-50 text-red-800 border-red-200" : "bg-amber-50 text-amber-800 border-amber-200")">
+                                                    @if (decision == "APPROVE") { <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg> }
+                                                    else if (decision == "REJECT") { <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg> }
+                                                    else { <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01"/></svg> }
+                                                    <span class="uppercase font-extrabold tracking-wide">@GetDecisionLabel(decision)</span>
                                                 </div>
-                                                <button type="button" @onclick="() => ClearDecision(item.id)" 
-                                                        class="w-full py-2.5 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5 shadow-sm active:scale-[0.98] select-none h-11">
-                                                    <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
-                                                    <span>Undo Keputusan</span>
+                                                <button type="button" @onclick="() => ClearDecision(item.id)"
+                                                        class="p-1.5 bg-white border border-gray-200 text-gray-500 hover:bg-gray-50 rounded-lg transition active:scale-95 select-none" title="Undo">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
                                                 </button>
                                             </div>
                                         }
                                         else
                                         {
-                                            <!-- Touch-Friendly Decision Buttons (Side by Side on mobile, vertical stack on desktop) -->
-                                            <div class="flex lg:flex-col gap-2.5 h-11 lg:h-auto">
-                                                <button type="button" @onclick='() => SetDecision(item.id, "APPROVE")' 
-                                                        class="flex-1 w-full bg-[#1a7a30] hover:bg-[#135d24] text-white text-xs font-extrabold rounded-xl transition flex items-center justify-center gap-1.5 shadow-sm active:scale-[0.97] select-none h-full lg:h-11">
-                                                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                            <div class="flex items-center gap-2 shrink-0">
+                                                <button type="button" @onclick='() => SetDecision(item.id, "APPROVE")'
+                                                        class="h-9 px-3.5 bg-[#1a7a30] hover:bg-[#135d24] text-white text-[11px] font-extrabold rounded-xl transition flex items-center gap-1.5 shadow-sm active:scale-[0.97] select-none">
+                                                    <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
                                                     <span>Setujui</span>
                                                 </button>
-                                                <button type="button" @onclick='() => OpenRejectModal(item.id)' 
-                                                        class="flex-1 w-full bg-[#fffbeb] border border-[#f5d0a9] hover:bg-[#fdf4e9] text-[#c2410c] text-xs font-extrabold rounded-xl transition flex items-center justify-center gap-1.5 shadow-sm active:scale-[0.97] select-none h-full lg:h-11 font-bold">
-                                                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                                                    <span>Tolak / Revisi</span>
+                                                <button type="button" @onclick='() => OpenRejectModal(item.id)'
+                                                        class="h-9 px-3.5 bg-[#fffbeb] border border-[#f5d0a9] hover:bg-[#fdf4e9] text-[#c2410c] text-[11px] font-extrabold rounded-xl transition flex items-center gap-1.5 shadow-sm active:scale-[0.97] select-none">
+                                                    <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                                    <span>Tolak / Rev</span>
                                                 </button>
                                             </div>
                                         }
