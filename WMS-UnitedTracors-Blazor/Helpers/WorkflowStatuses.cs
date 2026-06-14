@@ -10,6 +10,7 @@ public static class WorkflowStatuses
     public const string WaitingHandoverConfirm = "WAITING_HANDOVER_CONFIRM";
     public const string WaitingAdminHandover = "WAITING_ADMIN_HANDOVER";
     public const string WaitingDocumentation = "WAITING_DOCUMENTATION";
+    public const string WaitingAdminDocumentation = "WAITING_ADMIN_DOCUMENTATION";
     public const string DocumentationOverdue = "DOCUMENTATION_OVERDUE";
     public const string Approved = "APPROVED";
     public const string Completed = "COMPLETED";
@@ -38,6 +39,7 @@ public static class WorkflowStatuses
         status == WaitingHandoverConfirm ||
         status == WaitingAdminHandover ||
         status == WaitingDocumentation ||
+        status == WaitingAdminDocumentation ||
         status == DocumentationOverdue;
 
     public static bool IsBorrowActive(string? status) =>

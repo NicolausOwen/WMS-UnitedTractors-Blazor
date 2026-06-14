@@ -819,7 +819,7 @@ public class TransactionService
             item.documentation_photo = JsonSerializer.Serialize(photoPaths);
             item.documentation_notes = notes;
             item.documentation_uploaded_at = DateTime.UtcNow;
-            item.status = WorkflowStatuses.Completed;
+            item.status = WorkflowStatuses.WaitingAdminDocumentation;
             item.updated_at = DateTime.UtcNow;
             _context.Transactions.Update(item);
         }

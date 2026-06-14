@@ -16,7 +16,7 @@ public class ApprovalService
         _emailService = emailService;
     }
 
-    public async Task<(Dictionary<string, List<Transaction>> GroupedApprovals, List<Transaction> PendingReturns, List<ProfileRequest> PendingProfileRequests, Dictionary<string, List<Transaction>> GroupedHandovers)> GetApprovalsAsync(int currentUserId, string? userRole)
+    public async Task<(Dictionary<string, List<Transaction>> GroupedApprovals, List<Transaction> PendingReturns, List<ProfileRequest> PendingProfileRequests, Dictionary<string, List<Transaction>> GroupedHandovers, Dictionary<string, List<Transaction>> GroupedDocumentations)> GetApprovalsAsync(int currentUserId, string? userRole)
     {
         using var _context = _factory.CreateDbContext();
         var query = _context.Transactions
@@ -135,7 +135,30 @@ public class ApprovalService
                 .ToDictionary(g => g.Key, g => g.ToList());
         }
 
-        return (groupedApprovals, pendingReturns, pendingProfileRequests, groupedHandovers);
+        var groupedDocumentations = new Dictionary<string, List<Transaction>>();
+        if (perms.Contains(Permissions.ApprovalHandover) || perms.Contains(Permissions.ApprovalHandoverFinal))
+        {
+            var docQ = _context.Transactions
+                .Include(t => t.Product)
+                .Include(t => t.Requester)
+                .Include(t => t.Division)
+                .Where(t => t.type == "OUT" && t.request_type == "GIVEAWAY" && t.status == WorkflowStatuses.WaitingAdminDocumentation);
+
+            if (!isGlobalAdmin && allowedCategoryIds != null)
+            {
+                docQ = docQ.Where(t => t.Product != null && t.Product.category_id != null && allowedCategoryIds.Contains(t.Product.category_id.Value));
+            }
+
+            var docList = await docQ
+                .OrderByDescending(t => t.updated_at)
+                .ToListAsync();
+
+            groupedDocumentations = docList
+                .GroupBy(t => t.group_id)
+                .ToDictionary(g => g.Key, g => g.ToList());
+        }
+
+        return (groupedApprovals, pendingReturns, pendingProfileRequests, groupedHandovers, groupedDocumentations);
     }
 
     public async Task<string?> ApproveAsync(int id, string? notes, int currentUserId, string? userRole)
@@ -786,6 +809,120 @@ public class ApprovalService
 
         await _context.SaveChangesAsync();
         _ = NotifyUserAsync(transaction, "Serah Terima Ditolak Admin", $"Proses serah terima Anda ditolak oleh Admin. Alasan: {rejectionReason}");
+        return null;
+    }
+
+    public async Task<string?> ApproveGiveawayDocumentationBatchAsync(string groupId, int currentUserId, string? userRole)
+    {
+        using var _context = _factory.CreateDbContext();
+        var perms = await ResolvePermsAsync(_context, currentUserId);
+        if (!perms.Contains(Permissions.ApprovalHandoverFinal) && !perms.Contains(Permissions.ApprovalHandover)) 
+            return "Unauthorized action.";
+
+        var query = await _context.Transactions
+            .Include(t => t.Product)
+            .Where(t => t.status == WorkflowStatuses.WaitingAdminDocumentation && t.type == "OUT" && t.request_type == "GIVEAWAY")
+            .ToListAsync();
+
+        var matched = query.Where(t => t.group_id == groupId).ToList();
+
+        if (matched.Count == 0) return "Tidak ada transaksi dokumentasi yang menunggu verifikasi pada event ini.";
+
+        foreach (var item in matched)
+        {
+            item.status = WorkflowStatuses.Completed;
+            item.approver_id = currentUserId;
+            item.updated_at = DateTime.UtcNow;
+            _context.Transactions.Update(item);
+        }
+
+        await _context.SaveChangesAsync();
+
+        if (matched.Any())
+        {
+            _ = NotifyUserAsync(matched.First(), "Dokumentasi Giveaway Disetujui", "Dokumentasi foto penyerahan barang giveaway Anda telah disetujui oleh Admin.");
+        }
+
+        return null;
+    }
+
+    public async Task<string?> RejectGiveawayDocumentationBatchAsync(string groupId, string rejectionReason, int currentUserId, string? userRole)
+    {
+        using var _context = _factory.CreateDbContext();
+        var perms = await ResolvePermsAsync(_context, currentUserId);
+        if (!perms.Contains(Permissions.ApprovalHandoverFinal) && !perms.Contains(Permissions.ApprovalHandover)) 
+            return "Unauthorized action.";
+        if (string.IsNullOrWhiteSpace(rejectionReason)) return "Rejection reason is required.";
+
+        var query = await _context.Transactions
+            .Where(t => t.status == WorkflowStatuses.WaitingAdminDocumentation && t.type == "OUT" && t.request_type == "GIVEAWAY")
+            .ToListAsync();
+
+        var matched = query.Where(t => t.group_id == groupId).ToList();
+
+        if (matched.Count == 0) return "Tidak ada transaksi dokumentasi yang menunggu verifikasi pada event ini.";
+
+        foreach (var item in matched)
+        {
+            item.status = WorkflowStatuses.WaitingDocumentation;
+            item.rejection_reason = rejectionReason;
+            item.updated_at = DateTime.UtcNow;
+            _context.Transactions.Update(item);
+        }
+
+        await _context.SaveChangesAsync();
+
+        if (matched.Any())
+        {
+            _ = NotifyUserAsync(matched.First(), "Dokumentasi Giveaway Ditolak", $"Dokumentasi foto giveaway Anda ditolak oleh Admin. Alasan: {rejectionReason}");
+        }
+
+        return null;
+    }
+
+    public async Task<string?> ApproveGiveawayDocumentationItemAsync(int transactionId, int currentUserId, string? userRole)
+    {
+        using var _context = _factory.CreateDbContext();
+        var perms = await ResolvePermsAsync(_context, currentUserId);
+        if (!perms.Contains(Permissions.ApprovalHandoverFinal) && !perms.Contains(Permissions.ApprovalHandover)) 
+            return "Unauthorized action.";
+
+        var transaction = await _context.Transactions
+            .Include(t => t.Product)
+            .FirstOrDefaultAsync(t => t.id == transactionId && t.status == WorkflowStatuses.WaitingAdminDocumentation && t.type == "OUT" && t.request_type == "GIVEAWAY");
+
+        if (transaction == null) return "Transaksi dokumentasi tidak ditemukan atau tidak sedang menunggu verifikasi.";
+
+        transaction.status = WorkflowStatuses.Completed;
+        transaction.approver_id = currentUserId;
+        transaction.updated_at = DateTime.UtcNow;
+        _context.Transactions.Update(transaction);
+
+        await _context.SaveChangesAsync();
+        _ = NotifyUserAsync(transaction, "Dokumentasi Giveaway Disetujui", "Dokumentasi foto penyerahan barang giveaway Anda telah disetujui oleh Admin.");
+        return null;
+    }
+
+    public async Task<string?> RejectGiveawayDocumentationItemAsync(int transactionId, string rejectionReason, int currentUserId, string? userRole)
+    {
+        using var _context = _factory.CreateDbContext();
+        var perms = await ResolvePermsAsync(_context, currentUserId);
+        if (!perms.Contains(Permissions.ApprovalHandoverFinal) && !perms.Contains(Permissions.ApprovalHandover)) 
+            return "Unauthorized action.";
+        if (string.IsNullOrWhiteSpace(rejectionReason)) return "Rejection reason is required.";
+
+        var transaction = await _context.Transactions
+            .FirstOrDefaultAsync(t => t.id == transactionId && t.status == WorkflowStatuses.WaitingAdminDocumentation && t.type == "OUT" && t.request_type == "GIVEAWAY");
+
+        if (transaction == null) return "Transaksi dokumentasi tidak ditemukan atau tidak sedang menunggu verifikasi.";
+
+        transaction.status = WorkflowStatuses.WaitingDocumentation;
+        transaction.rejection_reason = rejectionReason;
+        transaction.updated_at = DateTime.UtcNow;
+        _context.Transactions.Update(transaction);
+
+        await _context.SaveChangesAsync();
+        _ = NotifyUserAsync(transaction, "Dokumentasi Giveaway Ditolak", $"Dokumentasi foto giveaway Anda ditolak oleh Admin. Alasan: {rejectionReason}");
         return null;
     }
 }
