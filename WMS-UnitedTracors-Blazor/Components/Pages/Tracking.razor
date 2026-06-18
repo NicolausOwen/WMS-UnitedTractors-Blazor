@@ -332,6 +332,12 @@
                                                                 <span>Menunggu antrean</span>
                                                             }
                                                         </span>
+                                                        @if (step.CompletedAt.HasValue) {
+                                                            <span class="text-[9px] text-gray-400 mt-0.5 flex items-center gap-1">
+                                                                <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0"/></svg>
+                                                                @step.CompletedAt.Value.ToString("dd MMM yyyy HH:mm")
+                                                            </span>
+                                                        }
                                                     </div>
                                                 </div>
                                             }
@@ -1805,6 +1811,7 @@
     {
         public string Name { get; set; } = "";
         public string Status { get; set; } = "";
+        public DateTime? CompletedAt { get; set; }
     }
 
     private static bool IsRevisionStatus(string? status) =>
@@ -1854,7 +1861,7 @@
     {
         var firstItem = groupItems.First();
         var steps = new List<TrackingStep>();
-        steps.Add(new TrackingStep { Name = "Pengajuan", Status = "DONE" });
+        steps.Add(new TrackingStep { Name = "Pengajuan", Status = "DONE", CompletedAt = firstItem.created_at });
 
         if (firstItem.request_type == "GIVEAWAY")
         {
@@ -1865,49 +1872,49 @@
                 steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "PENDING" });
                 steps.Add(new TrackingStep { Name = "Dokumentasi User", Status = "PENDING" });
             } else if (firstItem.status == "PENDING_ADMIN") {
-                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE" });
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE", CompletedAt = firstItem.updated_at });
                 steps.Add(new TrackingStep { Name = "Approval Admin", Status = "ACTIVE" });
                 steps.Add(new TrackingStep { Name = "Approval Manager", Status = "PENDING" });
                 steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "PENDING" });
                 steps.Add(new TrackingStep { Name = "Dokumentasi User", Status = "PENDING" });
             } else if (firstItem.status == "PENDING_MANAGER") {
-                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE" });
-                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE" });
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE", CompletedAt = firstItem.updated_at });
+                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE", CompletedAt = firstItem.updated_at });
                 steps.Add(new TrackingStep { Name = "Approval Manager", Status = "ACTIVE" });
                 steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "PENDING" });
                 steps.Add(new TrackingStep { Name = "Dokumentasi User", Status = "PENDING" });
             } else if (firstItem.status == "REVISION" || firstItem.status == "REVISION_BY_STAFF_INVENTORY" || firstItem.status == "REVISION_BY_ADMIN" || firstItem.status == "REVISION_BY_MANAGER") {
-                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = firstItem.status == "REVISION_BY_STAFF_INVENTORY" ? "WARNING" : "DONE" });
-                steps.Add(new TrackingStep { Name = "Approval Admin", Status = firstItem.status == "REVISION_BY_ADMIN" ? "WARNING" : "PENDING" });
-                steps.Add(new TrackingStep { Name = "Approval Manager", Status = firstItem.status == "REVISION_BY_MANAGER" ? "WARNING" : "PENDING" });
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = firstItem.status == "REVISION_BY_STAFF_INVENTORY" ? "WARNING" : "DONE", CompletedAt = firstItem.status == "REVISION_BY_STAFF_INVENTORY" ? firstItem.updated_at : (firstItem.status == "PENDING_STAFF_INVENTORY" ? null : firstItem.updated_at) });
+                steps.Add(new TrackingStep { Name = "Approval Admin", Status = firstItem.status == "REVISION_BY_ADMIN" ? "WARNING" : "PENDING", CompletedAt = firstItem.status == "REVISION_BY_ADMIN" ? firstItem.updated_at : null });
+                steps.Add(new TrackingStep { Name = "Approval Manager", Status = firstItem.status == "REVISION_BY_MANAGER" ? "WARNING" : "PENDING", CompletedAt = firstItem.status == "REVISION_BY_MANAGER" ? firstItem.updated_at : null });
                 steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "PENDING" });
                 steps.Add(new TrackingStep { Name = "Dokumentasi User", Status = "PENDING" });
             } else if (firstItem.status == "WAITING_HANDOVER") {
-                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE" });
-                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE" });
-                steps.Add(new TrackingStep { Name = "Approval Manager", Status = "DONE" });
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE", CompletedAt = firstItem.updated_at });
+                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE", CompletedAt = firstItem.updated_at });
+                steps.Add(new TrackingStep { Name = "Approval Manager", Status = "DONE", CompletedAt = firstItem.updated_at });
                 steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "ACTIVE" });
                 steps.Add(new TrackingStep { Name = "Dokumentasi User", Status = "PENDING" });
             } else if (firstItem.status == "WAITING_DOCUMENTATION") {
-                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE" });
-                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE" });
-                steps.Add(new TrackingStep { Name = "Approval Manager", Status = "DONE" });
-                steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "DONE" });
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE", CompletedAt = firstItem.updated_at });
+                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE", CompletedAt = firstItem.updated_at });
+                steps.Add(new TrackingStep { Name = "Approval Manager", Status = "DONE", CompletedAt = firstItem.updated_at });
+                steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "DONE", CompletedAt = firstItem.handover_timestamp ?? firstItem.handover_approved_at ?? firstItem.updated_at });
                 steps.Add(new TrackingStep { Name = "Dokumentasi User", Status = "ACTIVE" });
             } else if (firstItem.status == "DOCUMENTATION_OVERDUE") {
-                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE" });
-                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE" });
-                steps.Add(new TrackingStep { Name = "Approval Manager", Status = "DONE" });
-                steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "DONE" });
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE", CompletedAt = firstItem.updated_at });
+                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE", CompletedAt = firstItem.updated_at });
+                steps.Add(new TrackingStep { Name = "Approval Manager", Status = "DONE", CompletedAt = firstItem.updated_at });
+                steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "DONE", CompletedAt = firstItem.handover_timestamp ?? firstItem.handover_approved_at ?? firstItem.updated_at });
                 steps.Add(new TrackingStep { Name = "Dokumentasi User", Status = "WARNING" });
             } else if (firstItem.status == "COMPLETED" || firstItem.status == "APPROVED") {
-                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE" });
-                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE" });
-                steps.Add(new TrackingStep { Name = "Approval Manager", Status = "DONE" });
-                steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "DONE" });
-                steps.Add(new TrackingStep { Name = "Dokumentasi User", Status = "DONE" });
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE", CompletedAt = firstItem.updated_at });
+                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE", CompletedAt = firstItem.updated_at });
+                steps.Add(new TrackingStep { Name = "Approval Manager", Status = "DONE", CompletedAt = firstItem.updated_at });
+                steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "DONE", CompletedAt = firstItem.handover_timestamp ?? firstItem.handover_approved_at ?? firstItem.updated_at });
+                steps.Add(new TrackingStep { Name = "Dokumentasi User", Status = "DONE", CompletedAt = firstItem.documentation_uploaded_at ?? firstItem.updated_at });
             } else if (firstItem.status == "REJECTED") {
-                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "WARNING" });
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "WARNING", CompletedAt = firstItem.updated_at });
             }
         }
         else // BORROW
@@ -1921,37 +1928,37 @@
                 steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "PENDING" });
                 steps.Add(new TrackingStep { Name = "Pengembalian", Status = "PENDING" });
             } else if (firstItem.status == "REVISION_BY_STAFF_INVENTORY") {
-                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "WARNING" });
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "WARNING", CompletedAt = firstItem.updated_at });
                 steps.Add(new TrackingStep { Name = "Approval Admin", Status = "PENDING" });
                 steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "PENDING" });
                 steps.Add(new TrackingStep { Name = "Pengembalian", Status = "PENDING" });
             } else if (firstItem.status == "PENDING_ADMIN" || firstItem.status == "PENDING") {
-                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE" });
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE", CompletedAt = firstItem.updated_at });
                 steps.Add(new TrackingStep { Name = "Approval Admin", Status = "ACTIVE" });
                 steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "PENDING" });
                 steps.Add(new TrackingStep { Name = "Pengembalian", Status = "PENDING" });
             } else if (firstItem.status == "REVISION_BY_ADMIN" || firstItem.status == "REVISION") {
-                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE" });
-                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "WARNING" });
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE", CompletedAt = firstItem.updated_at });
+                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "WARNING", CompletedAt = firstItem.updated_at });
                 steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "PENDING" });
                 steps.Add(new TrackingStep { Name = "Pengembalian", Status = "PENDING" });
             } else if (firstItem.status == "WAITING_HANDOVER" || firstItem.status == "WAITING_ADMIN_HANDOVER") {
-                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE" });
-                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE" });
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE", CompletedAt = firstItem.updated_at });
+                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE", CompletedAt = firstItem.updated_at });
                 steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "ACTIVE" });
                 steps.Add(new TrackingStep { Name = "Pengembalian", Status = "PENDING" });
             } else if (firstItem.status == "APPROVED") {
-                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE" });
-                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE" });
-                steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "DONE" });
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE", CompletedAt = firstItem.updated_at });
+                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE", CompletedAt = firstItem.updated_at });
+                steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "DONE", CompletedAt = firstItem.handover_timestamp ?? firstItem.handover_approved_at ?? firstItem.updated_at });
 
                 if (totalReturned >= totalQty && totalQty > 0) {
-                    steps.Add(new TrackingStep { Name = "Pengembalian", Status = "DONE" });
+                    steps.Add(new TrackingStep { Name = "Pengembalian", Status = "DONE", CompletedAt = firstItem.returned_at ?? firstItem.updated_at });
                 } else {
                     steps.Add(new TrackingStep { Name = "Pengembalian", Status = "ACTIVE" });
                 }
             } else if (firstItem.status == "REJECTED") {
-                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "WARNING" });
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "WARNING", CompletedAt = firstItem.updated_at });
                 steps.Add(new TrackingStep { Name = "Approval Admin", Status = "PENDING" });
                 steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "PENDING" });
                 steps.Add(new TrackingStep { Name = "Pengembalian", Status = "PENDING" });

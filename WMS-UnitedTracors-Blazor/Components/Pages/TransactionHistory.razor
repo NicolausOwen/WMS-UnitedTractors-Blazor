@@ -48,39 +48,61 @@
             @* Collapsible Content *@
             @if (ShowFilters)
             {
-                <div class="px-5 py-4 bg-white transition-all duration-200">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:items-end gap-4">
-                        <div class="flex-1 min-w-[150px]">
+                <div class="px-6 py-5 bg-white transition-all duration-200 space-y-5">
+                    <!-- Section: Quick Filter / Tipe Transaksi -->
+                    <div>
+                        <span class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-2">Tipe Transaksi (Quick Filter)</span>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button type="button" @onclick='() => SetQuickFilter(null, null)' 
+                                    class='px-4 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer border @(FilterType == null && FilterRequestType == null ? "bg-[#e8a000] text-[#1a1a1a] border-[#e8a000]" : "bg-white text-[#5a5855] border-[#e5e3dc] hover:bg-[#faf9f5]")'>
+                                Semua Transaksi
+                            </button>
+                            <button type="button" @onclick='() => SetQuickFilter("OUT", "GIVEAWAY")' 
+                                    class='px-4 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center gap-2 border @(FilterType == "OUT" && FilterRequestType == "GIVEAWAY" ? "bg-[#eef9f0] text-[#1a7a30] border-[#b8e8c0]" : "bg-white text-[#5a5855] border-[#e5e3dc] hover:bg-[#faf9f5]")'>
+                                <span class="w-2 h-2 rounded-full bg-[#1a7a30]"></span>
+                                Giveaway
+                            </button>
+                            <button type="button" @onclick='() => SetQuickFilter("OUT", "BORROW")' 
+                                    class='px-4 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center gap-2 border @(FilterType == "OUT" && FilterRequestType == "BORROW" ? "bg-[#eef6fd] text-[#1a6b8a] border-[#d9e6f3]" : "bg-white text-[#5a5855] border-[#e5e3dc] hover:bg-[#faf9f5]")'>
+                                <span class="w-2 h-2 rounded-full bg-[#1a6b8a]"></span>
+                                Borrow
+                            </button>
+                            <button type="button" @onclick='() => SetQuickFilter("OUT", null)' 
+                                    class='px-4 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center gap-2 border @(FilterType == "OUT" && FilterRequestType == null ? "bg-[#fff8e6] text-[#b37a00] border-[#ffe099]" : "bg-white text-[#5a5855] border-[#e5e3dc] hover:bg-[#faf9f5]")'>
+                                <span class="w-2 h-2 rounded-full bg-[#e8a000]"></span>
+                                Giveaway & Borrow
+                            </button>
+                            <button type="button" @onclick='() => SetQuickFilter("IN", null)' 
+                                    class='px-4 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center gap-2 border @(FilterType == "IN" ? "bg-[#f5f4f0] text-gray-700 border-[#e5e3dc]" : "bg-white text-[#5a5855] border-[#e5e3dc] hover:bg-[#faf9f5]")'>
+                                <span class="w-2 h-2 rounded-full bg-gray-500"></span>
+                                Stock In
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Divider -->
+                    <div class="border-t border-[#f0ede5]"></div>
+
+                    <!-- Section: Detail Filters (Dates) -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="flex flex-col">
                             <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Start Date</label>
                             <input type="date" @bind="StartDate" class="block w-full px-3 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
                         </div>
-                        <div class="flex-1 min-w-[150px]">
+                        <div class="flex flex-col">
                             <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">End Date</label>
                             <input type="date" @bind="EndDate" class="block w-full px-3 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
                         </div>
-                        <div class="min-w-[150px]">
-                            <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Filter Type</label>
-                            <select @bind="FilterType" @bind:after="OnFilterTypeChanged" class="block w-full px-3 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
-                                <option value="">All Types</option>
-                                <option value="IN">STOCK IN</option>
-                                <option value="OUT">STOCK OUT</option>
-                            </select>
-                        </div>
-                        @if (FilterType == "OUT")
-                        {
-                            <div class="min-w-[150px]">
-                                <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Request Type</label>
-                                <select @bind="FilterRequestType" @bind:after="OnFilterRequestTypeChanged" class="block w-full px-3 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
-                                    <option value="">All Request Types</option>
-                                    <option value="GIVEAWAY">Diminta / Giveaway</option>
-                                    <option value="BORROW">Dipinjam / Borrow</option>
-                                </select>
-                            </div>
-                        }
-                        <div class="flex gap-2 w-full lg:w-auto justify-end">
-                            <button type="button" @onclick="() => LoadData(1)" class="px-5 py-2 bg-[#e8a000] text-[#1a1a1a] text-xs font-bold rounded-lg transition active:scale-95 cursor-pointer whitespace-nowrap hover:bg-[#d49300]">Apply</button>
-                            <button type="button" @onclick="ResetFilters" class="px-5 py-2 bg-white border border-[#e5e3dc] text-[#3a3835] text-xs font-bold rounded-lg cursor-pointer hover:bg-gray-50 transition">Reset</button>
-                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex items-center justify-end gap-3 pt-2">
+                        <button type="button" @onclick="ResetFilters" class="px-5 py-2 bg-white border border-[#e5e3dc] text-[#3a3835] text-xs font-bold rounded-lg cursor-pointer hover:bg-gray-50 transition active:scale-95 shadow-sm">
+                            Reset Filters
+                        </button>
+                        <button type="button" @onclick="() => LoadData(1)" class="px-6 py-2 bg-[#e8a000] text-[#1a1a1a] text-xs font-bold rounded-lg transition active:scale-95 cursor-pointer whitespace-nowrap hover:bg-[#d49300] shadow-sm">
+                            Apply Filters
+                        </button>
                     </div>
                 </div>
             }
@@ -624,6 +646,13 @@
             ExpandedGroups.Remove(groupId);
         else
             ExpandedGroups.Add(groupId);
+    }
+
+    private async Task SetQuickFilter(string? type, string? requestType)
+    {
+        FilterType = type;
+        FilterRequestType = requestType;
+        await LoadData(1);
     }
     
     private async Task ResetFilters()
