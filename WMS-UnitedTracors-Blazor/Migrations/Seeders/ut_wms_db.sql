@@ -1,4 +1,4 @@
-﻿SET SESSION sql_generate_invisible_primary_key = 0;
+SET SESSION sql_generate_invisible_primary_key = 0;
 SET SESSION sql_generate_invisible_primary_key = 0;
 
 SET FOREIGN_KEY_CHECKS = 0;
@@ -184,6 +184,7 @@ CREATE TABLE `products` (
   `unit_id` bigint DEFAULT NULL,
   `is_returnable` tinyint(1) NOT NULL DEFAULT '1',
   `min_stock` int NOT NULL DEFAULT '0',
+  `is_hidden` tinyint(1) NOT NULL DEFAULT '0',
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
@@ -446,6 +447,7 @@ CREATE TABLE `product_variants` (
   `size` varchar(255) DEFAULT NULL,
   `image` varchar(255) DEFAULT NULL,
   `stock` int NOT NULL DEFAULT '0',
+  `is_hidden` tinyint(1) NOT NULL DEFAULT '0',
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL
 ,
@@ -666,6 +668,7 @@ CREATE TABLE `transactions` (
   `type` varchar(3) NOT NULL,
   `request_type` varchar(8) NOT NULL DEFAULT 'BORROW',
   `quantity` int NOT NULL,
+  `original_quantity` int DEFAULT NULL,
   `returned_quantity` int NOT NULL DEFAULT '0',
   `pending_return_quantity` int NOT NULL DEFAULT '0',
   `returned_at` datetime DEFAULT NULL,
@@ -674,6 +677,8 @@ CREATE TABLE `transactions` (
   `handover_notes` text,
   `handover_recipient_name` varchar(255) DEFAULT NULL,
   `handover_timestamp` datetime DEFAULT NULL,
+  `handover_uploaded_by` varchar(10) DEFAULT NULL,
+  `handover_approved_at` datetime DEFAULT NULL,
   `documentation_photo` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
   `documentation_notes` text,
   `documentation_uploaded_at` datetime DEFAULT NULL,
@@ -700,9 +705,11 @@ CREATE TABLE `transactions` (
   `borrow_duration_days` int DEFAULT NULL,
   `borrow_start_date` date DEFAULT NULL,
   `pickup_date` date DEFAULT NULL,
+  `original_pickup_date` date DEFAULT NULL,
   `expected_return_date` date DEFAULT NULL,
   `event_name` varchar(255) DEFAULT NULL,
   `event_date` date DEFAULT NULL,
+  `event_end_date` date DEFAULT NULL,
   `documentation_link` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ;
