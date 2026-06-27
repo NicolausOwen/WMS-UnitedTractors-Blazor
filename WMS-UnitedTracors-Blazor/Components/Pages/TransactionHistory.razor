@@ -73,11 +73,14 @@
                                 <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" /></svg>
                                 Giveaway & Borrow
                             </button>
-                            <button type="button" @onclick='() => SetQuickFilter("IN", null)' 
-                                    class='px-4 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center gap-2 border @(FilterType == "IN" ? "bg-[#f5f4f0] text-gray-700 border-[#e5e3dc]" : "bg-white text-[#5a5855] border-[#e5e3dc] hover:bg-[#faf9f5]")'>
-                                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 3.75H6.912a2.25 2.25 0 0 0-2.15 1.588L2.35 13.177a2.25 2.25 0 0 0-.1.661V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18v-4.162c0-.224-.034-.447-.1-.661L19.24 5.338a2.25 2.25 0 0 0-2.15-1.588H15M9 3.75h6M9 3.75v3.75m6-3.75v3.75M9 7.5h6" /></svg>
-                                Stock In
-                            </button>
+                            @if (UserRole != null && !string.Equals(UserRole, "staff", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <button type="button" @onclick='() => SetQuickFilter("IN", null)' 
+                                        class='px-4 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center gap-2 border @(FilterType == "IN" ? "bg-[#f5f4f0] text-gray-700 border-[#e5e3dc]" : "bg-white text-[#5a5855] border-[#e5e3dc] hover:bg-[#faf9f5]")'>
+                                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 3.75H6.912a2.25 2.25 0 0 0-2.15 1.588L2.35 13.177a2.25 2.25 0 0 0-.1.661V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18v-4.162c0-.224-.034-.447-.1-.661L19.24 5.338a2.25 2.25 0 0 0-2.15-1.588H15M9 3.75h6M9 3.75v3.75m6-3.75v3.75M9 7.5h6" /></svg>
+                                    Stock In
+                                </button>
+                            }
                         </div>
                     </div>
 

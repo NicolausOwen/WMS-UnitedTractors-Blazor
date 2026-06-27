@@ -51,26 +51,29 @@
                             <svg class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                         </div>
                     </div>
-                    <div class="min-w-[150px] w-full lg:w-auto">
-                        <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Division</label>
-                        <select @bind="DivisionId" class="block w-full px-3 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
-                            <option value="">All Divisions</option>
-                            @foreach(var div in Divisions)
-                            {
-                                <option value="@div.id">@div.name</option>
-                            }
-                        </select>
-                    </div>
-                    @if (ActiveTrackingTab == "borrow")
+                    @if (UserRole != null && !string.Equals(UserRole, "staff", StringComparison.OrdinalIgnoreCase))
                     {
                         <div class="min-w-[150px] w-full lg:w-auto">
-                            <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Return Status</label>
-                            <select @bind="ReturnStatus" class="block w-full px-3 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
-                                <option value="">All Types</option>
-                                <option value="pending">Borrowed (Pending Return)</option>
-                                <option value="returned">Borrowed (Returned)</option>
+                            <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Division</label>
+                            <select @bind="DivisionId" class="block w-full px-3 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
+                                <option value="">All Divisions</option>
+                                @foreach(var div in Divisions)
+                                {
+                                    <option value="@div.id">@div.name</option>
+                                }
                             </select>
                         </div>
+                        @if (ActiveTrackingTab == "borrow")
+                        {
+                            <div class="min-w-[150px] w-full lg:w-auto">
+                                <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Return Status</label>
+                                <select @bind="ReturnStatus" class="block w-full px-3 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
+                                    <option value="">All Types</option>
+                                    <option value="pending">Borrowed (Pending Return)</option>
+                                    <option value="returned">Borrowed (Returned)</option>
+                                </select>
+                            </div>
+                        }
                     }
                     <div class="min-w-[140px] w-full lg:w-auto">
                         <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">From</label>

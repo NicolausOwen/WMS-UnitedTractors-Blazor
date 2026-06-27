@@ -306,6 +306,38 @@ public class ApprovalService
 
         ApplyStageNotes(transaction, stageBefore, rejectionReason);
 
+        if (stageBefore == WorkflowStatuses.WaitingHandover || 
+            stageBefore == WorkflowStatuses.WaitingHandoverConfirm || 
+            stageBefore == WorkflowStatuses.WaitingAdminHandover)
+        {
+            if (transaction.Product != null)
+            {
+                var stockBefore = transaction.Product.current_stock;
+                transaction.Product.current_stock += transaction.quantity ?? 0;
+                _context.Products.Update(transaction.Product);
+
+                if (transaction.product_variant_id.HasValue)
+                {
+                    var variant = await _context.ProductVariants.FindAsync(transaction.product_variant_id.Value);
+                    if (variant != null)
+                    {
+                        variant.stock += transaction.quantity ?? 0;
+                        _context.ProductVariants.Update(variant);
+                    }
+                }
+
+                _context.StockLogs.Add(new StockLog
+                {
+                    transaction_id = transaction.id,
+                    product_id = transaction.Product.id,
+                    stock_before = stockBefore,
+                    stock_after = transaction.Product.current_stock,
+                    created_at = DateTime.UtcNow,
+                    updated_at = DateTime.UtcNow
+                });
+            }
+        }
+
         if (transaction.type == "OUT" && transaction.Product != null && transaction.Requester != null)
         {
             if (transaction.request_type == "GIVEAWAY" && transaction.Product != null)
@@ -664,6 +696,13 @@ public class ApprovalService
 
     private static bool CanApprove(Transaction transaction, HashSet<string> perms)
     {
+        if (transaction.status == WorkflowStatuses.WaitingHandover || 
+            transaction.status == WorkflowStatuses.WaitingHandoverConfirm || 
+            transaction.status == WorkflowStatuses.WaitingAdminHandover)
+        {
+            return perms.Contains(Permissions.ApprovalStage2) || perms.Contains(Permissions.ApprovalManager) || perms.Contains(Permissions.ApprovalHandoverFinal);
+        }
+
         if (transaction.request_type == "GIVEAWAY")
         {
             return (transaction.status == WorkflowStatuses.PendingStaffInventory && perms.Contains(Permissions.ApprovalStage1)) ||
@@ -690,6 +729,36 @@ public class ApprovalService
                 transaction.admin_notes = notes;
                 break;
             case WorkflowStatuses.PendingManager when perms.Contains(Permissions.ApprovalManager):
+                if (transaction.Product == null) return "Product not found.";
+                if (transaction.Product.current_stock < (transaction.quantity ?? 0))
+                    return $"Insufficient stock. Stock available: {transaction.Product.current_stock}, requested: {transaction.quantity}";
+                
+                var stockBefore = transaction.Product.current_stock;
+                transaction.Product.current_stock -= transaction.quantity ?? 0;
+                _context.Products.Update(transaction.Product);
+
+                if (transaction.product_variant_id.HasValue)
+                {
+                    var variant = await _context.ProductVariants.FindAsync(transaction.product_variant_id.Value);
+                    if (variant != null)
+                    {
+                        if (variant.stock < (transaction.quantity ?? 0))
+                            return $"Insufficient variant stock. Variant stock available: {variant.stock}, requested: {transaction.quantity}";
+                        variant.stock -= transaction.quantity ?? 0;
+                        _context.ProductVariants.Update(variant);
+                    }
+                }
+
+                _context.StockLogs.Add(new StockLog
+                {
+                    transaction_id = transaction.id,
+                    product_id = transaction.Product.id,
+                    stock_before = stockBefore,
+                    stock_after = transaction.Product.current_stock,
+                    created_at = DateTime.UtcNow,
+                    updated_at = DateTime.UtcNow
+                });
+
                 transaction.status = WorkflowStatuses.WaitingHandover;
                 transaction.manager_notes = notes;
                 transaction.rejection_reason = null;
