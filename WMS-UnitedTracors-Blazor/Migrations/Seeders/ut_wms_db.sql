@@ -1,5 +1,5 @@
-SET SESSION sql_generate_invisible_primary_key = 0;
-SET SESSION sql_generate_invisible_primary_key = 0;
+-- SET SESSION sql_generate_invisible_primary_key = 0;
+-- SET SESSION sql_generate_invisible_primary_key = 0;
 
 SET FOREIGN_KEY_CHECKS = 0;
 -- phpMyAdmin SQL Dump
