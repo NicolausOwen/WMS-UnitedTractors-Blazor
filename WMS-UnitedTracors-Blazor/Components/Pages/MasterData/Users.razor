@@ -124,6 +124,7 @@
                         <tr class="bg-[#1a1a1a]">
                             <th class="px-6 py-3.5 text-[0.68rem] font-bold tracking-wider uppercase text-[#c8c5bc] w-12">#</th>
                             <th class="px-6 py-3.5 text-[0.68rem] font-bold tracking-wider uppercase text-[#c8c5bc]">Name</th>
+                            <th class="px-6 py-3.5 text-[0.68rem] font-bold tracking-wider uppercase text-[#c8c5bc]">NRP</th>
                             <th class="px-6 py-3.5 text-[0.68rem] font-bold tracking-wider uppercase text-[#c8c5bc]">Email</th>
                             <th class="px-6 py-3.5 text-[0.68rem] font-bold tracking-wider uppercase text-[#c8c5bc]">Poin</th>
                             <th class="px-6 py-3.5 text-[0.68rem] font-bold tracking-wider uppercase text-[#c8c5bc]">Division</th>
@@ -135,7 +136,7 @@
                         @if (UsersList == null || !UsersList.Any())
                         {
                             <tr>
-                                <td colspan="7" class="px-6 py-16 text-center">
+                                <td colspan="8" class="px-6 py-16 text-center">
                                     <p class="text-sm text-gray-500">No users found.</p>
                                 </td>
                             </tr>
@@ -151,6 +152,7 @@
                                 <tr class="@(isEditing ? "hidden" : "") hover:bg-[#faf9f5] border-b border-[#f0ede5] transition-colors duration-100">
                                     <td class="px-6 py-4 text-sm text-gray-400 align-middle">@index</td>
                                     <td class="px-6 py-4 text-sm font-semibold text-[#1a1a1a] whitespace-nowrap align-middle">@user.name</td>
+                                    <td class="px-6 py-4 text-sm text-gray-600 align-middle">@(string.IsNullOrEmpty(user.nrp) ? "-" : user.nrp)</td>
                                     <td class="px-6 py-4 text-sm text-gray-600 align-middle">@user.email</td>
                                     <td class="px-6 py-4 text-sm font-semibold text-[#e8a000] align-middle">@user.poin</td>
                                     <td class="px-6 py-4 text-sm text-gray-600 align-middle">@(user.Division?.name ?? "--")</td>
@@ -190,7 +192,7 @@
                                 @if (IsAdmin)
                                 {
                                     <tr class="@(isEditing ? "" : "hidden") bg-[#faf9f5]">
-                                        <td class="px-6 py-4" colspan="7">
+                                        <td class="px-6 py-4" colspan="8">
                                             <form @onsubmit="() => UpdateUser(user.id)" class="flex flex-col gap-4">
                                                 <div class="flex flex-col sm:flex-row gap-3">
                                                     <div class="flex-1">
@@ -286,6 +288,10 @@
                                         <span class="text-xs text-gray-400 font-bold">#@index</span>
                                         <h4 class="text-sm font-semibold text-[#1a1a1a] mt-0.5">@user.name</h4>
                                         <p class="text-xs text-gray-500">@user.email</p>
+                                        @if (!string.IsNullOrEmpty(user.nrp))
+                                        {
+                                            <p class="text-[0.7rem] text-gray-400 font-mono mt-0.5">NRP: @user.nrp</p>
+                                        }
                                     </div>
                                     @{
                                         string bgClass = "bg-[#f5f4f0]";
