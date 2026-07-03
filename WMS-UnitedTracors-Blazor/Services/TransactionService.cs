@@ -343,7 +343,11 @@ public class TransactionService
             query = query.Where(t => t.requester_id == currentUserId);
         }
 
-        if (!string.IsNullOrEmpty(type))
+        if (string.Equals(userRole, "staff", StringComparison.OrdinalIgnoreCase))
+        {
+            query = query.Where(t => t.type == "OUT");
+        }
+        else if (!string.IsNullOrEmpty(type))
         {
             query = query.Where(t => t.type == type);
         }
@@ -684,24 +688,6 @@ public class TransactionService
                     }
                     else if (item.request_type == "GIVEAWAY")
                     {
-                        if (item.Product == null) return "Produk giveaway tidak ditemukan.";
-                        if (item.Product.current_stock < (item.quantity ?? 0))
-                            return $"Stok tidak mencukupi untuk produk {item.Product.name}.";
-
-                        var stockBefore = item.Product.current_stock;
-                        item.Product.current_stock -= item.quantity ?? 0;
-                        _context.Products.Update(item.Product);
-
-                        _context.StockLogs.Add(new StockLog
-                        {
-                            transaction_id = item.id,
-                            product_id = item.Product.id,
-                            stock_before = stockBefore,
-                            stock_after = item.Product.current_stock,
-                            created_at = DateTime.UtcNow,
-                            updated_at = DateTime.UtcNow
-                        });
-
                         item.status = WorkflowStatuses.WaitingDocumentation;
                     }
 

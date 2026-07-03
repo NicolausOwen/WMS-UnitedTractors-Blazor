@@ -12,56 +12,72 @@
 
 <PageTitle>WMS - Persetujuan Admin</PageTitle>
 
-<div class="py-5 sm:py-8 bg-[#f5f4f0] min-h-screen font-sans antialiased text-[#1a1a1a] pb-36 md:pb-24">
-    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+<style>
+    .split-container {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        width: 100%;
+        align-items: stretch;
+    }
+    @@media (min-width: 768px) {
+        .split-container {
+            flex-direction: row;
+        }
+        .split-left {
+            width: 380px !important;
+            min-width: 380px !important;
+            flex-shrink: 0 !important;
+        }
+        .split-right {
+            flex: 1 1 0% !important;
+            min-width: 0 !important;
+        }
+    }
+</style>
+
+<div class="py-8 bg-[#f5f4f0] min-h-screen font-sans pb-36 md:pb-24">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        <!-- Premium Header Area -->
-        <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-                <h1 class="text-2xl sm:text-3xl font-extrabold text-[#1a1a1a] leading-tight tracking-tight flex items-center gap-2">
-                    <span>Persetujuan</span> 
-                    <span class="px-2.5 py-0.5 text-xs sm:text-sm font-bold bg-[#e8a000]/10 text-[#e8a000] border border-[#e8a000]/20 rounded-lg">Admin</span>
-                </h1>
-                <div class="text-[0.75rem] font-bold text-[#8a8880] mt-1.5 uppercase tracking-widest flex items-center gap-1.5">
-                    <svg class="w-3.5 h-3.5 text-[#e8a000]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                    @DateTime.Now.ToString("dddd, dd MMMM yyyy")
-                </div>
-            </div>
+        <div class="mb-6">
+            <h1 class="text-[1.6rem] font-bold text-[#1a1a1a] leading-none tracking-tight">Persetujuan <span class="text-[#e8a000]">Admin</span></h1>
+            <div class="text-[0.72rem] font-medium text-[#a09e99] mt-1">@DateTime.Now.ToString("dddd, dd MMMM yyyy")</div>
         </div>
 
         <!-- Premium Category Selector -->
         <div class="mb-6 bg-white p-2 rounded-2xl border border-[#e5e3dc] shadow-sm flex flex-col md:flex-row gap-2">
             <button type="button" @onclick='() => ChangeCategory("borrow")'
-                    class="flex-1 py-3 px-4 rounded-xl font-extrabold text-sm transition-all duration-200 flex items-center justify-center gap-2.5 focus:outline-none select-none @(ActiveCategory == "borrow" ? "bg-[#1a1a1a] text-white shadow-md" : "text-[#5a5855] hover:bg-gray-100 hover:text-gray-900")">
+                    class="flex-1 py-3 px-4 rounded-xl font-extrabold text-sm transition-all duration-200 flex items-center justify-center gap-2.5 focus:outline-none select-none @(ActiveCategory == "borrow" ? "bg-[#eef6fd] text-[#1a6b8a] border border-[#d9e6f3] border-b-2 border-b-[#1a6b8a] shadow-sm" : "text-[#5a5855] hover:bg-[#eef6fd]/30 hover:text-[#1a6b8a]")">
                 <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                 <span>Transaksi Borrowing</span>
                 @if (TotalBorrowCount > 0)
                 {
-                    <span class="px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 @(ActiveCategory == "borrow" ? "bg-amber-500 text-[#1a1a1a]" : "bg-amber-100 text-amber-700")">@TotalBorrowCount</span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 @(ActiveCategory == "borrow" ? "bg-[#1a6b8a] text-white" : "bg-[#e7f1fb] text-[#1a6b8a]")">@TotalBorrowCount</span>
                 }
             </button>
             
             <button type="button" @onclick='() => ChangeCategory("giveaway")'
-                    class="flex-1 py-3 px-4 rounded-xl font-extrabold text-sm transition-all duration-200 flex items-center justify-center gap-2.5 focus:outline-none select-none @(ActiveCategory == "giveaway" ? "bg-[#1a1a1a] text-white shadow-md" : "text-[#5a5855] hover:bg-gray-100 hover:text-gray-900")">
+                    class="flex-1 py-3 px-4 rounded-xl font-extrabold text-sm transition-all duration-200 flex items-center justify-center gap-2.5 focus:outline-none select-none @(ActiveCategory == "giveaway" ? "bg-[#eef9f0] text-[#1a7a30] border border-[#b8e8c0] border-b-2 border-b-[#1a7a30] shadow-sm" : "text-[#5a5855] hover:bg-[#eef9f0]/30 hover:text-[#1a7a30]")">
                 <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
                 <span>Transaksi Giveaway</span>
                 @if (TotalGiveawayCount > 0)
                 {
-                    <span class="px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 @(ActiveCategory == "giveaway" ? "bg-purple-500 text-white" : "bg-purple-100 text-purple-700")">@TotalGiveawayCount</span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 @(ActiveCategory == "giveaway" ? "bg-[#1a7a30] text-white" : "bg-[#eef9f0] text-[#1a7a30]")">@TotalGiveawayCount</span>
                 }
             </button>
             
             <button type="button" @onclick='() => ChangeCategory("profile")'
-                    class="flex-1 py-3 px-4 rounded-xl font-extrabold text-sm transition-all duration-200 flex items-center justify-center gap-2.5 focus:outline-none select-none @(ActiveCategory == "profile" ? "bg-[#1a1a1a] text-white shadow-md" : "text-[#5a5855] hover:bg-gray-100 hover:text-gray-900")">
+                    class="flex-1 py-3 px-4 rounded-xl font-extrabold text-sm transition-all duration-200 flex items-center justify-center gap-2.5 focus:outline-none select-none @(ActiveCategory == "profile" ? "bg-[#fff8e6] text-[#b37a00] border border-[#ffe099] border-b-2 border-b-[#b37a00] shadow-sm" : "text-[#5a5855] hover:bg-[#fff8e6]/30 hover:text-[#b37a00]")">
                 <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                 <span>Manajemen Profil</span>
                 @if (TotalProfileCount > 0)
                 {
-                    <span class="px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 @(ActiveCategory == "profile" ? "bg-rose-500 text-white" : "bg-rose-100 text-rose-700")">@TotalProfileCount</span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 @(ActiveCategory == "profile" ? "bg-[#b37a00] text-white" : "bg-[#fff8e6] text-[#b37a00]")">@TotalProfileCount</span>
                 }
             </button>
         </div>
 
+        <!-- Premium Dashboard Overview Stats -->
         <!-- Premium Dashboard Overview Stats -->
         @if (ActiveCategory == "borrow")
         {
@@ -72,26 +88,23 @@
             <div class="mb-6 bg-white p-1.5 rounded-2xl border border-[#e5e3dc] shadow-sm flex flex-col sm:flex-row gap-2">
                 <!-- Permintaan Baru -->
                 <button type="button" @onclick='() => ChangeTab("new")' 
-                        class="flex-1 py-2.5 px-4 rounded-xl font-extrabold text-xs sm:text-sm transition-all duration-200 flex items-center justify-center gap-2 focus:outline-none select-none border @(ActiveTab == "new" ? "bg-amber-500/15 text-amber-700 border-amber-500/30 shadow-xs" : "bg-white text-gray-500 border-transparent hover:bg-gray-100 hover:text-gray-900")">
-                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                        class="flex-1 py-2.5 px-4 rounded-xl font-extrabold text-xs sm:text-sm transition-all duration-200 flex items-center justify-center gap-2.5 focus:outline-none select-none border @(ActiveTab == "new" ? "bg-[#1a6b8a] text-white border-[#1a6b8a] shadow-sm" : "bg-white text-gray-500 border-transparent hover:bg-gray-50 hover:text-[#1a6b8a]")">
                     <span>Permintaan Baru</span>
-                    <span class="px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 @(ActiveTab == "new" ? "bg-amber-500 text-white" : "bg-gray-100 text-gray-600")">@borrowNewCount</span>
+                    <span class="w-5 h-5 rounded-full text-[10px] font-black shrink-0 flex items-center justify-center @(ActiveTab == "new" ? "bg-[#e8a000] text-[#1a1a1a]" : "bg-[#e7f1fb] text-[#1a6b8a]")">@borrowNewCount</span>
                 </button>
 
                 <!-- Serah Terima -->
                 <button type="button" @onclick='() => ChangeTab("handovers")'
-                        class="flex-1 py-2.5 px-4 rounded-xl font-extrabold text-xs sm:text-sm transition-all duration-200 flex items-center justify-center gap-2 focus:outline-none select-none border @(ActiveTab == "handovers" ? "bg-blue-500/15 text-blue-700 border-blue-500/30 shadow-xs" : "bg-white text-gray-500 border-transparent hover:bg-gray-100 hover:text-gray-900")">
-                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l-4-4m4 4l-4-4"/></svg>
+                        class="flex-1 py-2.5 px-4 rounded-xl font-extrabold text-xs sm:text-sm transition-all duration-200 flex items-center justify-center gap-2.5 focus:outline-none select-none border @(ActiveTab == "handovers" ? "bg-[#1a6b8a] text-white border-[#1a6b8a] shadow-sm" : "bg-white text-gray-500 border-transparent hover:bg-gray-50 hover:text-[#1a6b8a]")">
                     <span>Serah Terima</span>
-                    <span class="px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 @(ActiveTab == "handovers" ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-600")">@borrowHandoverCount</span>
+                    <span class="w-5 h-5 rounded-full text-[10px] font-black shrink-0 flex items-center justify-center @(ActiveTab == "handovers" ? "bg-[#e8a000] text-[#1a1a1a]" : "bg-[#e7f1fb] text-[#1a6b8a]")">@borrowHandoverCount</span>
                 </button>
 
                 <!-- Pengembalian -->
                 <button type="button" @onclick='() => ChangeTab("returns")'
-                        class="flex-1 py-2.5 px-4 rounded-xl font-extrabold text-xs sm:text-sm transition-all duration-200 flex items-center justify-center gap-2 focus:outline-none select-none border @(ActiveTab == "returns" ? "bg-emerald-500/15 text-emerald-700 border-emerald-500/30 shadow-xs" : "bg-white text-gray-500 border-transparent hover:bg-gray-100 hover:text-gray-900")">
-                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
+                        class="flex-1 py-2.5 px-4 rounded-xl font-extrabold text-xs sm:text-sm transition-all duration-200 flex items-center justify-center gap-2.5 focus:outline-none select-none border @(ActiveTab == "returns" ? "bg-[#1a6b8a] text-white border-[#1a6b8a] shadow-sm" : "bg-white text-gray-500 border-transparent hover:bg-gray-50 hover:text-[#1a6b8a]")">
                     <span>Pengembalian</span>
-                    <span class="px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 @(ActiveTab == "returns" ? "bg-emerald-500 text-white" : "bg-gray-100 text-gray-600")">@borrowReturnCount</span>
+                    <span class="w-5 h-5 rounded-full text-[10px] font-black shrink-0 flex items-center justify-center @(ActiveTab == "returns" ? "bg-[#e8a000] text-[#1a1a1a]" : "bg-[#e7f1fb] text-[#1a6b8a]")">@borrowReturnCount</span>
                 </button>
             </div>
         }
@@ -104,26 +117,23 @@
             <div class="mb-6 bg-white p-1.5 rounded-2xl border border-[#e5e3dc] shadow-sm flex flex-col sm:flex-row gap-2">
                 <!-- Permintaan Baru -->
                 <button type="button" @onclick='() => ChangeTab("new")' 
-                        class="flex-1 py-2.5 px-4 rounded-xl font-extrabold text-xs sm:text-sm transition-all duration-200 flex items-center justify-center gap-2 focus:outline-none select-none border @(ActiveTab == "new" ? "bg-purple-500/15 text-purple-700 border-purple-500/30 shadow-xs" : "bg-white text-gray-500 border-transparent hover:bg-gray-100 hover:text-gray-900")">
-                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        class="flex-1 py-2.5 px-4 rounded-xl font-extrabold text-xs sm:text-sm transition-all duration-200 flex items-center justify-center gap-2.5 focus:outline-none select-none border @(ActiveTab == "new" ? "bg-[#1a7a30] text-white border-[#1a7a30] shadow-sm" : "bg-white text-gray-500 border-transparent hover:bg-gray-50 hover:text-[#1a7a30]")">
                     <span>Permintaan Baru</span>
-                    <span class="px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 @(ActiveTab == "new" ? "bg-purple-500 text-white" : "bg-gray-100 text-gray-600")">@giveawayNewCount</span>
+                    <span class="w-5 h-5 rounded-full text-[10px] font-black shrink-0 flex items-center justify-center @(ActiveTab == "new" ? "bg-[#e8a000] text-[#1a1a1a]" : "bg-[#eef9f0] text-[#1a7a30]")">@giveawayNewCount</span>
                 </button>
 
                 <!-- Serah Terima -->
                 <button type="button" @onclick='() => ChangeTab("handovers")'
-                        class="flex-1 py-2.5 px-4 rounded-xl font-extrabold text-xs sm:text-sm transition-all duration-200 flex items-center justify-center gap-2 focus:outline-none select-none border @(ActiveTab == "handovers" ? "bg-blue-500/15 text-blue-700 border-blue-500/30 shadow-xs" : "bg-white text-gray-500 border-transparent hover:bg-gray-100 hover:text-gray-900")">
-                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l-4-4m4 4l-4-4"/></svg>
+                        class="flex-1 py-2.5 px-4 rounded-xl font-extrabold text-xs sm:text-sm transition-all duration-200 flex items-center justify-center gap-2.5 focus:outline-none select-none border @(ActiveTab == "handovers" ? "bg-[#1a7a30] text-white border-[#1a7a30] shadow-sm" : "bg-white text-gray-500 border-transparent hover:bg-gray-50 hover:text-[#1a7a30]")">
                     <span>Serah Terima</span>
-                    <span class="px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 @(ActiveTab == "handovers" ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-600")">@giveawayHandoverCount</span>
+                    <span class="w-5 h-5 rounded-full text-[10px] font-black shrink-0 flex items-center justify-center @(ActiveTab == "handovers" ? "bg-[#e8a000] text-[#1a1a1a]" : "bg-[#eef9f0] text-[#1a7a30]")">@giveawayHandoverCount</span>
                 </button>
 
                 <!-- Persetujuan Dokumentasi -->
                 <button type="button" @onclick='() => ChangeTab("documentations")'
-                        class="flex-1 py-2.5 px-4 rounded-xl font-extrabold text-xs sm:text-sm transition-all duration-200 flex items-center justify-center gap-2 focus:outline-none select-none border @(ActiveTab == "documentations" ? "bg-purple-500/15 text-purple-700 border-purple-500/30 shadow-xs" : "bg-white text-gray-500 border-transparent hover:bg-gray-100 hover:text-gray-900")">
-                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        class="flex-1 py-2.5 px-4 rounded-xl font-extrabold text-xs sm:text-sm transition-all duration-200 flex items-center justify-center gap-2.5 focus:outline-none select-none border @(ActiveTab == "documentations" ? "bg-[#1a7a30] text-white border-[#1a7a30] shadow-sm" : "bg-white text-gray-500 border-transparent hover:bg-gray-50 hover:text-[#1a7a30]")">
                     <span>Persetujuan Dokumentasi</span>
-                    <span class="px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 @(ActiveTab == "documentations" ? "bg-purple-500 text-white" : "bg-gray-100 text-gray-600")">@giveawayDocumentationCount</span>
+                    <span class="w-5 h-5 rounded-full text-[10px] font-black shrink-0 flex items-center justify-center @(ActiveTab == "documentations" ? "bg-[#e8a000] text-[#1a1a1a]" : "bg-[#eef9f0] text-[#1a7a30]")">@giveawayDocumentationCount</span>
                 </button>
             </div>
         }
@@ -131,10 +141,10 @@
         {
             <div class="mb-6 bg-white p-2 rounded-2xl border border-[#e5e3dc] shadow-sm flex flex-col md:flex-row gap-2 max-w-md">
                 <!-- Edit Profil Info Bar -->
-                <div class="flex-1 py-2.5 px-4 rounded-xl font-extrabold text-xs sm:text-sm transition-all duration-200 flex items-center justify-center gap-2.5 select-none bg-rose-500/15 text-rose-700 border border-rose-500/30">
+                <div class="flex-1 py-2.5 px-4 rounded-xl font-extrabold text-xs sm:text-sm transition-all duration-200 flex items-center justify-center gap-2.5 select-none bg-[#fff8e6] text-[#b37a00] border border-[#ffe099]">
                     <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                     <span>Permintaan Edit Profil</span>
-                    <span class="px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 bg-rose-500 text-white">@(PendingProfileRequests?.Count ?? 0)</span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 bg-[#b37a00] text-white">@(PendingProfileRequests?.Count ?? 0)</span>
                 </div>
             </div>
         }
@@ -181,26 +191,330 @@
                 }
                 else
                 {
-                    <div class="space-y-4">
-                        @foreach (var group in filteredGroups)
-                        {
-                            @RenderGroup(group)
-                        }
+                    <div class="split-container mb-12">
+                        <!-- Left Pane: Request List -->
+                        <div class="split-left bg-white border border-[#e5e3dc] rounded-2xl p-4 shadow-sm flex flex-col gap-4">
+                            <!-- Left Header -->
+                            <div class="flex items-center justify-between pb-3 border-b border-[#f0ede5]">
+                                <h3 class="font-extrabold text-base text-[#1a1a1a]">Daftar Permintaan</h3>
+                                <div class="flex items-center gap-2">
+                                    <button type="button" class="p-2 border border-[#e5e3dc] rounded-xl hover:bg-gray-50 text-gray-500 transition">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+                                    </button>
+                                    <div class="relative">
+                                        <button type="button" class="px-3 py-2 border border-[#e5e3dc] rounded-xl hover:bg-gray-50 text-xs font-bold text-[#1a1a1a] flex items-center gap-1.5 transition">
+                                            <span>Terbaru</span>
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Requests List -->
+                            <div class="space-y-3 max-h-[550px] overflow-y-auto pr-1">
+                                @foreach (var group in filteredGroups)
+                                {
+                                    var firstItem = group.Value.First();
+                                    var isSelected = SelectedGroupId == group.Key;
+                                    var isBorrow = firstItem.request_type == "BORROW";
+                                    var itemPillClass = isBorrow ? "bg-[#eef6fd] text-[#1a6b8a] border-[#d9e6f3]" : "bg-[#eef9f0] text-[#1a7a30] border-[#d8eadb]";
+                                    var iconBgClass = isBorrow ? "bg-[#eef6fd] text-[#1a6b8a] border-[#d9e6f3]" : "bg-[#eef9f0] text-[#1a7a30] border-[#d8eadb]";
+                                    var borderClass = isBorrow 
+                                        ? (isSelected ? "border-[#1a6b8a] bg-[#eef6fd]/30 shadow-sm border-l-4 border-l-[#1a6b8a]" : "border-[#e5e3dc] border-l-4 border-l-[#1a6b8a] hover:border-[#1a6b8a]/50 hover:bg-[#eef6fd]/20")
+                                        : (isSelected ? "border-[#1a7a30] bg-[#eef9f0]/30 shadow-sm border-l-4 border-l-[#1a7a30]" : "border-[#e5e3dc] border-l-4 border-l-[#1a7a30] hover:border-[#1a7a30]/50 hover:bg-[#eef9f0]/20");
+                                    
+                                    <div @onclick="() => SelectedGroupId = group.Key"
+                                         class="p-3.5 rounded-2xl border transition-all duration-200 cursor-pointer flex items-center justify-between gap-3 relative @borderClass">
+                                        <div class="flex items-center gap-2.5 min-w-0">
+                                            <!-- Indicator Dot -->
+                                            <div class="w-2 h-2 rounded-full shrink-0 @(isSelected ? (isBorrow ? "bg-[#1a6b8a]" : "bg-[#1a7a30]") : (isBorrow ? "bg-[#1a6b8a]/40" : "bg-[#1a7a30]/40"))"></div>
+                                            
+                                            <!-- Request Icon -->
+                                            <div class="w-9 h-9 rounded-xl border flex items-center justify-center shrink-0 @iconBgClass">
+                                                @if (firstItem.request_type == "GIVEAWAY")
+                                                {
+                                                    <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                                                }
+                                                else
+                                                {
+                                                    <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                                }
+                                            </div>
+                                            <!-- Request Info -->
+                                            <div class="min-w-0">
+                                                <h4 class="font-extrabold text-xs text-[#1a1a1a] truncate">Request #@group.Key.Substring(0, Math.Min(8, group.Key.Length))</h4>
+                                                <div class="text-[11px] text-gray-500 font-semibold mt-0.5 truncate">
+                                                    @(firstItem.applicant_name ?? firstItem.Requester?.name ?? "Staff User") • Event: @(firstItem.event_name ?? "-")
+                                                </div>
+                                                <div class="text-[9px] text-gray-400 font-semibold mt-1 flex items-center gap-1">
+                                                    <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                                    @firstItem.created_at.ToString("dd MMM yyyy HH:mm")
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Right badge -->
+                                        <div class="flex items-center gap-1.5 shrink-0">
+                                            <span class="px-2 py-0.5 rounded-full text-[9px] font-black border @itemPillClass">@group.Value.Count Item</span>
+                                            <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+
+                            <!-- Left Footer -->
+                            <div class="pt-3 border-t border-[#f0ede5] flex items-center justify-between gap-3 text-xs text-gray-500">
+                                <span>Menampilkan 1 - @filteredGroups.Count dari @filteredGroups.Count</span>
+                                <div class="flex items-center gap-1">
+                                    <button type="button" class="w-7 h-7 border border-[#e5e3dc] rounded-lg hover:bg-gray-50 flex items-center justify-center font-bold text-[#1a1a1a] select-none">&lt;</button>
+                                    <button type="button" class="w-7 h-7 bg-[#1a1a1a] rounded-lg text-white flex items-center justify-center font-bold select-none">1</button>
+                                    <button type="button" class="w-7 h-7 border border-[#e5e3dc] rounded-lg hover:bg-gray-50 flex items-center justify-center font-bold text-[#1a1a1a] select-none">&gt;</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Pane: Request Details -->
+                        <div class="split-right bg-white border border-[#e5e3dc] rounded-2xl p-5 sm:p-6 shadow-sm flex flex-col gap-6">
+                            @if (!string.IsNullOrEmpty(SelectedGroupId) && GroupedApprovals.ContainsKey(SelectedGroupId))
+                            {
+                                var currentGroup = GroupedApprovals[SelectedGroupId];
+                                var firstItem = currentGroup.First();
+                                var isGiveaway = firstItem.request_type == "GIVEAWAY";
+                                var badgeClass = isGiveaway ? "bg-[#eef9f0] border border-[#d8eadb] text-[#1a7a30]" : "bg-[#eef6fd] border border-[#d9e6f3] text-[#1a6b8a]";
+                                var buttonBgClass = isGiveaway ? "bg-[#1a7a30] hover:bg-[#16692a] border-[#1a7a30] text-white font-extrabold" : "bg-[#1a6b8a] hover:bg-[#165a74] border-[#1a6b8a] text-white font-extrabold";
+                                var cardDecisionsCount = currentGroup.Count(i => Decisions.ContainsKey(i.id));
+
+                                <!-- Details Header -->
+                                <div class="flex flex-col lg:flex-row lg:items-center justify-between pb-4 border-b border-[#f0ede5] gap-4">
+                                    <div class="min-w-0">
+                                        <div class="flex items-center gap-2 flex-wrap">
+                                            <h2 class="font-extrabold text-lg sm:text-xl text-[#1a1a1a]">Request #@SelectedGroupId.Substring(0, Math.Min(8, SelectedGroupId.Length))</h2>
+                                            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black shrink-0 @badgeClass">@currentGroup.Count Item</span>
+                                        </div>
+                                        <div class="text-xs text-[#8a8880] font-semibold mt-1">
+                                            Dibuat pada @firstItem.created_at.ToString("dd MMM yyyy HH:mm")
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Action Buttons -->
+                                    <div class="flex flex-wrap items-center gap-2 shrink-0">
+                                        @if (cardDecisionsCount > 0)
+                                        {
+                                            <button type="button" @onclick="() => OpenGroupConfirmModal(SelectedGroupId)" disabled="@IsProcessing" 
+                                                    class="px-4 py-2.5 text-xs font-black rounded-xl shadow-sm transition active:scale-[0.98] disabled:opacity-50 flex items-center gap-1.5 justify-center h-10 border @buttonBgClass">
+                                                <svg class="w-4 h-4 shrink-0 text-current" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                                <span>Setujui Semua (Batch)</span>
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button type="button" @onclick="() => OpenApproveAllModal(currentGroup)" disabled="@IsProcessing" 
+                                                    class="px-4 py-2.5 text-xs font-black rounded-xl shadow-sm transition active:scale-[0.98] disabled:opacity-50 flex items-center gap-1.5 border justify-center h-10 @buttonBgClass">
+                                                <svg class="w-4 h-4 shrink-0 text-current" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                                                <span>Setujui Semua (Batch)</span>
+                                            </button>
+                                        }
+                                        
+                                        <!-- Tolak Group Button -->
+                                        <button type="button" @onclick='() => AskConfirm("Tolak Semua Item", "Tolak seluruh pengajuan pada request ini?", () => ProcessBatchRejectGroup(SelectedGroupId), "Ya, Tolak Semua")'
+                                                disabled="@IsProcessing" class="px-4 py-2.5 bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 text-xs font-extrabold rounded-xl transition active:scale-[0.98] disabled:opacity-50 flex items-center gap-1.5 justify-center h-10">
+                                            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                            <span>Tolak</span>
+                                        </button>
+                                        
+                                        <button type="button" class="px-4 py-2.5 bg-white border border-[#e5e3dc] hover:bg-gray-50 text-xs font-extrabold rounded-xl transition active:scale-[0.98] flex items-center gap-1.5 justify-center text-gray-700 h-10">
+                                            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                                            <span>Request More Info</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Info Grid (applicant info details) -->
+                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <!-- Pemohon -->
+                                    <div class="border border-[#e5e3dc] border-l-4 rounded-2xl p-4 flex items-start gap-3 @(isGiveaway ? "bg-[#f6fbf7] border-l-[#1a7a30]" : "bg-[#f8fbff] border-l-[#1a6b8a]")">
+                                        <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border @(isGiveaway ? "bg-[#eef9f0] border-[#d8eadb] text-[#1a7a30]" : "bg-[#eef6fd] border-[#d9e6f3] text-[#1a6b8a]")">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                        </div>
+                                        <div class="min-w-0">
+                                            <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">PEMOHON</span>
+                                            <h5 class="font-extrabold text-sm text-[#1a1a1a] truncate mt-0.5">@(firstItem.applicant_name ?? firstItem.Requester?.name ?? "-")</h5>
+                                            <span class="text-[10px] text-[#8a8880] font-semibold">NRP: @(firstItem.applicant_nrp ?? "-")</span>
+                                        </div>
+                                    </div>
+                                    <!-- Event -->
+                                    <div class="border border-[#e5e3dc] border-l-4 rounded-2xl p-4 flex items-start gap-3 @(isGiveaway ? "bg-[#f6fbf7] border-l-[#1a7a30]" : "bg-[#f8fbff] border-l-[#1a6b8a]")">
+                                        <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border @(isGiveaway ? "bg-[#eef9f0] border-[#d8eadb] text-[#1a7a30]" : "bg-[#eef6fd] border-[#d9e6f3] text-[#1a6b8a]")">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                        </div>
+                                        <div class="min-w-0">
+                                            <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">EVENT / PROGR.</span>
+                                            <h5 class="font-extrabold text-sm text-[#1a1a1a] truncate mt-0.5">@(firstItem.event_name ?? "-")</h5>
+                                            <span class="text-[10px] text-[#8a8880] font-semibold">@(firstItem.event_date?.ToString("dd MMMM yyyy") ?? "-")</span>
+                                        </div>
+                                    </div>
+                                    <!-- Division -->
+                                    <div class="border border-[#e5e3dc] border-l-4 rounded-2xl p-4 flex items-start gap-3 @(isGiveaway ? "bg-[#f6fbf7] border-l-[#1a7a30]" : "bg-[#f8fbff] border-l-[#1a6b8a]")">
+                                        <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border @(isGiveaway ? "bg-[#eef9f0] border-[#d8eadb] text-[#1a7a30]" : "bg-[#eef6fd] border-[#d9e6f3] text-[#1a6b8a]")">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m-9 0V3m11 2h3m-3 4h3m-6 4h3m-3 4h3"/></svg>
+                                        </div>
+                                        <div class="min-w-0">
+                                            <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">DIVISI</span>
+                                            <h5 class="font-extrabold text-sm text-[#1a1a1a] truncate mt-0.5">@(firstItem.Division?.name ?? "-")</h5>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Timeline & Flow section -->
+                                <div class="border border-[#e5e3dc] rounded-2xl p-5 bg-white">
+                                    <h4 class="font-extrabold text-sm text-[#1a1a1a] mb-4">Timeline & Approval Flow</h4>
+                                    <div class="space-y-4">
+                                        <!-- Step 1 -->
+                                        <div class="flex items-start gap-3 relative pb-2">
+                                            <div class="absolute left-2.5 top-6 bottom-[-16px] w-[2px] bg-emerald-500 z-0"></div>
+                                            <div class="w-5.5 h-5.5 rounded-full bg-emerald-100 border border-emerald-500 flex items-center justify-center text-emerald-600 shrink-0 z-10">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                            </div>
+                                            <div class="flex-1 min-w-0 flex items-center justify-between gap-4">
+                                                <div>
+                                                    <h5 class="font-extrabold text-xs text-[#1a1a1a]">Submitted</h5>
+                                                    <p class="text-[10px] text-gray-500 font-semibold">Named Approver - 02:36 - Comment</p>
+                                                </div>
+                                                <span class="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded font-extrabold shrink-0">@firstItem.created_at.ToString("dd MMM yyyy")</span>
+                                            </div>
+                                        </div>
+                                        <!-- Step 2 -->
+                                        <div class="flex items-start gap-3 relative pb-2">
+                                            <div class="absolute left-2.5 top-6 bottom-[-16px] w-[2px] bg-emerald-500 z-0"></div>
+                                            <div class="w-5.5 h-5.5 rounded-full bg-emerald-100 border border-emerald-500 flex items-center justify-center text-emerald-600 shrink-0 z-10">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                            </div>
+                                            <div class="flex-1 min-w-0 flex items-center justify-between gap-4">
+                                                <div>
+                                                    <h5 class="font-extrabold text-xs text-[#1a1a1a]">Department Approved</h5>
+                                                    <p class="text-[10px] text-gray-500 font-semibold">John Doe, Tmitt - 02:45 - Comment</p>
+                                                </div>
+                                                <span class="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded font-extrabold shrink-0">@firstItem.created_at.ToString("dd MMM yyyy")</span>
+                                            </div>
+                                        </div>
+                                        <!-- Step 3 -->
+                                        <div class="flex items-start gap-3 relative">
+                                            <div class="w-5.5 h-5.5 rounded-full bg-gray-100 border border-gray-300 flex items-center justify-center text-gray-400 shrink-0 z-10">
+                                                <span class="w-2 h-2 rounded-full bg-gray-400"></span>
+                                            </div>
+                                            <div class="flex-1 min-w-0 flex items-center justify-between gap-4">
+                                                <div>
+                                                    <h5 class="font-extrabold text-xs text-[#1a1a1a]">Final Approval Pending</h5>
+                                                    <p class="text-[10px] text-gray-500 font-semibold">Sarah Wilson - 09:10 - Comment</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Items List -->
+                                <div>
+                                    <div class="flex items-center justify-between mb-3">
+                                        <h4 class="font-extrabold text-sm text-[#1a1a1a] uppercase tracking-wider">ITEM DIMINTA (@currentGroup.Count)</h4>
+                                        <button type="button" class="px-3 py-1.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-xs font-black rounded-lg text-gray-800 transition flex items-center gap-1 select-none">
+                                            <span>+ Add item</span>
+                                        </button>
+                                    </div>
+
+                                    <!-- Table Header/List -->
+                                    <div class="border border-[#e5e3dc] rounded-2xl overflow-hidden divide-y divide-[#f0ede5] shadow-xs">
+                                        @foreach (var item in currentGroup)
+                                        {
+                                            var decision = Decisions.GetValueOrDefault(item.id);
+                                            var isShortage = (item.Product?.current_stock ?? 0) < item.quantity;
+                                            var rowBgClass = decision == "APPROVE" ? "bg-emerald-50/20" : decision == "REJECT" ? "bg-red-50/20" : "bg-white";
+                                            
+                                            <div class="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-[#faf9f5]/50 transition-colors @rowBgClass">
+                                                <div class="flex items-center gap-3 min-w-0">
+                                                    <!-- Checkbox -->
+                                                    <input type="checkbox" checked="@(decision == "APPROVE")" 
+                                                           @onchange='(e) => { if((bool)e.Value) SetDecision(item.id, "APPROVE"); else ClearDecision(item.id); }'
+                                                           class="w-4.5 h-4.5 text-[#e8a000] border-gray-300 rounded focus:ring-[#e8a000] shrink-0" />
+                                                    
+                                                    <!-- Thumbnail with SVG Package Fallback -->
+                                                    <div class="w-12 h-12 rounded-xl border border-gray-200 overflow-hidden shrink-0 bg-white flex items-center justify-center">
+                                                        @if (string.IsNullOrEmpty(item.Product?.image))
+                                                        {
+                                                            <div class="w-full h-full bg-gray-50 flex items-center justify-center text-gray-400">
+                                                                <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                                                            </div>
+                                                        }
+                                                        else
+                                                        {
+                                                            <img src="@ImageHelper.ResolveProduct(item.Product)" class="w-full h-full object-cover" />
+                                                        }
+                                                    </div>
+
+                                                    <!-- Product SKU and Info -->
+                                                    <div class="min-w-0">
+                                                        <h5 class="font-extrabold text-sm text-gray-900 truncate">@item.Product?.name</h5>
+                                                        <code class="text-[10px] text-gray-400 font-mono">@item.Product?.sku</code>
+                                                    </div>
+                                                </div>
+
+                                                <div class="flex items-center justify-between sm:justify-end gap-5 shrink-0 w-full sm:w-auto">
+                                                    <!-- Stock status -->
+                                                    <div class="text-right">
+                                                        <span class="text-[9px] font-black uppercase block tracking-wider @(isShortage ? "text-red-500" : "text-emerald-600")">
+                                                            @(isShortage ? "STOK KURANG" : "STOK TERSEDIA")
+                                                        </span>
+                                                        <span class="text-[10px] text-gray-500 font-semibold mt-0.5">@item.Product?.current_stock unit</span>
+                                                    </div>
+
+                                                    <!-- Qty selector -->
+                                                    <div class="flex items-center border border-[#e5e3dc] rounded-xl overflow-hidden bg-white">
+                                                        <button type="button" class="px-2.5 py-1 bg-gray-50 hover:bg-gray-100 text-gray-500 text-xs font-bold transition">-</button>
+                                                        <input type="text" readonly value="@item.quantity" class="w-10 text-center text-xs font-extrabold bg-transparent border-0 outline-none" />
+                                                        <button type="button" class="px-2.5 py-1 bg-gray-50 hover:bg-gray-100 text-gray-500 text-xs font-bold transition">+</button>
+                                                    </div>
+
+                                                    <!-- Actions (Approve/Reject/Edit/Delete) -->
+                                                    <div class="flex items-center gap-1.5">
+                                                        @if (string.IsNullOrEmpty(decision))
+                                                        {
+                                                            <button type="button" @onclick='() => SetDecision(item.id, "APPROVE")' class="p-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 rounded-xl transition" title="Approve">
+                                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                                            </button>
+                                                            <button type="button" @onclick='() => OpenRejectModal(item.id)' class="p-2 bg-rose-50 hover:bg-rose-100 text-red-600 rounded-xl transition" title="Reject / Revision">
+                                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                                                            </button>
+                                                        }
+                                                        else
+                                                        {
+                                                            <div class="flex items-center gap-1">
+                                                                <span class="text-[10px] font-black uppercase text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100">@decision</span>
+                                                                <button type="button" @onclick='() => ClearDecision(item.id)' class="p-1.5 text-gray-400 hover:text-gray-600">
+                                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
+                                                                </button>
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
                     </div>
 
                     @* Batch action bar — fixed di bawah (glassmorphic pill) *@
                     <div class="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-30 max-w-md w-[calc(100%-2rem)]">
-                        <div class="backdrop-blur-md bg-white/90 border border-[#e2e1da] px-4.5 py-3 rounded-2xl shadow-xl flex items-center justify-between gap-4 animate-slideUp">
+                        <div class="backdrop-blur-md bg-white/95 border border-[#e5e3dc] px-5 py-3.5 rounded-2xl shadow-2xl flex items-center justify-between gap-4 animate-slideUp">
                             <div class="min-w-0">
                                 <div class="text-[9px] text-[#8a8880] font-black uppercase tracking-wider">Draft Persetujuan</div>
-                                <div class="text-sm font-black text-gray-900 mt-0.5 flex items-center gap-1.5">
-                                    <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                                <div class="text-sm font-black text-gray-900 mt-0.5 flex items-center gap-2">
+                                    <span class="w-2 h-2 rounded-full @(Decisions.Count == 0 ? "bg-gray-300" : "bg-[#e8a000] animate-pulse")"></span>
                                     <span>@Decisions.Count Item Dipilih</span>
                                 </div>
                             </div>
                             <button type="button" @onclick="OpenBatchConfirmModal" disabled="@(Decisions.Count == 0 || IsProcessing)"
-                                    class="inline-flex items-center gap-1.5 px-5 py-2.5 bg-[#1a1a1a] text-white text-xs font-black rounded-xl shadow-md hover:bg-[#333] transition active:scale-[0.98] disabled:opacity-40 disabled:shadow-none select-none h-11 shrink-0">
-                                <svg class="w-4 h-4 shrink-0 text-amber-500 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                    class="inline-flex items-center gap-1.5 px-5 py-2.5 text-xs font-black rounded-xl transition active:scale-[0.98] select-none h-11 shrink-0 @(Decisions.Count == 0 ? "bg-[#b2b1a9] text-white cursor-not-allowed shadow-none" : "bg-[#e8a000] text-[#1a1a1a] hover:bg-[#d49300] shadow-md")">
+                                <svg class="w-4 h-4 shrink-0 @(Decisions.Count == 0 ? "text-white" : "text-[#1a1a1a]")" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
                                 <span>Proses (@Decisions.Count)</span>
                             </button>
                         </div>
@@ -234,9 +548,9 @@
                         var isWaitingVerification = group.Value.Any(i => i.status == WorkflowStatuses.WaitingAdminHandover);
                         var isGiveawayHandover = group.Value.All(i => i.request_type == "GIVEAWAY");
                         
-                        <div class="bg-white rounded-2xl border border-[#e5e3dc] shadow-sm overflow-hidden animate-fadeIn border-l-4 border-l-[#1a6b8a]">
+                        <div class="bg-white rounded-2xl border border-[#e5e3dc] shadow-sm overflow-hidden animate-fadeIn border-l-4 @(isGiveawayHandover ? "border-l-[#1a7a30]" : "border-l-[#1a6b8a]")">
                             <!-- Group Header Card -->
-                            <div class="px-5 py-5 border-b border-[#f0ede5] flex flex-col lg:flex-row lg:items-center justify-between bg-gradient-to-r from-gray-50 to-white gap-4">
+                            <div class="px-5 py-5 border-b border-[#f0ede5] flex flex-col lg:flex-row lg:items-center justify-between bg-gradient-to-r @(isGiveawayHandover ? "from-[#eef9f0]/40" : "from-[#eef6fd]/40") to-white gap-4">
                                 <div class="min-w-0">
                                     <div class="flex items-center gap-2 flex-wrap">
                                         <h4 class="font-extrabold text-[#1a1a1a] text-base sm:text-lg">Event: @(firstItem.event_name ?? "-")</h4>
@@ -317,15 +631,15 @@
                                                     <code class="text-[9px] text-gray-500 bg-gray-100 border border-gray-200 px-1.5 py-0.5 rounded font-mono">@(item.Product?.sku)</code>
                                                     @if (item.request_type == "BORROW")
                                                     {
-                                                        <span class="inline-flex items-center bg-blue-50 text-blue-700 px-2 py-0.5 rounded-md text-[9px] font-extrabold border border-blue-100 uppercase tracking-wide gap-1">
-                                                            <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                                        <span class="inline-flex items-center bg-[#eef6fd] text-[#1a6b8a] px-2 py-0.5 rounded-md text-[9px] font-extrabold border border-[#d9e6f3] uppercase tracking-wide gap-1">
+                                                            <svg class="w-2.5 h-2.5 text-[#1a6b8a]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                                                             @(item.borrow_start_date?.ToString("dd MMM") ?? "-") — @(item.expected_return_date?.ToString("dd MMM yyyy") ?? "-")
                                                         </span>
                                                     }
                                                     else if (item.request_type == "GIVEAWAY")
                                                     {
-                                                        <span class="inline-flex items-center bg-purple-50 text-purple-700 px-2 py-0.5 rounded-md text-[9px] font-extrabold border border-purple-100 uppercase tracking-wide gap-1">
-                                                            <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                                                        <span class="inline-flex items-center bg-[#eef9f0] text-[#1a7a30] px-2 py-0.5 rounded-md text-[9px] font-extrabold border border-[#b8e8c0] uppercase tracking-wide gap-1">
+                                                            <svg class="w-2.5 h-2.5 text-[#1a7a30]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
                                                             Ambil: @(item.pickup_date?.ToString("dd MMM yyyy") ?? "-")
                                                         </span>
                                                     }
@@ -552,20 +866,20 @@
                     {
                         var firstItem = group.Value.First();
                         
-                        <div class="bg-white rounded-2xl border border-[#e5e3dc] shadow-sm overflow-hidden animate-fadeIn border-l-4 border-l-purple-500">
+                        <div class="bg-white rounded-2xl border border-[#e5e3dc] shadow-sm overflow-hidden animate-fadeIn border-l-4 border-l-[#1a7a30]">
                             <!-- Group Header Card -->
-                            <div class="px-5 py-5 border-b border-[#f0ede5] flex flex-col lg:flex-row lg:items-center justify-between bg-gradient-to-r from-purple-50/10 to-white gap-4">
+                            <div class="px-5 py-5 border-b border-[#f0ede5] flex flex-col lg:flex-row lg:items-center justify-between bg-gradient-to-r from-[#eef9f0]/40 to-white gap-4">
                                 <div class="min-w-0">
                                     <div class="flex items-center gap-2 flex-wrap">
                                         <h4 class="font-extrabold text-[#1a1a1a] text-base sm:text-lg">Event: @(firstItem.event_name ?? "-")</h4>
-                                        <span class="px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 text-[10px] font-bold border border-purple-200">@group.Value.Count Item</span>
+                                        <span class="px-2 py-0.5 rounded-full bg-[#eef9f0] text-[#1a7a30] text-[10px] font-bold border border-[#b8e8c0]">@group.Value.Count Item</span>
                                     </div>
                                     <div class="text-xs text-[#6b665e] mt-1.5 font-semibold">
                                         Pemohon: <span class="text-gray-900 font-extrabold">@(firstItem.applicant_name ?? firstItem.Requester?.name)</span>
                                     </div>
                                     <div class="mt-2.5">
-                                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[10px] font-extrabold uppercase tracking-wider border border-purple-200 bg-purple-50 text-purple-700">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse"></span>
+                                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[10px] font-extrabold uppercase tracking-wider border border-[#b8e8c0] bg-[#eef9f0] text-[#1a7a30]">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-[#1a7a30] animate-pulse"></span>
                                             Menunggu Persetujuan Dokumentasi
                                         </span>
                                     </div>
@@ -574,7 +888,7 @@
                                 <!-- Group Level Buttons -->
                                 <div class="flex flex-wrap gap-2.5 shrink-0">
                                     <button type="button" @onclick='() => AskConfirm("Approve Dokumentasi", "Setujui seluruh dokumentasi giveaway pada event ini?", () => ApproveDocumentationBatch(group.Key), "Ya, Setujui")' 
-                                            disabled="@IsProcessing" class="px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-extrabold rounded-xl shadow-sm transition active:scale-[0.98] select-none h-11 flex items-center justify-center">
+                                            disabled="@IsProcessing" class="px-4 py-2.5 bg-[#1a7a30] hover:bg-[#166528] text-white border border-[#1a7a30] text-xs font-extrabold rounded-xl shadow-sm transition active:scale-[0.98] select-none h-11 flex items-center justify-center">
                                         Approve Dokumentasi
                                     </button>
                                     <button type="button" @onclick="() => OpenDocumentationRejectModal(group.Key)" 
@@ -603,8 +917,8 @@
                                                 <div class="font-extrabold text-gray-900 text-sm leading-snug">@(item.Product?.name)</div>
                                                 <div class="flex flex-wrap items-center gap-1.5 mt-1">
                                                     <code class="text-[9px] text-gray-500 bg-gray-100 border border-gray-200 px-1.5 py-0.5 rounded font-mono">@(item.Product?.sku)</code>
-                                                    <span class="inline-flex items-center bg-purple-50 text-purple-700 px-2 py-0.5 rounded-md text-[9px] font-extrabold border border-purple-100 uppercase tracking-wide gap-1">
-                                                        <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                                                    <span class="inline-flex items-center bg-[#eef9f0] text-[#1a7a30] px-2 py-0.5 rounded-md text-[9px] font-extrabold border border-[#b8e8c0] uppercase tracking-wide gap-1">
+                                                        <svg class="w-2.5 h-2.5 text-[#1a7a30]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
                                                         Ambil: @(item.pickup_date?.ToString("dd MMM yyyy") ?? "-")
                                                     </span>
                                                 </div>
@@ -1108,9 +1422,9 @@
         bool isExpanded = ExpandedGroups.Contains(group.Key);
         bool isGiveaway = firstItem.request_type == "GIVEAWAY";
 
-        var accentBorderClass = isGiveaway ? "border-l-purple-500" : "border-l-[#e8a000]";
-        var badgeClass = isGiveaway ? "bg-purple-50 text-purple-700 border-purple-200" : "bg-[#e8a000]/10 border border-[#e8a000]/20 text-[#e8a000]";
-        var buttonBgClass = isGiveaway ? "bg-purple-600 hover:bg-purple-700 border-purple-700 text-white" : "bg-[#e8a000] hover:bg-[#d49300] border-[#d49300] text-[#1a1a1a]";
+        var accentBorderClass = "border-l-[#e8a000]";
+        var badgeClass = "bg-[#e8a000]/10 border border-[#e8a000]/20 text-[#e8a000]";
+        var buttonBgClass = "bg-[#e8a000] hover:bg-[#d49300] border-[#d49300] text-[#1a1a1a]";
 
         <div class="bg-white border border-[#e5e3dc] rounded-2xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md mb-4 animate-fadeIn border-l-4 @accentBorderClass">
             <!-- Accordion Header -->
@@ -1256,12 +1570,12 @@
                                                 <code class="text-[9px] text-gray-500 bg-gray-100 border border-gray-200 px-1.5 py-0.5 rounded font-mono">@(item.Product?.sku)</code>
                                                 @if (item.request_type == "GIVEAWAY")
                                                 {
-                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-purple-50 text-purple-700 border border-purple-200 uppercase tracking-wide">GIVEAWAY</span>
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-amber-50 text-amber-700 border border-amber-200 uppercase tracking-wide">GIVEAWAY</span>
                                                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black bg-amber-50 text-amber-700 border border-amber-200">@(((double)(item.Product?.value ?? 0)).ToString("N0")) Pts</span>
                                                 }
                                                 else
                                                 {
-                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-blue-50 text-blue-700 border border-blue-200 uppercase tracking-wide">BORROW</span>
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-amber-50 text-amber-700 border border-amber-200 uppercase tracking-wide">BORROW</span>
                                                 }
                                             </div>
                                             <div class="mt-1.5 text-[10px] text-[#6b665e] flex items-center gap-1 truncate">
@@ -1349,6 +1663,7 @@
     private string? UserRole;
     private string ActiveCategory = "borrow";
     private string ActiveTab = "new";
+    private string? SelectedGroupId;
 
     private int TotalBorrowCount => 
         (GroupedApprovals?.Values.Count(g => g.FirstOrDefault()?.request_type == "BORROW") ?? 0) +
@@ -1379,6 +1694,18 @@
         RevisedPickupDates.Clear();
         ReturnDecisions.Clear();
         ReturnReasons.Clear();
+        
+        var filteredGroups = GroupedApprovals?
+            .Where(g => g.Value.FirstOrDefault()?.request_type == (ActiveCategory == "borrow" ? "BORROW" : "GIVEAWAY"))
+            .ToList();
+        if (filteredGroups != null && filteredGroups.Any())
+        {
+            SelectedGroupId = filteredGroups.First().Key;
+        }
+        else
+        {
+            SelectedGroupId = null;
+        }
     }
 
     private void ChangeTab(string tab)
@@ -1390,6 +1717,21 @@
         RevisedPickupDates.Clear();
         ReturnDecisions.Clear();
         ReturnReasons.Clear();
+        
+        if (tab == "new")
+        {
+            var filteredGroups = GroupedApprovals?
+                .Where(g => g.Value.FirstOrDefault()?.request_type == (ActiveCategory == "borrow" ? "BORROW" : "GIVEAWAY"))
+                .ToList();
+            if (filteredGroups != null && filteredGroups.Any())
+            {
+                SelectedGroupId = filteredGroups.First().Key;
+            }
+            else
+            {
+                SelectedGroupId = null;
+            }
+        }
     }
 
     private HashSet<string> ExpandedGroups = new();
@@ -1433,6 +1775,21 @@
         RevisedPickupDates.Clear();
         ReturnDecisions.Clear();
         ReturnReasons.Clear();
+
+        var filteredGroups = GroupedApprovals?
+            .Where(g => g.Value.FirstOrDefault()?.request_type == (ActiveCategory == "borrow" ? "BORROW" : "GIVEAWAY"))
+            .ToList();
+        if (filteredGroups != null && filteredGroups.Any())
+        {
+            if (string.IsNullOrEmpty(SelectedGroupId) || !filteredGroups.Any(g => g.Key == SelectedGroupId))
+            {
+                SelectedGroupId = filteredGroups.First().Key;
+            }
+        }
+        else
+        {
+            SelectedGroupId = null;
+        }
     }
 
     private void ToggleGroup(string groupId)
@@ -2212,4 +2569,19 @@
             WorkflowStatuses.Approved => "border-[#b8e8c0] bg-[#eef9f0] text-[#1a7a30]",
             _ => "border-gray-200 bg-gray-50 text-gray-500"
         };
+
+    private async Task ProcessBatchRejectGroup(string groupId)
+    {
+        var groupItems = GroupedApprovals?.GetValueOrDefault(groupId);
+        if (groupItems != null)
+        {
+            foreach (var item in groupItems)
+            {
+                Decisions[item.id] = "REJECT";
+                if (!Reasons.ContainsKey(item.id)) Reasons[item.id] = "Ditolak oleh admin via batch action.";
+            }
+            OpenGroupConfirmModal(groupId);
+        }
+        await Task.CompletedTask;
+    }
 }

@@ -13,7 +13,7 @@
 @inject IJSRuntime JSRuntime
 @rendermode InteractiveServer
 
-<PageTitle>WMS - Dashboard</PageTitle>
+<PageTitle>WMS - Home Page</PageTitle>
 
 @if (!string.IsNullOrEmpty(ErrorMessage))
 {
@@ -164,11 +164,11 @@
     
     @* Quick Actions *@
     <div class="flex flex-wrap items-center gap-3 mb-8">
-        <a href="/Catalog/Borrow" class="inline-flex items-center gap-2 px-[1.1rem] py-[0.6rem] bg-[#3b82f6] hover:bg-[#2563eb] active:scale-[0.98] text-white text-[0.75rem] font-bold tracking-[0.06em] uppercase rounded-lg transition">
+        <a href="/Catalog/Borrow" class="inline-flex items-center gap-2 px-[1.1rem] py-[0.6rem] bg-[#1a1a1a] hover:bg-[#333333] active:scale-[0.98] text-white text-[0.75rem] font-bold tracking-[0.06em] uppercase rounded-lg transition">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
             Katalog Pinjam
         </a>
-        <a href="/Catalog/Giveaway" class="inline-flex items-center gap-2 px-[1.1rem] py-[0.6rem] bg-purple-600 hover:bg-purple-700 active:scale-[0.98] text-white text-[0.75rem] font-bold tracking-[0.06em] uppercase rounded-lg transition">
+        <a href="/Catalog/Giveaway" class="inline-flex items-center gap-2 px-[1.1rem] py-[0.6rem] bg-[#1a1a1a] hover:bg-[#333333] active:scale-[0.98] text-white text-[0.75rem] font-bold tracking-[0.06em] uppercase rounded-lg transition">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
             Katalog Ambil
         </a>
@@ -430,18 +430,18 @@
 @* Add to Cart Modal (Olshop Style) Blazor Port *@
 @if (ShowProductModal && SelectedProduct != null)
 {
-    <div id="addToCartModal" class="fixed inset-0 z-[70] flex" role="dialog" aria-modal="true">
+    <div id="addToCartModal" class="fixed inset-0 z-[300] flex" role="dialog" aria-modal="true">
         <div class="fixed inset-0 backdrop-blur-sm transition-opacity bg-[#1a1a1a]/65" @onclick="CloseProductModal"></div>
-        <div class="fixed inset-0 z-10 overflow-y-auto md:pl-[var(--ut-sidebar-w)] transition-all flex items-end sm:items-center justify-center sm:p-4 text-center" @onclick="CloseProductModal">
-            <div class="relative transform overflow-hidden rounded-t-2xl sm:rounded-xl bg-white text-left shadow-2xl transition-all w-full max-w-5xl sm:my-8 border-t sm:border border-[#e5e3dc]" @onclick:stopPropagation="true">
-                <div class="px-5 py-4 border-b border-[#f0ede5] flex items-center justify-between sticky top-0 bg-white z-10">
+        <div class="fixed inset-0 z-10 overflow-y-auto md:pl-[var(--ut-sidebar-w)] transition-all flex items-start md:items-center justify-center p-4 md:p-4 text-center" @onclick="CloseProductModal">
+            <div class="relative transform rounded-2xl md:rounded-xl bg-white text-left shadow-2xl transition-all w-full max-w-5xl my-8 md:my-8 border-t md:border border-[#e5e3dc] flex flex-col md:max-h-[85vh]" @onclick:stopPropagation="true">
+                <div class="px-5 py-4 border-b border-[#f0ede5] flex items-center justify-between bg-white z-10 shrink-0 rounded-t-2xl md:rounded-t-xl">
                     <h3 class="font-bold text-[#1a1a1a] text-sm" id="addToCartTitle">Detail Produk</h3>
                     <button type="button" @onclick="CloseProductModal" class="text-[#a09e99] hover:text-[#1a1a1a] transition p-1 bg-[#f5f4f0] rounded-full">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </div>
                 
-                <div class="px-5 py-4 pb-20 sm:pb-4">
+                <div class="px-5 py-4 pb-8 md:pb-4 overflow-y-auto md:overflow-visible flex-1 min-h-0 md:min-h-auto">
                     @if(!string.IsNullOrEmpty(ErrorMessage))
                     {
                         <div class="mb-4 flex items-center gap-3 bg-[#fef0f0] border border-[#f8c0c0] text-[#d94040] px-4 py-3 rounded-lg text-sm font-semibold">
@@ -814,11 +814,7 @@
         ModalImages = ModalImages.Where(i => !string.IsNullOrEmpty(i)).Distinct().ToList();
         SelectedMainImage = ModalImages.FirstOrDefault() ?? "https://placehold.co/600x400?text=No+Picture";
         
-        // Filter out hidden variants for catalog display
-        if (product.ProductVariants != null)
-        {
-            product.ProductVariants = product.ProductVariants.Where(v => v.is_hidden == 0).ToList();
-        }
+        // Variants are already filtered by EF Core Include (is_hidden == 0)
 
         if (product.ProductVariants != null && product.ProductVariants.Any())
         {
