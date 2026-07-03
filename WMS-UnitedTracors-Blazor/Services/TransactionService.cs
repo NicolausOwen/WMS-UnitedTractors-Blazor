@@ -13,11 +13,13 @@ public class TransactionService
 {
     private readonly IDbContextFactory<ApplicationDbContext> _factory;
     private readonly IWebHostEnvironment _env;
+    private readonly IEmailService _emailService;
 
-    public TransactionService(IDbContextFactory<ApplicationDbContext> factory, IWebHostEnvironment env)
+    public TransactionService(IDbContextFactory<ApplicationDbContext> factory, IWebHostEnvironment env, IEmailService emailService)
     {
         _factory = factory;
         _env = env;
+        _emailService = emailService;
     }
 
     // Shared upload constraints for proof photos/PDFs (handover & return).
@@ -249,7 +251,51 @@ public class TransactionService
         }
 
         await _context.SaveChangesAsync();
+
+        if (model.type == "OUT")
+        {
+            var requester = await _context.Users.FindAsync(currentUserId);
+            if (requester != null && !string.IsNullOrWhiteSpace(requester.email))
+            {
+                string requesterMessage = "Pesanan Anda berhasil dibuat dan saat ini sedang menunggu persetujuan dari pihak terkait. Kami akan menginformasikan kembali jika status pesanan Anda telah diperbarui.";
+                string requesterHtml = GetEmailTemplate("Request Berhasil Dibuat", requesterMessage);
+                _ = _emailService.SendEmailAsync(requester.email, "Request Berhasil Dibuat", requesterHtml);
+            }
+
+            var adminManagerEmails = await _context.Users
+                .Where(u => u.role == "Admin" || u.role == "Manager")
+                .Select(u => u.email)
+                .ToListAsync();
+
+            if (adminManagerEmails.Any())
+            {
+                string adminMessage = $"Terdapat request peminjaman/pengambilan barang baru dari <strong>{model.applicant_name ?? requester?.name}</strong>. Silakan login ke sistem WMS untuk meninjau dan melakukan persetujuan.";
+                string adminHtml = GetEmailTemplate("Request Baru Menunggu Persetujuan", adminMessage);
+                _ = _emailService.SendEmailToMultipleAsync(adminManagerEmails, "Request Baru (WMS UT)", adminHtml);
+            }
+        }
+
         return null;
+    }
+
+    private string GetEmailTemplate(string title, string message)
+    {
+        return $@"
+        <div style='font-family: ""Segoe UI"", Arial, sans-serif; background-color: #f4f4f5; padding: 40px 20px;'>
+            <div style='max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #e4e4e7;'>
+                <div style='background-color: #fdc300; padding: 25px; text-align: center; border-bottom: 4px solid #e8a000;'>
+                    <h1 style='color: #18181b; margin: 0; font-size: 24px; font-weight: 800; letter-spacing: 0.5px;'>UT WMS</h1>
+                </div>
+                <div style='padding: 35px 30px; color: #3f3f46; line-height: 1.6;'>
+                    <h2 style='color: #18181b; margin-top: 0; font-size: 20px; font-weight: 600;'>{title}</h2>
+                    <p style='font-size: 16px; margin-bottom: 0;'>{message}</p>
+                </div>
+                <div style='background-color: #fafafa; padding: 20px; text-align: center; font-size: 13px; color: #71717a; border-top: 1px solid #e4e4e7;'>
+                    <p style='margin: 0;'>Pesan ini dikirim secara otomatis oleh Sistem Manajemen Inventaris United Tractors.</p>
+                    <p style='margin: 5px 0 0 0;'>Mohon tidak membalas email ini.</p>
+                </div>
+            </div>
+        </div>";
     }
 
     public async Task<(List<Transaction> Transactions, int TotalItems, int TotalPages)> GetHistoryAsync(
@@ -297,7 +343,11 @@ public class TransactionService
             query = query.Where(t => t.requester_id == currentUserId);
         }
 
-        if (!string.IsNullOrEmpty(type))
+        if (string.Equals(userRole, "staff", StringComparison.OrdinalIgnoreCase))
+        {
+            query = query.Where(t => t.type == "OUT");
+        }
+        else if (!string.IsNullOrEmpty(type))
         {
             query = query.Where(t => t.type == type);
         }
@@ -654,24 +704,6 @@ public class TransactionService
                     }
                     else if (item.request_type == "GIVEAWAY")
                     {
-                        if (item.Product == null) return "Produk giveaway tidak ditemukan.";
-                        if (item.Product.current_stock < (item.quantity ?? 0))
-                            return $"Stok tidak mencukupi untuk produk {item.Product.name}.";
-
-                        var stockBefore = item.Product.current_stock;
-                        item.Product.current_stock -= item.quantity ?? 0;
-                        _context.Products.Update(item.Product);
-
-                        _context.StockLogs.Add(new StockLog
-                        {
-                            transaction_id = item.id,
-                            product_id = item.Product.id,
-                            stock_before = stockBefore,
-                            stock_after = item.Product.current_stock,
-                            created_at = DateTime.UtcNow,
-                            updated_at = DateTime.UtcNow
-                        });
-
                         item.status = WorkflowStatuses.WaitingDocumentation;
                     }
 
@@ -789,7 +821,7 @@ public class TransactionService
             item.documentation_photo = JsonSerializer.Serialize(photoPaths);
             item.documentation_notes = notes;
             item.documentation_uploaded_at = DateTime.UtcNow;
-            item.status = WorkflowStatuses.Completed;
+            item.status = WorkflowStatuses.WaitingAdminDocumentation;
             item.updated_at = DateTime.UtcNow;
             _context.Transactions.Update(item);
         }
@@ -911,7 +943,7 @@ public class TransactionService
         {
             transaction.borrow_start_date = model.items?.FirstOrDefault()?.borrow_start_date ?? transaction.borrow_start_date;
             transaction.expected_return_date = model.items?.FirstOrDefault()?.expected_return_date ?? transaction.expected_return_date;
-            
+
             if (transaction.borrow_start_date.HasValue && transaction.expected_return_date.HasValue)
             {
                 int duration = (int)(transaction.expected_return_date.Value.Date - transaction.borrow_start_date.Value.Date).TotalDays;
@@ -1066,73 +1098,73 @@ public class TransactionService
     }
 
     public async Task ProcessScannerTransactionAsync(UT_WMSDotnet.ViewModels.ScannerTransactionViewModel model, int userId)
+    {
+        using var _context = _factory.CreateDbContext();
+        if (model.Type == "OUT" && model.EventDate.HasValue && model.EventDate.Value.Date < DateTime.Today)
+            throw new Exception("Tanggal event tidak boleh sebelum hari ini.");
+
+        foreach (var item in model.Items)
         {
-            using var _context = _factory.CreateDbContext();
-            if (model.Type == "OUT" && model.EventDate.HasValue && model.EventDate.Value.Date < DateTime.Today)
-                throw new Exception("Tanggal event tidak boleh sebelum hari ini.");
+            var product = await _context.Products.FirstOrDefaultAsync(p => p.sku == item.Sku);
+            if (product == null)
+                throw new Exception($"Produk dengan SKU {item.Sku} tidak ditemukan.");
 
-            foreach (var item in model.Items)
+            if (model.Type == "OUT")
             {
-                var product = await _context.Products.FirstOrDefaultAsync(p => p.sku == item.Sku);
-                if (product == null)
-                    throw new Exception($"Produk dengan SKU {item.Sku} tidak ditemukan.");
+                if (product.current_stock < item.Quantity)
+                    throw new Exception($"Stok produk {product.name} ({item.Sku}) tidak mencukupi. Stok: {product.current_stock}");
 
-                if (model.Type == "OUT")
-                {
-                    if (product.current_stock < item.Quantity)
-                        throw new Exception($"Stok produk {product.name} ({item.Sku}) tidak mencukupi. Stok: {product.current_stock}");
-                    
-                    product.current_stock -= item.Quantity;
-                }
-                else
-                {
-                    product.current_stock += item.Quantity;
-                }
-
-                var transaction = new Transaction
-                {
-                    product_id = product.id,
-                    type = model.Type,
-                    quantity = item.Quantity,
-                    request_type = model.Type == "OUT" ? "BORROW" : null, // Default behavior
-                    status = "APPROVED",
-                    requester_id = userId,
-                    approver_id = userId,
-                    notes = model.Notes,
-                    created_at = DateTime.UtcNow,
-                    updated_at = DateTime.UtcNow
-                };
-
-                if (model.Type == "OUT")
-                {
-                    transaction.applicant_name = model.ApplicantName;
-                    transaction.applicant_nrp = model.ApplicantNrp;
-                    transaction.event_name = model.EventName;
-                    transaction.event_date = model.EventDate;
-                    transaction.division_id = model.DivisionId;
-                    transaction.documentation_link = model.DocumentationLink;
-                    
-                    if (product.is_returnable != 1)
-                    {
-                        transaction.request_type = "GIVEAWAY";
-                    }
-                }
-
-                _context.Transactions.Add(transaction);
-                
-                // Add stock log
-                int stockBefore = model.Type == "OUT" ? product.current_stock + item.Quantity : product.current_stock - item.Quantity;
-                _context.StockLogs.Add(new StockLog
-                {
-                    product_id = product.id,
-                    transaction_id = transaction.id,
-                    stock_before = stockBefore,
-                    stock_after = product.current_stock,
-                    created_at = DateTime.UtcNow,
-                    updated_at = DateTime.UtcNow
-                });
+                product.current_stock -= item.Quantity;
+            }
+            else
+            {
+                product.current_stock += item.Quantity;
             }
 
-            await _context.SaveChangesAsync();
+            var transaction = new Transaction
+            {
+                product_id = product.id,
+                type = model.Type,
+                quantity = item.Quantity,
+                request_type = model.Type == "OUT" ? "BORROW" : null, // Default behavior
+                status = "APPROVED",
+                requester_id = userId,
+                approver_id = userId,
+                notes = model.Notes,
+                created_at = DateTime.UtcNow,
+                updated_at = DateTime.UtcNow
+            };
+
+            if (model.Type == "OUT")
+            {
+                transaction.applicant_name = model.ApplicantName;
+                transaction.applicant_nrp = model.ApplicantNrp;
+                transaction.event_name = model.EventName;
+                transaction.event_date = model.EventDate;
+                transaction.division_id = model.DivisionId;
+                transaction.documentation_link = model.DocumentationLink;
+
+                if (product.is_returnable != 1)
+                {
+                    transaction.request_type = "GIVEAWAY";
+                }
+            }
+
+            _context.Transactions.Add(transaction);
+
+            // Add stock log
+            int stockBefore = model.Type == "OUT" ? product.current_stock + item.Quantity : product.current_stock - item.Quantity;
+            _context.StockLogs.Add(new StockLog
+            {
+                product_id = product.id,
+                transaction_id = transaction.id,
+                stock_before = stockBefore,
+                stock_after = product.current_stock,
+                created_at = DateTime.UtcNow,
+                updated_at = DateTime.UtcNow
+            });
         }
+
+        await _context.SaveChangesAsync();
     }
+}

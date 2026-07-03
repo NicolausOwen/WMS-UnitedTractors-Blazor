@@ -164,10 +164,15 @@
                             </div>
 
                             @* Is Returnable *@
-                            <div>
-                                <label class="flex items-center gap-2 cursor-pointer w-max">
-                                    <InputCheckbox @bind-Value="Model.is_returnable" class="rounded border-gray-300 text-gray-900 focus:ring-gray-900 w-4 h-4 transition outline-none" />
-                                    <span class="text-sm font-medium text-gray-700">Item is Returnable <span class="text-xs text-gray-500 font-normal">(Uncheck this for Merchandise/Giveaways)</span></span>
+                            <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                                <label class="flex items-start gap-3 cursor-pointer w-full group">
+                                    <div class="pt-0.5 shrink-0">
+                                        <InputCheckbox @bind-Value="Model.is_returnable" class="rounded border-gray-300 text-[#1a1a1a] focus:ring-[#1a1a1a] w-5 h-5 transition outline-none cursor-pointer" />
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <span class="text-sm font-bold text-[#1a1a1a] group-hover:text-[#e8a000] transition-colors">Item is Returnable</span>
+                                        <span class="text-xs text-gray-500 font-normal mt-0.5">Uncheck this for Merchandise/Giveaways</span>
+                                    </div>
                                 </label>
                             </div>
 
@@ -332,6 +337,13 @@
                                                             <div class="flex items-center gap-2 sm:gap-3">
                                                                 <InputText @bind-Value="size.Size" placeholder="Size" class="block flex-1 min-w-0 py-2 px-3 text-sm bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#e8a000] focus:border-[#e8a000] outline-none transition" />
                                                                 <InputNumber @bind-Value="size.Stock" min="0" placeholder="Stock" class="block w-20 sm:w-24 min-w-0 py-2 px-3 text-sm bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#e8a000] focus:border-[#e8a000] outline-none transition" />
+                                                                @if (IsSuperAdmin)
+                                                                {
+                                                                    <label class="flex items-center gap-1 cursor-pointer shrink-0 select-none" title="@(size.IsHidden ? "Hidden from catalog" : "Visible in catalog")">
+                                                                        <InputCheckbox @bind-Value="size.IsHidden" class="w-4 h-4 text-red-600 bg-gray-100 border-gray-300 rounded focus:ring-red-500 cursor-pointer" />
+                                                                        <span class="text-[10px] font-bold uppercase @(size.IsHidden ? "text-red-500" : "text-gray-400")">Hide</span>
+                                                                    </label>
+                                                                }
                                                                 <button type="button" @onclick="() => RemoveSize(group, size)" class="text-red-500 hover:text-red-700 transition px-1 sm:px-2 shrink-0">
                                                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                                                                 </button>
@@ -384,6 +396,7 @@
     private bool IsSubmitting;
     private bool IsLoading = true;
     private bool ProductNotFound = false;
+    private bool IsSuperAdmin = false;
 
     private IReadOnlyList<Microsoft.AspNetCore.Components.Forms.IBrowserFile>? selectedImages;
     private List<string> imagePreviews = new();
@@ -405,6 +418,9 @@
             NavigationManager.NavigateTo("/login");
             return;
         }
+
+        var role = user.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+        IsSuperAdmin = role == "superadmin" || string.Equals(role, "Super Admin", StringComparison.OrdinalIgnoreCase);
 
         
         if (!user.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ProductsManage))
@@ -440,6 +456,7 @@
             Model.current_stock = product.current_stock;
             Model.initial_stock = product.initial_stock;
             Model.is_returnable = product.is_returnable == 1;
+            Model.is_hidden = product.is_hidden == 1;
             Model.description = product.description ?? "";
             Model.transaction_type = product.transaction_type ?? "";
 
@@ -450,6 +467,7 @@
                 color = v.color,
                 size = v.size,
                 stock = v.stock,
+                is_hidden = v.is_hidden == 1,
                 existing_image = v.image
             }).ToList() ?? new List<ProductVariantViewModel>();
 
@@ -458,13 +476,14 @@
                 .Select(g => new VariantGroupUI
                 {
                     ColorName = g.Key,
-                    ExistingImage = g.FirstOrDefault()?.existing_image,
+                    ExistingImage = g.FirstOrDefault(v => !string.IsNullOrEmpty(v.existing_image))?.existing_image,
                     Sizes = g.Select(v => new VariantSizeUI
                     {
                         Id = v.id,
                         Sku = v.sku,
                         Size = v.size ?? "",
-                        Stock = v.stock
+                        Stock = v.stock,
+                        IsHidden = v.is_hidden
                     }).ToList()
                 }).ToList();
             
@@ -565,6 +584,7 @@
                     color = group.ColorName,
                     size = size.Size,
                     stock = size.Stock,
+                    is_hidden = size.IsHidden,
                     existing_image = group.ExistingImage,
                     image = group.ImageFile,
                     image_preview_url = group.ImagePreviewUrl
@@ -666,6 +686,7 @@
         public string? Sku { get; set; }
         public string Size { get; set; } = "";
         public int Stock { get; set; }
+        public bool IsHidden { get; set; }
     }
 
     private void NavigateBack()

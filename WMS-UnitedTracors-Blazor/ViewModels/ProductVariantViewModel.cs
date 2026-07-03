@@ -10,6 +10,7 @@ public class ProductVariantViewModel
     public string? color { get; set; }
     public string? size { get; set; }
     public int stock { get; set; }
+    public bool is_hidden { get; set; }
     public IBrowserFile? image { get; set; }
     public string? existing_image { get; set; }
     

@@ -13,7 +13,7 @@
 @inject IJSRuntime JSRuntime
 @rendermode InteractiveServer
 
-<PageTitle>WMS - Dashboard</PageTitle>
+<PageTitle>WMS - Home Page</PageTitle>
 
 @if (!string.IsNullOrEmpty(ErrorMessage))
 {
@@ -164,11 +164,11 @@
     
     @* Quick Actions *@
     <div class="flex flex-wrap items-center gap-3 mb-8">
-        <a href="/Catalog/Borrow" class="inline-flex items-center gap-2 px-[1.1rem] py-[0.6rem] bg-[#3b82f6] hover:bg-[#2563eb] active:scale-[0.98] text-white text-[0.75rem] font-bold tracking-[0.06em] uppercase rounded-lg transition">
+        <a href="/Catalog/Borrow" class="inline-flex items-center gap-2 px-[1.1rem] py-[0.6rem] bg-[#1a1a1a] hover:bg-[#333333] active:scale-[0.98] text-white text-[0.75rem] font-bold tracking-[0.06em] uppercase rounded-lg transition">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
             Katalog Pinjam
         </a>
-        <a href="/Catalog/Giveaway" class="inline-flex items-center gap-2 px-[1.1rem] py-[0.6rem] bg-[#3b82f6] hover:bg-[#2563eb] active:scale-[0.98] text-white text-[0.75rem] font-bold tracking-[0.06em] uppercase rounded-lg transition">
+        <a href="/Catalog/Giveaway" class="inline-flex items-center gap-2 px-[1.1rem] py-[0.6rem] bg-[#1a1a1a] hover:bg-[#333333] active:scale-[0.98] text-white text-[0.75rem] font-bold tracking-[0.06em] uppercase rounded-lg transition">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
             Katalog Ambil
         </a>
@@ -298,134 +298,6 @@
         </a>
     </div>
 
-    @* NOTE: old catalog section removed — use /Catalog/Borrow and /Catalog/Giveaway *@
-    @if (false) {
-    <div class="bg-white border border-[#e5e3dc] rounded-xl overflow-hidden shadow-sm">
-        @* Header *@
-        <div class="px-6 py-4 border-b border-[#f0ede5] flex flex-col gap-4">
-            <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                <div>
-                    <h3 class="text-xl font-bold text-[#1a1a1a]">Product Catalog</h3>
-                    <p class="text-[1rem] text-[#8a8880] mt-0.5">Daftar barang yang tersedia di gudang</p>
-                </div>
-                <div class="w-full sm:w-64 shrink-0 relative">
-                    <input type="text" 
-                            @bind="SearchQuery" 
-                            @bind:event="oninput" 
-                            placeholder="Cari nama barang atau SKU..." 
-                            class="w-full pl-10 pr-4 py-2 bg-[#f9f8f6] border border-[#e5e3dc] rounded-full text-sm font-semibold text-[#5a5855] focus:outline-none focus:ring-2 focus:ring-[#e8a000] focus:bg-white transition-all" />
-                    <svg class="w-4 h-4 text-[#8a8880] absolute left-3.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                </div>
-            </div>
-
-            @* Category Pills *@
-            @if (Categories != null && Categories.Any()) {
-            <div class="flex items-center gap-2 mt-4 overflow-x-auto pb-1">
-                <button @onclick="() => FilterByCategory(null)"
-                   class="px-3 py-1 bg-white border border-[#e5e3dc] hover:border-[#1a1a1a] text-xs font-semibold text-[#5a5855] hover:text-[#1a1a1a] rounded-full transition cursor-pointer shrink-0 @(!SelectedCategoryId.HasValue ? "!bg-[#1a1a1a] !border-[#1a1a1a] !text-white hover:!text-white" : "")">
-                    All
-                </button>
-                @foreach(var cat in Categories) {
-                    <button @onclick="() => FilterByCategory(cat.id)"
-                       class="px-3 py-1 bg-white border border-[#e5e3dc] hover:border-[#1a1a1a] text-xs font-semibold text-[#5a5855] hover:text-[#1a1a1a] rounded-full transition cursor-pointer shrink-0 @(SelectedCategoryId == cat.id ? "!bg-[#1a1a1a] !border-[#1a1a1a] !text-white hover:!text-white" : "")">
-                        @cat.name
-                    </button>
-                }
-            </div>
-            }
-        </div>
-
-        @* Table *@
-        @if(CatalogProducts == null) {
-             <div class="px-6 py-16 text-center text-[#8a8880]">Loading...</div>
-        }
-        else if(CatalogProducts.Any()) {
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 p-4" id="catalogGrid">
-            @foreach(var product in CatalogProducts) {
-                
-            <div @onclick="() => OpenProductModal(product)" class="bg-white border border-[#e5e3dc] rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 hover:border-[#e8a000] transition-all duration-300 flex flex-col group product-item cursor-pointer text-left focus:outline-none focus:ring-2 focus:ring-[#e8a000]" tabindex="0" role="button">
-                @* Image Container *@
-                <div class="aspect-square relative bg-[#f5f4f0] flex items-center justify-center overflow-hidden border-b border-[#f0ede5]">
-                    <img src="@GetProductDisplayImage(product)" alt="@product.name" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.onerror=null;this.src='https://placehold.co/600x400?text=No+Picture';">
-                    
-                    @* Stock Badges Overlay *@
-                    <div class="absolute top-2 left-2 flex flex-col gap-1">
-                        @if(product.current_stock <= 0) {
-                            <span class="px-2 py-0.5 bg-[#fef0f0] border border-[#f8c0c0] text-[#d94040] text-[0.6rem] font-bold rounded shadow-sm tracking-wider uppercase">Habis</span>
-                        }
-                    </div>
-                </div>
-                
-                @* Product Info *@
-                <div class="p-3.5 flex flex-col flex-grow">
-                    <div class="flex items-center justify-between gap-1 mb-1.5">
-                        <span class="text-[0.65rem] font-bold text-[#8a8880] truncate group-hover:text-[#e8a000] transition-colors">
-                            @(product.Category != null ? product.Category.name : "--")
-                        </span>
-                        <code class="text-[0.55rem] font-medium text-[#8a8880] bg-[#f0ede5] px-1.5 py-0.5 rounded">@product.sku</code>
-                    </div>
-                    
-                    <h4 class="text-base font-extrabold text-[#1a1a1a] leading-snug line-clamp-4 mb-3 flex-grow group-hover:text-[#e8a000] transition-colors" title="@product.name">
-                        @product.name
-                    </h4>
-                    
-                    @* Stock Info *@
-                    <div class="mt-auto">
-                        <div class="flex items-center justify-between text-xs pb-1 border-b border-transparent">
-                            <div class="flex flex-col gap-0.5">
-                                <span class="text-[#8a8880] text-[0.65rem]">Kredit</span>
-                                @if (product.is_returnable == 1 || product.transaction_type == "BORROW")
-                                {
-                                    <span class="font-bold text-[#8a8880]">-</span>
-                                }
-                                else
-                                {
-                                    <span class="font-bold text-[#e8a000]">@product.value <span class="font-normal text-[0.65rem] text-[#8a8880]">pts</span></span>
-                                }
-                            </div>
-                            <div class="flex flex-col gap-0.5 text-right">
-                                <span class="text-[#8a8880] text-[0.65rem]">Stok</span>
-                                <span class="font-bold @(product.current_stock <= 0 ? "text-[#d94040]" : "text-[#1a7a30]")">
-                                    @product.current_stock <span class="font-normal text-[0.65rem] text-[#8a8880]">@(product.Unit != null ? product.Unit.name : "unit")</span>
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            }
-        </div>
-        
-        @* Pagination *@
-        @if (TotalPages > 1) {
-        <div class="px-6 py-4 border-t border-[#f0ede5] flex justify-center">
-            <div class="flex items-center gap-1 bg-[#f9f8f6] p-1.5 rounded-lg border border-[#e5e3dc]">
-                <button @onclick="() => LoadData(CurrentPage - 1)" disabled="@(CurrentPage == 1)" class="w-8 h-8 flex items-center justify-center rounded text-[#5a5855] hover:bg-white hover:text-[#1a1a1a] hover:shadow-sm disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:shadow-none transition-all">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-                </button>
-                
-                @for(int i = 1; i <= TotalPages; i++) {
-                    int pageNumber = i;
-                    <button @onclick="() => LoadData(pageNumber)" class="w-8 h-8 flex items-center justify-center rounded text-xs font-bold transition-all @(CurrentPage == pageNumber ? "bg-[#1a1a1a] text-white shadow-sm" : "text-[#5a5855] hover:bg-white hover:text-[#1a1a1a] hover:shadow-sm")">
-                        @pageNumber
-                    </button>
-                }
-
-                <button @onclick="() => LoadData(CurrentPage + 1)" disabled="@(CurrentPage == TotalPages)" class="w-8 h-8 flex items-center justify-center rounded text-[#5a5855] hover:bg-white hover:text-[#1a1a1a] hover:shadow-sm disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:shadow-none transition-all">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                </button>
-            </div>
-        </div>
-        }
-        
-        } else {
-        <div class="px-6 py-16 text-center">
-            <p class="text-[0.85rem] text-[#8a8880]">No products found.</p>
-        </div>
-        }
-    </div>
-
-    } @* end @if(false) - old catalog section *@
 
     @* Footer *@
     <div class="flex items-center justify-between mt-8 pt-6 border-t border-[#e5e3dc] text-[0.72rem] text-[#8a8880]">
@@ -442,121 +314,7 @@
 <CartCheckout />
 
 
-@if (false)
-{
-    <div id="borrowModal" class="fixed inset-0 z-[60] flex" role="dialog" aria-modal="true">
-        <div class="fixed inset-0 backdrop-blur-sm transition-opacity bg-[#1a1a1a]/65" @onclick="() => ShowCartModal = false"></div>
-        <div class="fixed inset-0 z-10 overflow-y-auto" @onclick="() => ShowCartModal = false">
-            <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
-                <div class="relative transform overflow-hidden rounded-xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg border border-[#e5e3dc]" @onclick:stopPropagation="true">
-                    
-                    <div class="bg-white px-6 pt-6 pb-4">
-                        <div class="flex items-center justify-between mb-5">
-                            <h3 class="font-syne text-[1.05rem] font-bold text-[#1a1a1a]">Request Items</h3>
-                            <button type="button" @onclick="CloseCartModal" class="text-[#a09e99] bg-transparent border-0 cursor-pointer p-1 hover:text-gray-700 transition">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                            </button>
-                        </div>
 
-                        @if(!string.IsNullOrEmpty(ErrorMessage))
-                        {
-                            <div class="mb-4 flex items-center gap-3 bg-[#fef0f0] border border-[#f8c0c0] text-[#d94040] px-4 py-3 rounded-lg text-sm font-semibold">
-                                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                                @ErrorMessage
-                            </div>
-                        }
-                        @if(!CartService.Items.Any())
-                        {
-                            <div class="text-center py-8">
-                                <p class="text-sm text-[#8a8880]">Keranjang kosong. Silakan tambahkan barang dari katalog.</p>
-                            </div>
-                        }
-                        else
-                        {
-                            <div class="mt-4 mb-4 bg-[#faf9f5] p-4 rounded-[10px] border border-[#e5e3dc]">
-                                <div class="flex justify-between items-center mb-2">
-                                    <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880]">Items to Borrow</label>
-                                </div>
-                                <div class="space-y-3 max-h-60 overflow-y-auto pr-2">
-                                    @foreach(var item in CartService.Items)
-                                    {
-                                        <div class="bg-white border border-[#e5e3dc] rounded-xl p-3.5 flex flex-col gap-3 shadow-sm hover:border-gray-300 transition-colors">
-                                            <div class="flex items-center justify-between gap-3">
-                                                <div class="flex-1 min-w-0 text-left">
-                                                    <h4 class="text-xs font-bold text-[#1a1a1a] truncate" title="@item.Name">@item.Name</h4>
-                                                    <div class="flex items-center gap-1.5 mt-1 text-[10px] text-gray-500 font-semibold">
-                                                        <span>Sku: @item.Sku</span>
-                                                        <span>•</span>
-                                                        <span>Type: <span class="text-[#e8a000]">@item.RequestType</span></span>
-                                                    </div>
-                                                </div>
-                                                <div class="flex items-center gap-2 shrink-0">
-                                                    <div class="flex items-center border border-[#e5e3dc] rounded-lg overflow-hidden bg-white h-8">
-                                                        <button type="button" @onclick="() => { if(item.Quantity > 1) item.Quantity--; }" class="w-7 h-full flex items-center justify-center text-xs text-[#5a5855] hover:bg-[#f5f4f0] transition font-bold select-none">-</button>
-                                                        <input type="number" @bind="item.Quantity" @bind:event="oninput" min="1" max="@item.MaxStock" class="w-10 text-center py-0.5 text-xs outline-none bg-transparent font-bold">
-                                                        <button type="button" @onclick="() => { if(item.Quantity < item.MaxStock) item.Quantity++; }" class="w-7 h-full flex items-center justify-center text-xs text-[#5a5855] hover:bg-[#f5f4f0] transition font-bold select-none">+</button>
-                                                    </div>
-                                                    <button type="button" class="p-1.5 text-[#d94040] hover:bg-[#fef0f0] rounded-lg bg-transparent border border-transparent hover:border-[#f8c0c0] cursor-pointer transition shrink-0" @onclick="() => CartService.RemoveItem(item)" title="Hapus">
-                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    }
-                                </div>
-                                <div class="flex justify-between items-center mt-4 border-t border-[#e5e3dc] pt-3">
-                                    <span class="text-[0.65rem] font-bold tracking-wider uppercase text-[#8a8880]">Total Kredit Dibutuhkan</span>
-                                    <span class="text-[0.8rem] font-bold text-[#e8a000]">@CartService.GetTotalCredit() <span class="font-normal text-[0.65rem] text-[#8a8880]">pts</span></span>
-                                </div>
-                            </div>
-
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Nama Pemohon</label>
-                                    <input type="text" readonly value="@ApplicantName" class="w-full px-3.5 py-2.5 text-xs bg-[#ecebe8] border border-[#e5e3dc] rounded-lg outline-none text-[#5a5855] cursor-not-allowed">
-                                </div>
-                                <div>
-                                    <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">NRP Pemohon</label>
-                                    <input type="text" readonly value="@ApplicantNrp" class="w-full px-3.5 py-2.5 text-xs bg-[#ecebe8] border border-[#e5e3dc] rounded-lg outline-none text-[#5a5855] cursor-not-allowed">
-                                </div>
-                            </div>
-
-                            <div class="mt-4">
-                                <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Event / Program <span class="text-red-500">*</span></label>
-                                <input type="text" @bind="EventName" placeholder="Name of event or program" class="w-full px-3.5 py-2.5 text-xs bg-[#f5f4f0] border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none text-[#1a1a1a]">
-                            </div>
-
-                            <div class="mt-4">
-                                <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Tanggal Event <span class="text-red-500">*</span></label>
-                                <input type="date" @bind="EventDate" min="@TodayDateString" class="w-full px-3.5 py-2.5 text-xs bg-[#f5f4f0] border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none text-[#1a1a1a]">
-                            </div>
-
-
-
-                            <div class="mt-4">
-                                <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Catatan Tambahan</label>
-                                <textarea @bind="Notes" rows="2" placeholder="Optional notes..." class="w-full px-3.5 py-2.5 text-xs bg-[#f5f4f0] border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none text-[#1a1a1a] resize-none"></textarea>
-                            </div>
-                            <p class="text-[10px] text-gray-500 mt-2">* Wajib diisi</p>
-                        }
-                    </div>
-
-                    <div class="px-6 py-4 flex flex-row-reverse gap-3 bg-[#faf9f5] border-t border-[#f0ede5]">
-                        @if(CartService.Items.Count > 0)
-                        {
-                            <button type="button" @onclick="SubmitBorrowRequest" class="px-5 py-2.5 bg-[#e8a000] hover:bg-[#d49300] active:scale-[0.98] text-[#1a1a1a] text-xs font-bold tracking-wider rounded-lg transition cursor-pointer">
-                                Submit Request
-                            </button>
-                        }
-                                 <button type="button" @onclick="CloseCartModal" class="inline-flex justify-center px-5 py-2.5 bg-white border border-[#e5e3dc] hover:bg-[#f0ede5] text-[#3a3835] text-xs font-bold rounded-lg transition cursor-pointer">
-                                     Cancel
-                                 </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-}
 
 @* Riwayat Peminjam Modal *@
 @if (ShowBorrowHistoryModal && SelectedProduct != null)
@@ -672,18 +430,18 @@
 @* Add to Cart Modal (Olshop Style) Blazor Port *@
 @if (ShowProductModal && SelectedProduct != null)
 {
-    <div id="addToCartModal" class="fixed inset-0 z-[215] flex" role="dialog" aria-modal="true">
+    <div id="addToCartModal" class="fixed inset-0 z-[300] flex" role="dialog" aria-modal="true">
         <div class="fixed inset-0 backdrop-blur-sm transition-opacity bg-[#1a1a1a]/65" @onclick="CloseProductModal"></div>
-        <div class="fixed inset-0 z-10 overflow-y-auto transition-all flex items-end sm:items-center justify-center sm:p-4 text-center" @onclick="CloseProductModal">
-            <div class="relative transform overflow-hidden rounded-t-2xl sm:rounded-xl bg-white text-left shadow-2xl transition-all w-full max-w-5xl sm:my-8 border-t sm:border border-[#e5e3dc]" @onclick:stopPropagation="true">
-                <div class="px-5 py-4 border-b border-[#f0ede5] flex items-center justify-between sticky top-0 bg-white z-10">
+        <div class="fixed inset-0 z-10 overflow-y-auto md:pl-[var(--ut-sidebar-w)] transition-all flex items-start md:items-center justify-center p-4 md:p-4 text-center" @onclick="CloseProductModal">
+            <div class="relative transform rounded-2xl md:rounded-xl bg-white text-left shadow-2xl transition-all w-full max-w-5xl my-8 md:my-8 border-t md:border border-[#e5e3dc] flex flex-col md:max-h-[85vh]" @onclick:stopPropagation="true">
+                <div class="px-5 py-4 border-b border-[#f0ede5] flex items-center justify-between bg-white z-10 shrink-0 rounded-t-2xl md:rounded-t-xl">
                     <h3 class="font-bold text-[#1a1a1a] text-sm" id="addToCartTitle">Detail Produk</h3>
                     <button type="button" @onclick="CloseProductModal" class="text-[#a09e99] hover:text-[#1a1a1a] transition p-1 bg-[#f5f4f0] rounded-full">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </div>
                 
-                <div class="px-5 py-4 pb-20 sm:pb-4">
+                <div class="px-5 py-4 pb-8 md:pb-4 overflow-y-auto md:overflow-visible flex-1 min-h-0 md:min-h-auto">
                     @if(!string.IsNullOrEmpty(ErrorMessage))
                     {
                         <div class="mb-4 flex items-center gap-3 bg-[#fef0f0] border border-[#f8c0c0] text-[#d94040] px-4 py-3 rounded-lg text-sm font-semibold">
@@ -895,7 +653,6 @@
     private string? ErrorMessage;
     
     private bool ShowProductModal = false;
-    private bool ShowCartModal = false;
     private bool ShowBorrowHistoryModal = false;
     private List<Transaction>? ProductRequestHistory;
     private bool IsProductHistoryLoading = false;
@@ -929,7 +686,6 @@
         get => CartService.EventDate;
         set => CartService.EventDate = value;
     }
-    private string? DocumentationLink;
     private string? Notes
     {
         get => CartService.Notes;
@@ -1058,6 +814,8 @@
         ModalImages = ModalImages.Where(i => !string.IsNullOrEmpty(i)).Distinct().ToList();
         SelectedMainImage = ModalImages.FirstOrDefault() ?? "https://placehold.co/600x400?text=No+Picture";
         
+        // Variants are already filtered by EF Core Include (is_hidden == 0)
+
         if (product.ProductVariants != null && product.ProductVariants.Any())
         {
             var firstVar = product.ProductVariants.First();
@@ -1354,135 +1112,6 @@
         await InvokeAsync(StateHasChanged);
     }
     
-    private void CloseCartModal()
-    {
-        ShowCartModal = false;
-        ErrorMessage = null;
-    }
-
-    private async Task SubmitBorrowRequest()
-    {
-        try
-        {
-            ErrorMessage = null;
-
-            // Validasi form
-            if (CartService.Items.Count == 0)
-            {
-                ErrorMessage = "Keranjang kosong. Silakan tambahkan barang terlebih dahulu.";
-                return;
-            }
-
-            if (string.IsNullOrWhiteSpace(ApplicantName))
-            {
-                ErrorMessage = "Nama Pemohon tidak boleh kosong.";
-                return;
-            }
-
-            if (string.IsNullOrWhiteSpace(ApplicantNrp))
-            {
-                ErrorMessage = "NRP Pemohon tidak boleh kosong.";
-                return;
-            }
-
-            if (string.IsNullOrWhiteSpace(EventName))
-            {
-                ErrorMessage = "Nama Event/Program wajib diisi.";
-                return;
-            }
-
-            if (!EventDate.HasValue)
-            {
-                ErrorMessage = "Tanggal Event wajib diisi.";
-                return;
-            }
-
-            if (EventDate.Value.Date < DateTime.Today)
-            {
-                ErrorMessage = "Tanggal Event tidak boleh sebelum hari ini.";
-                return;
-            }
-
-
-            // Validasi tanggal peminjaman (transaction-level)
-            if (CartService.Items.Any(i => i.RequestType == "BORROW"))
-            {
-                if (!CartService.BorrowStartDate.HasValue || !CartService.BorrowEndDate.HasValue)
-                {
-                    ErrorMessage = "Tanggal pinjam dan tanggal kembali harus diisi untuk item BORROW.";
-                    return;
-                }
-                if (CartService.BorrowStartDate.Value.Date < DateTime.Today)
-                {
-                    ErrorMessage = "Tanggal peminjaman tidak boleh di masa lalu.";
-                    return;
-                }
-                if (CartService.BorrowEndDate.Value.Date <= CartService.BorrowStartDate.Value.Date)
-                {
-                    ErrorMessage = "Tanggal pengembalian tidak boleh sebelum atau sama dengan tanggal peminjaman.";
-                    return;
-                }
-            }
-
-            // Validasi tanggal pengambilan (transaction-level)
-            if (CartService.Items.Any(i => i.RequestType == "GIVEAWAY"))
-            {
-                if (!CartService.GiveawayPickupDate.HasValue)
-                {
-                    ErrorMessage = "Tanggal pengambilan harus diisi untuk item GIVEAWAY.";
-                    return;
-                }
-                if (CartService.GiveawayPickupDate < DateTime.Today)
-                {
-                    ErrorMessage = "Tanggal pengambilan tidak boleh di masa lalu.";
-                    return;
-                }
-            }
-
-            // Siapkan request
-            var req = new UT_WMSDotnet.ViewModels.TransactionRequestViewModel
-            {
-                type = "OUT",
-                applicant_name = ApplicantName,
-                applicant_nrp = ApplicantNrp,
-                division_id = UserDivisionId,
-                event_name = EventName,
-                event_date = EventDate,
-                documentation_link = DocumentationLink,
-                notes = Notes,
-                items = CartService.Items.Select(i => new UT_WMSDotnet.ViewModels.TransactionItemViewModel
-                {
-                    sku = i.Sku,
-                    quantity = i.Quantity,
-                    request_type = i.RequestType,
-                    product_variant_id = i.ProductVariantId
-                }).ToList()
-            };
-
-            var error = await TransactionService.StoreTransactionAsync(req, CurrentUserId);
-            if (error == null)
-            {
-                CartService.ClearCart();
-                ShowCartModal = false;
-                EventName = null;
-                EventDate = null;
-                DocumentationLink = null;
-                Notes = null;
-                ErrorMessage = null;
-                
-                await Task.Delay(500);
-                Navigation.NavigateTo("/Tracking");
-            }
-            else
-            {
-                ErrorMessage = error;
-            }
-        }
-        catch (Exception ex)
-        {
-            ErrorMessage = "Terjadi kesalahan: " + ex.Message;
-        }
-    }
     public void Dispose()
     {
         CartService.OnChange -= StateHasChanged;
