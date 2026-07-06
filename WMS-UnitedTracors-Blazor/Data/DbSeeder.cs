@@ -133,16 +133,17 @@ public class DbSeeder
 
         var usersToSeed = new List<User>
         {
-            new User { email = "superadmin@wms.com", name = "Super Administrator", role = "superadmin" },
-            new User { email = "admin@wms.com", name = "Admin User", role = "admin" },
-            new User { email = "manager@wms.com", name = "Manager User", role = "manager" },
-            new User { email = "staff@wms.com", name = "Staff User", role = "staff" }
+            new User { email = "superadmin@wms.com",    name = "Super Administrator",        role = "superadmin" },
+            new User { email = "si@wms.com",            name = "Ceri (Staff Inventoris)",    role = "Staff Inventoris" },
+            new User { email = "admin@wms.com",         name = "Della (Admin)",              role = "Team Leader Infrastructure" },
+            new User { email = "manager@wms.com",       name = "Anwari (Manager)",           role = "Manager" },
+            new User { email = "user@wms.com",          name = "User",                       role = "User" },
         };
 
         foreach (var u in usersToSeed)
         {
-            var exists = await _context.Set<User>().AnyAsync(x => x.email == u.email);
-            if (!exists)
+            var existingUser = await _context.Set<User>().FirstOrDefaultAsync(x => x.email == u.email);
+            if (existingUser == null)
             {
                 u.password = BCrypt.Net.BCrypt.HashPassword("password");
                 u.poin = 1000;
@@ -153,6 +154,7 @@ public class DbSeeder
         }
         await _context.SaveChangesAsync();
     }
+
 
     private async Task SeedDefaultAdminRolesAsync()
     {

@@ -552,7 +552,7 @@ public class ApprovalService
         {
             if (isApproved)
             {
-                item.status = WorkflowStatuses.WaitingAdminHandover;
+                item.status = WorkflowStatuses.Approved;
                 item.rejection_reason = null;
             }
             else
@@ -571,7 +571,7 @@ public class ApprovalService
             var firstMatched = matched.First();
             if (isApproved)
             {
-                _ = NotifyUserAsync(firstMatched, "Konfirmasi Serah Terima", "Bukti serah terima Anda telah dikonfirmasi dan sedang menunggu verifikasi final dari Admin.");
+                _ = NotifyUserAsync(firstMatched, "Konfirmasi Serah Terima Selesai", "Bukti serah terima Anda telah dikonfirmasi dan proses peminjaman telah disetujui.");
             }
             else
             {

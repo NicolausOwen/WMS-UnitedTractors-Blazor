@@ -745,7 +745,7 @@ public class TransactionService
         {
             if (isApproved)
             {
-                item.status = WorkflowStatuses.WaitingAdminHandover;
+                item.status = WorkflowStatuses.Approved;
                 item.rejection_reason = null;
             }
             else

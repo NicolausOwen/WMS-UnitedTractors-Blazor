@@ -235,7 +235,17 @@ if (app.Environment.IsDevelopment() ||
                     ('20260605013419_AddHandoverFields', '9.0.0'),
                     ('20260608062936_UpdateDatabase', '9.0.0'),
                     ('20260608081019_AddAdminRoles', '9.0.0'),
-                    ('20260609063238_FixTransactionStatusColumn', '9.0.0');
+                    ('20260609013724_AddCategoryIdToUserAdminRole', '9.0.0'),
+                    ('20260609063238_FixTransactionStatusColumn', '9.0.0'),
+                    ('20260609090000_AddGiveawayWorkflowFields', '9.0.0'),
+                    ('20260610030048_RemoveUsersRoleCheckConstraint', '9.0.0'),
+                    ('20260610040000_MakeDocumentationPhotoText', '9.0.0'),
+                    ('20260610104700_AddHandoverUploadedBy', '9.0.0'),
+                    ('20260610110633_AddOriginalFieldsToTransaction', '9.0.0'),
+                    ('20260611000000_AddEventEndDate', '9.0.0'),
+                    ('20260611040021_AddIsHiddenToProduct', '9.0.0'),
+                    ('20260611044913_AddIsHiddenToVariant', '9.0.0'),
+                    ('20260706022150_AddPermissionsToAdminRoles', '9.0.0');
                 ");
             }
         }
