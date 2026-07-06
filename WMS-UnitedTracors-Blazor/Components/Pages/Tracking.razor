@@ -174,8 +174,7 @@
                     var isWaitingAdminHandover = hasBorrow && borrowItemsOnly.Any(i => i.status == "WAITING_ADMIN_HANDOVER");
                     var handoverDone = hasBorrow && borrowItemsOnly.Any(i => i.status == "APPROVED" && !string.IsNullOrEmpty(i.handover_photo));
                     // Tombol upload hanya saat menunggu bukti dari user (WAITING_HANDOVER), bukan saat menunggu verifikasi admin.
-                    var canHandover = hasBorrow && borrowItemsOnly.Any(i => i.status == "WAITING_HANDOVER")
-                                      && firstItem.requester_id == CurrentUserId;
+                    var canHandover = false; // Hanya SI yang bisa mengunggah bukti serah terima melalui Dashboard Approval
                     var isWaitingUserConfirm = hasBorrow && borrowItemsOnly.Any(i =>
                         i.status == "WAITING_HANDOVER_CONFIRM" &&
                         (i.handover_uploaded_by == "SI" || string.IsNullOrEmpty(i.handover_uploaded_by)));
@@ -800,7 +799,7 @@
                                                                     @{
                                                                         var canReturn = usage.status == "APPROVED" && usage.request_type == "BORROW" && usage.returned_quantity < usage.quantity && (usage.pending_return_quantity ?? 0) == 0;
                                                                         var isReturnDraft = usage.status == "APPROVED" && usage.request_type == "BORROW" && (usage.pending_return_quantity ?? 0) > 0 && usage.is_return_draft == 1;
-                                                                        var canManageDraft = isReturnDraft && (usage.requester_id == CurrentUserId || userPrincipal.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalReturn));
+                                                                        var canManageDraft = isReturnDraft && (usage.requester_id == CurrentUserId || userPrincipal.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalHandover));
                                                                         var canRevise = usage.status == "REVISION" || usage.status == "REVISION_BY_STAFF_INVENTORY" || usage.status == "REVISION_BY_ADMIN" || usage.status == "REVISION_BY_MANAGER";
                                                                         var hasAction = canReturn || canManageDraft || canRevise;
                                                                     }
@@ -808,7 +807,7 @@
                                                                     {
                                                                         <div class="flex items-center justify-end gap-1.5 flex-wrap">
                                                                             <button type="button" @onclick="() => OpenReturnModal(usage, false)" class="text-[9px] px-2 py-0.5 bg-white border border-[#e5e3dc] rounded hover:border-[#1a1a1a] transition font-bold whitespace-nowrap">Return Item</button>
-                                                                            @if (userPrincipal.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalReturn))
+                                                                            @if (userPrincipal.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalHandover))
                                                                             {
                                                                                 <button type="button" @onclick="() => OpenReturnModal(usage, true)" class="text-[9px] px-2 py-0.5 bg-[#1a1a1a] text-white rounded hover:bg-[#333] transition font-bold whitespace-nowrap">Force Return</button>
                                                                             }
@@ -943,7 +942,7 @@
                                                         @{
                                                             var canReturnMobile = usage.status == "APPROVED" && usage.request_type == "BORROW" && usage.returned_quantity < usage.quantity && (usage.pending_return_quantity ?? 0) == 0;
                                                             var isReturnDraftMobile = usage.status == "APPROVED" && usage.request_type == "BORROW" && (usage.pending_return_quantity ?? 0) > 0 && usage.is_return_draft == 1;
-                                                            var canManageDraftMobile = isReturnDraftMobile && (usage.requester_id == CurrentUserId || userPrincipal.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalReturn));
+                                                            var canManageDraftMobile = isReturnDraftMobile && (usage.requester_id == CurrentUserId || userPrincipal.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalHandover));
                                                             var canReviseMobile = usage.status == "REVISION" || usage.status == "REVISION_BY_STAFF_INVENTORY" || usage.status == "REVISION_BY_ADMIN" || usage.status == "REVISION_BY_MANAGER";
                                                             var hasActionMobile = canReturnMobile || canManageDraftMobile || canReviseMobile;
                                                         }
@@ -953,7 +952,7 @@
                                                                 @if (canReturnMobile)
                                                                 {
                                                                     <button type="button" @onclick="() => OpenReturnModal(usage, false)" class="text-[9px] px-2 py-1 bg-white border border-[#e5e3dc] rounded hover:border-[#1a1a1a] transition font-bold whitespace-nowrap">Return Item</button>
-                                                                    @if (userPrincipal.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalReturn))
+                                                                    @if (userPrincipal.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalHandover))
                                                                     {
                                                                         <button type="button" @onclick="() => OpenReturnModal(usage, true)" class="text-[9px] px-2 py-1 bg-[#1a1a1a] text-white rounded hover:bg-[#333] transition font-bold whitespace-nowrap">Force Return</button>
                                                                     }

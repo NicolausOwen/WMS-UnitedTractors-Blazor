@@ -335,7 +335,6 @@ public class TransactionService
             perms.Contains(WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalStage2) ||
             perms.Contains(WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalManager) ||
             perms.Contains(WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalHandover) ||
-            perms.Contains(WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalReturn) ||
             perms.Contains(WMS_UnitedTracors_Blazor.Helpers.Permissions.ProductsManage);
 
         if (!isApproverOrAdmin)
@@ -821,7 +820,7 @@ public class TransactionService
             item.documentation_photo = JsonSerializer.Serialize(photoPaths);
             item.documentation_notes = notes;
             item.documentation_uploaded_at = DateTime.UtcNow;
-            item.status = WorkflowStatuses.WaitingAdminDocumentation;
+            item.status = WorkflowStatuses.Completed; // Langsung COMPLETED tanpa perlu verifikasi admin lagi
             item.updated_at = DateTime.UtcNow;
             _context.Transactions.Update(item);
         }

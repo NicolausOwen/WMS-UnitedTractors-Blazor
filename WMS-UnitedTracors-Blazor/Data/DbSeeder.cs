@@ -136,6 +136,7 @@ public class DbSeeder
             new User { email = "superadmin@wms.com",    name = "Super Administrator",        role = "superadmin" },
             new User { email = "si@wms.com",            name = "Ceri (Staff Inventoris)",    role = "Staff Inventoris" },
             new User { email = "admin@wms.com",         name = "Della (Admin)",              role = "Team Leader Infrastructure" },
+            new User { email = "pic@wms.com",           name = "Taruna (PIC Studio)",        role = "PIC Studio" },
             new User { email = "manager@wms.com",       name = "Anwari (Manager)",           role = "Manager" },
             new User { email = "user@wms.com",          name = "User",                       role = "User" },
         };

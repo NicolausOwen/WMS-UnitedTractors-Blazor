@@ -69,7 +69,7 @@ public class TrackingService
 
         bool isSuperAdmin = Permissions.All.All(p => perms.Contains(p));
         bool canManageOrApprove = perms.Contains(Permissions.ApprovalStage1) || perms.Contains(Permissions.ApprovalStage2) ||
-                                  perms.Contains(Permissions.ApprovalHandover) || perms.Contains(Permissions.ApprovalReturn) ||
+                                  perms.Contains(Permissions.ApprovalHandover) ||
                                   perms.Contains(Permissions.ProductsManage);
 
         IQueryable<Transaction> query;

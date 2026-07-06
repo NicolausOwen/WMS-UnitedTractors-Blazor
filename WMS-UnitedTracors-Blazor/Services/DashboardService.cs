@@ -123,7 +123,7 @@ public class DashboardService
         var actorRole = actor != null ? await _context.AdminRoles.FirstOrDefaultAsync(r => r.RoleName == actor.role && r.IsActive) : null;
         var perms = WMS_UnitedTracors_Blazor.Helpers.Permissions.Resolve(actor?.role, actorRole?.Permissions);
         bool seesAll = perms.Contains(WMS_UnitedTracors_Blazor.Helpers.Permissions.ProductsManage) ||
-                       perms.Contains(WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalReturn);
+                       perms.Contains(WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalHandover);
 
         if (!seesAll)
         {

@@ -36,7 +36,6 @@ public class ApprovalService
                                 perms.Contains(Permissions.ApprovalStage2) || 
                                 perms.Contains(Permissions.ApprovalHandover) || 
                                 perms.Contains(Permissions.ApprovalHandoverFinal) || 
-                                perms.Contains(Permissions.ApprovalReturn) ||
                                 perms.Contains(Permissions.UsersManage);
 
         if (hasApprovalPerms || isSuperAdmin)
@@ -76,7 +75,7 @@ public class ApprovalService
         var pendingProfileRequests = new List<ProfileRequest>();
         var groupedHandovers = new Dictionary<string, List<Transaction>>();
 
-        if (perms.Contains(Permissions.ApprovalReturn))
+        if (perms.Contains(Permissions.ApprovalHandover))
         {
             var returnsQuery = _context.Transactions
                 .Include(t => t.Product)
@@ -450,7 +449,7 @@ public class ApprovalService
         if (transaction == null) return "Transaction not found.";
 
         var perms = await ResolvePermsAsync(_context, currentUserId);
-        if (!perms.Contains(Permissions.ApprovalReturn)) return "Unauthorized action.";
+        if (!perms.Contains(Permissions.ApprovalHandover)) return "Unauthorized action.";
         
         if (transaction.status != WorkflowStatuses.Approved || transaction.pending_return_quantity <= 0 || transaction.is_return_draft != 0)
             return "Transaction is not pending return approval.";
@@ -494,6 +493,32 @@ public class ApprovalService
             transaction.updated_at = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
+
+            // Kirim notifikasi email ke Admin (TL / PIC Studio)
+            try
+            {
+                var admins = await _context.Users
+                    .Where(u => u.role == "Team Leader Infrastructure" || u.role == "PIC Studio" || u.role == "admin")
+                    .Select(u => u.email)
+                    .ToListAsync();
+
+                if (admins.Any())
+                {
+                    var product = transaction.Product?.name ?? "Barang";
+                    var applicant = transaction.applicant_name ?? "User";
+                    var condition = transaction.return_condition ?? "baik";
+                    
+                    string mailTitle = "Notifikasi Pengembalian Barang";
+                    string mailMessage = $"Barang <strong>{product}</strong> sejumlah {qty} unit yang dipinjam oleh {applicant} telah dikembalikan dalam kondisi <strong>{condition}</strong>. Pengembalian telah diverifikasi oleh Staff Inventoris.";
+                    string html = GetEmailTemplate(mailTitle, mailMessage);
+                    _ = _emailService.SendEmailToMultipleAsync(admins, "Notifikasi Pengembalian Barang (WMS UT)", html);
+                }
+            }
+            catch (Exception)
+            {
+                // Jangan menggagalkan transaksi jika pengiriman email notifikasi gagal
+            }
+
             return null;
         }
         catch (Exception ex)
@@ -621,7 +646,7 @@ public class ApprovalService
         if (transaction == null) return "Transaction not found.";
 
         var perms = await ResolvePermsAsync(_context, currentUserId);
-        if (!perms.Contains(Permissions.ApprovalReturn)) return "Unauthorized action.";
+        if (!perms.Contains(Permissions.ApprovalHandover)) return "Unauthorized action.";
         
         if (transaction.status != WorkflowStatuses.Approved || transaction.pending_return_quantity <= 0 || transaction.is_return_draft != 0)
             return "Transaction is not pending return approval.";
