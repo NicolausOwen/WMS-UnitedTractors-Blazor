@@ -30,7 +30,7 @@ public class DbSeeder
 
     private async Task ExecuteSqlDumpAsync()
     {
-        var sqlFilePath = Path.Combine(Directory.GetCurrentDirectory(), "Migrations", "Seeders", "wms_united_tractors_clean.sql");
+        var sqlFilePath = Path.Combine(Directory.GetCurrentDirectory(), "Migrations", "Seeders", "ut_wms_db.sql");
         if (!File.Exists(sqlFilePath))
         {
             _logger.LogWarning($"File SQL dump tidak ditemukan di {sqlFilePath}");
@@ -47,35 +47,55 @@ public class DbSeeder
         _logger.LogInformation("Mengeksekusi SQL dump...");
         var sqlContent = await File.ReadAllTextAsync(sqlFilePath);
 
-        // Hapus CREATE TABLE, ALTER TABLE, DROP TABLE agar tidak bentrok dengan EF Core Migrations
+        // Hapus CREATE TABLE, ALTER TABLE, DROP TABLE, dll agar tidak bentrok dengan EF Core Migrations
         sqlContent = Regex.Replace(sqlContent, @"CREATE TABLE[\s\S]*?;\r?\n", "", RegexOptions.IgnoreCase);
         sqlContent = Regex.Replace(sqlContent, @"DROP TABLE[\s\S]*?;\r?\n", "", RegexOptions.IgnoreCase);
         sqlContent = Regex.Replace(sqlContent, @"ALTER TABLE[\s\S]*?;\r?\n", "", RegexOptions.IgnoreCase);
+        sqlContent = Regex.Replace(sqlContent, @"DROP PROCEDURE[\s\S]*?;\r?\n", "", RegexOptions.IgnoreCase);
+        sqlContent = Regex.Replace(sqlContent, @"CREATE PROCEDURE[\s\S]*?;\r?\n", "", RegexOptions.IgnoreCase);
+        
+        // Hapus perintah kontrol transaksi & sesi yang tidak kompatibel
+        sqlContent = Regex.Replace(sqlContent, @"START TRANSACTION;?\r?\n?", "", RegexOptions.IgnoreCase);
+        sqlContent = Regex.Replace(sqlContent, @"COMMIT;?\r?\n?", "", RegexOptions.IgnoreCase);
+        sqlContent = Regex.Replace(sqlContent, @"SET FOREIGN_KEY_CHECKS\s*=\s*\d+;?\r?\n?", "", RegexOptions.IgnoreCase);
+        sqlContent = Regex.Replace(sqlContent, @"SET SQL_MODE\s*=.*?;?\r?\n?", "", RegexOptions.IgnoreCase);
+        sqlContent = Regex.Replace(sqlContent, @"SET time_zone\s*=.*?;?\r?\n?", "", RegexOptions.IgnoreCase);
+        sqlContent = Regex.Replace(sqlContent, @"/\*!.*?\*/;?\r?\n?", "", RegexOptions.IgnoreCase);
 
-        // Hapus INSERT INTO untuk tabel-tabel Laravel internal yang tidak ada di EF Core
-        var ignoredTables = new[] { "migrations", "sessions", "password_reset_tokens", "personal_access_tokens", "cache", "cache_locks", "jobs", "job_batches" };
+        // Hapus INSERT INTO untuk tabel-tabel internal yang tidak ada di EF Core
+        var ignoredTables = new[] { "migrations", "sessions", "password_reset_tokens", "personal_access_tokens", "cache", "cache_locks", "jobs", "job_batches", "__EFMigrationsHistory" };
         foreach (var table in ignoredTables)
         {
-            // Match until ); at the end of the line to avoid matching semicolons inside strings
             sqlContent = Regex.Replace(sqlContent, $@"INSERT INTO `{table}`[\s\S]*?\);\r?\n", "", RegexOptions.IgnoreCase);
         }
 
-        // Eksekusi sisa SQL (INSERT INTO)
-        try
+        // Pisahkan tiap pernyataan INSERT dan jalankan satu per satu
+        // (MySqlConnector default tidak support multi-statement)
+        var statements = sqlContent
+            .Split(new[] { ";\n", ";\r\n" }, StringSplitOptions.RemoveEmptyEntries)
+            .Select(s => s.Trim())
+            .Where(s => s.StartsWith("INSERT", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        _logger.LogInformation($"Menjalankan {statements.Count} pernyataan INSERT dari SQL dump...");
+
+        int successCount = 0, failCount = 0;
+        await _context.Database.ExecuteSqlRawAsync("SET FOREIGN_KEY_CHECKS = 0;");
+        foreach (var stmt in statements)
         {
-            // Jalankan semua SQL mentah dengan menonaktifkan pengecekan Foreign Key sementara
-            var finalSql = "SET FOREIGN_KEY_CHECKS = 0;\n" + sqlContent + "\nSET FOREIGN_KEY_CHECKS = 1;";
-            await _context.Database.ExecuteSqlRawAsync(finalSql);
-            _logger.LogInformation("Berhasil mengeksekusi SQL dump.");
-            
-            // 1. Masukkan divisions
-            await SeedDivisionsAsync();
+            try
+            {
+                await _context.Database.ExecuteSqlRawAsync(stmt + ";");
+                successCount++;
+            }
+            catch (Exception ex)
+            {
+                failCount++;
+                _logger.LogWarning($"[SKIP] INSERT gagal: {ex.Message.Substring(0, Math.Min(100, ex.Message.Length))}");
+            }
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Gagal mengeksekusi SQL dump.");
-            throw;
-        }
+        await _context.Database.ExecuteSqlRawAsync("SET FOREIGN_KEY_CHECKS = 1;");
+        _logger.LogInformation($"SQL dump selesai. Berhasil: {successCount}, Gagal/Skip: {failCount}");
     }
 
     private async Task SeedDivisionsAsync()

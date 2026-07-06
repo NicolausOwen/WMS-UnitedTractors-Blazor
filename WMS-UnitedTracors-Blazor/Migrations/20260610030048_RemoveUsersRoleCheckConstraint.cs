@@ -10,7 +10,24 @@ namespace ut_wms_asp.net.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.Sql("ALTER TABLE users DROP CHECK CK_users_role;");
+            migrationBuilder.Sql(@"
+                DROP PROCEDURE IF EXISTS DropCheckConstraint;
+                CREATE PROCEDURE DropCheckConstraint()
+                BEGIN
+                    DECLARE CONTINUE HANDLER FOR SQLEXCEPTION BEGIN END;
+                    SET @sql1 = 'ALTER TABLE users DROP CONSTRAINT CK_users_role';
+                    PREPARE stmt1 FROM @sql1;
+                    EXECUTE stmt1;
+                    DEALLOCATE PREPARE stmt1;
+                    
+                    SET @sql2 = 'ALTER TABLE users DROP CHECK CK_users_role';
+                    PREPARE stmt2 FROM @sql2;
+                    EXECUTE stmt2;
+                    DEALLOCATE PREPARE stmt2;
+                END;
+                CALL DropCheckConstraint();
+                DROP PROCEDURE DropCheckConstraint;
+            ");
         }
 
         /// <inheritdoc />

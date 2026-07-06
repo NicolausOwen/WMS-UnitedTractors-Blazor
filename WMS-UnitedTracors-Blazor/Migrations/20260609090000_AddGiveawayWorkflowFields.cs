@@ -1,11 +1,14 @@
 using System;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
+using UT_WMSDotnet.Data;
 
 #nullable disable
 
 namespace ut_wms_asp.net.Migrations
 {
-    /// <inheritdoc />
+    [DbContext(typeof(ApplicationDbContext))]
+    [Migration("20260609090000_AddGiveawayWorkflowFields")]
     public partial class AddGiveawayWorkflowFields : Migration
     {
         /// <inheritdoc />

@@ -207,23 +207,37 @@ if (app.Environment.IsDevelopment() ||
         // Temporary Migration History Fix for pre-existing tables
         try
         {
-            await context.Database.ExecuteSqlRawAsync(@"
-                CREATE TABLE IF NOT EXISTS `__EFMigrationsHistory` (
-                    `MigrationId` varchar(150) CHARACTER SET utf8mb4 NOT NULL,
-                    `ProductVersion` varchar(32) CHARACTER SET utf8mb4 NOT NULL,
-                    CONSTRAINT `PK___EFMigrationsHistory` PRIMARY KEY (`MigrationId`)
-                ) CHARACTER SET=utf8mb4;
-            ");
-            await context.Database.ExecuteSqlRawAsync(@"
-                INSERT IGNORE INTO `__EFMigrationsHistory` (`MigrationId`, `ProductVersion`) VALUES 
-                ('20260522095935_SyncWithSqlDump', '9.0.0'),
-                ('20260527063537_AddProductDescriptionAndVariants', '9.0.0'),
-                ('20260604021546_AddTransactionsTable', '9.0.0'),
-                ('20260605013419_AddHandoverFields', '9.0.0'),
-                ('20260608062936_UpdateDatabase', '9.0.0'),
-                ('20260608081019_AddAdminRoles', '9.0.0'),
-                ('20260609063238_FixTransactionStatusColumn', '9.0.0');
-            ");
+            var categoriesTableExists = false;
+            try
+            {
+                await context.Database.ExecuteSqlRawAsync("SELECT 1 FROM `categories` LIMIT 1;");
+                categoriesTableExists = true;
+            }
+            catch
+            {
+                categoriesTableExists = false;
+            }
+
+            if (categoriesTableExists)
+            {
+                await context.Database.ExecuteSqlRawAsync(@"
+                    CREATE TABLE IF NOT EXISTS `__EFMigrationsHistory` (
+                        `MigrationId` varchar(150) CHARACTER SET utf8mb4 NOT NULL,
+                        `ProductVersion` varchar(32) CHARACTER SET utf8mb4 NOT NULL,
+                        CONSTRAINT `PK___EFMigrationsHistory` PRIMARY KEY (`MigrationId`)
+                    ) CHARACTER SET=utf8mb4;
+                ");
+                await context.Database.ExecuteSqlRawAsync(@"
+                    INSERT IGNORE INTO `__EFMigrationsHistory` (`MigrationId`, `ProductVersion`) VALUES 
+                    ('20260522095935_SyncWithSqlDump', '9.0.0'),
+                    ('20260527063537_AddProductDescriptionAndVariants', '9.0.0'),
+                    ('20260604021546_AddTransactionsTable', '9.0.0'),
+                    ('20260605013419_AddHandoverFields', '9.0.0'),
+                    ('20260608062936_UpdateDatabase', '9.0.0'),
+                    ('20260608081019_AddAdminRoles', '9.0.0'),
+                    ('20260609063238_FixTransactionStatusColumn', '9.0.0');
+                ");
+            }
         }
         catch (Exception) {}
 

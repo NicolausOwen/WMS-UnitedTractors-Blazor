@@ -13,7 +13,7 @@ namespace ut_wms_asp.net.Migrations
             migrationBuilder.AddColumn<int>(
                 name: "CategoryId",
                 table: "user_admin_roles",
-                type: "bigint unsigned",
+                type: "int",
                 nullable: true);
 
             migrationBuilder.CreateIndex(
