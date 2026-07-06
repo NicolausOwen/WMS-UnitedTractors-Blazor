@@ -40,15 +40,14 @@
         }
 
         @* Filters *@
-        <div class="bg-white rounded-xl border border-[#e5e3dc] mb-6 overflow-hidden shadow-sm">
-            <div class="px-5 py-4">
-                <div class="flex flex-col lg:flex-row flex-wrap gap-3 items-end">
+        <div class="relative bg-white rounded-xl border border-[#e5e3dc] mb-4 overflow-hidden shadow-sm">
+            <div class="px-4 py-3">
+                <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
                     <div class="flex-1 min-w-[180px] w-full">
-                        <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Search Product</label>
                         <div class="relative">
-                            <input type="text" @bind="ProductSearch" placeholder="Name or SKU..."
+                            <input type="text" @bind="ProductSearch" placeholder="Search product or SKU" aria-label="Search product or SKU"
                                 class="block w-full pl-9 pr-3 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
-                            <svg class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                            <svg class="w-4 h-4 text-[#8a8880] absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                         </div>
                     </div>
                     @if (UserRole != null && !string.Equals(UserRole, "staff", StringComparison.OrdinalIgnoreCase))
@@ -75,15 +74,15 @@
                             </div>
                         }
                     }
-                    <div class="min-w-[140px] w-full lg:w-auto">
+                    <div class="min-w-[140px] w-full lg:w-auto @(ShowDateFilter ? "block" : "hidden lg:block")">
                         <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">From</label>
                         <input type="date" @bind="DateFrom" class="block w-full px-3 py-1.5 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
                     </div>
-                    <div class="min-w-[140px] w-full lg:w-auto">
+                    <div class="min-w-[140px] w-full lg:w-auto @(ShowDateFilter ? "block" : "hidden lg:block")">
                         <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">To</label>
                         <input type="date" @bind="DateTo" class="block w-full px-3 py-1.5 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
                     </div>
-                    <div class="flex gap-2 w-full lg:w-auto justify-end">
+                    <div class="flex gap-2 w-full lg:w-auto justify-end @(ShowDateFilter ? "flex" : "hidden lg:flex")">
                         <button type="button" @onclick="LoadData" class="px-5 py-2 bg-[#e8a000] hover:bg-[#d49300] text-[#1a1a1a] text-xs font-bold rounded-lg transition active:scale-95 cursor-pointer whitespace-nowrap">
                             Apply
                         </button>
@@ -92,27 +91,25 @@
                         </button>
                     </div>
                 </div>
+                <div class="sm:hidden flex justify-center mt-3">
+                    <button type="button" @onclick="() => ShowDateFilter = !ShowDateFilter" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white text-[#1a1a1a] hover:bg-[#faf9f5] transition">
+                        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+                        <span class="text-[0.75rem] font-semibold">Filter</span>
+                    </button>
+                </div>
             </div>
         </div>
 
-        <div class="mb-6 bg-white rounded-xl border border-[#e5e3dc] overflow-hidden shadow-sm">
-            <div class="px-5 py-4 border-b border-[#f0ede5] flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                <div>
-                    <p class="text-[0.68rem] font-extrabold uppercase tracking-[0.16em] text-[#8a8880]">Mode Tracking</p>
-                    <p class="text-sm text-[#5a5855] mt-1">
-                        @(ActiveTrackingTab == "borrow"
-                            ? "Fokus pada peminjaman aktif, status serah terima, dan progres pengembalian."
-                            : "Fokus pada request giveaway, status serah terima, dan dokumentasi user.")
-                    </p>
-                </div>
-                <div class="flex items-center gap-2 overflow-x-auto pb-1">
-                    <button type="button" @onclick='() => SetActiveTrackingTab("borrow")' class="px-4 py-2 text-sm font-bold rounded-lg transition-all whitespace-nowrap @(ActiveTrackingTab == "borrow" ? "bg-[#1a1a1a] text-white" : "text-[#8a8880] hover:text-[#1a1a1a] hover:bg-[#faf9f5]")" aria-pressed="@(ActiveTrackingTab == "borrow")">
+        <div class="mb-4 bg-white rounded-xl border border-[#e5e3dc] overflow-hidden shadow-sm">
+            <div class="px-5 py-4">
+                <div class="grid grid-cols-2 gap-2">
+                    <button type="button" @onclick='() => SetActiveTrackingTab("borrow")' class="w-full px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap @(ActiveTrackingTab == "borrow" ? "bg-[#1a1a1a] text-white" : "text-[#8a8880] hover:text-[#1a1a1a] hover:bg-[#faf9f5]")" aria-pressed="@(ActiveTrackingTab == "borrow")">
                         Borrowing
-                        <span class="ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] @(ActiveTrackingTab == "borrow" ? "bg-[#e8a000] text-[#1a1a1a]" : "bg-[#e7f1fb] text-[#1a6b8a]")">@BorrowGroupCount</span>
+                        <span class="ml-2 inline-flex px-1 py-0.5 rounded-full text-[10px] @(ActiveTrackingTab == "borrow" ? "bg-[#e8a000] text-[#1a1a1a]" : "bg-[#e7f1fb] text-[#1a6b8a]")">@BorrowGroupCount</span>
                     </button>
-                    <button type="button" @onclick='() => SetActiveTrackingTab("giveaway")' class="px-4 py-2 text-sm font-bold rounded-lg transition-all whitespace-nowrap @(ActiveTrackingTab == "giveaway" ? "bg-[#1a1a1a] text-white" : "text-[#8a8880] hover:text-[#1a1a1a] hover:bg-[#faf9f5]")" aria-pressed="@(ActiveTrackingTab == "giveaway")">
+                    <button type="button" @onclick='() => SetActiveTrackingTab("giveaway")' class="w-full px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap @(ActiveTrackingTab == "giveaway" ? "bg-[#1a1a1a] text-white" : "text-[#8a8880] hover:text-[#1a1a1a] hover:bg-[#faf9f5]")" aria-pressed="@(ActiveTrackingTab == "giveaway")">
                         Giveaway
-                        <span class="ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] @(ActiveTrackingTab == "giveaway" ? "bg-[#e8a000] text-[#1a1a1a]" : "bg-[#eef9f0] text-[#1a7a30]")">@GiveawayGroupCount</span>
+                        <span class="ml-2 inline-flex px-1 py-0.5 rounded-full text-[10px] @(ActiveTrackingTab == "giveaway" ? "bg-[#e8a000] text-[#1a1a1a]" : "bg-[#eef9f0] text-[#1a7a30]")">@GiveawayGroupCount</span>
                     </button>
                 </div>
             </div>
@@ -1207,6 +1204,7 @@
     private string? ReturnStatus;
     private DateTime? DateFrom;
     private DateTime? DateTo;
+    private bool ShowDateFilter = false;
     
     private string? ErrorMessage;
     private string? SuccessMessage;
