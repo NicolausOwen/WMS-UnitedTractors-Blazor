@@ -21,6 +21,7 @@ public class ApprovalService
         using var _context = _factory.CreateDbContext();
         var query = _context.Transactions
             .Include(t => t.Product)
+                .ThenInclude(p => p.Category)
             .Include(t => t.Requester)
             .Include(t => t.Division)
             .OrderByDescending(t => t.created_at)
@@ -67,6 +68,31 @@ public class ApprovalService
             ));
 
         var transactions = await query.ToListAsync();
+
+        bool isSuper = string.Equals(userRole, "superadmin", StringComparison.OrdinalIgnoreCase) || 
+                       string.Equals(userRole, "Super Admin", StringComparison.OrdinalIgnoreCase);
+
+        if (!isSuper && perms.Contains(Permissions.ApprovalStage2))
+        {
+            transactions = transactions.Where(t => {
+                if (t.status == WorkflowStatuses.PendingAdmin || (t.request_type == "BORROW" && t.status == WorkflowStatuses.Pending))
+                {
+                    var categoryName = t.Product?.Category?.name;
+                    bool isElektronik = string.Equals(categoryName, "Elektronik", StringComparison.OrdinalIgnoreCase);
+                    
+                    if (isElektronik)
+                    {
+                        return string.Equals(userRole, "PIC Studio", StringComparison.OrdinalIgnoreCase);
+                    }
+                    else
+                    {
+                        return string.Equals(userRole, "Team Leader Infrastructure", StringComparison.OrdinalIgnoreCase);
+                    }
+                }
+                return true;
+            }).ToList();
+        }
+
         var groupedApprovals = transactions
             .GroupBy(t => $"{t.created_at:yyyy-MM-dd HH:mm}_{t.requester_id}_{t.applicant_name}")
             .ToDictionary(g => g.Key, g => g.ToList());
@@ -163,10 +189,14 @@ public class ApprovalService
     public async Task<string?> ApproveAsync(int id, string? notes, int currentUserId, string? userRole)
     {
         using var _context = _factory.CreateDbContext();
-        var transaction = await _context.Transactions.Include(t => t.Product).Include(t => t.Requester).FirstOrDefaultAsync(t => t.id == id);
+        var transaction = await _context.Transactions
+            .Include(t => t.Product)
+                .ThenInclude(p => p.Category)
+            .Include(t => t.Requester)
+            .FirstOrDefaultAsync(t => t.id == id);
         if (transaction == null) return "Transaction not found.";
         var perms = await ResolvePermsAsync(_context, currentUserId);
-        if (!CanApprove(transaction, perms)) return "Transaction is no longer pending or is not assigned to your approval stage.";
+        if (!CanApprove(transaction, perms, userRole)) return "Transaction is no longer pending or is not assigned to your approval stage.";
 
         if (transaction.request_type == "GIVEAWAY")
         {
@@ -285,10 +315,14 @@ public class ApprovalService
     public async Task<string?> RejectAsync(int id, string rejectionReason, int currentUserId, string? userRole)
     {
         using var _context = _factory.CreateDbContext();
-        var transaction = await _context.Transactions.Include(t => t.Product).Include(t => t.Requester).FirstOrDefaultAsync(t => t.id == id);
+        var transaction = await _context.Transactions
+            .Include(t => t.Product)
+                .ThenInclude(p => p.Category)
+            .Include(t => t.Requester)
+            .FirstOrDefaultAsync(t => t.id == id);
         if (transaction == null) return "Transaction not found.";
         var perms = await ResolvePermsAsync(_context, currentUserId);
-        if (!CanApprove(transaction, perms)) return "Transaction is no longer pending or is not assigned to your approval stage.";
+        if (!CanApprove(transaction, perms, userRole)) return "Transaction is no longer pending or is not assigned to your approval stage.";
 
         if (perms.Contains(Permissions.ApprovalManager) && transaction.Product != null && transaction.Product.is_returnable == 1)
         {
@@ -373,11 +407,12 @@ public class ApprovalService
         using var _context = _factory.CreateDbContext();
         var transaction = await _context.Transactions
             .Include(t => t.Product)
+                .ThenInclude(p => p.Category)
             .Include(t => t.Requester)
             .FirstOrDefaultAsync(t => t.id == id);
         if (transaction == null) return "Transaction not found.";
         var perms = await ResolvePermsAsync(_context, currentUserId);
-        if (!CanApprove(transaction, perms)) return "Transaction is no longer pending or is not assigned to your approval stage.";
+        if (!CanApprove(transaction, perms, userRole)) return "Transaction is no longer pending or is not assigned to your approval stage.";
 
         if (perms.Contains(Permissions.ApprovalManager) && transaction.Product != null && transaction.Product.is_returnable == 1)
             return "Managers cannot request revision for borrowing transactions. Only admins can.";
@@ -719,7 +754,7 @@ public class ApprovalService
         return Permissions.Resolve(user.role, role?.Permissions);
     }
 
-    private static bool CanApprove(Transaction transaction, HashSet<string> perms)
+    private static bool CanApprove(Transaction transaction, HashSet<string> perms, string? userRole)
     {
         if (transaction.status == WorkflowStatuses.WaitingHandover || 
             transaction.status == WorkflowStatuses.WaitingHandoverConfirm || 
@@ -730,15 +765,62 @@ public class ApprovalService
 
         if (transaction.request_type == "GIVEAWAY")
         {
-            return (transaction.status == WorkflowStatuses.PendingStaffInventory && perms.Contains(Permissions.ApprovalStage1)) ||
-                   (transaction.status == WorkflowStatuses.PendingAdmin && perms.Contains(Permissions.ApprovalStage2)) ||
-                   (transaction.status == WorkflowStatuses.PendingManager && perms.Contains(Permissions.ApprovalManager));
+            bool allowed = (transaction.status == WorkflowStatuses.PendingStaffInventory && perms.Contains(Permissions.ApprovalStage1)) ||
+                           (transaction.status == WorkflowStatuses.PendingAdmin && perms.Contains(Permissions.ApprovalStage2)) ||
+                           (transaction.status == WorkflowStatuses.PendingManager && perms.Contains(Permissions.ApprovalManager));
+            if (!allowed) return false;
+
+            if (transaction.status == WorkflowStatuses.PendingAdmin)
+            {
+                bool isSuper = string.Equals(userRole, "superadmin", StringComparison.OrdinalIgnoreCase) || 
+                               string.Equals(userRole, "Super Admin", StringComparison.OrdinalIgnoreCase);
+                if (!isSuper)
+                {
+                    var categoryName = transaction.Product?.Category?.name;
+                    bool isElektronik = string.Equals(categoryName, "Elektronik", StringComparison.OrdinalIgnoreCase);
+                    if (isElektronik)
+                    {
+                        return string.Equals(userRole, "PIC Studio", StringComparison.OrdinalIgnoreCase);
+                    }
+                    else
+                    {
+                        return string.Equals(userRole, "Team Leader Infrastructure", StringComparison.OrdinalIgnoreCase);
+                    }
+                }
+            }
+            return true;
         }
 
         // BORROW: Stage 1 (approval.stage1) -> Stage 2 (approval.stage2). Legacy PENDING boleh oleh keduanya.
-        return (transaction.status == WorkflowStatuses.PendingStaffInventory && perms.Contains(Permissions.ApprovalStage1)) ||
-               (transaction.status == WorkflowStatuses.PendingAdmin && perms.Contains(Permissions.ApprovalStage2)) ||
-               (transaction.status == WorkflowStatuses.Pending && (perms.Contains(Permissions.ApprovalStage1) || perms.Contains(Permissions.ApprovalStage2)));
+        bool isPendingStage2 = transaction.status == WorkflowStatuses.PendingAdmin || 
+                              (transaction.status == WorkflowStatuses.Pending && perms.Contains(Permissions.ApprovalStage2));
+
+        bool canApproveBase = (transaction.status == WorkflowStatuses.PendingStaffInventory && perms.Contains(Permissions.ApprovalStage1)) ||
+                              (transaction.status == WorkflowStatuses.PendingAdmin && perms.Contains(Permissions.ApprovalStage2)) ||
+                              (transaction.status == WorkflowStatuses.Pending && (perms.Contains(Permissions.ApprovalStage1) || perms.Contains(Permissions.ApprovalStage2)));
+
+        if (!canApproveBase) return false;
+
+        if (isPendingStage2 && transaction.status != WorkflowStatuses.PendingStaffInventory)
+        {
+            bool isSuper = string.Equals(userRole, "superadmin", StringComparison.OrdinalIgnoreCase) || 
+                           string.Equals(userRole, "Super Admin", StringComparison.OrdinalIgnoreCase);
+            if (!isSuper)
+            {
+                var categoryName = transaction.Product?.Category?.name;
+                bool isElektronik = string.Equals(categoryName, "Elektronik", StringComparison.OrdinalIgnoreCase);
+                if (isElektronik)
+                {
+                    return string.Equals(userRole, "PIC Studio", StringComparison.OrdinalIgnoreCase);
+                }
+                else
+                {
+                    return string.Equals(userRole, "Team Leader Infrastructure", StringComparison.OrdinalIgnoreCase);
+                }
+            }
+        }
+
+        return true;
     }
 
     private async Task<string?> ApproveGiveawayAsync(ApplicationDbContext _context, Transaction transaction, string? notes, int currentUserId, HashSet<string> perms)

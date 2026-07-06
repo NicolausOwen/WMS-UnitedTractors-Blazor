@@ -24,8 +24,9 @@ public class DbSeeder
         // 2. Eksekusi Seeder Tambahan (Division, Unit, Superadmin)
         await SeedDivisionsAsync();
         await SeedUnitsAsync();
-        await SeedDefaultUsersAsync();
         await SeedDefaultAdminRolesAsync();
+        await SeedDefaultUsersAsync();
+        await SeedUserAdminRoleAssignmentsAsync();
     }
 
     private async Task ExecuteSqlDumpAsync()
@@ -218,4 +219,44 @@ public class DbSeeder
 
         await _context.SaveChangesAsync();
     }
+
+    private async Task SeedUserAdminRoleAssignmentsAsync()
+    {
+        var users = await _context.Set<User>().ToListAsync();
+        var adminRoles = await _context.AdminRoles.ToListAsync();
+
+        foreach (var user in users)
+        {
+            if (string.IsNullOrEmpty(user.role)) continue;
+
+            string targetRoleName = user.role switch
+            {
+                "superadmin" => "Super Admin",
+                _ => user.role
+            };
+
+            var targetRole = adminRoles.FirstOrDefault(r => string.Equals(r.RoleName, targetRoleName, StringComparison.OrdinalIgnoreCase));
+            if (targetRole != null)
+            {
+                var existingAssignment = await _context.UserAdminRoles
+                    .FirstOrDefaultAsync(uar => uar.UserId == user.id && uar.AdminRoleId == targetRole.Id && uar.CategoryId == null);
+
+                if (existingAssignment == null)
+                {
+                    _context.UserAdminRoles.Add(new UserAdminRole
+                    {
+                        Id = Guid.NewGuid(),
+                        UserId = user.id,
+                        AdminRoleId = targetRole.Id,
+                        CategoryId = null,
+                        CreatedAt = DateTime.UtcNow,
+                        CreatedBy = "System"
+                    });
+                }
+            }
+        }
+
+        await _context.SaveChangesAsync();
+    }
 }
+
