@@ -23,14 +23,14 @@
     </div>
 }
 
-<div class="w-full min-h-screen bg-[#f5f4f0] px-4 md:px-10 py-6 pb-24 md:pb-12 font-sans">
+<div class="w-full min-h-screen px-4 md:px-10 py-6 pb-24 md:pb-12 font-sans">
     
     @* =========================================== *@
     @* Mobile Version for Staff (m-banking style)  *@
     @* =========================================== *@
     @if (string.Equals(UserRole, "staff", StringComparison.OrdinalIgnoreCase))
     {
-        <div class="block md:hidden mb-6">
+        <div class="mb-6">
 
             @* ── Hero Section: Greeting + Sisa Kredit (orange gradient) ── *@
             <div class="bg-gradient-to-br from-[#e8a000] via-[#f0ab10] to-[#f7ca60] rounded-3xl p-5 pb-6 mb-4 relative overflow-hidden shadow-lg -mx-4 px-6">
@@ -43,7 +43,7 @@
                 <div class="relative z-10 flex items-center justify-between mb-5">
                     <div>
                         <p class="text-[0.6rem] font-semibold text-[#7a3d00]/80 uppercase tracking-widest">Selamat datang kembali 👋</p>
-                        <h2 class="text-xl font-extrabold text-white font-syne leading-tight mt-0.5 drop-shadow-sm">@ApplicantName</h2>
+                        <h2 class="text-xl font-extrabold font-syne leading-tight mt-0.5 drop-shadow-sm" style="color: #fbbf24 !important;">@ApplicantName</h2>
                     </div>
                     <div class="w-10 h-10 rounded-full bg-white/25 flex items-center justify-center backdrop-blur-sm">
                         <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -53,11 +53,11 @@
                 </div>
 
                 @* Sisa Kredit *@
-                <div class="relative z-10 bg-white/20 backdrop-blur-sm rounded-2xl px-4 py-3 border border-white/30">
+                <div class="relative z-10 rounded-2xl px-4 py-3 border border-[#fbbf24]/40 shadow-inner text-white" style="background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 52%, #d97706 100%);">
                     <div class="flex items-center justify-between mb-1.5">
-                        <p class="text-[0.6rem] font-bold text-white/80 uppercase tracking-widest">Sisa Kredit Anda</p>
+                        <p class="text-[0.6rem] font-bold text-white/90 uppercase tracking-widest">Sisa Kredit Anda</p>
                         <button @onclick="() => ShowPoin = !ShowPoin"
-                                class="flex items-center gap-1.5 text-white/70 hover:text-white transition text-[0.6rem] font-semibold uppercase tracking-wide">
+                                class="flex items-center gap-1.5 text-white/90 hover:text-white transition text-[0.6rem] font-semibold uppercase tracking-wide">
                             @if (ShowPoin)
                             {
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -96,7 +96,7 @@
 
                     @* Katalog Pinjam *@
                     <a href="/Catalog/Borrow" class="flex flex-col items-center text-center gap-1.5 flex-1 active:scale-95 transition-transform">
-                        <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shadow-sm">
+                        <div class="w-12 h-12 rounded-2xl bg-[#fef3c7] text-[#b45309] flex items-center justify-center shadow-sm">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
                             </svg>
@@ -394,25 +394,25 @@
     @if (!string.Equals(UserRole, "staff", StringComparison.OrdinalIgnoreCase))
     {
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-            <a href="/Catalog/Borrow" class="flex items-center gap-4 p-5 bg-white border border-blue-100 hover:border-blue-400 rounded-xl shadow-sm hover:shadow-md transition-all group">
-                <div class="p-3 bg-blue-50 rounded-xl text-blue-600 group-hover:bg-blue-100 transition">
+            <a href="/Catalog/Borrow" class="flex items-center gap-4 p-5 bg-[#fffbeb] border border-[#f9e29c] hover:border-[#e8a000] rounded-xl shadow-sm hover:shadow-md transition-all group">
+                <div class="p-3 bg-[#fef3c7] rounded-xl text-[#b45309] group-hover:bg-[#fde68a] transition">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
                 </div>
                 <div>
-                    <h4 class="font-bold text-[#1a1a1a] text-sm group-hover:text-blue-600 transition">Katalog Pinjam</h4>
+                    <h4 class="font-bold text-[#1a1a1a] text-sm group-hover:text-[#e8a000] transition">Katalog Pinjam</h4>
                     <p class="text-xs text-[#8a8880] mt-0.5">Lihat & tambahkan barang pinjaman ke keranjang</p>
                 </div>
-                <svg class="w-5 h-5 text-[#d1cec7] ml-auto group-hover:text-blue-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                <svg class="w-5 h-5 text-[#d1cec7] ml-auto group-hover:text-[#e8a000] transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
             </a>
-            <a href="/Catalog/Giveaway" class="flex items-center gap-4 p-5 bg-white border border-purple-100 hover:border-purple-400 rounded-xl shadow-sm hover:shadow-md transition-all group">
-                <div class="p-3 bg-purple-50 rounded-xl text-purple-600 group-hover:bg-purple-100 transition">
+            <a href="/Catalog/Giveaway" class="flex items-center gap-4 p-5 bg-[#fffbeb] border border-[#f9e29c] hover:border-[#e8a000] rounded-xl shadow-sm hover:shadow-md transition-all group">
+                <div class="p-3 bg-[#fef3c7] rounded-xl text-[#b45309] group-hover:bg-[#fde68a] transition">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
                 </div>
                 <div>
-                    <h4 class="font-bold text-[#1a1a1a] text-sm group-hover:text-purple-600 transition">Redeem Credit</h4>
+                    <h4 class="font-bold text-[#1a1a1a] text-sm group-hover:text-[#e8a000] transition">Redeem Credit</h4>
                     <p class="text-xs text-[#8a8880] mt-0.5">Lihat & tambahkan merchandise ke keranjang</p>
                 </div>
-                <svg class="w-5 h-5 text-[#d1cec7] ml-auto group-hover:text-purple-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                <svg class="w-5 h-5 text-[#d1cec7] ml-auto group-hover:text-[#e8a000] transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
             </a>
         </div>
     }
