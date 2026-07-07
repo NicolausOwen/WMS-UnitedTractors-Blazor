@@ -76,8 +76,22 @@ public class TrackingService
 
         if (!canManageOrApprove && perms.Contains(Permissions.ApprovalManager))
         {
-            // Manager (only manager approval) -> giveaway in active states only.
-            query = activeStatusFilter.Where(t => t.request_type == "GIVEAWAY");
+            // Manager (only manager approval) -> giveaway in active states only + their own requests.
+            query = baseQuery.Where(t => 
+                (t.request_type == "GIVEAWAY" && (
+                    t.status == WorkflowStatuses.PendingStaffInventory ||
+                    t.status == WorkflowStatuses.PendingAdmin ||
+                    t.status == WorkflowStatuses.PendingManager ||
+                    t.status == WorkflowStatuses.Revision ||
+                    t.status == WorkflowStatuses.RevisionByStaffInventory ||
+                    t.status == WorkflowStatuses.RevisionByAdmin ||
+                    t.status == WorkflowStatuses.RevisionByManager ||
+                    t.status == WorkflowStatuses.WaitingHandover ||
+                    t.status == WorkflowStatuses.WaitingDocumentation ||
+                    t.status == WorkflowStatuses.DocumentationOverdue
+                )) || 
+                t.requester_id == currentUserId
+            );
         }
         else if (!canManageOrApprove)
         {
