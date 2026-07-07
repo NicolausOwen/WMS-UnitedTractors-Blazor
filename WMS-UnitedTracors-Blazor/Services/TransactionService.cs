@@ -119,6 +119,25 @@ public class TransactionService
                 {
                     return "Tanggal kembali harus lebih besar dari tanggal pinjam.";
                 }
+
+                // Durasi peminjaman maksimal 10 hari
+                var borrowDays = (model.borrow_end_date.Value.Date - model.borrow_start_date.Value.Date).Days;
+                if (borrowDays > 10)
+                {
+                    return "Durasi peminjaman maksimal adalah 10 hari.";
+                }
+
+                // Tanggal event harus berada di dalam rentang tanggal peminjaman
+                if (model.event_date.HasValue)
+                {
+                    if (model.borrow_start_date.Value.Date > model.event_date.Value.Date ||
+                        (model.event_end_date.HasValue 
+                            ? model.event_end_date.Value.Date > model.borrow_end_date.Value.Date 
+                            : model.event_date.Value.Date > model.borrow_end_date.Value.Date))
+                    {
+                        return "Tanggal event (mulai dan selesai) harus berada di dalam rentang tanggal peminjaman.";
+                    }
+                }
             }
 
             if (hasGiveawayItems && model.giveaway_pickup_date.HasValue)
@@ -403,7 +422,7 @@ public class TransactionService
             query = query.Where(t => t.requester_id == currentUserId);
         }
 
-        if (string.Equals(userRole, "staff", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(userRole, "staff", StringComparison.OrdinalIgnoreCase) || string.Equals(userRole, "user", StringComparison.OrdinalIgnoreCase))
         {
             query = query.Where(t => t.type == "OUT");
         }

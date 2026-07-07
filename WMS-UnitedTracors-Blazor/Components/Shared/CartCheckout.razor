@@ -321,6 +321,27 @@
                     ErrorMessage = "Tanggal kembali harus setelah tanggal pinjam.";
                     return;
                 }
+                
+                // Durasi peminjaman maksimal 10 hari
+                var borrowDays = (CartService.BorrowEndDate.Value.Date - CartService.BorrowStartDate.Value.Date).Days;
+                if (borrowDays > 10)
+                {
+                    ErrorMessage = "Durasi peminjaman maksimal adalah 10 hari.";
+                    return;
+                }
+
+                // Tanggal event harus berada di dalam rentang tanggal peminjaman
+                if (CartService.EventStartDate.HasValue)
+                {
+                    if (CartService.BorrowStartDate.Value.Date > CartService.EventStartDate.Value.Date ||
+                        (CartService.EventEndDate.HasValue 
+                            ? CartService.EventEndDate.Value.Date > CartService.BorrowEndDate.Value.Date 
+                            : CartService.EventStartDate.Value.Date > CartService.BorrowEndDate.Value.Date))
+                    {
+                        ErrorMessage = "Tanggal event (mulai dan selesai) harus berada di dalam rentang tanggal peminjaman.";
+                        return;
+                    }
+                }
             }
 
             IsSubmitting = true;
