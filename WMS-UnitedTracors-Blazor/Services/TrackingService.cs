@@ -138,7 +138,7 @@ public class TrackingService
                 t.request_type == "GIVEAWAY" &&
                 t.status == WorkflowStatuses.WaitingDocumentation &&
                 t.event_date.HasValue &&
-                t.event_date.Value.Date.AddDays(3) < DateTime.Today)
+                t.event_date.Value.Date.AddDays(3) < WibHelper.Today)
             .ToListAsync();
 
         if (overdueItems.Any())
@@ -149,6 +149,25 @@ public class TrackingService
                 item.updated_at = DateTime.UtcNow;
             }
 
+            await _context.SaveChangesAsync();
+        }
+
+        // Auto-approve WAITING_HANDOVER_CONFIRM after 24 hours
+        var cutoff = DateTime.UtcNow.AddHours(-24);
+        var expiredHandovers = await _context.Transactions
+            .Where(t =>
+                t.request_type == "BORROW" &&
+                t.status == WorkflowStatuses.WaitingHandoverConfirm &&
+                t.updated_at <= cutoff)
+            .ToListAsync();
+
+        if (expiredHandovers.Any())
+        {
+            foreach (var item in expiredHandovers)
+            {
+                item.status = WorkflowStatuses.Approved;
+                item.updated_at = DateTime.UtcNow;
+            }
             await _context.SaveChangesAsync();
         }
 

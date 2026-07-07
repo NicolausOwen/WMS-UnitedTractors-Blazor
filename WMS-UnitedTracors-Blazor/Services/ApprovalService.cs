@@ -225,45 +225,33 @@ public class ApprovalService
             using var dbTransaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                var stockBefore = transaction.Product!.current_stock;
-
                 if (transaction.type == "IN")
                 {
+                    var stockBefore = transaction.Product!.current_stock;
                     transaction.Product!.current_stock += transaction.quantity ?? 0;
-                }
-                else
-                {
-                    if (transaction.Product!.current_stock < (transaction.quantity ?? 0)) throw new Exception("Insufficient stock");
-                    transaction.Product!.current_stock -= transaction.quantity ?? 0;
-                }
+                    _context.Products.Update(transaction.Product!);
 
-                _context.Products.Update(transaction.Product!);
-
-                if (transaction.product_variant_id.HasValue)
-                {
-                    var variant = await _context.ProductVariants.FindAsync(transaction.product_variant_id.Value);
-                    if (variant != null)
+                    if (transaction.product_variant_id.HasValue)
                     {
-                        if (transaction.type == "IN") variant.stock += transaction.quantity ?? 0;
-                        else
+                        var variant = await _context.ProductVariants.FindAsync(transaction.product_variant_id.Value);
+                        if (variant != null)
                         {
-                            if (variant.stock < (transaction.quantity ?? 0)) throw new Exception("Insufficient variant stock");
-                            variant.stock -= transaction.quantity ?? 0;
+                            variant.stock += transaction.quantity ?? 0;
+                            _context.ProductVariants.Update(variant);
                         }
-                        _context.ProductVariants.Update(variant);
                     }
-                }
 
-                var stockLog = new StockLog
-                {
-                    transaction_id = transaction.id,
-                    product_id = transaction.Product!.id,
-                    stock_before = stockBefore,
-                    stock_after = transaction.Product!.current_stock,
-                    created_at = DateTime.UtcNow,
-                    updated_at = DateTime.UtcNow
-                };
-                _context.StockLogs.Add(stockLog);
+                    var stockLog = new StockLog
+                    {
+                        transaction_id = transaction.id,
+                        product_id = transaction.Product!.id,
+                        stock_before = stockBefore,
+                        stock_after = transaction.Product!.current_stock,
+                        created_at = DateTime.UtcNow,
+                        updated_at = DateTime.UtcNow
+                    };
+                    _context.StockLogs.Add(stockLog);
+                }
 
                 // Borrowing (OUT + BORROW) requires a handover step before it is considered
                 // actively borrowed. Giveaways and stock-in are finalized immediately.
@@ -324,10 +312,7 @@ public class ApprovalService
         var perms = await ResolvePermsAsync(_context, currentUserId);
         if (!CanApprove(transaction, perms, userRole)) return "Transaction is no longer pending or is not assigned to your approval stage.";
 
-        if (perms.Contains(Permissions.ApprovalManager) && transaction.Product != null && transaction.Product.is_returnable == 1)
-        {
-            return "Managers cannot reject borrowing transactions. Only admins can.";
-        }
+        // Manager approval is giveaway-only; CanApprove() already blocks BORROW for Manager.
 
         var stageBefore = transaction.status;
 
@@ -339,36 +324,31 @@ public class ApprovalService
 
         ApplyStageNotes(transaction, stageBefore, rejectionReason);
 
-        if (stageBefore == WorkflowStatuses.WaitingHandover || 
-            stageBefore == WorkflowStatuses.WaitingHandoverConfirm || 
-            stageBefore == WorkflowStatuses.WaitingAdminHandover)
+        if (transaction.type == "OUT" && transaction.Product != null)
         {
-            if (transaction.Product != null)
+            var stockBefore = transaction.Product.current_stock;
+            transaction.Product.current_stock += transaction.quantity ?? 0;
+            _context.Products.Update(transaction.Product);
+
+            if (transaction.product_variant_id.HasValue)
             {
-                var stockBefore = transaction.Product.current_stock;
-                transaction.Product.current_stock += transaction.quantity ?? 0;
-                _context.Products.Update(transaction.Product);
-
-                if (transaction.product_variant_id.HasValue)
+                var variant = await _context.ProductVariants.FindAsync(transaction.product_variant_id.Value);
+                if (variant != null)
                 {
-                    var variant = await _context.ProductVariants.FindAsync(transaction.product_variant_id.Value);
-                    if (variant != null)
-                    {
-                        variant.stock += transaction.quantity ?? 0;
-                        _context.ProductVariants.Update(variant);
-                    }
+                    variant.stock += transaction.quantity ?? 0;
+                    _context.ProductVariants.Update(variant);
                 }
-
-                _context.StockLogs.Add(new StockLog
-                {
-                    transaction_id = transaction.id,
-                    product_id = transaction.Product.id,
-                    stock_before = stockBefore,
-                    stock_after = transaction.Product.current_stock,
-                    created_at = DateTime.UtcNow,
-                    updated_at = DateTime.UtcNow
-                });
             }
+
+            _context.StockLogs.Add(new StockLog
+            {
+                transaction_id = transaction.id,
+                product_id = transaction.Product.id,
+                stock_before = stockBefore,
+                stock_after = transaction.Product.current_stock,
+                created_at = DateTime.UtcNow,
+                updated_at = DateTime.UtcNow
+            });
         }
 
         if (transaction.type == "OUT" && transaction.Product != null && transaction.Requester != null)
@@ -414,10 +394,37 @@ public class ApprovalService
         var perms = await ResolvePermsAsync(_context, currentUserId);
         if (!CanApprove(transaction, perms, userRole)) return "Transaction is no longer pending or is not assigned to your approval stage.";
 
-        if (perms.Contains(Permissions.ApprovalManager) && transaction.Product != null && transaction.Product.is_returnable == 1)
-            return "Managers cannot request revision for borrowing transactions. Only admins can.";
+        // Manager approval is giveaway-only; CanApprove() already blocks BORROW for Manager.
 
         if (string.IsNullOrWhiteSpace(revisionReason)) return "Catatan revisi wajib diisi.";
+
+        // Refund stock immediately back to inventory since it enters revision
+        if (transaction.type == "OUT" && transaction.Product != null)
+        {
+            var stockBefore = transaction.Product.current_stock;
+            transaction.Product.current_stock += transaction.quantity ?? 0;
+            _context.Products.Update(transaction.Product);
+
+            if (transaction.product_variant_id.HasValue)
+            {
+                var variant = await _context.ProductVariants.FindAsync(transaction.product_variant_id.Value);
+                if (variant != null)
+                {
+                    variant.stock += transaction.quantity ?? 0;
+                    _context.ProductVariants.Update(variant);
+                }
+            }
+
+            _context.StockLogs.Add(new StockLog
+            {
+                transaction_id = transaction.id,
+                product_id = transaction.Product.id,
+                stock_before = stockBefore,
+                stock_after = transaction.Product.current_stock,
+                created_at = DateTime.UtcNow,
+                updated_at = DateTime.UtcNow
+            });
+        }
 
         if (revisedQuantity.HasValue)
         {
@@ -448,7 +455,7 @@ public class ApprovalService
         {
             var pickupDate = revisedPickupDate.Value.Date;
 
-            if (pickupDate < DateTime.Today)
+            if (pickupDate < WibHelper.Today)
                 return "Tanggal pengambilan revisi tidak boleh sebelum hari ini.";
 
             if (transaction.event_date.HasValue && transaction.event_date.Value.Date < pickupDate)
@@ -760,7 +767,9 @@ public class ApprovalService
             transaction.status == WorkflowStatuses.WaitingHandoverConfirm || 
             transaction.status == WorkflowStatuses.WaitingAdminHandover)
         {
-            return perms.Contains(Permissions.ApprovalStage2) || perms.Contains(Permissions.ApprovalManager) || perms.Contains(Permissions.ApprovalHandoverFinal);
+            // Handover statuses are only for SI (Stage1/Handover) and TL (Stage2/HandoverFinal), NOT Manager.
+            return perms.Contains(Permissions.ApprovalStage2) || perms.Contains(Permissions.ApprovalHandoverFinal) ||
+                   perms.Contains(Permissions.ApprovalHandover) || perms.Contains(Permissions.ApprovalStage1);
         }
 
         if (transaction.request_type == "GIVEAWAY")
@@ -836,36 +845,6 @@ public class ApprovalService
                 transaction.admin_notes = notes;
                 break;
             case WorkflowStatuses.PendingManager when perms.Contains(Permissions.ApprovalManager):
-                if (transaction.Product == null) return "Product not found.";
-                if (transaction.Product.current_stock < (transaction.quantity ?? 0))
-                    return $"Insufficient stock. Stock available: {transaction.Product.current_stock}, requested: {transaction.quantity}";
-                
-                var stockBefore = transaction.Product.current_stock;
-                transaction.Product.current_stock -= transaction.quantity ?? 0;
-                _context.Products.Update(transaction.Product);
-
-                if (transaction.product_variant_id.HasValue)
-                {
-                    var variant = await _context.ProductVariants.FindAsync(transaction.product_variant_id.Value);
-                    if (variant != null)
-                    {
-                        if (variant.stock < (transaction.quantity ?? 0))
-                            return $"Insufficient variant stock. Variant stock available: {variant.stock}, requested: {transaction.quantity}";
-                        variant.stock -= transaction.quantity ?? 0;
-                        _context.ProductVariants.Update(variant);
-                    }
-                }
-
-                _context.StockLogs.Add(new StockLog
-                {
-                    transaction_id = transaction.id,
-                    product_id = transaction.Product.id,
-                    stock_before = stockBefore,
-                    stock_after = transaction.Product.current_stock,
-                    created_at = DateTime.UtcNow,
-                    updated_at = DateTime.UtcNow
-                });
-
                 transaction.status = WorkflowStatuses.WaitingHandover;
                 transaction.manager_notes = notes;
                 transaction.rejection_reason = null;

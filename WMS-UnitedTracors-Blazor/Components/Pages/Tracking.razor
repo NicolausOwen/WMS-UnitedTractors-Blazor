@@ -243,7 +243,7 @@
                                                 } else if(status == "WAITING_HANDOVER") {
                                                     <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#fff8e6] text-[#b37a00] border border-[#ffe099]">Menunggu Bukti Serah Terima</span>
                                                 } else if(status == "WAITING_HANDOVER_CONFIRM") {
-                                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#fce7f3] text-[#be185d] border border-[#fbcfe8] animate-pulse">⚠ Konfirmasi Penerimaan</span>
+                                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#e0f2fe] text-[#0369a1] border border-[#bae6fd]">Serah Terima Berjalan</span>
                                                 } else if(status == "WAITING_ADMIN_HANDOVER") {
                                                     <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#e0f2fe] text-[#1a6b8a] border border-[#bae6fd]">Menunggu Verifikasi Admin</span>
                                                 } else if(allReturned) {
@@ -499,7 +499,40 @@
                                                 }
                                             </div>
 
-                                            @if ((canHandover && !hasHandoverDraftPhoto) || (canGiveawayHandover && !hasGiveawayHandoverDraftPhoto) || isWaitingUserConfirm || canUploadDocumentation || groupItems.Any(i => i.returned_quantity > 0 || (i.pending_return_quantity > 0 && i.is_return_draft == 0)))
+                                            @if (isWaitingUserConfirm)
+                                            {
+                                                // Calculate remaining time until auto-confirm (24 hours from updated_at)
+                                                var firstWaitingItem = borrowItemsOnly.FirstOrDefault(i => i.status == WorkflowStatuses.WaitingHandoverConfirm);
+                                                var autoConfirmTime = firstWaitingItem != null ? firstWaitingItem.updated_at.AddHours(24) : WibHelper.Now;
+                                                var localAutoConfirmTime = autoConfirmTime; // already in WIB
+                                                var timeLeft = autoConfirmTime - WibHelper.Now; // both in WIB
+                                                var timeLeftStr = timeLeft.TotalSeconds > 0
+                                                    ? $"{(int)timeLeft.TotalHours} jam {timeLeft.Minutes} menit"
+                                                    : "segera";
+
+                                                <div class="flex flex-col sm:flex-row sm:items-center gap-3.5 bg-[#eef6fd] border border-[#bae6fd] p-4 rounded-xl w-full shadow-sm">
+                                                    <div class="flex items-start gap-2.5 text-[#1a6b8a] flex-1">
+                                                        <svg class="shrink-0 mt-0.5" style="width: 20px; height: 20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                        <div>
+                                                            <div class="text-xs font-extrabold uppercase tracking-wide">Penerimaan Barang Sedang Berlangsung</div>
+                                                            <div class="text-[11px] font-semibold mt-1 leading-relaxed text-[#2c5282]">
+                                                                Staff Inventoris telah menyerahkan barang. Jika benar sudah menerima, Anda tidak perlu melakukan aksi apa pun.
+                                                                Sistem akan menyetujui otomatis dalam <strong>@timeLeftStr</strong> (pada @localAutoConfirmTime.ToString("dd MMM yyyy, HH:mm") WIB).
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="shrink-0 self-end sm:self-center mt-2 sm:mt-0">
+                                                        <button type="button"
+                                                            @onclick="() => OpenDisputeModal(borrowItemsOnly)"
+                                                            disabled="@IsSubmitting"
+                                                            class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white text-[11px] font-extrabold rounded-xl transition active:scale-95 shadow-sm whitespace-nowrap">
+                                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                                            Saya Belum Menerima Barang
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            }
+                                            @if ((canHandover && !hasHandoverDraftPhoto) || (canGiveawayHandover && !hasGiveawayHandoverDraftPhoto) || canUploadDocumentation || groupItems.Any(i => i.returned_quantity > 0 || (i.pending_return_quantity > 0 && i.is_return_draft == 0)))
                                             {
                                                 <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[#f0ede5]">
                                                     <span class="text-xs font-bold text-[#8a8880]">Aksi Grup:</span>
@@ -517,24 +550,6 @@
                                                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
                                                                 Upload Bukti Serah Terima
                                                             </button>
-                                                        }
-                                                        @if (isWaitingUserConfirm)
-                                                        {
-                                                            <div class="flex items-center gap-2">
-                                                                <button type="button"
-                                                                    @onclick='() => AskConfirm("Konfirmasi Penerimaan Barang", "Apakah kamu sudah menerima barang dari Staff Inventoris? Konfirmasi ini akan meneruskan ke approval akhir.", () => ConfirmHandoverReceiptByUser(borrowItemsOnly, true), "Ya, Sudah Terima")'
-                                                                    disabled="@IsSubmitting"
-                                                                    class="inline-flex items-center gap-1.5 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-lg transition active:scale-95 shadow-sm whitespace-nowrap">
-                                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                                                    Konfirmasi Penerimaan
-                                                                </button>
-                                                                <button type="button"
-                                                                    @onclick='() => AskConfirm("Tolak Serah Terima", "Kamu menolak penerimaan barang? Permintaan akan dikembalikan ke Staff Inventoris.", () => ConfirmHandoverReceiptByUser(borrowItemsOnly, false), "Ya, Tolak")'
-                                                                    disabled="@IsSubmitting"
-                                                                    class="px-3 py-1.5 bg-white border border-red-200 text-red-600 hover:bg-red-50 text-xs font-bold rounded-lg transition">
-                                                                    Tolak
-                                                                </button>
-                                                            </div>
                                                         }
                                                         @if (canUploadDocumentation)
                                                         {
@@ -794,7 +809,7 @@
                                                                 </td>
                                                                 <td class="px-4 py-3 align-middle text-right">
                                                                     @{
-                                                                        var canReturn = usage.status == "APPROVED" && usage.request_type == "BORROW" && usage.returned_quantity < usage.quantity && (usage.pending_return_quantity ?? 0) == 0;
+                                                                        var canReturn = (usage.status == "APPROVED" || usage.status == "WAITING_HANDOVER_CONFIRM") && usage.request_type == "BORROW" && usage.returned_quantity < usage.quantity && (usage.pending_return_quantity ?? 0) == 0;
                                                                         var isReturnDraft = usage.status == "APPROVED" && usage.request_type == "BORROW" && (usage.pending_return_quantity ?? 0) > 0 && usage.is_return_draft == 1;
                                                                         var canManageDraft = isReturnDraft && (usage.requester_id == CurrentUserId || userPrincipal.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalHandover));
                                                                         var canRevise = usage.status == "REVISION" || usage.status == "REVISION_BY_STAFF_INVENTORY" || usage.status == "REVISION_BY_ADMIN" || usage.status == "REVISION_BY_MANAGER";
@@ -937,7 +952,7 @@
 
                                                         <!-- Action Buttons for mobile -->
                                                         @{
-                                                            var canReturnMobile = usage.status == "APPROVED" && usage.request_type == "BORROW" && usage.returned_quantity < usage.quantity && (usage.pending_return_quantity ?? 0) == 0;
+                                                            var canReturnMobile = (usage.status == "APPROVED" || usage.status == "WAITING_HANDOVER_CONFIRM") && usage.request_type == "BORROW" && usage.returned_quantity < usage.quantity && (usage.pending_return_quantity ?? 0) == 0;
                                                             var isReturnDraftMobile = usage.status == "APPROVED" && usage.request_type == "BORROW" && (usage.pending_return_quantity ?? 0) > 0 && usage.is_return_draft == 1;
                                                             var canManageDraftMobile = isReturnDraftMobile && (usage.requester_id == CurrentUserId || userPrincipal.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalHandover));
                                                             var canReviseMobile = usage.status == "REVISION" || usage.status == "REVISION_BY_STAFF_INVENTORY" || usage.status == "REVISION_BY_ADMIN" || usage.status == "REVISION_BY_MANAGER";
@@ -1162,6 +1177,34 @@
   </Footer>
 </Modal>
 
+<Modal Show="ShowDisputeModal" Size="md" ShowClose="true" ZIndex="110" OnClose="CloseDisputeModal">
+    <Header>Laporkan Belum Menerima Barang</Header>
+    <ChildContent>
+        @if (DisputeModalError != null)
+        {
+            <div class="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-2.5 rounded-xl text-xs font-semibold">
+                @DisputeModalError
+            </div>
+        }
+        <p class="text-xs text-gray-500 mb-3.5 leading-relaxed">
+            Apakah Anda yakin belum menerima barang fisik dari Staff Inventoris untuk pengajuan ini? 
+            Silakan tulis alasan atau keterangan detail di bawah agar Staff Inventoris dapat mengetahuinya dan melakukan serah terima ulang.
+        </p>
+        <div class="space-y-3">
+            <div>
+                <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Alasan/Catatan Keberatan <span class="text-red-500">*</span></label>
+                <textarea @bind="DisputeReasonText" class="w-full rounded-xl border border-gray-200 focus:border-red-500 focus:ring-1 focus:ring-red-500 p-3 text-sm outline-none transition-all" rows="3" placeholder="Contoh: Barang belum saya terima secara fisik di ruangan..."></textarea>
+            </div>
+        </div>
+    </ChildContent>
+    <Footer>
+        <button type="button" @onclick="CloseDisputeModal" class="px-4 py-2 text-xs font-bold text-gray-500 hover:text-gray-900 transition">Batal</button>
+        <button type="button" @onclick="SubmitDispute" disabled="@IsSubmitting" class="px-5 py-2.5 bg-red-600 text-white text-xs font-extrabold rounded-xl hover:bg-red-500 transition disabled:opacity-50 h-10 items-center justify-center flex">
+            @(IsSubmitting ? "Mengirim..." : "Kirim Laporan")
+        </button>
+    </Footer>
+</Modal>
+
 @code {
     // Reusable konfirmasi "apakah yakin" untuk aksi submit final.
     private bool ShowConfirm = false;
@@ -1169,6 +1212,66 @@
     private string ConfirmMessage = "";
     private string ConfirmButtonText = "Ya, Lanjutkan";
     private Func<Task>? ConfirmCallback;
+
+    // Dispute Modal State
+    private bool ShowDisputeModal = false;
+    private List<Transaction> DisputeTargetItems = new();
+    private string DisputeReasonText = "";
+    private string? DisputeModalError = null;
+
+    private void OpenDisputeModal(List<Transaction> items)
+    {
+        DisputeTargetItems = items;
+        DisputeReasonText = "";
+        DisputeModalError = null;
+        ShowDisputeModal = true;
+    }
+
+    private void CloseDisputeModal()
+    {
+        ShowDisputeModal = false;
+        DisputeTargetItems = new();
+        DisputeReasonText = "";
+        DisputeModalError = null;
+    }
+
+    private async Task SubmitDispute()
+    {
+        if (string.IsNullOrWhiteSpace(DisputeReasonText))
+        {
+            DisputeModalError = "Alasan wajib diisi.";
+            return;
+        }
+
+        if (IsSubmitting) return;
+        var groupId = DisputeTargetItems.FirstOrDefault(i => i.status == "WAITING_HANDOVER_CONFIRM")?.group_id;
+        if (string.IsNullOrEmpty(groupId)) return;
+
+        IsSubmitting = true;
+        DisputeModalError = null;
+        try
+        {
+            var err = await TransactionService.ConfirmHandoverReceiptByUserAsync(groupId, CurrentUserId, false, DisputeReasonText);
+            if (err == null)
+            {
+                SuccessMessage = "Keberatan berhasil dilaporkan. Transaksi dikembalikan ke Staff Inventoris.";
+                CloseDisputeModal();
+                await LoadData();
+            }
+            else
+            {
+                DisputeModalError = err;
+            }
+        }
+        catch (Exception ex)
+        {
+            DisputeModalError = "Terjadi kesalahan saat mengirim laporan: " + ex.Message;
+        }
+        finally
+        {
+            IsSubmitting = false;
+        }
+    }
 
     private void AskConfirm(string title, string message, Func<Task> callback, string buttonText = "Ya, Lanjutkan")
     {
@@ -1396,8 +1499,35 @@
     }
 
 
-    private void OpenReturnModal(Transaction transaction, bool force)
+    private async Task OpenReturnModal(Transaction transaction, bool force)
     {
+        if (transaction.status == WorkflowStatuses.WaitingHandoverConfirm)
+        {
+            IsSubmitting = true;
+            try
+            {
+                var err = await TransactionService.ConfirmHandoverReceiptByUserAsync(transaction.group_id, CurrentUserId, true, null);
+                if (err != null)
+                {
+                    ErrorMessage = err;
+                    return;
+                }
+                await LoadData();
+                if (GroupedUsages.TryGetValue(transaction.group_id, out var groupItems))
+                {
+                    var updatedTx = groupItems.FirstOrDefault(t => t.id == transaction.id);
+                    if (updatedTx != null)
+                    {
+                        transaction = updatedTx;
+                    }
+                }
+            }
+            finally
+            {
+                IsSubmitting = false;
+            }
+        }
+
         ReturnTransaction = transaction;
         IsForceReturn = force;
         IsReturnModalOpen = true;

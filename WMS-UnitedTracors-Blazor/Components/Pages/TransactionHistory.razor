@@ -278,7 +278,7 @@
                                                         @if (step.CompletedAt.HasValue) {
                                                             <span class="text-[9px] text-gray-400 mt-0.5 flex items-center gap-1">
                                                                 <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0"/></svg>
-                                                                @step.CompletedAt.Value.ToString("dd MMM yyyy HH:mm")
+                                                                @step.CompletedAt.Value.ToString("dd MMM yyyy HH:mm") WIB
                                                             </span>
                                                         }
                                                     </div>
@@ -482,7 +482,7 @@
                                                         <td class="px-4 py-3 align-middle">
                                                             @if (item.status != "PENDING" && item.status != "PENDING_STAFF_INVENTORY" && item.status != "PENDING_ADMIN" && item.status != "PENDING_MANAGER") {
                                                                 <div class="text-xs text-gray-600 font-medium">@(item.updated_at.ToString("dd MMM yyyy"))</div>
-                                                                <div class="text-[9px] text-gray-400">@(item.updated_at.ToString("HH:mm"))</div>
+                                                                <div class="text-[9px] text-gray-400">@(item.updated_at.ToString("HH:mm")) WIB</div>
                                                             } else {
                                                                 <span class="text-gray-400 text-xs">-</span>
                                                             }

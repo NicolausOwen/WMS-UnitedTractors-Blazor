@@ -88,4 +88,39 @@ public class ApplicationDbContext : DbContext
             .HasForeignKey(uar => uar.AdminRoleId)
             .OnDelete(DeleteBehavior.Restrict);
     }
+
+    public override int SaveChanges()
+    {
+        ConvertDateTimeToWib();
+        return base.SaveChanges();
+    }
+
+    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        ConvertDateTimeToWib();
+        return base.SaveChangesAsync(cancellationToken);
+    }
+
+    private void ConvertDateTimeToWib()
+    {
+        var entries = ChangeTracker.Entries()
+            .Where(e => e.State == EntityState.Added || e.State == EntityState.Modified);
+
+        foreach (var entry in entries)
+        {
+            foreach (var property in entry.Properties)
+            {
+                if (property.Metadata.ClrType == typeof(DateTime) || property.Metadata.ClrType == typeof(DateTime?))
+                {
+                    if (property.CurrentValue is DateTime dt)
+                    {
+                        if (dt.Kind == DateTimeKind.Utc)
+                        {
+                            property.CurrentValue = dt.AddHours(7);
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

@@ -29,7 +29,7 @@ else
         <table class="w-full mb-6 border-collapse">
             <tr>
                 <td class="font-bold w-40 py-1 align-top">Tanggal Request</td>
-                <td class="py-1 align-top">: @FirstItem.created_at.ToString("dd MMM yyyy HH:mm:ss")</td>
+                <td class="py-1 align-top">: @FirstItem.created_at.ToString("dd MMM yyyy HH:mm:ss") WIB</td>
             </tr>
             <tr>
                 <td class="font-bold w-40 py-1 align-top">Nama Pemohon</td>
@@ -54,14 +54,14 @@ else
             {
                 <tr>
                     <td class="font-bold w-40 py-1 align-top">Tanggal Dikembalikan</td>
-                    <td class="py-1 align-top">: @FirstItem.updated_at.ToString("dd MMM yyyy HH:mm:ss")</td>
+                    <td class="py-1 align-top">: @FirstItem.updated_at.ToString("dd MMM yyyy HH:mm:ss") WIB</td>
                 </tr>
             }
             @if (Type == "Penyerahan" && FirstItem.updated_at != DateTime.MinValue)
             {
                 <tr>
                     <td class="font-bold w-40 py-1 align-top">Tanggal Serah Terima</td>
-                    <td class="py-1 align-top">: @FirstItem.updated_at.ToString("dd MMM yyyy HH:mm:ss")</td>
+                    <td class="py-1 align-top">: @FirstItem.updated_at.ToString("dd MMM yyyy HH:mm:ss") WIB</td>
                 </tr>
             }
             @if (Type == "Penyerahan" && !string.IsNullOrEmpty(FirstItem.handover_notes))

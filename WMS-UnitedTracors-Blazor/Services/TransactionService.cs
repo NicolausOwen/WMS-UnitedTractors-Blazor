@@ -95,7 +95,7 @@ public class TransactionService
                 return "Detail event, pemohon, dan divisi wajib diisi untuk transaksi OUT.";
             }
 
-            if (model.event_date.Value.Date < DateTime.Today)
+            if (model.event_date.Value.Date < WibHelper.Today)
             {
                 return "Tanggal event tidak boleh sebelum hari ini.";
             }
@@ -111,7 +111,7 @@ public class TransactionService
                 {
                     return "Tanggal pinjam dan tanggal kembali wajib diisi untuk item pinjaman.";
                 }
-                if (model.borrow_start_date.Value.Date < DateTime.Today)
+                if (model.borrow_start_date.Value.Date < WibHelper.Today)
                 {
                     return "Tanggal pinjam tidak boleh sebelum hari ini.";
                 }
@@ -123,7 +123,7 @@ public class TransactionService
 
             if (hasGiveawayItems && model.giveaway_pickup_date.HasValue)
             {
-                if (model.giveaway_pickup_date.Value.Date < DateTime.Today)
+                if (model.giveaway_pickup_date.Value.Date < WibHelper.Today)
                 {
                     return "Tanggal pengambilan tidak boleh sebelum hari ini.";
                 }
@@ -169,88 +169,149 @@ public class TransactionService
         var user = await _context.Users.FindAsync(currentUserId);
         if (user == null) return "Unauthorized.";
 
-        if (model.type == "OUT")
+        var strategy = _context.Database.CreateExecutionStrategy();
+        var result = await strategy.ExecuteAsync(async () =>
         {
-            int totalPointsRequired = 0;
-            foreach (var item in items)
+            using var dbTransaction = await _context.Database.BeginTransactionAsync();
+            try
             {
-                var product = await _context.Products.FirstOrDefaultAsync(p => p.sku == item.sku);
-                if (product == null) return $"Produk dengan SKU {item.sku} tidak ditemukan.";
-
-                var stockToCheck = product.current_stock;
-                if (item.product_variant_id.HasValue)
+                if (model.type == "OUT")
                 {
-                    var variant = await _context.ProductVariants.FindAsync(item.product_variant_id.Value);
-                    if (variant != null) stockToCheck = variant.stock;
+                    int totalPointsRequired = 0;
+                    foreach (var item in items)
+                    {
+                        var product = await _context.Products.FirstOrDefaultAsync(p => p.sku == item.sku);
+                        if (product == null) return $"Produk dengan SKU {item.sku} tidak ditemukan.";
+
+                        var stockToCheck = product.current_stock;
+                        if (item.product_variant_id.HasValue)
+                        {
+                            var variant = await _context.ProductVariants.FindAsync(item.product_variant_id.Value);
+                            if (variant != null) stockToCheck = variant.stock;
+                        }
+
+                        if (stockToCheck < item.quantity)
+                        {
+                            return $"Stok tidak mencukupi untuk produk: {product.name}.";
+                        }
+
+                        // Hanya barang non-returnable (GIVEAWAY) yang memakai poin.
+                        // Barang returnable (BORROW) dipinjam tanpa biaya poin.
+                        var itemReqType = item.request_type ?? "BORROW";
+                        if (itemReqType == "GIVEAWAY")
+                        {
+                            totalPointsRequired += (product.value * item.quantity);
+                        }
+                    }
+
+                    if (totalPointsRequired > 0)
+                    {
+                        if (user.poin < totalPointsRequired)
+                        {
+                            return $"Poin Anda tidak mencukupi untuk request ini. Diperlukan {totalPointsRequired} poin, namun Anda hanya memiliki {user.poin} poin.";
+                        }
+
+                        user.poin -= totalPointsRequired;
+                        _context.Users.Update(user);
+                    }
                 }
 
-                if (stockToCheck < item.quantity)
+                var createdTransactions = new List<(Transaction t, Product p, int qty, int? variantId, int stockBefore)>();
+
+                foreach (var item in items)
                 {
-                    return $"Stok tidak mencukupi untuk produk: {product.name}.";
+                    var product = await _context.Products.FirstOrDefaultAsync(p => p.sku == item.sku);
+                    if (product != null)
+                    {
+                        var reqType = item.request_type ?? "BORROW";
+
+                        // Deduct stock immediately if type is OUT
+                        int stockBefore = product.current_stock;
+                        if (model.type == "OUT")
+                        {
+                            product.current_stock -= item.quantity;
+                            _context.Products.Update(product);
+
+                            if (item.product_variant_id.HasValue)
+                            {
+                                var variant = await _context.ProductVariants.FindAsync(item.product_variant_id.Value);
+                                if (variant != null)
+                                {
+                                    variant.stock -= item.quantity;
+                                    _context.ProductVariants.Update(variant);
+                                }
+                            }
+                        }
+
+                        var transaction = new Transaction
+                        {
+                            product_id = product.id,
+                            product_variant_id = item.product_variant_id,
+                            type = model.type,
+                            request_type = model.type == "OUT" ? reqType : "BORROW",
+                            quantity = item.quantity,
+                            // Borrow & giveaway (OUT) sama-sama mulai dari tahap Staff Inventoris.
+                            status = model.type == "OUT"
+                                ? WorkflowStatuses.PendingStaffInventory
+                                : WorkflowStatuses.Pending,
+                            requester_id = currentUserId,
+                            notes = model.notes,
+                            applicant_name = model.applicant_name,
+                            applicant_nrp = model.applicant_nrp,
+                            event_name = model.event_name,
+                            event_date = model.event_date,
+                            event_end_date = model.event_end_date,
+                            documentation_link = model.documentation_link,
+                            borrow_duration_days = (reqType == "BORROW") ? (item.borrow_duration_days ?? 0) : 0,
+                            borrow_start_date = item.borrow_start_date,
+                            expected_return_date = item.expected_return_date,
+                            pickup_date = item.pickup_date,
+                            used_by = model.applicant_name,
+                            division_id = model.division_id,
+                            created_at = DateTime.UtcNow,
+                            updated_at = DateTime.UtcNow
+                        };
+
+                        _context.Transactions.Add(transaction);
+                        createdTransactions.Add((transaction, product, item.quantity, item.product_variant_id, stockBefore));
+                    }
                 }
 
-                // Hanya barang non-returnable (GIVEAWAY) yang memakai poin.
-                // Barang returnable (BORROW) dipinjam tanpa biaya poin.
-                // (Harus selaras dengan logika refund yang memakai request_type == "GIVEAWAY".)
-                var itemReqType = item.request_type ?? "BORROW";
-                if (itemReqType == "GIVEAWAY")
+                await _context.SaveChangesAsync();
+
+                // Create stock logs for OUT transactions
+                if (model.type == "OUT")
                 {
-                    totalPointsRequired += (product.value * item.quantity);
+                    foreach (var ct in createdTransactions)
+                    {
+                        var stockLog = new StockLog
+                        {
+                            transaction_id = ct.t.id,
+                            product_id = ct.p.id,
+                            stock_before = ct.stockBefore,
+                            stock_after = ct.p.current_stock,
+                            created_at = DateTime.UtcNow,
+                            updated_at = DateTime.UtcNow
+                        };
+                        _context.StockLogs.Add(stockLog);
+                    }
+                    await _context.SaveChangesAsync();
                 }
+
+                await dbTransaction.CommitAsync();
+                return null;
             }
-
-            if (totalPointsRequired > 0)
+            catch (Exception ex)
             {
-                if (user.poin < totalPointsRequired)
-                {
-                    return $"Poin Anda tidak mencukupi untuk request ini. Diperlukan {totalPointsRequired} poin, namun Anda hanya memiliki {user.poin} poin.";
-                }
-
-                user.poin -= totalPointsRequired;
-                _context.Users.Update(user);
+                await dbTransaction.RollbackAsync();
+                return "Checkout failed: " + ex.Message;
             }
-        }
+        });
 
-        foreach (var item in items)
+        if (result != null)
         {
-            var product = await _context.Products.FirstOrDefaultAsync(p => p.sku == item.sku);
-            if (product != null)
-            {
-                var reqType = item.request_type ?? "BORROW";
-                var transaction = new Transaction
-                {
-                    product_id = product.id,
-                    product_variant_id = item.product_variant_id,
-                    type = model.type,
-                    request_type = model.type == "OUT" ? reqType : "BORROW",
-                    quantity = item.quantity,
-                    // Borrow & giveaway (OUT) sama-sama mulai dari tahap Staff Inventoris.
-                    status = model.type == "OUT"
-                        ? WorkflowStatuses.PendingStaffInventory
-                        : WorkflowStatuses.Pending,
-                    requester_id = currentUserId,
-                    notes = model.notes,
-                    applicant_name = model.applicant_name,
-                    applicant_nrp = model.applicant_nrp,
-                    event_name = model.event_name,
-                    event_date = model.event_date,
-                    event_end_date = model.event_end_date,
-                    documentation_link = model.documentation_link,
-                    borrow_duration_days = (reqType == "BORROW") ? (item.borrow_duration_days ?? 0) : 0,
-                    borrow_start_date = item.borrow_start_date,
-                    expected_return_date = item.expected_return_date,
-                    pickup_date = item.pickup_date,
-                    used_by = model.applicant_name,
-                    division_id = model.division_id,
-                    created_at = DateTime.UtcNow,
-                    updated_at = DateTime.UtcNow
-                };
-
-                _context.Transactions.Add(transaction);
-            }
+            return result;
         }
-
-        await _context.SaveChangesAsync();
 
         if (model.type == "OUT")
         {
@@ -605,7 +666,8 @@ public class TransactionService
         string? notes,
         string? uploadedBy = null,
         string? recipientName = null,
-        DateTime? handoverTimestamp = null)
+        DateTime? handoverTimestamp = null,
+        List<string>? existingPhotos = null)
     {
         using var _context = _factory.CreateDbContext();
         if (transactionIds == null || !transactionIds.Any())
@@ -625,30 +687,36 @@ public class TransactionService
         if (!pending.Any())
             return "Item ini tidak sedang menunggu bukti serah terima.";
 
-        if (photos == null || photos.Count == 0)
+        if ((photos == null || photos.Count == 0) && (existingPhotos == null || existingPhotos.Count == 0))
             return "Minimal satu foto bukti serah terima wajib diunggah.";
 
-        if (photos.Count > 5)
+        if ((photos?.Count ?? 0) + (existingPhotos?.Count ?? 0) > 5)
             return "Maksimal 5 file bukti serah terima per upload.";
 
-        foreach (var photo in photos)
+        if (photos != null && photos.Count > 0)
         {
-            var uploadError = ValidateUploadFile(photo);
-            if (uploadError != null) return uploadError;
+            foreach (var photo in photos)
+            {
+                var uploadError = ValidateUploadFile(photo);
+                if (uploadError != null) return uploadError;
+            }
         }
 
-        List<string> photoPaths = new();
+        List<string> photoPaths = existingPhotos != null ? new List<string>(existingPhotos) : new List<string>();
         try
         {
             var uploads = Path.Combine(_env.WebRootPath, "storage", "handovers");
             if (!Directory.Exists(uploads)) Directory.CreateDirectory(uploads);
-            foreach (var photo in photos)
+            if (photos != null && photos.Count > 0)
             {
-                var fileName = Guid.NewGuid().ToString() + Path.GetExtension(photo.Name);
-                var filePath = Path.Combine(uploads, fileName);
-                using var fileStream = new FileStream(filePath, FileMode.Create);
-                await photo.OpenReadStream(MaxUploadBytes).CopyToAsync(fileStream);
-                photoPaths.Add("storage/handovers/" + fileName);
+                foreach (var photo in photos)
+                {
+                    var fileName = Guid.NewGuid().ToString() + Path.GetExtension(photo.Name);
+                    var filePath = Path.Combine(uploads, fileName);
+                    using var fileStream = new FileStream(filePath, FileMode.Create);
+                    await photo.OpenReadStream(MaxUploadBytes).CopyToAsync(fileStream);
+                    photoPaths.Add("storage/handovers/" + fileName);
+                }
             }
         }
         catch (Exception ex)
@@ -756,6 +824,46 @@ public class TransactionService
             _context.Transactions.Update(item);
         }
 
+        await _context.SaveChangesAsync();
+        return null;
+    }
+
+    public async Task CheckAndAutoConfirmHandoversAsync()
+    {
+        using var _context = _factory.CreateDbContext();
+        var cutoff = WibHelper.Now.AddHours(-24);
+        var expiredHandovers = await _context.Transactions
+            .Where(t =>
+                t.status == WorkflowStatuses.WaitingHandoverConfirm &&
+                t.request_type == "BORROW" &&
+                t.updated_at <= cutoff)
+            .ToListAsync();
+
+        if (expiredHandovers.Any())
+        {
+            foreach (var item in expiredHandovers)
+            {
+                item.status = WorkflowStatuses.Approved;
+                item.updated_at = DateTime.UtcNow;
+                _context.Transactions.Update(item);
+            }
+            await _context.SaveChangesAsync();
+        }
+    }
+
+    public async Task<string?> RejectDisputedHandoverReportAsync(int transactionId, string reason, int currentUserId)
+    {
+        using var _context = _factory.CreateDbContext();
+        var transaction = await _context.Transactions
+            .FirstOrDefaultAsync(t => t.id == transactionId);
+            
+        if (transaction == null) return "Transaksi tidak ditemukan.";
+        
+        transaction.status = WorkflowStatuses.WaitingHandoverConfirm;
+        transaction.rejection_reason = null; // Clear the dispute reason
+        transaction.updated_at = DateTime.UtcNow; // Reset the 24-hour auto-confirm timer!
+        
+        _context.Transactions.Update(transaction);
         await _context.SaveChangesAsync();
         return null;
     }
@@ -903,7 +1011,42 @@ public class TransactionService
         string newRequestType = model.request_type ?? transaction.request_type ?? "BORROW";
         var product = transaction.Product;
 
-        if (product?.current_stock < newQty) return "Insufficient stock for this product.";
+        if (transaction.type == "OUT" && product != null)
+        {
+            var stockToCheck = product.current_stock;
+            if (transaction.product_variant_id.HasValue)
+            {
+                var variant = await _context.ProductVariants.FindAsync(transaction.product_variant_id.Value);
+                if (variant != null) stockToCheck = variant.stock;
+            }
+
+            if (stockToCheck < newQty) return "Insufficient stock for this product.";
+
+            // Deduct the new revised quantity from inventory
+            int stockBefore = product.current_stock;
+            product.current_stock -= newQty;
+            _context.Products.Update(product);
+
+            if (transaction.product_variant_id.HasValue)
+            {
+                var variant = await _context.ProductVariants.FindAsync(transaction.product_variant_id.Value);
+                if (variant != null)
+                {
+                    variant.stock -= newQty;
+                    _context.ProductVariants.Update(variant);
+                }
+            }
+
+            _context.StockLogs.Add(new StockLog
+            {
+                transaction_id = transaction.id,
+                product_id = product.id,
+                stock_before = stockBefore,
+                stock_after = product.current_stock,
+                created_at = DateTime.UtcNow,
+                updated_at = DateTime.UtcNow
+            });
+        }
 
         var requester = transaction.Requester;
         if (requester == null) return "User not found.";
@@ -994,7 +1137,7 @@ public class TransactionService
     public async Task<int> MarkGiveawayDocumentationOverdueAsync()
     {
         using var _context = _factory.CreateDbContext();
-        var now = DateTime.Today;
+        var now = WibHelper.Today;
         var transactions = await _context.Transactions
             .Where(t =>
                 t.request_type == "GIVEAWAY" &&
@@ -1099,7 +1242,7 @@ public class TransactionService
     public async Task ProcessScannerTransactionAsync(UT_WMSDotnet.ViewModels.ScannerTransactionViewModel model, int userId)
     {
         using var _context = _factory.CreateDbContext();
-        if (model.Type == "OUT" && model.EventDate.HasValue && model.EventDate.Value.Date < DateTime.Today)
+        if (model.Type == "OUT" && model.EventDate.HasValue && model.EventDate.Value.Date < WibHelper.Today)
             throw new Exception("Tanggal event tidak boleh sebelum hari ini.");
 
         foreach (var item in model.Items)

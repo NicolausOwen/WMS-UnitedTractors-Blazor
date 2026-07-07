@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using UT_WMSDotnet.Data;
 using UT_WMSDotnet.Models;
 using WMS_UnitedTracors_Blazor.Helpers;
@@ -40,6 +41,26 @@ public class DashboardService
     public async Task<DashboardData> GetDashboardDataAsync(int? category, string? search = null, int page = 1, int pageSize = 15)
     {
         using var _context = _factory.CreateDbContext();
+
+        // Passive Auto-approve WAITING_HANDOVER_CONFIRM after 24 hours
+        var cutoff = DateTime.UtcNow.AddHours(-24);
+        var expiredHandovers = await _context.Transactions
+            .Where(t =>
+                t.request_type == "BORROW" &&
+                t.status == WorkflowStatuses.WaitingHandoverConfirm &&
+                t.updated_at <= cutoff)
+            .ToListAsync();
+
+        if (expiredHandovers.Any())
+        {
+            foreach (var item in expiredHandovers)
+            {
+                item.status = WorkflowStatuses.Approved;
+                item.updated_at = DateTime.UtcNow;
+            }
+            await _context.SaveChangesAsync();
+        }
+
         var widgetTotalItems = await _context.Products.CountAsync();
         var pendingApprovals = await _context.Transactions.CountAsync(t =>
             t.status == WorkflowStatuses.Pending ||
@@ -99,7 +120,7 @@ public class DashboardService
             MerchAvailable = await _context.Products.Where(p => p.is_returnable != 1 && p.current_stock > 2).CountAsync(),
             MerchLowStock = await _context.Products.Where(p => p.is_returnable != 1 && p.current_stock > 0 && p.current_stock <= 2).CountAsync(),
             MerchOutOfStock = await _context.Products.Where(p => p.is_returnable != 1 && p.current_stock <= 0).CountAsync(),
-            BorrowOverdue = await _context.Transactions.Where(t => t.request_type == "BORROW" && t.status == WorkflowStatuses.Approved && t.returned_quantity < t.quantity && t.expected_return_date < DateTime.Today).CountAsync(),
+            BorrowOverdue = await _context.Transactions.Where(t => t.request_type == "BORROW" && t.status == WorkflowStatuses.Approved && t.returned_quantity < t.quantity && t.expected_return_date < WibHelper.Today).CountAsync(),
             BorrowAvailable = await _context.Products.Where(p => p.is_returnable == 1 && p.current_stock > 0).CountAsync(),
             BorrowBorrowed = await _context.Transactions.Where(t => t.request_type == "BORROW" && t.status == WorkflowStatuses.Approved && t.returned_quantity < t.quantity).CountAsync()
         };
@@ -145,11 +166,12 @@ public class DashboardService
         public string BtnText { get; set; } = "";
     }
 
-    public async Task<List<ActionItemModel>> GetUserActionItemsAsync(int userId)
+    public async Task<List<ActionItemModel>> GetUserActionItemsAsync(int userId, ClaimsPrincipal? user = null)
     {
         using var _context = _factory.CreateDbContext();
         var actionItems = new List<ActionItemModel>();
 
+        // 1. General User Tasks (Requester role / their own requests)
         var pendingTransactions = await _context.Transactions
             .Include(t => t.Product)
             .Where(t => t.requester_id == userId && 
@@ -159,6 +181,9 @@ public class DashboardService
                          t.status == WorkflowStatuses.RevisionByStaffInventory ||
                          t.status == WorkflowStatuses.RevisionByAdmin ||
                          t.status == WorkflowStatuses.RevisionByManager ||
+                         t.status == WorkflowStatuses.WaitingHandoverConfirm ||
+                         t.status == WorkflowStatuses.WaitingDocumentation ||
+                         t.status == WorkflowStatuses.DocumentationOverdue ||
                          (t.request_type == "BORROW" && t.status == WorkflowStatuses.Approved && t.returned_quantity < t.quantity)))
             .OrderByDescending(t => t.updated_at)
             .ToListAsync();
@@ -171,12 +196,41 @@ public class DashboardService
                 {
                     Type = "handover",
                     Title = t.event_name ?? "Request Barang",
-                    BadgeClass = "bg-[#fef3c7] text-[#d97706]",
+                    BadgeClass = "bg-[#fef3c7] text-[#d97706] border border-[#fde68a]",
                     Badge = "Menunggu Serah Terima",
-                    Description = $"Upload bukti serah terima untuk {t.quantity}x {(t.Product != null ? t.Product.name : "")}",
+                    Description = $"Menunggu Staff Inventoris mengunggah bukti serah terima untuk {t.quantity}x {(t.Product != null ? t.Product.name : "")}",
                     Date = t.created_at,
                     BtnUrl = "Tracking",
-                    BtnText = "Upload Bukti"
+                    BtnText = "Cek Tracking"
+                });
+            }
+            else if (t.status == WorkflowStatuses.WaitingHandoverConfirm)
+            {
+                actionItems.Add(new ActionItemModel
+                {
+                    Type = "handover",
+                    Title = t.event_name ?? "Serah Terima Berjalan",
+                    BadgeClass = "bg-[#e0f2fe] text-[#0369a1] border border-[#bae6fd]",
+                    Badge = "Serah Terima Berjalan",
+                    Description = $"Barang telah diserahkan. Harap cek kecocokan fisik untuk {t.quantity}x {(t.Product != null ? t.Product.name : "")}.",
+                    Date = t.created_at,
+                    BtnUrl = "Tracking",
+                    BtnText = "Cek / Return"
+                });
+            }
+            else if (t.status == WorkflowStatuses.WaitingDocumentation || t.status == WorkflowStatuses.DocumentationOverdue)
+            {
+                bool isOverdue = t.status == WorkflowStatuses.DocumentationOverdue;
+                actionItems.Add(new ActionItemModel
+                {
+                    Type = "handover",
+                    Title = t.event_name ?? "Dokumentasi Giveaway",
+                    BadgeClass = isOverdue ? "bg-[#fef0f0] text-[#d94040] border border-[#f8c0c0]" : "bg-[#fff8e6] text-[#b37a00] border border-[#ffe099]",
+                    Badge = isOverdue ? "Dokumentasi Overdue" : "Menunggu Dokumentasi",
+                    Description = $"Unggah bukti dokumentasi foto untuk {t.quantity}x {(t.Product != null ? t.Product.name : "")}",
+                    Date = t.created_at,
+                    BtnUrl = "Tracking",
+                    BtnText = "Upload Foto"
                 });
             }
             else if (t.status == WorkflowStatuses.Revision || t.status == WorkflowStatuses.RevisionByStaffInventory || t.status == WorkflowStatuses.RevisionByAdmin || t.status == WorkflowStatuses.RevisionByManager)
@@ -185,7 +239,7 @@ public class DashboardService
                 {
                     Type = "revision",
                     Title = t.event_name ?? "Request Barang",
-                    BadgeClass = "bg-[#fef0f0] text-[#d94040]",
+                    BadgeClass = "bg-[#fef0f0] text-[#d94040] border border-[#f8c0c0]",
                     Badge = "Butuh Revisi",
                     Description = $"Revisi request {(t.Product != null ? t.Product.name : "")}. Alasan: {t.rejection_reason}",
                     Date = t.created_at,
@@ -195,12 +249,12 @@ public class DashboardService
             }
             else if (t.request_type == "BORROW" && t.status == WorkflowStatuses.Approved && t.returned_quantity < t.quantity)
             {
-                bool isOverdue = t.expected_return_date < DateTime.Today;
+                bool isOverdue = t.expected_return_date < WibHelper.Today;
                 actionItems.Add(new ActionItemModel
                 {
                     Type = "return",
                     Title = t.event_name ?? "Peminjaman Barang",
-                    BadgeClass = isOverdue ? "bg-[#fef0f0] text-[#d94040]" : "bg-[#f0f9ff] text-[#0284c7]",
+                    BadgeClass = isOverdue ? "bg-[#fef0f0] text-[#d94040] border border-[#f8c0c0]" : "bg-[#f0f9ff] text-[#0284c7] border border-[#b3e5fc]",
                     Badge = isOverdue ? "Overdue" : "Dipinjam",
                     Description = $"Kembalikan {t.quantity - (t.returned_quantity ?? 0)}x {(t.Product != null ? t.Product.name : "")}. {(t.expected_return_date.HasValue ? "Tenggat: " + t.expected_return_date.Value.ToString("dd MMM yyyy") : "")}",
                     Date = t.created_at,
@@ -209,7 +263,179 @@ public class DashboardService
                 });
             }
         }
-        
-        return actionItems;
+
+        // 2. Staff Inventory (SI) / Admin Tasks
+        if (user != null && (user.HasPermission(Permissions.ApprovalStage1) || user.HasPermission(Permissions.ApprovalHandover)))
+        {
+            // A. Menunggu Approval Tahap 1
+            var toApproveStage1 = await _context.Transactions
+                .Include(t => t.Product)
+                .Include(t => t.Requester)
+                .Where(t => t.status == WorkflowStatuses.PendingStaffInventory || t.status == WorkflowStatuses.Pending)
+                .OrderByDescending(t => t.updated_at)
+                .ToListAsync();
+
+            foreach (var t in toApproveStage1)
+            {
+                actionItems.Add(new ActionItemModel
+                {
+                    Type = "handover",
+                    Title = t.event_name ?? "Approval Tahap 1",
+                    BadgeClass = "bg-[#fff8e6] text-[#b37a00] border border-[#ffe099]",
+                    Badge = "Menunggu Approval",
+                    Description = $"Persetujuan pengajuan {t.request_type} dari {t.Requester?.name ?? "User"} untuk {t.quantity}x {(t.Product != null ? t.Product.name : "")}",
+                    Date = t.created_at,
+                    BtnUrl = "Approvals",
+                    BtnText = "Proses"
+                });
+            }
+
+            // B. Menunggu Serah Terima (SI harus isi bukti serah terima)
+            var toHandover = await _context.Transactions
+                .Include(t => t.Product)
+                .Include(t => t.Requester)
+                .Where(t => t.status == WorkflowStatuses.WaitingHandover)
+                .OrderByDescending(t => t.updated_at)
+                .ToListAsync();
+
+            foreach (var t in toHandover)
+            {
+                actionItems.Add(new ActionItemModel
+                {
+                    Type = "handover",
+                    Title = t.event_name ?? "Serah Terima Barang",
+                    BadgeClass = "bg-[#fef3c7] text-[#d97706] border border-[#fde68a]",
+                    Badge = "Butuh Serah Terima",
+                    Description = $"Kirim bukti serah terima barang untuk {t.quantity}x {(t.Product != null ? t.Product.name : "")} (Penerima: {t.Requester?.name ?? "User"})",
+                    Date = t.created_at,
+                    BtnUrl = "Approvals",
+                    BtnText = "Isi Bukti"
+                });
+            }
+
+            // C. Dispute Serah Terima (User dispute "Saya Belum Menerima Barang")
+            var disputes = await _context.Transactions
+                .Include(t => t.Product)
+                .Include(t => t.Requester)
+                .Where(t => t.status == WorkflowStatuses.WaitingHandoverConfirm && !string.IsNullOrEmpty(t.rejection_reason))
+                .OrderByDescending(t => t.updated_at)
+                .ToListAsync();
+
+            foreach (var t in disputes)
+            {
+                actionItems.Add(new ActionItemModel
+                {
+                    Type = "revision",
+                    Title = t.event_name ?? "Dispute Penerimaan",
+                    BadgeClass = "bg-[#fef0f0] text-[#d94040] border border-[#f8c0c0]",
+                    Badge = "Disputed",
+                    Description = $"User {t.Requester?.name} mengklaim belum menerima {t.quantity}x {(t.Product != null ? t.Product.name : "")}. Alasan: {t.rejection_reason}",
+                    Date = t.created_at,
+                    BtnUrl = "Approvals",
+                    BtnText = "Verifikasi"
+                });
+            }
+
+            // D. Approval Return (Returns waiting for ACC)
+            var pendingReturns = await _context.Transactions
+                .Include(t => t.Product)
+                .Include(t => t.Requester)
+                .Where(t => t.status == WorkflowStatuses.Approved && t.pending_return_quantity > 0 && t.is_return_draft == 0)
+                .OrderByDescending(t => t.updated_at)
+                .ToListAsync();
+
+            foreach (var t in pendingReturns)
+            {
+                actionItems.Add(new ActionItemModel
+                {
+                    Type = "return",
+                    Title = t.event_name ?? "Persetujuan Return",
+                    BadgeClass = "bg-[#e0f2fe] text-[#0369a1] border border-[#bae6fd]",
+                    Badge = "Return Pending",
+                    Description = $"Persetujuan pengembalian {t.pending_return_quantity}x {(t.Product != null ? t.Product.name : "")} dari {t.Requester?.name}",
+                    Date = t.created_at,
+                    BtnUrl = "Approvals",
+                    BtnText = "Verifikasi Return"
+                });
+            }
+        }
+
+        // 3. TL / PIC Studio / Admin Stage 2 Tasks
+        if (user != null && (user.HasPermission(Permissions.ApprovalStage2) || user.HasPermission(Permissions.ApprovalHandoverFinal)))
+        {
+            // A. Approval Tahap 2
+            var toApproveStage2 = await _context.Transactions
+                .Include(t => t.Product)
+                .Include(t => t.Requester)
+                .Where(t => t.status == WorkflowStatuses.PendingAdmin)
+                .OrderByDescending(t => t.updated_at)
+                .ToListAsync();
+
+            foreach (var t in toApproveStage2)
+            {
+                actionItems.Add(new ActionItemModel
+                {
+                    Type = "handover",
+                    Title = t.event_name ?? "Approval Tahap 2",
+                    BadgeClass = "bg-[#fff8e6] text-[#b37a00] border border-[#ffe099]",
+                    Badge = "Menunggu Approval TL",
+                    Description = $"Persetujuan pengajuan {t.request_type} dari {t.Requester?.name ?? "User"} untuk {t.quantity}x {(t.Product != null ? t.Product.name : "")}",
+                    Date = t.created_at,
+                    BtnUrl = "Approvals",
+                    BtnText = "Proses"
+                });
+            }
+
+            // B. Verifikasi Bukti Serah Terima Final
+            var verifyHandovers = await _context.Transactions
+                .Include(t => t.Product)
+                .Include(t => t.Requester)
+                .Where(t => t.status == WorkflowStatuses.WaitingAdminHandover)
+                .OrderByDescending(t => t.updated_at)
+                .ToListAsync();
+
+            foreach (var t in verifyHandovers)
+            {
+                actionItems.Add(new ActionItemModel
+                {
+                    Type = "handover",
+                    Title = t.event_name ?? "Verifikasi Serah Terima",
+                    BadgeClass = "bg-[#f5f3ff] text-[#6d28d9] border border-[#ddd6fe]",
+                    Badge = "Verifikasi Bukti",
+                    Description = $"Verifikasi bukti serah terima untuk {t.quantity}x {(t.Product != null ? t.Product.name : "")} (Penerima: {t.Requester?.name ?? "User"})",
+                    Date = t.created_at,
+                    BtnUrl = "Approvals",
+                    BtnText = "Verifikasi"
+                });
+            }
+        }
+
+        // 4. Manager Tasks
+        if (user != null && user.HasPermission(Permissions.ApprovalManager))
+        {
+            var toApproveManager = await _context.Transactions
+                .Include(t => t.Product)
+                .Include(t => t.Requester)
+                .Where(t => t.status == WorkflowStatuses.PendingManager)
+                .OrderByDescending(t => t.updated_at)
+                .ToListAsync();
+
+            foreach (var t in toApproveManager)
+            {
+                actionItems.Add(new ActionItemModel
+                {
+                    Type = "handover",
+                    Title = t.event_name ?? "Approval Manager",
+                    BadgeClass = "bg-[#fff8e6] text-[#b37a00] border border-[#ffe099]",
+                    Badge = "Menunggu Approval Manager",
+                    Description = $"Persetujuan pengajuan {t.request_type} dari {t.Requester?.name ?? "User"} untuk {t.quantity}x {(t.Product != null ? t.Product.name : "")}",
+                    Date = t.created_at,
+                    BtnUrl = "Approvals",
+                    BtnText = "Proses"
+                });
+            }
+        }
+
+        return actionItems.OrderByDescending(x => x.Date).ToList();
     }
 }

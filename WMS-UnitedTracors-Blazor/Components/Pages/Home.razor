@@ -248,7 +248,7 @@
                                                 @item.Description
                                             </p>
                                             <div class="text-[0.65rem] text-[#8a8880] font-medium mt-1">
-                                                Diajukan pada: @item.Date.ToString("dd MMMM yyyy, HH:mm")
+                                                Diajukan pada: @item.Date.ToString("dd MMMM yyyy, HH:mm") WIB
                                             </div>
                                         </div>
                                     </div>
@@ -893,7 +893,7 @@
         if (CurrentUserId > 0)
         {
             ActiveBorrows = await DashboardService.GetActiveBorrowsAsync(CurrentUserId, UserRole);
-            ActionItems = await DashboardService.GetUserActionItemsAsync(CurrentUserId);
+            ActionItems = await DashboardService.GetUserActionItemsAsync(CurrentUserId, userPrincipal);
             if (ActionItems.Count > 0) ActionItemsExpanded = true;
         }
 

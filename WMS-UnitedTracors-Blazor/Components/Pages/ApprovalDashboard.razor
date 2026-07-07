@@ -248,7 +248,7 @@
                                                 </div>
                                                 <div class="text-[9px] text-gray-400 font-semibold mt-1 flex items-center gap-1">
                                                     <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                                                    @firstItem.created_at.ToString("dd MMM yyyy HH:mm")
+                                                    @firstItem.created_at.ToString("dd MMM yyyy HH:mm") WIB
                                                 </div>
                                             </div>
                                         </div>
@@ -291,7 +291,7 @@
                                             <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black shrink-0 @badgeClass">@currentGroup.Count Item</span>
                                         </div>
                                         <div class="text-xs text-[#8a8880] font-semibold mt-1">
-                                            Dibuat pada @firstItem.created_at.ToString("dd MMM yyyy HH:mm")
+                                            Dibuat pada @firstItem.created_at.ToString("dd MMM yyyy HH:mm") WIB
                                         </div>
                                     </div>
                                     
@@ -569,22 +569,6 @@
                                 
                                 <!-- Group Level Buttons -->
                                 <div class="flex flex-wrap gap-2.5 shrink-0">
-                                    @if (isWaitingInput)
-                                    {
-                                        <button type="button" @onclick="() => OpenApprovalHandoverModal(group.Value)" 
-                                                class="px-4 py-2.5 bg-[#e8a000] hover:bg-[#d49300] text-[#1a1a1a] text-xs font-extrabold rounded-xl shadow-sm transition active:scale-[0.98] select-none h-11 flex items-center gap-1.5">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                                            <span>@(TransactionService.HasStoredFiles(firstItem.handover_photo) ? "Ubah Draft" : "Isi Bukti")</span>
-                                        </button>
-                                        @if (TransactionService.HasStoredFiles(firstItem.handover_photo))
-                                        {
-                                            <button type="button" @onclick='() => AskConfirm(isGiveawayHandover ? "Selesaikan Serah Terima" : "Submit Serah Terima", isGiveawayHandover ? "Selesaikan serah terima giveaway ini? Stok akan dipotong dan sistem akan menunggu dokumentasi user." : "Kirim bukti serah terima ke admin untuk diverifikasi?", () => SubmitApprovalHandover(group.Value), isGiveawayHandover ? "Ya, Selesaikan" : "Ya, Submit")' 
-                                                    disabled="@IsProcessing" class="px-4 py-2.5 bg-[#1a7a30] hover:bg-[#166528] text-white text-xs font-extrabold rounded-xl shadow-sm transition active:scale-[0.98] disabled:opacity-50 select-none h-11 flex items-center gap-1.5">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-5 9l2 2 4-4"/></svg>
-                                                <span>@(isGiveawayHandover ? "Selesaikan Serah Terima" : "Kirim ke Verifikasi")</span>
-                                            </button>
-                                        }
-                                    }
                                     @if (isWaitingUserConfirm)
                                     {
                                         <button type="button" @onclick='() => AskConfirm("Konfirmasi Serah Terima", "Konfirmasi penerimaan bukti serah terima ini?", () => ConfirmHandoverBySi(group.Key, true), "Ya, Konfirmasi")' 
@@ -626,7 +610,13 @@
                                             </div>
                                             <!-- Name + Badges -->
                                             <div class="min-w-0 flex-1">
-                                                <div class="font-extrabold text-gray-900 text-sm leading-snug">@(item.Product?.name)</div>
+                                                <div class="flex items-center gap-2 flex-wrap">
+                                                    <div class="font-extrabold text-gray-900 text-sm leading-snug">@(item.Product?.name)</div>
+                                                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 border rounded-lg text-[9px] font-extrabold uppercase tracking-wide @(GetHandoverStatusClass(item))">
+                                                        <span class="w-1.5 h-1.5 rounded-full bg-current opacity-80"></span>
+                                                        @GetHandoverStatusLabel(item)
+                                                    </span>
+                                                </div>
                                                 <div class="flex flex-wrap items-center gap-1.5 mt-1">
                                                     <code class="text-[9px] text-gray-500 bg-gray-100 border border-gray-200 px-1.5 py-0.5 rounded font-mono">@(item.Product?.sku)</code>
                                                     @if (item.request_type == "BORROW")
@@ -689,17 +679,10 @@
                                                         <span class="text-[10px] font-bold uppercase tracking-wider">Belum Ada Bukti</span>
                                                     </div>
                                                 }
-                                            </div>
-
-                                            <!-- Status Badge -->
-                                            <div class="shrink-0">
-                                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 border rounded-lg text-[9px] font-extrabold uppercase tracking-wide @(GetHandoverStatusClass(item.status))">
-                                                    <span class="w-1.5 h-1.5 rounded-full bg-current opacity-80"></span>
-                                                    @GetHandoverStatusLabel(item.status)
-                                                </span>
+                                                
                                                 @if (item.status == WorkflowStatuses.WaitingHandover && !string.IsNullOrEmpty(item.rejection_reason))
                                                 {
-                                                    <div class="mt-1.5 px-2.5 py-1.5 bg-red-50 border border-red-200 rounded-lg text-[9px] text-red-700 font-semibold leading-tight max-w-[180px]" title="@item.rejection_reason">
+                                                    <div class="mt-2 px-2.5 py-1.5 bg-red-50 border border-red-200 rounded-lg text-[9px] text-red-700 font-semibold leading-tight max-w-[180px]" title="@item.rejection_reason">
                                                         <div class="font-extrabold text-[#d94040] mb-0.5 uppercase tracking-wider">Alasan Ditolak</div>
                                                         "@item.rejection_reason"
                                                     </div>
@@ -715,6 +698,14 @@
                                                         <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                                                         <span>@(TransactionService.HasStoredFiles(item.handover_photo) ? "Ubah" : "Isi Bukti")</span>
                                                     </button>
+                                                    @if (!string.IsNullOrEmpty(item.rejection_reason))
+                                                    {
+                                                        <button type="button" @onclick="() => OpenDisputedHandoverRejectModal(item.id)" 
+                                                                class="px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white text-[10px] font-extrabold rounded-xl transition active:scale-[0.97] select-none h-9 flex items-center gap-1.5 shadow-sm">
+                                                            <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                                                            <span>Tolak Keberatan</span>
+                                                        </button>
+                                                    }
                                                     @if (TransactionService.HasStoredFiles(item.handover_photo))
                                                     {
                                                         <button type="button" @onclick='() => AskConfirm(item.request_type == "GIVEAWAY" ? "Selesaikan Serah Terima" : "Submit Serah Terima", item.request_type == "GIVEAWAY" ? "Selesaikan serah terima giveaway ini?" : "Kirim bukti serah terima ke admin?", () => SubmitApprovalHandover(new List<Transaction> { item }), "Ya, Kirim")' 
@@ -1137,21 +1128,92 @@
 
                 <div>
                     <label class="block text-[0.72rem] font-bold tracking-[0.14em] uppercase text-[#8a8880] mb-2">Unggah File Foto / PDF</label>
-                    <InputFile OnChange="HandleApprovalHandoverFileSelected" multiple accept="image/jpg,image/jpeg,image/png,image/webp,application/pdf" class="block w-full text-xs text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-extrabold file:bg-[#f5f4f0] file:text-[#1a1a1a] hover:file:bg-[#e5e3dc] transition cursor-pointer border border-[#e5e3dc] rounded-xl bg-white" />
-                    <p class="text-[10px] text-gray-500 mt-1.5">Format: JPG, PNG, WEBP, PDF. Maksimal 5 file, maks 4MB per file.</p>
-                    @if (ApprovalHandoverFiles.Any())
+                    
+                    <!-- Existing & New Files Combined -->
+                    @if (ApprovalHandoverExistingFiles.Any() || ApprovalHandoverFiles.Any())
                     {
-                        <div class="mt-3 flex flex-wrap gap-2">
-                            @foreach (var file in ApprovalHandoverFiles)
-                            {
-                                <div class="px-3 py-2 rounded-xl border border-[#e5e3dc] bg-[#faf9f5] text-[11px] font-semibold text-[#1a1a1a] flex items-center gap-1.5">
-                                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                                    <span class="truncate max-w-[150px]">@file.Name</span>
-                                    <span class="text-[#8a8880]">(@((file.Size / 1024.0 / 1024.0).ToString("0.#")) MB)</span>
-                                </div>
-                            }
+                        <div class="mb-3.5 space-y-1.5 bg-[#faf9f5] border border-[#e5e3dc] p-3 rounded-xl">
+                            <label class="block text-[9px] font-extrabold tracking-wider uppercase text-gray-500">File Bukti Terunggah:</label>
+                            <div class="flex flex-wrap gap-2">
+                                <!-- Existing database files -->
+                                @foreach (var file in ApprovalHandoverExistingFiles)
+                                {
+                                    var fileName = file.Split('/').Last();
+                                    <div class="px-2.5 py-1.5 rounded-lg border border-[#e5e3dc] bg-white text-[11px] font-semibold text-[#1a1a1a] flex items-center gap-1.5 shadow-sm">
+                                        @if (file.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            <a href="@($"/{file.TrimStart('/')}")" target="_blank" class="flex items-center gap-1.5 text-red-600 hover:text-red-800 transition">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                                <span class="truncate max-w-[120px]" title="@fileName">@fileName</span>
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <a href="@($"/{file.TrimStart('/')}")" target="_blank" data-image-popup class="flex items-center gap-1.5 text-[#1a6b8a] hover:text-[#14526b] transition">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                                <span class="truncate max-w-[120px]" title="@fileName">@fileName</span>
+                                            </a>
+                                        }
+                                        <button type="button" @onclick="() => RemoveExistingHandoverFile(file)" class="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded-lg transition" title="Hapus file ini">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                        </button>
+                                    </div>
+                                }
+
+                                <!-- Newly added browser files -->
+                                @foreach (var file in ApprovalHandoverFiles)
+                                {
+                                    var hasPreview = ApprovalHandoverNewFilePreviews.TryGetValue(file, out var previewUrl);
+                                    <div class="px-2.5 py-1.5 rounded-lg border border-dashed border-[#e8a000] bg-white text-[11px] font-semibold text-[#1a1a1a] flex items-center gap-1.5 shadow-sm">
+                                        @if (file.ContentType.Contains("pdf", StringComparison.OrdinalIgnoreCase) || file.Name.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            @if (hasPreview)
+                                            {
+                                                <a href="@previewUrl" target="_blank" class="flex items-center gap-1.5 text-red-500 hover:text-red-700 transition font-extrabold">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                                    <span class="truncate max-w-[120px]" title="@file.Name">@file.Name</span>
+                                                    <span class="text-[9px] text-[#8a8880] font-normal">(@((file.Size / 1024.0 / 1024.0).ToString("0.#")) MB)</span>
+                                                </a>
+                                            }
+                                            else
+                                            {
+                                                <div class="flex items-center gap-1.5 text-red-500">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                                    <span class="truncate max-w-[120px]" title="@file.Name">@file.Name</span>
+                                                    <span class="text-[9px] text-[#8a8880] font-normal">(@((file.Size / 1024.0 / 1024.0).ToString("0.#")) MB)</span>
+                                                </div>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            @if (hasPreview)
+                                            {
+                                                <a href="@previewUrl" target="_blank" data-image-popup class="flex items-center gap-1.5 text-[#e8a000] hover:text-[#d49300] transition font-extrabold">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                                    <span class="truncate max-w-[120px]" title="@file.Name">@file.Name</span>
+                                                    <span class="text-[9px] text-[#8a8880] font-normal">(@((file.Size / 1024.0 / 1024.0).ToString("0.#")) MB)</span>
+                                                </a>
+                                            }
+                                            else
+                                            {
+                                                <div class="flex items-center gap-1.5 text-[#e8a000]">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                                    <span class="truncate max-w-[120px]" title="@file.Name">@file.Name</span>
+                                                    <span class="text-[9px] text-[#8a8880] font-normal">(@((file.Size / 1024.0 / 1024.0).ToString("0.#")) MB)</span>
+                                                </div>
+                                            }
+                                        }
+                                        <button type="button" @onclick="() => RemoveNewHandoverFile(file)" class="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded-lg transition" title="Batal unggah file ini">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                        </button>
+                                    </div>
+                                }
+                            </div>
                         </div>
                     }
+
+                    <InputFile OnChange="HandleApprovalHandoverFileSelected" multiple accept="image/jpg,image/jpeg,image/png,image/webp,application/pdf" class="block w-full text-xs text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-extrabold file:bg-[#f5f4f0] file:text-[#1a1a1a] hover:file:bg-[#e5e3dc] transition cursor-pointer border border-[#e5e3dc] rounded-xl bg-white" />
+                    <p class="text-[10px] text-gray-500 mt-1.5">Format: JPG, PNG, WEBP, PDF. Maksimal 5 file, maks 4MB per file.</p>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1246,12 +1308,14 @@
                             </svg>
                         </div>
                         <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left w-full">
-                            <h3 class="text-base font-extrabold leading-6 text-gray-900">@(IsRejectingDocumentation ? "Tolak Dokumentasi Giveaway" : "Tolak Bukti Serah Terima")</h3>
+                            <h3 class="text-base font-extrabold leading-6 text-gray-900">@(IsRejectingDocumentation ? "Tolak Dokumentasi Giveaway" : IsRejectingDisputedHandover ? "Tolak Keberatan User" : "Tolak Bukti Serah Terima")</h3>
                             <div class="mt-2">
                                 <p class="text-sm text-[#8a8880] mb-3.5 font-medium">
                                     @(IsRejectingDocumentation 
                                         ? "Berikan alasan penolakan dokumentasi giveaway ini agar pemohon dapat mengetahuinya dan melakukan unggah ulang foto dokumentasi." 
-                                        : "Berikan alasan penolakan bukti ini agar pemohon dapat mengetahuinya dan melakukan unggah ulang bukti.")
+                                        : IsRejectingDisputedHandover
+                                            ? "Tolak laporan keberatan user ini. Transaksi akan dikembalikan ke status menunggu konfirmasi penerimaan dan sisa waktu 24 jam akan dimulai kembali."
+                                            : "Berikan alasan penolakan bukti ini agar pemohon dapat mengetahuinya dan melakukan unggah ulang bukti.")
                                 </p>
                                 <textarea @bind="HandoverRejectReason" @bind:event="oninput" @onkeypress="() => HandoverRejectionError = false" class="w-full rounded-xl border p-3.5 text-sm outline-none transition-all @(HandoverRejectionError ? "border-red-500 focus:ring-1 focus:ring-red-500" : "border-gray-200 focus:border-red-500 focus:ring-1 focus:ring-red-500")" rows="3" placeholder="Masukkan alasan penolakan..."></textarea>
                                 @if (HandoverRejectionError)
@@ -1263,7 +1327,9 @@
                     </div>
                 </div>
                 <div class="bg-gray-50 px-5 py-4 sm:px-6 flex flex-col sm:flex-row-reverse gap-2 border-t border-gray-150">
-                    <button type="button" @onclick="ConfirmHandoverReject" class="w-full sm:w-auto inline-flex justify-center rounded-xl bg-red-600 px-4 py-2.5 text-xs font-extrabold text-white shadow-sm hover:bg-red-500 transition h-11 items-center">Tolak Bukti</button>
+                    <button type="button" @onclick="ConfirmHandoverReject" class="w-full sm:w-auto inline-flex justify-center rounded-xl bg-red-600 px-4 py-2.5 text-xs font-extrabold text-white shadow-sm hover:bg-red-500 transition h-11 items-center">
+                        @(IsRejectingDisputedHandover ? "Tolak Keberatan" : "Tolak Bukti")
+                    </button>
                     <button type="button" @onclick="CloseHandoverRejectModal" class="w-full sm:w-auto inline-flex justify-center rounded-xl bg-white px-4 py-2.5 text-xs font-bold text-gray-700 border border-gray-300 hover:bg-gray-50 transition h-11 items-center">Batal</button>
                 </div>
             </div>
@@ -1432,7 +1498,7 @@
                 <div class="flex-1 min-w-0">
                     <div class="text-sm font-extrabold text-gray-900 flex flex-wrap items-center gap-2">
                         <span class="bg-[#1a1a1a]/5 text-gray-800 px-2 py-0.5 rounded text-xs font-mono">Request #@group.Key.Substring(0, Math.Min(8, group.Key.Length))</span>
-                        <span class="text-[#8a8880] text-xs font-semibold">@firstItem.created_at.ToString("dd MMM yyyy HH:mm")</span>
+                        <span class="text-[#8a8880] text-xs font-semibold">@firstItem.created_at.ToString("dd MMM yyyy HH:mm") WIB</span>
                         <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black shrink-0 @badgeClass">@group.Value.Count Item</span>
                     </div>
                     <div class="text-xs text-[#5a5855] font-bold mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -2001,6 +2067,8 @@
     private bool ShowApprovalHandoverModal = false;
     private List<Transaction> ApprovalHandoverItems = new();
     private List<IBrowserFile> ApprovalHandoverFiles = new();
+    private List<string> ApprovalHandoverExistingFiles = new();
+    private Dictionary<IBrowserFile, string> ApprovalHandoverNewFilePreviews = new();
     private string? ApprovalHandoverNotes;
     private string? ApprovalHandoverRecipientName;
     private DateTime? ApprovalHandoverTimestampInput;
@@ -2059,6 +2127,10 @@
         ApprovalHandoverRecipientName = firstPending?.handover_recipient_name ?? firstPending?.applicant_name;
         ApprovalHandoverTimestampInput = firstPending?.handover_timestamp ?? DateTime.Now;
         ApprovalHandoverFiles = new();
+        ApprovalHandoverExistingFiles = firstPending != null 
+            ? TransactionService.ParseStoredFiles(firstPending.handover_photo)
+            : new List<string>();
+        ApprovalHandoverNewFilePreviews = new();
         HandoverDraftError = "";
         ShowApprovalHandoverModal = true;
     }
@@ -2068,18 +2140,71 @@
         ShowApprovalHandoverModal = false;
         ApprovalHandoverItems = new();
         ApprovalHandoverFiles = new();
+        ApprovalHandoverExistingFiles = new();
+        ApprovalHandoverNewFilePreviews = new();
         ApprovalHandoverNotes = null;
         ApprovalHandoverRecipientName = null;
         ApprovalHandoverTimestampInput = null;
         HandoverDraftError = "";
     }
-
-    private void HandleApprovalHandoverFileSelected(InputFileChangeEventArgs e)
+    private void RemoveExistingHandoverFile(string file)
     {
-        ApprovalHandoverFiles = e.GetMultipleFiles(5).ToList();
-        HandoverDraftError = "";
+        ApprovalHandoverExistingFiles.Remove(file);
     }
 
+    private void RemoveNewHandoverFile(IBrowserFile file)
+    {
+        ApprovalHandoverFiles.Remove(file);
+        ApprovalHandoverNewFilePreviews.Remove(file);
+    }
+
+    private async Task HandleApprovalHandoverFileSelected(InputFileChangeEventArgs e)
+    {
+        var newFiles = e.GetMultipleFiles(5).ToList();
+        foreach (var file in newFiles)
+        {
+            if (!ApprovalHandoverFiles.Any(f => f.Name == file.Name && f.Size == file.Size))
+            {
+                ApprovalHandoverFiles.Add(file);
+                
+                // Cek tipe file untuk preview
+                if (file.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+                {
+                    try
+                    {
+                        var resizedFile = await file.RequestImageFileAsync(file.ContentType, 800, 600);
+                        using var stream = resizedFile.OpenReadStream(TransactionService.MaxUploadBytes);
+                        using var ms = new System.IO.MemoryStream();
+                        await stream.CopyToAsync(ms);
+                        var base64 = Convert.ToBase64String(ms.ToArray());
+                        var previewUrl = $"data:{file.ContentType};base64,{base64}";
+                        ApprovalHandoverNewFilePreviews[file] = previewUrl;
+                    }
+                    catch
+                    {
+                        // Gagal load preview
+                    }
+                }
+                else if (file.ContentType.Contains("pdf", StringComparison.OrdinalIgnoreCase) || file.Name.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+                {
+                    try
+                    {
+                        using var stream = file.OpenReadStream(TransactionService.MaxUploadBytes);
+                        using var ms = new System.IO.MemoryStream();
+                        await stream.CopyToAsync(ms);
+                        var base64 = Convert.ToBase64String(ms.ToArray());
+                        var previewUrl = $"data:application/pdf;base64,{base64}";
+                        ApprovalHandoverNewFilePreviews[file] = previewUrl;
+                    }
+                    catch
+                    {
+                        // Gagal load preview
+                    }
+                }
+            }
+        }
+        HandoverDraftError = "";
+    }
     private async Task SubmitApprovalHandoverDraft()
     {
         if (!ApprovalHandoverItems.Any())
@@ -2088,7 +2213,7 @@
             return;
         }
 
-        if (!ApprovalHandoverFiles.Any())
+        if (!ApprovalHandoverFiles.Any() && !ApprovalHandoverExistingFiles.Any())
         {
             HandoverDraftError = "Minimal satu file bukti serah terima wajib diunggah.";
             return;
@@ -2108,7 +2233,8 @@
                 ApprovalHandoverNotes,
                 "SI",
                 ApprovalHandoverRecipientName,
-                ApprovalHandoverTimestampInput);
+                ApprovalHandoverTimestampInput,
+                ApprovalHandoverExistingFiles);
 
             if (err == null)
             {
@@ -2164,6 +2290,7 @@
     }
 
     private bool IsRejectingDocumentation = false;
+    private bool IsRejectingDisputedHandover = false;
 
     private void OpenDocumentationRejectModal(string groupId)
     {
@@ -2185,6 +2312,17 @@
         ShowHandoverRejectModal = true;
     }
 
+    private void OpenDisputedHandoverRejectModal(int id)
+    {
+        HandoverRejectTransactionId = id;
+        HandoverRejectGroupId = "";
+        HandoverRejectReason = "";
+        HandoverRejectionError = false;
+        IsRejectingDocumentation = false;
+        IsRejectingDisputedHandover = true;
+        ShowHandoverRejectModal = true;
+    }
+
     private void CloseHandoverRejectModal()
     {
         ShowHandoverRejectModal = false;
@@ -2192,6 +2330,7 @@
         HandoverRejectTransactionId = null;
         HandoverRejectionError = false;
         IsRejectingDocumentation = false;
+        IsRejectingDisputedHandover = false;
     }
 
     private async Task ConfirmHandoverReject()
@@ -2218,6 +2357,10 @@
                     err = await ApprovalService.RejectGiveawayDocumentationBatchAsync(HandoverRejectGroupId, HandoverRejectReason, CurrentUserId, UserRole);
                 }
             }
+            else if (IsRejectingDisputedHandover)
+            {
+                err = await TransactionService.RejectDisputedHandoverReportAsync(HandoverRejectTransactionId!.Value, HandoverRejectReason, CurrentUserId);
+            }
             else
             {
                 if (HandoverRejectTransactionId.HasValue)
@@ -2231,7 +2374,11 @@
             }
             if (err == null)
             {
-                SuccessMessage = IsRejectingDocumentation ? "Dokumentasi giveaway berhasil ditolak." : "Handover rejected successfully.";
+                SuccessMessage = IsRejectingDocumentation 
+                    ? "Dokumentasi giveaway berhasil ditolak." 
+                    : IsRejectingDisputedHandover
+                        ? "Laporan keberatan user berhasil ditolak. Transaksi dikembalikan ke status menunggu konfirmasi penerimaan user."
+                        : "Handover rejected successfully.";
                 CloseHandoverRejectModal();
                 await LoadData();
             }
@@ -2552,24 +2699,35 @@
     private static string GetApprovalStatusClass(string? status) =>
         "inline-flex items-center px-2 py-0.5 border border-[#fde68a] rounded-md text-[0.65rem] font-bold bg-[#fef3c7] text-[#92400e] uppercase tracking-wider";
 
-    private static string GetHandoverStatusLabel(string? status) =>
-        status switch
+    private string GetHandoverStatusLabel(Transaction item)
+    {
+        if (item.status == WorkflowStatuses.WaitingHandover)
         {
-            WorkflowStatuses.WaitingHandover => "Menunggu Bukti",
+            return TransactionService.HasStoredFiles(item.handover_photo) ? "Menunggu Submit" : "Menunggu Bukti";
+        }
+        return item.status switch
+        {
             WorkflowStatuses.WaitingAdminHandover => "Menunggu Verifikasi",
             WorkflowStatuses.Approved => "Disetujui",
-            _ => status ?? "-"
+            _ => item.status ?? "-"
         };
+    }
 
-    private static string GetHandoverStatusClass(string? status) =>
-        status switch
+    private string GetHandoverStatusClass(Transaction item)
+    {
+        if (item.status == WorkflowStatuses.WaitingHandover)
         {
-            WorkflowStatuses.WaitingHandover => "border-[#fde68a] bg-[#fef3c7] text-[#92400e]",
+            return TransactionService.HasStoredFiles(item.handover_photo)
+                ? "border-[#b8e8c0] bg-[#eef9f0] text-[#1a7a30]"
+                : "border-[#fde68a] bg-[#fef3c7] text-[#92400e]";
+        }
+        return item.status switch
+        {
             WorkflowStatuses.WaitingAdminHandover => "border-[#bae6fd] bg-[#e0f2fe] text-[#1a6b8a]",
             WorkflowStatuses.Approved => "border-[#b8e8c0] bg-[#eef9f0] text-[#1a7a30]",
             _ => "border-gray-200 bg-gray-50 text-gray-500"
         };
-
+    }
     private async Task ProcessBatchRejectGroup(string groupId)
     {
         var groupItems = GroupedApprovals?.GetValueOrDefault(groupId);
