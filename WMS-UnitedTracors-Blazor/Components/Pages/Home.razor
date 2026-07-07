@@ -28,7 +28,7 @@
     @* =========================================== *@
     @* Mobile Version for Staff (m-banking style)  *@
     @* =========================================== *@
-    @if (string.Equals(UserRole, "staff", StringComparison.OrdinalIgnoreCase))
+    @if (IsStaffOrUser)
     {
         <div class="mb-6">
 
@@ -279,7 +279,7 @@
         </div>
     
     @* Quick Actions *@
-    <div class="@(string.Equals(UserRole, "staff", StringComparison.OrdinalIgnoreCase) ? "hidden md:flex" : "flex") flex-wrap items-center gap-3 mb-8">
+    <div class="@(IsStaffOrUser ? "hidden md:flex" : "flex") flex-wrap items-center gap-3 mb-8">
         <a href="/Catalog/Borrow" class="inline-flex items-center gap-2 px-[1.1rem] py-[0.6rem] bg-[#1a1a1a] hover:bg-[#333333] active:scale-[0.98] text-white text-[0.75rem] font-bold tracking-[0.06em] uppercase rounded-lg transition">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
             Katalog Pinjam
@@ -391,7 +391,7 @@
     }
 
     @* Catalog shortcut cards *@
-    @if (!string.Equals(UserRole, "staff", StringComparison.OrdinalIgnoreCase))
+    @if (!IsStaffOrUser)
     {
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
             <a href="/Catalog/Borrow" class="flex items-center gap-4 p-5 bg-[#fffbeb] border border-[#f9e29c] hover:border-[#e8a000] rounded-xl shadow-sm hover:shadow-md transition-all group">
@@ -792,6 +792,7 @@
     
     private int CurrentUserId = 0;
     private string? UserRole; private System.Security.Claims.ClaimsPrincipal userPrincipal = new System.Security.Claims.ClaimsPrincipal();
+    private bool IsStaffOrUser => string.Equals(UserRole, "staff", StringComparison.OrdinalIgnoreCase) || string.Equals(UserRole, "user", StringComparison.OrdinalIgnoreCase);
     private string? ApplicantName;
     private string? ApplicantNrp;
     private int? UserDivisionId;

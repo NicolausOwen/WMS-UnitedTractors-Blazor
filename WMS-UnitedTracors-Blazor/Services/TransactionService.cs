@@ -342,7 +342,7 @@ public class TransactionService
             query = query.Where(t => t.requester_id == currentUserId);
         }
 
-        if (string.Equals(userRole, "staff", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(userRole, "staff", StringComparison.OrdinalIgnoreCase) || string.Equals(userRole, "user", StringComparison.OrdinalIgnoreCase))
         {
             query = query.Where(t => t.type == "OUT");
         }
