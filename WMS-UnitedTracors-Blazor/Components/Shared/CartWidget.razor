@@ -1,0 +1,28 @@
+@using WMS_UnitedTracors_Blazor.Services
+@inject CartService CartService
+@implements IDisposable
+@rendermode InteractiveServer
+
+<button type="button" @onclick="CartService.ShowCart" class="relative flex items-center justify-center w-[34px] h-[34px] rounded-lg border border-[#2a2a2a] hover:border-[#c98d00] bg-none text-[#8a8780] hover:text-[#e8a000] hover:bg-[rgba(232,160,0,0.08)] transition-colors duration-150 cursor-pointer" title="Keranjang" aria-label="Buka Keranjang">
+    <svg class="w-5 h-5 stroke-current fill-none stroke-[2] stroke-linecap-round stroke-linejoin-round" viewBox="0 0 24 24">
+        <path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+    </svg>
+    @if (CartService.Items.Any())
+    {
+        <span class="absolute -top-1.5 -right-1.5 inline-flex items-center justify-center min-w-[1.2rem] h-[1.2rem] px-1 bg-[#d94040] text-white text-[0.6rem] font-bold rounded-full shadow-sm border-2 border-[#1a1a1a]">
+            @CartService.Items.Sum(i => i.Quantity)
+        </span>
+    }
+</button>
+
+@code {
+    protected override void OnInitialized()
+    {
+        CartService.OnChange += StateHasChanged;
+    }
+    
+    public void Dispose()
+    {
+        CartService.OnChange -= StateHasChanged;
+    }
+}

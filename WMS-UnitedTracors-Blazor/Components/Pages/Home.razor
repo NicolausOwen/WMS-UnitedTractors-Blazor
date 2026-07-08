@@ -429,8 +429,6 @@
 
 </div>
 
-@* Cart widget — floating button + checkout modal *@
-<CartCheckout />
 
 
 
@@ -895,7 +893,7 @@
         {
             ActiveBorrows = await DashboardService.GetActiveBorrowsAsync(CurrentUserId, UserRole);
             ActionItems = await DashboardService.GetUserActionItemsAsync(CurrentUserId, userPrincipal);
-            if (ActionItems.Count > 0) ActionItemsExpanded = true;
+
         }
 
         _shouldRenderCharts = true;

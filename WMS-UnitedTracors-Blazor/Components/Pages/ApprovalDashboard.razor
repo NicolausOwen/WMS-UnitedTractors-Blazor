@@ -191,9 +191,9 @@
                 }
                 else
                 {
-                    <div class="split-container mb-12">
-                        <!-- Left Pane: Request List -->
-                        <div class="split-left bg-white border border-[#e5e3dc] rounded-2xl p-4 shadow-sm flex flex-col gap-4">
+                    <div class="mb-12">
+                        <!-- Full Pane: Request List -->
+                        <div class="bg-white border border-[#e5e3dc] rounded-2xl p-4 shadow-sm flex flex-col gap-4">
                             <!-- Left Header -->
                             <div class="flex items-center justify-between pb-3 border-b border-[#f0ede5]">
                                 <h3 class="font-extrabold text-base text-[#1a1a1a]">Daftar Permintaan</h3>
@@ -219,15 +219,12 @@
                                     var isBorrow = firstItem.request_type == "BORROW";
                                     var itemPillClass = isBorrow ? "bg-[#eef6fd] text-[#1a6b8a] border-[#d9e6f3]" : "bg-[#eef9f0] text-[#1a7a30] border-[#d8eadb]";
                                     var iconBgClass = isBorrow ? "bg-[#eef6fd] text-[#1a6b8a] border-[#d9e6f3]" : "bg-[#eef9f0] text-[#1a7a30] border-[#d8eadb]";
-                                    var borderClass = isBorrow 
-                                        ? (isSelected ? "border-[#1a6b8a] bg-[#eef6fd]/30 shadow-sm border-l-4 border-l-[#1a6b8a]" : "border-[#e5e3dc] border-l-4 border-l-[#1a6b8a] hover:border-[#1a6b8a]/50 hover:bg-[#eef6fd]/20")
-                                        : (isSelected ? "border-[#1a7a30] bg-[#eef9f0]/30 shadow-sm border-l-4 border-l-[#1a7a30]" : "border-[#e5e3dc] border-l-4 border-l-[#1a7a30] hover:border-[#1a7a30]/50 hover:bg-[#eef9f0]/20");
                                     
-                                    <div @onclick="() => SelectedGroupId = group.Key"
-                                         class="p-3.5 rounded-2xl border transition-all duration-200 cursor-pointer flex items-center justify-between gap-3 relative @borderClass">
+                                    <div @onclick="@(() => Navigation.NavigateTo($"/approval-detail/{group.Key}"))"
+                                         class="p-3.5 rounded-xl border border-[#e5e3dc] hover:border-[#1a6b8a]/50 hover:bg-[#eef6fd]/20 transition-all duration-200 cursor-pointer flex items-center justify-between gap-3 relative">
                                         <div class="flex items-center gap-2.5 min-w-0">
                                             <!-- Indicator Dot -->
-                                            <div class="w-2 h-2 rounded-full shrink-0 @(isSelected ? (isBorrow ? "bg-[#1a6b8a]" : "bg-[#1a7a30]") : (isBorrow ? "bg-[#1a6b8a]/40" : "bg-[#1a7a30]/40"))"></div>
+                                            <div class="w-2 h-2 rounded-full shrink-0 @(isBorrow ? "bg-[#1a6b8a]" : "bg-[#1a7a30]")"></div>
                                             
                                             <!-- Request Icon -->
                                             <div class="w-9 h-9 rounded-xl border flex items-center justify-center shrink-0 @iconBgClass">
@@ -270,253 +267,6 @@
                                     <button type="button" class="w-7 h-7 border border-[#e5e3dc] rounded-lg hover:bg-gray-50 flex items-center justify-center font-bold text-[#1a1a1a] select-none">&gt;</button>
                                 </div>
                             </div>
-                        </div>
-
-                        <!-- Right Pane: Request Details -->
-                        <div class="split-right bg-white border border-[#e5e3dc] rounded-2xl p-5 sm:p-6 shadow-sm flex flex-col gap-6">
-                            @if (!string.IsNullOrEmpty(SelectedGroupId) && GroupedApprovals.ContainsKey(SelectedGroupId))
-                            {
-                                var currentGroup = GroupedApprovals[SelectedGroupId];
-                                var firstItem = currentGroup.First();
-                                var isGiveaway = firstItem.request_type == "GIVEAWAY";
-                                var badgeClass = isGiveaway ? "bg-[#eef9f0] border border-[#d8eadb] text-[#1a7a30]" : "bg-[#eef6fd] border border-[#d9e6f3] text-[#1a6b8a]";
-                                var buttonBgClass = isGiveaway ? "bg-[#1a7a30] hover:bg-[#16692a] border-[#1a7a30] text-white font-extrabold" : "bg-[#1a6b8a] hover:bg-[#165a74] border-[#1a6b8a] text-white font-extrabold";
-                                var cardDecisionsCount = currentGroup.Count(i => Decisions.ContainsKey(i.id));
-
-                                <!-- Details Header -->
-                                <div class="flex flex-col lg:flex-row lg:items-center justify-between pb-4 border-b border-[#f0ede5] gap-4">
-                                    <div class="min-w-0">
-                                        <div class="flex items-center gap-2 flex-wrap">
-                                            <h2 class="font-extrabold text-lg sm:text-xl text-[#1a1a1a]">Request #@SelectedGroupId.Substring(0, Math.Min(8, SelectedGroupId.Length))</h2>
-                                            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black shrink-0 @badgeClass">@currentGroup.Count Item</span>
-                                        </div>
-                                        <div class="text-xs text-[#8a8880] font-semibold mt-1">
-                                            Dibuat pada @firstItem.created_at.ToString("dd MMM yyyy HH:mm") WIB
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Action Buttons -->
-                                    <div class="flex flex-wrap items-center gap-2 shrink-0">
-                                        @if (cardDecisionsCount > 0)
-                                        {
-                                            <button type="button" @onclick="() => OpenGroupConfirmModal(SelectedGroupId)" disabled="@IsProcessing" 
-                                                    class="px-4 py-2.5 text-xs font-black rounded-xl shadow-sm transition active:scale-[0.98] disabled:opacity-50 flex items-center gap-1.5 justify-center h-10 border @buttonBgClass">
-                                                <svg class="w-4 h-4 shrink-0 text-current" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-                                                <span>Setujui Semua (Batch)</span>
-                                            </button>
-                                        }
-                                        else
-                                        {
-                                            <button type="button" @onclick="() => OpenApproveAllModal(currentGroup)" disabled="@IsProcessing" 
-                                                    class="px-4 py-2.5 text-xs font-black rounded-xl shadow-sm transition active:scale-[0.98] disabled:opacity-50 flex items-center gap-1.5 border justify-center h-10 @buttonBgClass">
-                                                <svg class="w-4 h-4 shrink-0 text-current" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
-                                                <span>Setujui Semua (Batch)</span>
-                                            </button>
-                                        }
-                                        
-                                        <!-- Tolak Group Button -->
-                                        <button type="button" @onclick='() => AskConfirm("Tolak Semua Item", "Tolak seluruh pengajuan pada request ini?", () => ProcessBatchRejectGroup(SelectedGroupId), "Ya, Tolak Semua")'
-                                                disabled="@IsProcessing" class="px-4 py-2.5 bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 text-xs font-extrabold rounded-xl transition active:scale-[0.98] disabled:opacity-50 flex items-center gap-1.5 justify-center h-10">
-                                            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                                            <span>Tolak</span>
-                                        </button>
-                                        
-                                        <button type="button" class="px-4 py-2.5 bg-white border border-[#e5e3dc] hover:bg-gray-50 text-xs font-extrabold rounded-xl transition active:scale-[0.98] flex items-center gap-1.5 justify-center text-gray-700 h-10">
-                                            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-                                            <span>Request More Info</span>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <!-- Info Grid (applicant info details) -->
-                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    <!-- Pemohon -->
-                                    <div class="border border-[#e5e3dc] border-l-4 rounded-2xl p-4 flex items-start gap-3 @(isGiveaway ? "bg-[#f6fbf7] border-l-[#1a7a30]" : "bg-[#f8fbff] border-l-[#1a6b8a]")">
-                                        <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border @(isGiveaway ? "bg-[#eef9f0] border-[#d8eadb] text-[#1a7a30]" : "bg-[#eef6fd] border-[#d9e6f3] text-[#1a6b8a]")">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                                        </div>
-                                        <div class="min-w-0">
-                                            <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">PEMOHON</span>
-                                            <h5 class="font-extrabold text-sm text-[#1a1a1a] truncate mt-0.5">@(firstItem.applicant_name ?? firstItem.Requester?.name ?? "-")</h5>
-                                            <span class="text-[10px] text-[#8a8880] font-semibold">NRP: @(firstItem.applicant_nrp ?? "-")</span>
-                                        </div>
-                                    </div>
-                                    <!-- Event -->
-                                    <div class="border border-[#e5e3dc] border-l-4 rounded-2xl p-4 flex items-start gap-3 @(isGiveaway ? "bg-[#f6fbf7] border-l-[#1a7a30]" : "bg-[#f8fbff] border-l-[#1a6b8a]")">
-                                        <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border @(isGiveaway ? "bg-[#eef9f0] border-[#d8eadb] text-[#1a7a30]" : "bg-[#eef6fd] border-[#d9e6f3] text-[#1a6b8a]")">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                                        </div>
-                                        <div class="min-w-0">
-                                            <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">EVENT / PROGR.</span>
-                                            <h5 class="font-extrabold text-sm text-[#1a1a1a] truncate mt-0.5">@(firstItem.event_name ?? "-")</h5>
-                                            <span class="text-[10px] text-[#8a8880] font-semibold">@(firstItem.event_date?.ToString("dd MMMM yyyy") ?? "-")</span>
-                                        </div>
-                                    </div>
-                                    <!-- Division -->
-                                    <div class="border border-[#e5e3dc] border-l-4 rounded-2xl p-4 flex items-start gap-3 @(isGiveaway ? "bg-[#f6fbf7] border-l-[#1a7a30]" : "bg-[#f8fbff] border-l-[#1a6b8a]")">
-                                        <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border @(isGiveaway ? "bg-[#eef9f0] border-[#d8eadb] text-[#1a7a30]" : "bg-[#eef6fd] border-[#d9e6f3] text-[#1a6b8a]")">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m-9 0V3m11 2h3m-3 4h3m-6 4h3m-3 4h3"/></svg>
-                                        </div>
-                                        <div class="min-w-0">
-                                            <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">DIVISI</span>
-                                            <h5 class="font-extrabold text-sm text-[#1a1a1a] truncate mt-0.5">@(firstItem.Division?.name ?? "-")</h5>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Timeline & Flow section -->
-                                <div class="border border-[#e5e3dc] rounded-2xl p-5 bg-white">
-                                    <h4 class="font-extrabold text-sm text-[#1a1a1a] mb-4">Timeline & Approval Flow</h4>
-                                    <div class="space-y-4">
-                                        <!-- Step 1 -->
-                                        <div class="flex items-start gap-3 relative pb-2">
-                                            <div class="absolute left-2.5 top-6 bottom-[-16px] w-[2px] bg-emerald-500 z-0"></div>
-                                            <div class="w-5.5 h-5.5 rounded-full bg-emerald-100 border border-emerald-500 flex items-center justify-center text-emerald-600 shrink-0 z-10">
-                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-                                            </div>
-                                            <div class="flex-1 min-w-0 flex items-center justify-between gap-4">
-                                                <div>
-                                                    <h5 class="font-extrabold text-xs text-[#1a1a1a]">Submitted</h5>
-                                                    <p class="text-[10px] text-gray-500 font-semibold">Named Approver - 02:36 - Comment</p>
-                                                </div>
-                                                <span class="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded font-extrabold shrink-0">@firstItem.created_at.ToString("dd MMM yyyy")</span>
-                                            </div>
-                                        </div>
-                                        <!-- Step 2 -->
-                                        <div class="flex items-start gap-3 relative pb-2">
-                                            <div class="absolute left-2.5 top-6 bottom-[-16px] w-[2px] bg-emerald-500 z-0"></div>
-                                            <div class="w-5.5 h-5.5 rounded-full bg-emerald-100 border border-emerald-500 flex items-center justify-center text-emerald-600 shrink-0 z-10">
-                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-                                            </div>
-                                            <div class="flex-1 min-w-0 flex items-center justify-between gap-4">
-                                                <div>
-                                                    <h5 class="font-extrabold text-xs text-[#1a1a1a]">Department Approved</h5>
-                                                    <p class="text-[10px] text-gray-500 font-semibold">John Doe, Tmitt - 02:45 - Comment</p>
-                                                </div>
-                                                <span class="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded font-extrabold shrink-0">@firstItem.created_at.ToString("dd MMM yyyy")</span>
-                                            </div>
-                                        </div>
-                                        <!-- Step 3 -->
-                                        <div class="flex items-start gap-3 relative">
-                                            <div class="w-5.5 h-5.5 rounded-full bg-gray-100 border border-gray-300 flex items-center justify-center text-gray-400 shrink-0 z-10">
-                                                <span class="w-2 h-2 rounded-full bg-gray-400"></span>
-                                            </div>
-                                            <div class="flex-1 min-w-0 flex items-center justify-between gap-4">
-                                                <div>
-                                                    <h5 class="font-extrabold text-xs text-[#1a1a1a]">Final Approval Pending</h5>
-                                                    <p class="text-[10px] text-gray-500 font-semibold">Sarah Wilson - 09:10 - Comment</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Items List -->
-                                <div>
-                                    <div class="flex items-center justify-between mb-3">
-                                        <h4 class="font-extrabold text-sm text-[#1a1a1a] uppercase tracking-wider">ITEM DIMINTA (@currentGroup.Count)</h4>
-                                        <button type="button" class="px-3 py-1.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-xs font-black rounded-lg text-gray-800 transition flex items-center gap-1 select-none">
-                                            <span>+ Add item</span>
-                                        </button>
-                                    </div>
-
-                                    <!-- Table Header/List -->
-                                    <div class="border border-[#e5e3dc] rounded-2xl overflow-hidden divide-y divide-[#f0ede5] shadow-xs">
-                                        @foreach (var item in currentGroup)
-                                        {
-                                            var decision = Decisions.GetValueOrDefault(item.id);
-                                            var isShortage = (item.Product?.current_stock ?? 0) < item.quantity;
-                                            var rowBgClass = decision == "APPROVE" ? "bg-emerald-50/20" : decision == "REJECT" ? "bg-red-50/20" : "bg-white";
-                                            
-                                            <div class="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-[#faf9f5]/50 transition-colors @rowBgClass">
-                                                <div class="flex items-center gap-3 min-w-0">
-                                                    <!-- Checkbox -->
-                                                    <input type="checkbox" checked="@(decision == "APPROVE")" 
-                                                           @onchange='(e) => { if((bool)e.Value) SetDecision(item.id, "APPROVE"); else ClearDecision(item.id); }'
-                                                           class="w-4.5 h-4.5 text-[#e8a000] border-gray-300 rounded focus:ring-[#e8a000] shrink-0" />
-                                                    
-                                                    <!-- Thumbnail with SVG Package Fallback -->
-                                                    <div class="w-12 h-12 rounded-xl border border-gray-200 overflow-hidden shrink-0 bg-white flex items-center justify-center">
-                                                        @if (string.IsNullOrEmpty(item.Product?.image))
-                                                        {
-                                                            <div class="w-full h-full bg-gray-50 flex items-center justify-center text-gray-400">
-                                                                <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-                                                            </div>
-                                                        }
-                                                        else
-                                                        {
-                                                            <img src="@ImageHelper.ResolveProduct(item.Product)" class="w-full h-full object-cover" />
-                                                        }
-                                                    </div>
-
-                                                    <!-- Product SKU and Info -->
-                                                    <div class="min-w-0">
-                                                        <h5 class="font-extrabold text-sm text-gray-900 truncate">@item.Product?.name</h5>
-                                                        <code class="text-[10px] text-gray-400 font-mono">@item.Product?.sku</code>
-                                                    </div>
-                                                </div>
-
-                                                <div class="flex items-center justify-between sm:justify-end gap-5 shrink-0 w-full sm:w-auto">
-                                                    <!-- Stock status -->
-                                                    <div class="text-right">
-                                                        <span class="text-[9px] font-black uppercase block tracking-wider @(isShortage ? "text-red-500" : "text-emerald-600")">
-                                                            @(isShortage ? "STOK KURANG" : "STOK TERSEDIA")
-                                                        </span>
-                                                        <span class="text-[10px] text-gray-500 font-semibold mt-0.5">@item.Product?.current_stock unit</span>
-                                                    </div>
-
-                                                    <!-- Qty selector -->
-                                                    <div class="flex items-center border border-[#e5e3dc] rounded-xl overflow-hidden bg-white">
-                                                        <button type="button" class="px-2.5 py-1 bg-gray-50 hover:bg-gray-100 text-gray-500 text-xs font-bold transition">-</button>
-                                                        <input type="text" readonly value="@item.quantity" class="w-10 text-center text-xs font-extrabold bg-transparent border-0 outline-none" />
-                                                        <button type="button" class="px-2.5 py-1 bg-gray-50 hover:bg-gray-100 text-gray-500 text-xs font-bold transition">+</button>
-                                                    </div>
-
-                                                    <!-- Actions (Approve/Reject/Edit/Delete) -->
-                                                    <div class="flex items-center gap-1.5">
-                                                        @if (string.IsNullOrEmpty(decision))
-                                                        {
-                                                            <button type="button" @onclick='() => SetDecision(item.id, "APPROVE")' class="p-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 rounded-xl transition" title="Approve">
-                                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-                                                            </button>
-                                                            <button type="button" @onclick='() => OpenRejectModal(item.id)' class="p-2 bg-rose-50 hover:bg-rose-100 text-red-600 rounded-xl transition" title="Reject / Revision">
-                                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
-                                                            </button>
-                                                        }
-                                                        else
-                                                        {
-                                                            <div class="flex items-center gap-1">
-                                                                <span class="text-[10px] font-black uppercase text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100">@decision</span>
-                                                                <button type="button" @onclick='() => ClearDecision(item.id)' class="p-1.5 text-gray-400 hover:text-gray-600">
-                                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
-                                                                </button>
-                                                            </div>
-                                                        }
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        }
-                                    </div>
-                                </div>
-                            }
-                        </div>
-                    </div>
-
-                    @* Batch action bar — fixed di bawah (glassmorphic pill) *@
-                    <div class="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-30 max-w-md w-[calc(100%-2rem)]">
-                        <div class="backdrop-blur-md bg-white/95 border border-[#e5e3dc] px-5 py-3.5 rounded-2xl shadow-2xl flex items-center justify-between gap-4 animate-slideUp">
-                            <div class="min-w-0">
-                                <div class="text-[9px] text-[#8a8880] font-black uppercase tracking-wider">Draft Persetujuan</div>
-                                <div class="text-sm font-black text-gray-900 mt-0.5 flex items-center gap-2">
-                                    <span class="w-2 h-2 rounded-full @(Decisions.Count == 0 ? "bg-gray-300" : "bg-[#e8a000] animate-pulse")"></span>
-                                    <span>@Decisions.Count Item Dipilih</span>
-                                </div>
-                            </div>
-                            <button type="button" @onclick="OpenBatchConfirmModal" disabled="@(Decisions.Count == 0 || IsProcessing)"
-                                    class="inline-flex items-center gap-1.5 px-5 py-2.5 text-xs font-black rounded-xl transition active:scale-[0.98] select-none h-11 shrink-0 @(Decisions.Count == 0 ? "bg-[#b2b1a9] text-white cursor-not-allowed shadow-none" : "bg-[#e8a000] text-[#1a1a1a] hover:bg-[#d49300] shadow-md")">
-                                <svg class="w-4 h-4 shrink-0 @(Decisions.Count == 0 ? "text-white" : "text-[#1a1a1a]")" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-                                <span>Proses (@Decisions.Count)</span>
-                            </button>
                         </div>
                     </div>
                 }
