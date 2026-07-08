@@ -69,6 +69,17 @@
                         <span class="text-[9px] sm:text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5 truncate">Divisi</span>
                         <span class="text-xs sm:text-sm font-extrabold text-[#1a1a1a] truncate">@(firstItem.Division?.name ?? "-")</span>
                     </div>
+
+                    @if (firstItem.request_type == "BORROW")
+                    {
+                        <!-- Rentang Peminjaman -->
+                        <div class="bg-gray-50 border border-gray-200 rounded-xl sm:rounded-2xl p-3 sm:p-4 flex flex-col justify-center shrink-0 w-[140px] sm:w-[160px] md:w-[180px] snap-start">
+                            <span class="text-[9px] sm:text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5 truncate">Rentang Pinjam</span>
+                            <span class="text-xs sm:text-sm font-extrabold text-[#1a1a1a] truncate">
+                                @(firstItem.borrow_start_date?.ToString("dd MMM") ?? "-") - @(firstItem.expected_return_date?.ToString("dd MMM yyyy") ?? "-")
+                            </span>
+                        </div>
+                    }
                 </div>
 
                 <!-- Timeline & Flow section -->

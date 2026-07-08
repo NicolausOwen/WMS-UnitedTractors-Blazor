@@ -239,6 +239,10 @@
                                                 <h4 class="font-extrabold text-xs text-[#1a1a1a] truncate">Request #@group.Key.Substring(0, Math.Min(8, group.Key.Length))</h4>
                                                 <div class="text-[11px] text-gray-500 font-semibold mt-0.5 truncate">
                                                     @(firstItem.applicant_name ?? firstItem.Requester?.name ?? "Staff User") • Event: @(firstItem.event_name ?? "-")
+                                                    @if (isBorrow && firstItem.borrow_duration_days.HasValue && firstItem.borrow_duration_days.Value > 0)
+                                                    {
+                                                        <span> • Lama Pinjam: @firstItem.borrow_duration_days.Value Hari</span>
+                                                    }
                                                 </div>
                                                 <div class="text-[9px] text-gray-400 font-semibold mt-1 flex items-center gap-1">
                                                     <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
@@ -295,7 +299,7 @@
                         var isWaitingVerification = group.Value.Any(i => i.status == WorkflowStatuses.WaitingAdminHandover);
                         var isGiveawayHandover = group.Value.All(i => i.request_type == "GIVEAWAY");
                         
-                        <div class="bg-white rounded-2xl border border-[#e5e3dc] shadow-sm overflow-hidden animate-fadeIn border-l-4 @GetEventColorClass(firstItem.event_name, true)">
+                        <div class="bg-white rounded-2xl border @GetEventThinBorderColorClass(firstItem.event_name) shadow-sm overflow-hidden animate-fadeIn border-l-4 @GetEventColorClass(firstItem.event_name, true)">
                             <!-- Group Header Card -->
                             <div class="px-3 sm:px-5 py-3 sm:py-5 border-b border-[#f0ede5] flex flex-col lg:flex-row lg:items-center justify-between bg-gradient-to-r @GetEventColorClass(firstItem.event_name, false) to-white gap-2 sm:gap-4">
                                 <div class="min-w-0">
@@ -382,11 +386,6 @@
                                                     }
                                                 </div>
                                             </div>
-                                            <!-- Qty pill -->
-                                            <div class="shrink-0 text-right bg-[#faf9f5] border border-gray-200 rounded-xl px-3 py-1.5">
-                                                <div class="text-[9px] text-[#8a8880] font-bold uppercase tracking-wider">Jumlah</div>
-                                                <div class="text-sm font-extrabold text-gray-900 mt-0.5">@item.quantity <span class="text-[10px] font-bold text-gray-500">@(item.Product?.Unit?.name ?? "unit")</span></div>
-                                            </div>
                                         </div>
 
                                         <!-- Row: Proof files + Status + Actions -->
@@ -437,7 +436,13 @@
                                             </div>
 
                                             <!-- Actions per Item -->
-                                            <div class="flex items-center gap-2 shrink-0">
+                                            <div class="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto shrink-0 mt-2 sm:mt-0 border-t sm:border-0 border-[#f0ede5] pt-3 sm:pt-0">
+                                                <!-- Qty pill -->
+                                                <div class="shrink-0 text-right bg-[#faf9f5] border border-gray-200 rounded-xl px-3 py-1.5 flex flex-row items-center gap-2 sm:flex-col sm:items-end sm:gap-0">
+                                                    <div class="text-[9px] text-[#8a8880] font-bold uppercase tracking-wider">Jumlah</div>
+                                                    <div class="text-sm font-extrabold text-gray-900 mt-0.5 sm:mt-0">@item.quantity <span class="text-[10px] font-bold text-gray-500">@(item.Product?.Unit?.name ?? "unit")</span></div>
+                                                </div>
+                                                <div class="flex items-center gap-2 shrink-0">
                                                 @if (item.status == WorkflowStatuses.WaitingHandover)
                                                 {
                                                     <button type="button" @onclick="() => OpenApprovalHandoverModal(new List<Transaction> { item })" 
@@ -475,6 +480,7 @@
                                                         Reject
                                                     </button>
                                                 }
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -604,7 +610,7 @@
                     {
                         var firstItem = group.Value.First();
                         
-                        <div class="bg-white rounded-2xl border border-[#e5e3dc] shadow-sm overflow-hidden animate-fadeIn border-l-4 @GetEventColorClass(firstItem.event_name, true)">
+                        <div class="bg-white rounded-2xl border @GetEventThinBorderColorClass(firstItem.event_name) shadow-sm overflow-hidden animate-fadeIn border-l-4 @GetEventColorClass(firstItem.event_name, true)">
                             <!-- Group Header Card -->
                             <div class="px-3 sm:px-5 py-3 sm:py-5 border-b border-[#f0ede5] flex flex-col lg:flex-row lg:items-center justify-between bg-gradient-to-r @GetEventColorClass(firstItem.event_name, false) to-white gap-2 sm:gap-4">
                                 <div class="min-w-0">
@@ -661,11 +667,6 @@
                                                     </span>
                                                 </div>
                                             </div>
-                                            <!-- Qty pill -->
-                                            <div class="shrink-0 text-right bg-[#faf9f5] border border-gray-200 rounded-xl px-3 py-1.5">
-                                                <div class="text-[9px] text-[#8a8880] font-bold uppercase tracking-wider">Jumlah</div>
-                                                <div class="text-sm font-extrabold text-gray-900 mt-0.5">@item.quantity <span class="text-[10px] font-bold text-gray-500">@(item.Product?.Unit?.name ?? "unit")</span></div>
-                                            </div>
                                         </div>
 
                                         <!-- Row: Proof files + Notes + Actions -->
@@ -708,7 +709,13 @@
                                             </div>
 
                                             <!-- Actions per Item -->
-                                            <div class="flex items-center gap-2 shrink-0">
+                                            <div class="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto shrink-0 mt-2 sm:mt-0 border-t sm:border-0 border-[#f0ede5] pt-3 sm:pt-0">
+                                                <!-- Qty pill -->
+                                                <div class="shrink-0 text-right bg-[#faf9f5] border border-gray-200 rounded-xl px-3 py-1.5 flex flex-row items-center gap-2 sm:flex-col sm:items-end sm:gap-0">
+                                                    <div class="text-[9px] text-[#8a8880] font-bold uppercase tracking-wider">Jumlah</div>
+                                                    <div class="text-sm font-extrabold text-gray-900 mt-0.5 sm:mt-0">@item.quantity <span class="text-[10px] font-bold text-gray-500">@(item.Product?.Unit?.name ?? "unit")</span></div>
+                                                </div>
+                                                <div class="flex items-center gap-2 shrink-0">
                                                 <button type="button" @onclick='() => AskConfirm("Approve Dokumentasi Item", "Setujui dokumentasi untuk item ini?", () => ApproveDocumentationItem(item.id), "Ya, Setujui")' 
                                                         disabled="@IsProcessing" class="px-3.5 py-2 bg-[#1a1a1a] hover:bg-[#333] text-white text-[10px] font-extrabold rounded-xl transition active:scale-[0.97] select-none h-9 flex items-center gap-1.5">
                                                     <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
@@ -719,6 +726,7 @@
                                                     <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
                                                     Reject
                                                 </button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -1202,27 +1210,52 @@
 }
 
 @code {
-    private string GetEventColorClass(string eventName, bool isBorder)
+    private string GetEventThinBorderColorClass(string eventName)
     {
-        if (string.IsNullOrEmpty(eventName)) return isBorder ? "border-l-[#1a6b8a]" : "from-[#eef6fd]/40";
+        if (string.IsNullOrEmpty(eventName)) return "border-[#1a6b8a]/30";
         
         var borderColors = new[] { 
-            "border-l-[#3b82f6]", // blue-500
-            "border-l-[#10b981]", // emerald-500
-            "border-l-[#a855f7]", // purple-500
-            "border-l-[#f97316]", // orange-500
-            "border-l-[#ec4899]", // pink-500
-            "border-l-[#14b8a6]", // teal-500
-            "border-l-[#f43f5e]"  // rose-500
+            "border-blue-200", // blue-500
+            "border-emerald-200", // emerald-500
+            "border-purple-200", // purple-500
+            "border-orange-200", // orange-500
+            "border-pink-200", // pink-500
+            "border-teal-200", // teal-500
+            "border-rose-200"  // rose-500
+        };
+        int hash = 0;
+        if (eventName != null)
+        {
+            foreach (char c in eventName)
+            {
+                hash = (hash * 31) + c;
+            }
+        }
+        var index = Math.Abs(hash) % borderColors.Length;
+        return borderColors[index];
+    }
+
+    private string GetEventColorClass(string eventName, bool isBorder)
+    {
+        if (string.IsNullOrEmpty(eventName)) return isBorder ? "border-l-gray-300" : "from-gray-50";
+        
+        var borderColors = new[] { 
+            "border-l-blue-500", // blue-500
+            "border-l-emerald-500", // emerald-500
+            "border-l-purple-500", // purple-500
+            "border-l-orange-500", // orange-500
+            "border-l-pink-500", // pink-500
+            "border-l-teal-500", // teal-500
+            "border-l-rose-500"  // rose-500
         };
         var bgColors = new[] {
-            "from-[#eff6ff]", // blue-50
-            "from-[#ecfdf5]", // emerald-50
-            "from-[#faf5ff]", // purple-50
-            "from-[#fff7ed]", // orange-50
-            "from-[#fdf2f8]", // pink-50
-            "from-[#f0fdfa]", // teal-50
-            "from-[#fff1f2]"  // rose-50
+            "from-blue-50", // blue-50
+            "from-emerald-50", // emerald-50
+            "from-purple-50", // purple-50
+            "from-orange-50", // orange-50
+            "from-pink-50", // pink-50
+            "from-teal-50", // teal-50
+            "from-rose-50"  // rose-50
         };
 
         int hash = 0;
