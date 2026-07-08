@@ -48,34 +48,34 @@
                     </div>
                 </div>
 
-                <!-- Info Grid (applicant info details) minimalist horizontal scroll on mobile -->
-                <div class="flex overflow-x-auto gap-3 pb-2 mb-2 w-full snap-x snap-mandatory hide-scrollbars">
+                <!-- Info Grid (applicant info details) minimalist grid on mobile, horizontal scroll on desktop -->
+                <div class="grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:overflow-x-auto sm:gap-3 sm:pb-2 sm:mb-2 w-full sm:snap-x sm:snap-mandatory hide-scrollbars">
                     <!-- Pemohon -->
-                    <div class="bg-gray-50 border border-gray-200 rounded-xl sm:rounded-2xl p-3 sm:p-4 flex flex-col justify-center shrink-0 w-[140px] sm:w-[160px] md:w-[180px] snap-start">
-                        <span class="text-[9px] sm:text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5 truncate">Pemohon</span>
-                        <span class="text-xs sm:text-sm font-extrabold text-[#1a1a1a] truncate">@(firstItem.applicant_name ?? firstItem.Requester?.name ?? "-")</span>
-                        <span class="text-[9px] sm:text-[10px] text-gray-500 font-semibold mt-0.5 truncate">NRP: @(firstItem.applicant_nrp ?? "-")</span>
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg sm:rounded-2xl p-2.5 sm:p-4 flex flex-col justify-center sm:shrink-0 sm:w-[160px] md:w-[180px] sm:snap-start">
+                        <span class="text-[8px] sm:text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Pemohon</span>
+                        <span class="text-[10px] sm:text-sm font-extrabold text-[#1a1a1a] leading-tight">@(firstItem.applicant_name ?? firstItem.Requester?.name ?? "-")</span>
+                        <span class="text-[8px] sm:text-[10px] text-gray-500 font-semibold mt-0.5 leading-tight">NRP: @(firstItem.applicant_nrp ?? "-")</span>
                     </div>
                     
                     <!-- Event -->
-                    <div class="bg-gray-50 border border-gray-200 rounded-xl sm:rounded-2xl p-3 sm:p-4 flex flex-col justify-center shrink-0 w-[140px] sm:w-[160px] md:w-[180px] snap-start">
-                        <span class="text-[9px] sm:text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5 truncate">Event / Progr.</span>
-                        <span class="text-xs sm:text-sm font-extrabold text-[#1a1a1a] truncate">@(firstItem.event_name ?? "-")</span>
-                        <span class="text-[9px] sm:text-[10px] text-gray-500 font-semibold mt-0.5 truncate">@(firstItem.event_date?.ToString("dd MMM yyyy") ?? "-")</span>
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg sm:rounded-2xl p-2.5 sm:p-4 flex flex-col justify-center sm:shrink-0 sm:w-[160px] md:w-[180px] sm:snap-start">
+                        <span class="text-[8px] sm:text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Event / Progr.</span>
+                        <span class="text-[10px] sm:text-sm font-extrabold text-[#1a1a1a] leading-tight">@(firstItem.event_name ?? "-")</span>
+                        <span class="text-[8px] sm:text-[10px] text-gray-500 font-semibold mt-0.5 leading-tight">@(firstItem.event_date?.ToString("dd MMM yyyy") ?? "-")</span>
                     </div>
                     
                     <!-- Division -->
-                    <div class="bg-gray-50 border border-gray-200 rounded-xl sm:rounded-2xl p-3 sm:p-4 flex flex-col justify-center shrink-0 w-[140px] sm:w-[160px] md:w-[180px] snap-start">
-                        <span class="text-[9px] sm:text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5 truncate">Divisi</span>
-                        <span class="text-xs sm:text-sm font-extrabold text-[#1a1a1a] truncate">@(firstItem.Division?.name ?? "-")</span>
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg sm:rounded-2xl p-2.5 sm:p-4 flex flex-col justify-center sm:shrink-0 sm:w-[160px] md:w-[180px] sm:snap-start">
+                        <span class="text-[8px] sm:text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Divisi</span>
+                        <span class="text-[10px] sm:text-sm font-extrabold text-[#1a1a1a] leading-tight">@(firstItem.Division?.name ?? "-")</span>
                     </div>
 
                     @if (firstItem.request_type == "BORROW")
                     {
                         <!-- Rentang Peminjaman -->
-                        <div class="bg-gray-50 border border-gray-200 rounded-xl sm:rounded-2xl p-3 sm:p-4 flex flex-col justify-center shrink-0 w-[140px] sm:w-[160px] md:w-[180px] snap-start">
-                            <span class="text-[9px] sm:text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5 truncate">Rentang Pinjam</span>
-                            <span class="text-xs sm:text-sm font-extrabold text-[#1a1a1a] truncate">
+                        <div class="bg-gray-50 border border-gray-200 rounded-lg sm:rounded-2xl p-2.5 sm:p-4 flex flex-col justify-center sm:shrink-0 sm:w-[160px] md:w-[180px] sm:snap-start">
+                            <span class="text-[8px] sm:text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Rentang Pinjam</span>
+                            <span class="text-[10px] sm:text-sm font-extrabold text-[#1a1a1a] leading-tight">
                                 @(firstItem.borrow_start_date?.ToString("dd MMM") ?? "-") - @(firstItem.expected_return_date?.ToString("dd MMM yyyy") ?? "-")
                             </span>
                         </div>
