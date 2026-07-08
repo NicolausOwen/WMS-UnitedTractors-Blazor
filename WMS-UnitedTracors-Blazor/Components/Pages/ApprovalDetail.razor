@@ -48,39 +48,26 @@
                     </div>
                 </div>
 
-                <!-- Info Grid (applicant info details) -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Info Grid (applicant info details) minimalist in a box -->
+                <div class="bg-gray-50 border border-gray-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row flex-wrap gap-y-4 gap-x-8 lg:gap-x-16 mb-2">
                     <!-- Pemohon -->
-                    <div class="border border-[#e5e3dc] border-l-4 rounded-2xl p-4 flex items-start gap-3 @(isGiveaway ? "bg-[#f6fbf7] border-l-[#1a7a30]" : "bg-[#f8fbff] border-l-[#1a6b8a]")">
-                        <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border @(isGiveaway ? "bg-[#eef9f0] border-[#d8eadb] text-[#1a7a30]" : "bg-[#eef6fd] border-[#d9e6f3] text-[#1a6b8a]")">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                        </div>
-                        <div class="min-w-0">
-                            <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">PEMOHON</span>
-                            <h5 class="font-extrabold text-sm text-[#1a1a1a] truncate mt-0.5">@(firstItem.applicant_name ?? firstItem.Requester?.name ?? "-")</h5>
-                            <span class="text-[10px] text-[#8a8880] font-semibold">NRP: @(firstItem.applicant_nrp ?? "-")</span>
-                        </div>
+                    <div class="flex flex-col">
+                        <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Pemohon</span>
+                        <span class="text-sm font-extrabold text-[#1a1a1a]">@(firstItem.applicant_name ?? firstItem.Requester?.name ?? "-")</span>
+                        <span class="text-[10px] text-gray-500 font-semibold mt-0.5">NRP: @(firstItem.applicant_nrp ?? "-")</span>
                     </div>
+                    
                     <!-- Event -->
-                    <div class="border border-[#e5e3dc] border-l-4 rounded-2xl p-4 flex items-start gap-3 @(isGiveaway ? "bg-[#f6fbf7] border-l-[#1a7a30]" : "bg-[#f8fbff] border-l-[#1a6b8a]")">
-                        <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border @(isGiveaway ? "bg-[#eef9f0] border-[#d8eadb] text-[#1a7a30]" : "bg-[#eef6fd] border-[#d9e6f3] text-[#1a6b8a]")">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                        </div>
-                        <div class="min-w-0">
-                            <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">EVENT / PROGR.</span>
-                            <h5 class="font-extrabold text-sm text-[#1a1a1a] truncate mt-0.5">@(firstItem.event_name ?? "-")</h5>
-                            <span class="text-[10px] text-[#8a8880] font-semibold">@(firstItem.event_date?.ToString("dd MMMM yyyy") ?? "-")</span>
-                        </div>
+                    <div class="flex flex-col">
+                        <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Event / Program</span>
+                        <span class="text-sm font-extrabold text-[#1a1a1a]">@(firstItem.event_name ?? "-")</span>
+                        <span class="text-[10px] text-gray-500 font-semibold mt-0.5">@(firstItem.event_date?.ToString("dd MMMM yyyy") ?? "-")</span>
                     </div>
+                    
                     <!-- Division -->
-                    <div class="border border-[#e5e3dc] border-l-4 rounded-2xl p-4 flex items-start gap-3 @(isGiveaway ? "bg-[#f6fbf7] border-l-[#1a7a30]" : "bg-[#f8fbff] border-l-[#1a6b8a]")">
-                        <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border @(isGiveaway ? "bg-[#eef9f0] border-[#d8eadb] text-[#1a7a30]" : "bg-[#eef6fd] border-[#d9e6f3] text-[#1a6b8a]")">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m-9 0V3m11 2h3m-3 4h3m-6 4h3m-3 4h3"/></svg>
-                        </div>
-                        <div class="min-w-0">
-                            <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">DIVISI</span>
-                            <h5 class="font-extrabold text-sm text-[#1a1a1a] truncate mt-0.5">@(firstItem.Division?.name ?? "-")</h5>
-                        </div>
+                    <div class="flex flex-col">
+                        <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Divisi</span>
+                        <span class="text-sm font-extrabold text-[#1a1a1a]">@(firstItem.Division?.name ?? "-")</span>
                     </div>
                 </div>
 
@@ -193,12 +180,12 @@
                                 </div>
 
                                 <div class="flex items-center gap-2 shrink-0">
-                                    <button type="button" @onclick='() => ProcessSingleAction(item.id, "REJECT")' disabled="@IsProcessing"
+                                    <button type="button" @onclick='() => PromptSingleAction(item.id, "REJECT")' disabled="@IsProcessing"
                                             class="px-3 py-1.5 border border-red-200 hover:bg-red-50 text-red-600 text-xs font-extrabold rounded-lg transition disabled:opacity-50 flex items-center gap-1.5">
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                                         <span>Tolak</span>
                                     </button>
-                                    <button type="button" @onclick='() => ProcessSingleAction(item.id, "APPROVE")' disabled="@IsProcessing"
+                                    <button type="button" @onclick='() => PromptSingleAction(item.id, "APPROVE")' disabled="@IsProcessing"
                                             class="px-3 py-1.5 bg-[#1a7a30] hover:bg-[#16692a] text-white text-xs font-extrabold rounded-lg transition disabled:opacity-50 flex items-center gap-1.5">
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
                                         <span>Setujui</span>
@@ -209,26 +196,57 @@
                     </div>
 
                     <!-- Bottom Batch Actions -->
-                    @if (SelectedItems.Count > 0)
-                    {
-                        <div class="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-2xl flex items-center justify-between shadow-sm animate-fade-in-up">
-                            <span class="text-xs font-bold text-gray-600">@SelectedItems.Count item terpilih</span>
-                            <div class="flex items-center gap-2">
-                                <button type="button" @onclick='() => ProcessBatchAction("REJECT")' disabled="@IsProcessing"
-                                        class="px-4 py-2 border border-red-200 text-red-600 hover:bg-red-50 text-xs font-extrabold rounded-xl transition disabled:opacity-50">
-                                    Tolak Terpilih
-                                </button>
-                                <button type="button" @onclick='() => ProcessBatchAction("APPROVE")' disabled="@IsProcessing"
-                                        class="px-4 py-2 bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm text-xs font-extrabold rounded-xl transition disabled:opacity-50">
-                                    Setujui Terpilih
-                                </button>
-                            </div>
+                    <div class="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-2xl flex items-center justify-between shadow-sm">
+                        <span class="text-xs font-bold text-gray-600">@SelectedItems.Count item terpilih</span>
+                        <div class="flex items-center gap-2">
+                            <button type="button" @onclick='() => PromptBatchAction("REJECT")' disabled="@(IsProcessing || SelectedItems.Count == 0)"
+                                    class="px-4 py-2 border text-xs font-extrabold rounded-xl transition disabled:opacity-50 @(SelectedItems.Count > 0 ? "border-red-200 text-red-600 hover:bg-red-50 cursor-pointer" : "border-gray-200 text-gray-400 bg-gray-100 cursor-not-allowed")">
+                                Tolak Terpilih
+                            </button>
+                            <button type="button" @onclick='() => PromptBatchAction("APPROVE")' disabled="@(IsProcessing || SelectedItems.Count == 0)"
+                                    class="px-4 py-2 text-xs font-extrabold rounded-xl transition disabled:opacity-50 @(SelectedItems.Count > 0 ? "bg-[#1a7a30] text-white hover:bg-[#16692a] shadow-sm cursor-pointer" : "bg-gray-200 text-gray-400 cursor-not-allowed")">
+                                Setujui Terpilih
+                            </button>
                         </div>
-                    }
+                    </div>
                 </div>
             </div>
         }
     </div>
+
+    <!-- Confirm Modal -->
+    @if (ShowConfirmModal)
+    {
+        <div class="fixed inset-0 z-[200] flex items-end justify-center sm:items-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm animate-fadeIn" @onclick="CloseConfirmModal">
+            <div class="bg-white rounded-t-3xl sm:rounded-2xl w-full sm:max-w-md shadow-2xl overflow-hidden pb-[calc(20px+env(safe-area-inset-bottom))] sm:pb-0 border border-gray-150 animate-fade-in-up" @onclick:stopPropagation="true">
+                <!-- Drag handle (Mobile) -->
+                <div class="w-12 h-1.5 bg-gray-300 rounded-full mx-auto my-3 sm:hidden shrink-0"></div>
+                
+                <div class="p-5 flex items-start gap-4">
+                    <div class="w-10 h-10 rounded-full @(ConfirmActionType == "APPROVE" ? "bg-emerald-50 border-emerald-200 text-[#1a7a30]" : "bg-red-50 border-red-200 text-red-600") flex items-center justify-center shrink-0 border">
+                        <svg class="w-5.5 h-5.5 text-current" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                    </div>
+                    <div class="min-w-0">
+                        <h3 class="text-base font-extrabold text-[#1a1a1a]">Konfirmasi Keputusan</h3>
+                        <p class="text-xs text-gray-500 font-semibold mt-1">
+                            Apakah Anda yakin ingin @(ConfirmActionType == "APPROVE" ? "menyetujui" : "menolak") @(ConfirmScope == "BATCH" ? $"{SelectedItems.Count} item terpilih" : "item ini")? Tindakan ini tidak dapat dibatalkan.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="p-4 bg-[#faf9f5] border-t border-[#e5e3dc] flex gap-3">
+                    <button type="button" @onclick="CloseConfirmModal" class="flex-1 px-4 py-2.5 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm font-extrabold rounded-xl transition">
+                        Batal
+                    </button>
+                    <button type="button" @onclick="ConfirmAction" disabled="@IsProcessing" class="flex-1 px-4 py-2.5 @(ConfirmActionType == "APPROVE" ? "bg-[#1a7a30] hover:bg-[#16692a]" : "bg-red-600 hover:bg-red-700") text-white text-sm font-extrabold rounded-xl transition disabled:opacity-50">
+                        @(IsProcessing ? "Memproses..." : "Ya, Lanjutkan")
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
 </div>
 
 @code {
@@ -239,6 +257,12 @@
     private bool IsLoading = true;
     private bool IsProcessing = false;
     private HashSet<int> SelectedItems = new();
+    
+    // Modal State
+    private bool ShowConfirmModal = false;
+    private string ConfirmActionType = "";
+    private string ConfirmScope = ""; // "SINGLE" or "BATCH"
+    private int ConfirmItemId = 0;
     
     private ClaimsPrincipal? userPrincipal;
     private int CurrentUserId = 0;
@@ -303,6 +327,39 @@
         {
             SelectedItems.Remove(id);
         }
+    }
+
+    private void PromptSingleAction(int id, string action)
+    {
+        ConfirmActionType = action;
+        ConfirmScope = "SINGLE";
+        ConfirmItemId = id;
+        ShowConfirmModal = true;
+    }
+
+    private void PromptBatchAction(string action)
+    {
+        ConfirmActionType = action;
+        ConfirmScope = "BATCH";
+        ShowConfirmModal = true;
+    }
+
+    private void CloseConfirmModal()
+    {
+        ShowConfirmModal = false;
+    }
+
+    private async Task ConfirmAction()
+    {
+        if (ConfirmScope == "SINGLE")
+        {
+            await ProcessSingleAction(ConfirmItemId, ConfirmActionType);
+        }
+        else if (ConfirmScope == "BATCH")
+        {
+            await ProcessBatchAction(ConfirmActionType);
+        }
+        CloseConfirmModal();
     }
 
     private async Task ProcessSingleAction(int id, string action)
