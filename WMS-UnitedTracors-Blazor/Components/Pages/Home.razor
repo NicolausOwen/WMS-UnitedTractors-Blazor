@@ -32,28 +32,23 @@
     {
         <div class="mb-6">
 
-            @* ── Hero Section: Greeting + Sisa Kredit (orange gradient) ── *@
-            <div class="bg-gradient-to-br from-[#e8a000] via-[#f0ab10] to-[#f7ca60] rounded-3xl p-5 pb-6 mb-4 relative overflow-hidden shadow-lg -mx-4 px-6">
-                @* decorative blobs *@
-                <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/15 rounded-full blur-3xl pointer-events-none"></div>
-                <div class="absolute left-0 bottom-0 w-32 h-24 bg-[#c47800]/25 rounded-full blur-2xl pointer-events-none"></div>
-                <div class="absolute right-8 bottom-2 w-16 h-16 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
-
+            @* ── Hero Section: Greeting + Sisa Kredit ── *@
+            <div class="mb-6">
                 @* Greeting *@
-                <div class="relative z-10 flex items-center justify-between mb-5">
+                <div class="flex items-center justify-between mb-5">
                     <div>
                         <p class="text-[0.6rem] font-semibold text-[#7a3d00]/80 uppercase tracking-widest">Selamat datang kembali 👋</p>
-                        <h2 class="text-xl font-extrabold font-syne leading-tight mt-0.5 drop-shadow-sm" style="color: #fbbf24 !important;">@ApplicantName</h2>
+                        <h2 class="text-xl font-extrabold font-syne leading-tight mt-0.5 drop-shadow-sm text-[#92400e]">@ApplicantName</h2>
                     </div>
-                    <div class="w-10 h-10 rounded-full bg-white/25 flex items-center justify-center backdrop-blur-sm">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="w-10 h-10 rounded-full bg-[#f7f7f7] text-[#7a3d00] flex items-center justify-center shadow-sm">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                         </svg>
                     </div>
                 </div>
 
                 @* Sisa Kredit *@
-                <div class="relative z-10 rounded-2xl px-4 py-3 border border-[#fbbf24]/40 shadow-inner text-white" style="background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 52%, #d97706 100%);">
+                <div class="rounded-2xl px-4 py-3 border border-[#fbbf24]/40 shadow-inner text-white" style="background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 52%, #d97706 100%);">
                     <div class="flex items-center justify-between mb-1.5">
                         <p class="text-[0.6rem] font-bold text-white/90 uppercase tracking-widest">Sisa Kredit Anda</p>
                         <button @onclick="() => ShowPoin = !ShowPoin"
