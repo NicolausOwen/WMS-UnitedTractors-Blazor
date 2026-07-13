@@ -2284,11 +2284,21 @@
         try
         {
             int successCount = 0;
+            var processedItems = new List<(Transaction item, string action, string? reason)>();
             foreach (var item in items)
             {
-                var err = await ApprovalService.ApproveAsync(item.id, null, CurrentUserId, UserRole);
+                var err = await ApprovalService.ApproveAsync(item.id, null, CurrentUserId, UserRole, false);
                 if (err != null) ErrorMessage += $"Item {item.id}: {err} | ";
-                else successCount++;
+                else 
+                {
+                    successCount++;
+                    processedItems.Add((item, "APPROVE", null));
+                }
+            }
+
+            if (processedItems.Any())
+            {
+                await ApprovalService.NotifyBatchResultAsync(processedItems);
             }
 
             if (successCount > 0) SuccessMessage = $"{successCount} items approved.";
@@ -2327,6 +2337,7 @@
                 itemsToProcess = Decisions.Where(d => groupItems.Any(i => i.id == d.Key)).ToList();
             }
 
+            var processedItems = new List<(Transaction item, string action, string? reason)>();
             foreach (var kvp in itemsToProcess)
             {
                 var id = kvp.Key;
@@ -2340,12 +2351,25 @@
                 }
 
                 string? err = null;
-                if (action == "APPROVE") err = await ApprovalService.ApproveAsync(id, reason, CurrentUserId, UserRole);
-                else if (action == "REJECT") err = await ApprovalService.RejectAsync(id, reason, CurrentUserId, UserRole);
-                else if (action == "REVISE") err = await ApprovalService.RequestRevisionAsync(id, reason, CurrentUserId, UserRole, RevisedQuantities.GetValueOrDefault(id), RevisedPickupDates.GetValueOrDefault(id));
+                if (action == "APPROVE") err = await ApprovalService.ApproveAsync(id, reason, CurrentUserId, UserRole, false);
+                else if (action == "REJECT") err = await ApprovalService.RejectAsync(id, reason, CurrentUserId, UserRole, false);
+                else if (action == "REVISE") err = await ApprovalService.RequestRevisionAsync(id, reason, CurrentUserId, UserRole, RevisedQuantities.GetValueOrDefault(id), RevisedPickupDates.GetValueOrDefault(id), false);
 
                 if (err != null) ErrorMessage += $"Item {id}: {err} | ";
-                else successCount++;
+                else 
+                {
+                    successCount++;
+                    var item = GroupedApprovals?.Values.SelectMany(g => g).FirstOrDefault(x => x.id == id);
+                    if (item != null)
+                    {
+                        processedItems.Add((item, action, reason));
+                    }
+                }
+            }
+
+            if (processedItems.Any())
+            {
+                await ApprovalService.NotifyBatchResultAsync(processedItems);
             }
 
             if (successCount > 0) SuccessMessage = $"{successCount} items processed.";

@@ -186,7 +186,7 @@ public class ApprovalService
         return (groupedApprovals, pendingReturns, pendingProfileRequests, groupedHandovers, groupedDocumentations);
     }
 
-    public async Task<string?> ApproveAsync(int id, string? notes, int currentUserId, string? userRole)
+    public async Task<string?> ApproveAsync(int id, string? notes, int currentUserId, string? userRole, bool sendNotification = true)
     {
         using var _context = _factory.CreateDbContext();
         var transaction = await _context.Transactions
@@ -200,7 +200,7 @@ public class ApprovalService
 
         if (transaction.request_type == "GIVEAWAY")
         {
-            return await ApproveGiveawayAsync(_context, transaction, notes, currentUserId, perms);
+            return await ApproveGiveawayAsync(_context, transaction, notes, currentUserId, perms, sendNotification);
         }
 
         // BORROW stage 1: Staff Inventoris menyetujui -> lanjut ke tahap Admin (belum potong stok).
@@ -214,7 +214,10 @@ public class ApprovalService
             transaction.rejection_reason = null;
             _context.Transactions.Update(transaction);
             await _context.SaveChangesAsync();
-            _ = NotifyUserAsync(transaction, "Update Request WMS", "Request Anda telah disetujui pada tahap Staff Inventoris dan sedang menunggu tahap selanjutnya.");
+            if (sendNotification)
+            {
+                await NotifyBatchResultAsync(new List<(Transaction, string, string?)> { (transaction, "APPROVE", null) });
+            }
             return null;
         }
 
@@ -285,10 +288,10 @@ public class ApprovalService
                 await _context.SaveChangesAsync();
                 await dbTransaction.CommitAsync();
 
-                var msg = transaction.type == "OUT" && transaction.request_type == "BORROW" 
-                    ? "Request peminjaman Anda telah disetujui secara final. Silakan proses serah terima." 
-                    : "Request Anda telah disetujui secara final.";
-                _ = NotifyUserAsync(transaction, "Update Request WMS", msg);
+                if (sendNotification)
+                {
+                    await NotifyBatchResultAsync(new List<(Transaction, string, string?)> { (transaction, "APPROVE", null) });
+                }
 
                 return null;
             }
@@ -300,7 +303,7 @@ public class ApprovalService
         });
     }
 
-    public async Task<string?> RejectAsync(int id, string rejectionReason, int currentUserId, string? userRole)
+    public async Task<string?> RejectAsync(int id, string rejectionReason, int currentUserId, string? userRole, bool sendNotification = true)
     {
         using var _context = _factory.CreateDbContext();
         var transaction = await _context.Transactions
@@ -367,22 +370,25 @@ public class ApprovalService
         _context.Transactions.Update(transaction);
         await _context.SaveChangesAsync();
         
-        _ = NotifyUserAsync(transaction, "Request Ditolak WMS", $"Request Anda telah ditolak. Alasan: {rejectionReason}");
+        if (sendNotification)
+        {
+            await NotifyBatchResultAsync(new List<(Transaction, string, string?)> { (transaction, "REJECT", rejectionReason) });
+        }
         
         return null;
     }
 
-    public async Task<string?> RequestRevisionAsync(int id, string revisionReason, int currentUserId, string? userRole)
+    public async Task<string?> RequestRevisionAsync(int id, string revisionReason, int currentUserId, string? userRole, bool sendNotification = true)
     {
-        return await RequestRevisionAsync(id, revisionReason, currentUserId, userRole, null, null);
+        return await RequestRevisionAsync(id, revisionReason, currentUserId, userRole, null, null, sendNotification);
     }
 
-    public async Task<string?> RequestRevisionAsync(int id, string revisionReason, int currentUserId, string? userRole, int? revisedQuantity)
+    public async Task<string?> RequestRevisionAsync(int id, string revisionReason, int currentUserId, string? userRole, int? revisedQuantity, bool sendNotification = true)
     {
-        return await RequestRevisionAsync(id, revisionReason, currentUserId, userRole, revisedQuantity, null);
+        return await RequestRevisionAsync(id, revisionReason, currentUserId, userRole, revisedQuantity, null, sendNotification);
     }
 
-    public async Task<string?> RequestRevisionAsync(int id, string revisionReason, int currentUserId, string? userRole, int? revisedQuantity, DateTime? revisedPickupDate)
+    public async Task<string?> RequestRevisionAsync(int id, string revisionReason, int currentUserId, string? userRole, int? revisedQuantity, DateTime? revisedPickupDate, bool sendNotification = true)
     {
         using var _context = _factory.CreateDbContext();
         var transaction = await _context.Transactions
@@ -481,6 +487,12 @@ public class ApprovalService
 
         _context.Transactions.Update(transaction);
         await _context.SaveChangesAsync();
+        
+        if (sendNotification)
+        {
+            await NotifyBatchResultAsync(new List<(Transaction, string, string?)> { (transaction, "REVISE", revisionReason) });
+        }
+        
         return null;
     }
 
@@ -832,7 +844,7 @@ public class ApprovalService
         return true;
     }
 
-    private async Task<string?> ApproveGiveawayAsync(ApplicationDbContext _context, Transaction transaction, string? notes, int currentUserId, HashSet<string> perms)
+    private async Task<string?> ApproveGiveawayAsync(ApplicationDbContext _context, Transaction transaction, string? notes, int currentUserId, HashSet<string> perms, bool sendNotification = true)
     {
         switch (transaction.status)
         {
@@ -859,9 +871,10 @@ public class ApprovalService
         _context.Transactions.Update(transaction);
         await _context.SaveChangesAsync();
 
-        string stage = transaction.status == WorkflowStatuses.PendingAdmin ? "Staff Inventoris" :
-                       transaction.status == WorkflowStatuses.PendingManager ? "Admin" : "Manager (Final, silakan proses pengambilan/serah terima)";
-        _ = NotifyUserAsync(transaction, "Update Request WMS", $"Request Giveaway Anda telah disetujui oleh {stage}.");
+        if (sendNotification)
+        {
+            await NotifyBatchResultAsync(new List<(Transaction, string, string?)> { (transaction, "APPROVE", null) });
+        }
 
         return null;
     }
@@ -880,6 +893,68 @@ public class ApprovalService
         {
             var htmlMessage = GetEmailTemplate(subject, message);
             await _emailService.SendEmailAsync(requesterEmail, subject, htmlMessage);
+        }
+    }
+
+    public async Task NotifyBatchResultAsync(List<(Transaction item, string action, string? reason)> itemsProcessed)
+    {
+        if (itemsProcessed == null || !itemsProcessed.Any()) return;
+
+        var grouped = itemsProcessed.GroupBy(x => new { x.item.requester_id, x.item.event_name, x.item.group_id });
+
+        foreach (var group in grouped)
+        {
+            var firstItem = group.First().item;
+            
+            var requesterEmail = firstItem.Requester?.email;
+            if (string.IsNullOrWhiteSpace(requesterEmail))
+            {
+                using var context = _factory.CreateDbContext();
+                var user = await context.Users.FindAsync(firstItem.requester_id);
+                requesterEmail = user?.email;
+            }
+
+            if (string.IsNullOrWhiteSpace(requesterEmail)) continue;
+
+            string eventName = firstItem.event_name ?? "Tanpa Nama Event";
+            
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine($"<p>Berikut adalah hasil proses persetujuan untuk request Event: <strong>{eventName}</strong></p>");
+            sb.AppendLine("<ul style='list-style-type: none; padding-left: 0;'>");
+            
+            foreach(var (item, action, reason) in group)
+            {
+                string productName = item.Product?.name ?? "Barang";
+                string statusText = "";
+                
+                if (action == "APPROVE") 
+                {
+                    if (item.status == WorkflowStatuses.PendingAdmin || item.status == WorkflowStatuses.PendingManager)
+                        statusText = "<span style='color: #1a6b8a; font-weight: bold;'>DISETUJUI (Menunggu Tahap Selanjutnya)</span>";
+                    else
+                        statusText = "<span style='color: #1a7a30; font-weight: bold;'>DISETUJUI FINAL</span>";
+                }
+                else if (action == "REJECT")
+                {
+                    statusText = $"<span style='color: #d94040; font-weight: bold;'>DITOLAK</span> (Alasan: {reason})";
+                }
+                else if (action == "REVISE")
+                {
+                    statusText = $"<span style='color: #e8a000; font-weight: bold;'>DIREVISI</span> (Catatan: {reason})";
+                }
+                else 
+                {
+                    statusText = action;
+                }
+                                    
+                sb.AppendLine($"<li style='margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 8px;'>");
+                sb.AppendLine($"<strong>{productName}</strong> ({item.quantity} unit)<br/>Status: {statusText}");
+                sb.AppendLine($"</li>");
+            }
+            sb.AppendLine("</ul>");
+
+            var htmlMessage = GetEmailTemplate("Update Status Request WMS", sb.ToString());
+            await _emailService.SendEmailAsync(requesterEmail, "Update Request WMS", htmlMessage);
         }
     }
 
