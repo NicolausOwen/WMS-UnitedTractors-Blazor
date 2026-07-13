@@ -8,6 +8,7 @@
     <AssemblyName>$(AssemblyName.Replace(' ', '_'))</AssemblyName>
     <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
     <NoWarn>NU1608</NoWarn>
+    <DefaultItemExcludes>$(DefaultItemExcludes);scratch\**</DefaultItemExcludes>
   </PropertyGroup>
 
   <ItemGroup>
