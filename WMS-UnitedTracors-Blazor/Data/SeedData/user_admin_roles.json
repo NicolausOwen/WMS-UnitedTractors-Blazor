@@ -1,0 +1,74 @@
+[
+  {
+    "Id": "1b761eb3-6a38-49ab-820b-c8a691c36c96",
+    "UserId": 6,
+    "AdminRoleId": "e6ad3624-7c19-48cb-a746-b0f58f13ad31",
+    "CreatedAt": "2026-07-06 08:44:56",
+    "CreatedBy": "System",
+    "CategoryId": null
+  },
+  {
+    "Id": "1bef87d2-62c3-4d48-a142-837b59ad5f79",
+    "UserId": 2,
+    "AdminRoleId": "d941584b-880a-4d31-aa4c-ca04a29a43d4",
+    "CreatedAt": "2026-07-06 08:44:56",
+    "CreatedBy": "System",
+    "CategoryId": null
+  },
+  {
+    "Id": "29ed9394-6624-434b-bb04-6bd293cb4ebb",
+    "UserId": 1,
+    "AdminRoleId": "6969448e-153b-43fc-8be0-1dda5927a8a1",
+    "CreatedAt": "2026-07-06 08:44:56",
+    "CreatedBy": "System",
+    "CategoryId": null
+  },
+  {
+    "Id": "36a2d501-7687-400c-a8e5-911a180e1bb6",
+    "UserId": 5,
+    "AdminRoleId": "063e920c-626c-4fa8-a8b9-35900bb7b7b7",
+    "CreatedAt": "2026-06-10 01:10:41",
+    "CreatedBy": "Super Administrator",
+    "CategoryId": null
+  },
+  {
+    "Id": "3ba555a2-7ae3-4d54-92cc-7eb1d56a2768",
+    "UserId": 9,
+    "AdminRoleId": "e6ad3624-7c19-48cb-a746-b0f58f13ad31",
+    "CreatedAt": "2026-07-07 02:33:50",
+    "CreatedBy": "System",
+    "CategoryId": null
+  },
+  {
+    "Id": "6134fa61-54c8-4d16-8964-0b6ed05badbd",
+    "UserId": 4,
+    "AdminRoleId": "0aa48329-85e7-480d-9e62-21cd0dec8e86",
+    "CreatedAt": "2026-06-10 02:42:39",
+    "CreatedBy": "Super Administrator",
+    "CategoryId": null
+  },
+  {
+    "Id": "80404596-aaa1-439f-b1ff-d92042fcec80",
+    "UserId": 7,
+    "AdminRoleId": "063e920c-626c-4fa8-a8b9-35900bb7b7b7",
+    "CreatedAt": "2026-07-06 08:44:56",
+    "CreatedBy": "System",
+    "CategoryId": null
+  },
+  {
+    "Id": "93cfde80-3b73-4c1f-a07f-31bea249515e",
+    "UserId": 8,
+    "AdminRoleId": "ec5f41d3-cec6-4d33-a220-81a18c9e1cfd",
+    "CreatedAt": "2026-07-06 08:44:56",
+    "CreatedBy": "System",
+    "CategoryId": null
+  },
+  {
+    "Id": "ef3351b4-1c3a-4312-a707-f84f4cc17ef9",
+    "UserId": 3,
+    "AdminRoleId": "e6ad3624-7c19-48cb-a746-b0f58f13ad31",
+    "CreatedAt": "2026-06-10 02:46:46",
+    "CreatedBy": "Super Administrator",
+    "CategoryId": null
+  }
+]
