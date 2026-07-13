@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using System.Text.RegularExpressions;
+using System.Text.Json;
 using UT_WMSDotnet.Models;
 using Perms = WMS_UnitedTracors_Blazor.Helpers.Permissions;
 
@@ -18,85 +18,46 @@ public class DbSeeder
 
     public async Task SeedAsync()
     {
-        // 1. Eksekusi SQL Dump
-        await ExecuteSqlDumpAsync();
+        _logger.LogInformation("Memulai proses seeding database...");
 
-        // 2. Eksekusi Seeder Tambahan (Division, Unit, Superadmin)
+        // Seed master data
+        await SeedCategoriesAsync();
         await SeedDivisionsAsync();
+        await SeedLocationsAsync();
         await SeedUnitsAsync();
+
+        // Seed Users and Roles
         await SeedDefaultAdminRolesAsync();
         await SeedDefaultUsersAsync();
         await SeedUserAdminRoleAssignmentsAsync();
+
+        // Seed Products
+        await SeedProductsAsync();
+
+        _logger.LogInformation("Proses seeding selesai.");
     }
 
-    private async Task ExecuteSqlDumpAsync()
+    private async Task SeedCategoriesAsync()
     {
-        var sqlFilePath = Path.Combine(Directory.GetCurrentDirectory(), "Migrations", "Seeders", "ut_wms_db.sql");
-        if (!File.Exists(sqlFilePath))
+        var categories = new[]
         {
-            _logger.LogWarning($"File SQL dump tidak ditemukan di {sqlFilePath}");
-            return;
-        }
+            new Category { name = "Makanan", created_at = DateTime.UtcNow, updated_at = DateTime.UtcNow },
+            new Category { name = "Game", created_at = DateTime.UtcNow, updated_at = DateTime.UtcNow },
+            new Category { name = "Facility", created_at = DateTime.UtcNow, updated_at = DateTime.UtcNow },
+            new Category { name = "ATK", created_at = DateTime.UtcNow, updated_at = DateTime.UtcNow },
+            new Category { name = "Merchandise", created_at = DateTime.UtcNow, updated_at = DateTime.UtcNow },
+            new Category { name = "Alat Musik", created_at = DateTime.UtcNow, updated_at = DateTime.UtcNow },
+            new Category { name = "Elektronik", created_at = DateTime.UtcNow, updated_at = DateTime.UtcNow }
+        };
 
-        // Jika tabel sudah ada isinya, kita lewati seeding dump agar tidak duplicate
-        if (await _context.Set<Category>().AnyAsync())
+        foreach (var cat in categories)
         {
-            _logger.LogInformation("Database sudah terisi, melewati eksekusi SQL dump.");
-            return;
-        }
-
-        _logger.LogInformation("Mengeksekusi SQL dump...");
-        var sqlContent = await File.ReadAllTextAsync(sqlFilePath);
-
-        // Hapus CREATE TABLE, ALTER TABLE, DROP TABLE, dll agar tidak bentrok dengan EF Core Migrations
-        sqlContent = Regex.Replace(sqlContent, @"CREATE TABLE[\s\S]*?;\r?\n", "", RegexOptions.IgnoreCase);
-        sqlContent = Regex.Replace(sqlContent, @"DROP TABLE[\s\S]*?;\r?\n", "", RegexOptions.IgnoreCase);
-        sqlContent = Regex.Replace(sqlContent, @"ALTER TABLE[\s\S]*?;\r?\n", "", RegexOptions.IgnoreCase);
-        sqlContent = Regex.Replace(sqlContent, @"DROP PROCEDURE[\s\S]*?;\r?\n", "", RegexOptions.IgnoreCase);
-        sqlContent = Regex.Replace(sqlContent, @"CREATE PROCEDURE[\s\S]*?;\r?\n", "", RegexOptions.IgnoreCase);
-        
-        // Hapus perintah kontrol transaksi & sesi yang tidak kompatibel
-        sqlContent = Regex.Replace(sqlContent, @"START TRANSACTION;?\r?\n?", "", RegexOptions.IgnoreCase);
-        sqlContent = Regex.Replace(sqlContent, @"COMMIT;?\r?\n?", "", RegexOptions.IgnoreCase);
-        sqlContent = Regex.Replace(sqlContent, @"SET FOREIGN_KEY_CHECKS\s*=\s*\d+;?\r?\n?", "", RegexOptions.IgnoreCase);
-        sqlContent = Regex.Replace(sqlContent, @"SET SQL_MODE\s*=.*?;?\r?\n?", "", RegexOptions.IgnoreCase);
-        sqlContent = Regex.Replace(sqlContent, @"SET time_zone\s*=.*?;?\r?\n?", "", RegexOptions.IgnoreCase);
-        sqlContent = Regex.Replace(sqlContent, @"/\*!.*?\*/;?\r?\n?", "", RegexOptions.IgnoreCase);
-
-        // Hapus INSERT INTO untuk tabel-tabel internal yang tidak ada di EF Core
-        var ignoredTables = new[] { "migrations", "sessions", "password_reset_tokens", "personal_access_tokens", "cache", "cache_locks", "jobs", "job_batches", "__EFMigrationsHistory" };
-        foreach (var table in ignoredTables)
-        {
-            sqlContent = Regex.Replace(sqlContent, $@"INSERT INTO `{table}`[\s\S]*?\);\r?\n", "", RegexOptions.IgnoreCase);
-        }
-
-        // Pisahkan tiap pernyataan INSERT dan jalankan satu per satu
-        // (MySqlConnector default tidak support multi-statement)
-        var statements = sqlContent
-            .Split(new[] { ";\n", ";\r\n" }, StringSplitOptions.RemoveEmptyEntries)
-            .Select(s => s.Trim())
-            .Where(s => s.StartsWith("INSERT", StringComparison.OrdinalIgnoreCase))
-            .ToList();
-
-        _logger.LogInformation($"Menjalankan {statements.Count} pernyataan INSERT dari SQL dump...");
-
-        int successCount = 0, failCount = 0;
-        await _context.Database.ExecuteSqlRawAsync("SET FOREIGN_KEY_CHECKS = 0;");
-        foreach (var stmt in statements)
-        {
-            try
+            if (!await _context.Categories.AnyAsync(c => c.name == cat.name))
             {
-                await _context.Database.ExecuteSqlRawAsync(stmt + ";");
-                successCount++;
-            }
-            catch (Exception ex)
-            {
-                failCount++;
-                _logger.LogWarning($"[SKIP] INSERT gagal: {ex.Message.Substring(0, Math.Min(100, ex.Message.Length))}");
+                _context.Categories.Add(cat);
             }
         }
-        await _context.Database.ExecuteSqlRawAsync("SET FOREIGN_KEY_CHECKS = 1;");
-        _logger.LogInformation($"SQL dump selesai. Berhasil: {successCount}, Gagal/Skip: {failCount}");
+        await _context.SaveChangesAsync();
     }
 
     private async Task SeedDivisionsAsync()
@@ -105,9 +66,38 @@ public class DbSeeder
 
         foreach (var divisionName in divisions)
         {
-            if (!await _context.Set<Division>().AnyAsync(d => d.name == divisionName))
+            if (!await _context.Divisions.AnyAsync(d => d.name == divisionName))
             {
-                _context.Set<Division>().Add(new Division { name = divisionName });
+                _context.Divisions.Add(new Division { name = divisionName, created_at = DateTime.UtcNow, updated_at = DateTime.UtcNow });
+            }
+        }
+        await _context.SaveChangesAsync();
+    }
+
+    private async Task SeedLocationsAsync()
+    {
+        var locations = new[]
+        {
+            new Location { name = "Gudang", description = "Gudang lt 1" },
+            new Location { name = "Storage Room" },
+            new Location { name = "ATK" },
+            new Location { name = "Makeup Room" },
+            new Location { name = "Merchandise" },
+            new Location { name = "7.1.12.2" },
+            new Location { name = "7.1.12.3" },
+            new Location { name = "7.1.11.1" },
+            new Location { name = "7.1.11.2" },
+            new Location { name = "7.1.11.3" },
+            new Location { name = "7.1.11.5" }
+        };
+
+        foreach (var loc in locations)
+        {
+            if (!await _context.Locations.AnyAsync(l => l.name == loc.name))
+            {
+                loc.created_at = DateTime.UtcNow;
+                loc.updated_at = DateTime.UtcNow;
+                _context.Locations.Add(loc);
             }
         }
         await _context.SaveChangesAsync();
@@ -119,48 +109,17 @@ public class DbSeeder
 
         foreach (var unitName in units)
         {
-            if (!await _context.Set<Unit>().AnyAsync(u => u.name == unitName))
+            if (!await _context.Units.AnyAsync(u => u.name == unitName))
             {
-                _context.Set<Unit>().Add(new Unit { name = unitName });
+                _context.Units.Add(new Unit { name = unitName, created_at = DateTime.UtcNow, updated_at = DateTime.UtcNow });
             }
         }
         await _context.SaveChangesAsync();
     }
-
-    private async Task SeedDefaultUsersAsync()
-    {
-        var chcuDivision = await _context.Set<Division>().FirstOrDefaultAsync(d => d.name == "CHCU");
-        int? divisionId = chcuDivision?.id;
-
-        var usersToSeed = new List<User>
-        {
-            new User { email = "superadmin@wms.com",    name = "Super Administrator",        role = "superadmin" },
-            new User { email = "si@wms.com",            name = "Ceri (Staff Inventoris)",    role = "Staff Inventoris" },
-            new User { email = "admin@wms.com",         name = "Della (Admin)",              role = "Team Leader Infrastructure" },
-            new User { email = "pic@wms.com",           name = "Taruna (PIC Studio)",        role = "PIC Studio" },
-            new User { email = "manager@wms.com",       name = "Anwari (Manager)",           role = "Manager" },
-            new User { email = "user@wms.com",          name = "User",                       role = "User" },
-        };
-
-        foreach (var u in usersToSeed)
-        {
-            var existingUser = await _context.Set<User>().FirstOrDefaultAsync(x => x.email == u.email);
-            if (existingUser == null)
-            {
-                u.password = BCrypt.Net.BCrypt.HashPassword("password");
-                u.poin = 1000;
-                u.nrp = new Random().Next(10000000, 99999999).ToString();
-                u.division_id = divisionId;
-                _context.Set<User>().Add(u);
-            }
-        }
-        await _context.SaveChangesAsync();
-    }
-
 
     private async Task SeedDefaultAdminRolesAsync()
     {
-        // roleName -> default permission keys
+        // roleName -> default permission keys based on SQL dump
         var defaults = new (string Name, string[] Perms)[]
         {
             ("Super Admin", Perms.All),
@@ -181,7 +140,7 @@ public class DbSeeder
                     Id = Guid.NewGuid(),
                     RoleName = name,
                     Description = $"Default role for {name}",
-                    Permissions = System.Text.Json.JsonSerializer.Serialize(perms),
+                    Permissions = JsonSerializer.Serialize(perms),
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow,
                     CreatedBy = "System",
@@ -191,38 +150,47 @@ public class DbSeeder
             }
             else if (string.IsNullOrEmpty(existing.Permissions))
             {
-                // Isi permission default hanya jika belum pernah diset.
-                existing.Permissions = System.Text.Json.JsonSerializer.Serialize(perms);
+                existing.Permissions = JsonSerializer.Serialize(perms);
                 existing.UpdatedAt = DateTime.UtcNow;
-            }
-        }
-
-        // Idempotent merge for existing roles
-        var allRoles = await _context.AdminRoles.ToListAsync();
-        foreach (var role in allRoles)
-        {
-            if (!string.IsNullOrEmpty(role.Permissions))
-            {
-                try
-                {
-                    var rolePerms = System.Text.Json.JsonSerializer.Deserialize<List<string>>(role.Permissions) ?? new List<string>();
-                    if (rolePerms.Contains(Perms.ApprovalStage2) && !rolePerms.Contains(Perms.ApprovalHandoverFinal))
-                    {
-                        rolePerms.Add(Perms.ApprovalHandoverFinal);
-                        role.Permissions = System.Text.Json.JsonSerializer.Serialize(rolePerms);
-                        role.UpdatedAt = DateTime.UtcNow;
-                    }
-                }
-                catch { /* Ignore invalid JSON */ }
             }
         }
 
         await _context.SaveChangesAsync();
     }
 
+    private async Task SeedDefaultUsersAsync()
+    {
+        var chcuDivision = await _context.Divisions.FirstOrDefaultAsync(d => d.name == "CHCU");
+        int? divisionId = chcuDivision?.id;
+
+        var usersToSeed = new List<User>
+        {
+            new User { email = "superadmin@wms.com",    name = "Super Administrator",        role = "superadmin" },
+            new User { email = "si@wms.com",            name = "Ceri (Staff Inventoris)",    role = "Staff Inventoris" },
+            new User { email = "admin@wms.com",         name = "Della (Admin)",              role = "Team Leader Infrastructure" },
+            new User { email = "pic@wms.com",           name = "Taruna (PIC Studio)",        role = "PIC Studio" },
+            new User { email = "manager@wms.com",       name = "Anwari (Manager)",           role = "Manager" },
+            new User { email = "user@wms.com",          name = "User",                       role = "User" },
+        };
+
+        foreach (var u in usersToSeed)
+        {
+            var existingUser = await _context.Users.FirstOrDefaultAsync(x => x.email == u.email);
+            if (existingUser == null)
+            {
+                u.password = BCrypt.Net.BCrypt.HashPassword("password");
+                u.poin = 1000;
+                u.nrp = new Random().Next(10000000, 99999999).ToString();
+                u.division_id = divisionId;
+                _context.Users.Add(u);
+            }
+        }
+        await _context.SaveChangesAsync();
+    }
+
     private async Task SeedUserAdminRoleAssignmentsAsync()
     {
-        var users = await _context.Set<User>().ToListAsync();
+        var users = await _context.Users.ToListAsync();
         var adminRoles = await _context.AdminRoles.ToListAsync();
 
         foreach (var user in users)
@@ -258,5 +226,31 @@ public class DbSeeder
 
         await _context.SaveChangesAsync();
     }
-}
 
+    private async Task SeedProductsAsync()
+    {
+        if (await _context.Products.AnyAsync()) return; // Skip if products exist
+
+        var filePath = Path.Combine(Directory.GetCurrentDirectory(), "Data", "SeedData", "products.json");
+        if (!File.Exists(filePath))
+        {
+            _logger.LogWarning($"File products.json tidak ditemukan di {filePath}");
+            return;
+        }
+
+        var json = await File.ReadAllTextAsync(filePath);
+        var products = JsonSerializer.Deserialize<List<Product>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+        if (products != null && products.Any())
+        {
+            _logger.LogInformation($"Menyisipkan {products.Count} produk dari products.json...");
+            foreach (var p in products)
+            {
+                // Reset ID to auto increment
+                p.id = 0; 
+                _context.Products.Add(p);
+            }
+            await _context.SaveChangesAsync();
+        }
+    }
+}

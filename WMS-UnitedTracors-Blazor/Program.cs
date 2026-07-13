@@ -204,60 +204,66 @@ if (app.Environment.IsDevelopment() ||
         var dbFactory = services.GetRequiredService<IDbContextFactory<ApplicationDbContext>>();
         var context = dbFactory.CreateDbContext();
 
-        // Temporary Migration History Fix for pre-existing tables
-        try
+        // 1. Cek apakah ada command flag --reset-db
+        var isResetRequested = args.Contains("--reset-db");
+        var logger = services.GetRequiredService<ILogger<Program>>();
+
+        if (isResetRequested)
         {
-            var categoriesTableExists = false;
+            logger.LogWarning("Menghapus database (FRESH REWRITE) karena flag --reset-db aktif...");
+            await context.Database.EnsureDeletedAsync();
+            logger.LogInformation("Menjalankan migrasi database baru...");
+            await context.Database.MigrateAsync();
+        }
+        else
+        {
+            logger.LogInformation("Memeriksa status database existing...");
+            
+            // Pengamanan agar EF Core tidak menabrak tabel yang sudah ada (karena file migrasi baru saja disquash)
             try
             {
-                await context.Database.ExecuteSqlRawAsync("SELECT 1 FROM `categories` LIMIT 1;");
-                categoriesTableExists = true;
+                var tablesExist = false;
+                try
+                {
+                    await context.Database.ExecuteSqlRawAsync("SELECT 1 FROM `categories` LIMIT 1;");
+                    tablesExist = true;
+                }
+                catch { }
+
+                if (tablesExist)
+                {
+                    await context.Database.ExecuteSqlRawAsync(@"
+                        CREATE TABLE IF NOT EXISTS `__EFMigrationsHistory` (
+                            `MigrationId` varchar(150) CHARACTER SET utf8mb4 NOT NULL,
+                            `ProductVersion` varchar(32) CHARACTER SET utf8mb4 NOT NULL,
+                            CONSTRAINT `PK___EFMigrationsHistory` PRIMARY KEY (`MigrationId`)
+                        ) CHARACTER SET=utf8mb4;
+                    ");
+                    // Insert file migrasi terbaru agar EF Core tahu DB sudah up-to-date dengan InitialCreate
+                    await context.Database.ExecuteSqlRawAsync(@"
+                        INSERT IGNORE INTO `__EFMigrationsHistory` (`MigrationId`, `ProductVersion`) 
+                        VALUES ('20260713032839_InitialCreate', '9.0.0');
+                    ");
+                }
             }
-            catch
+            catch (Exception ex)
             {
-                categoriesTableExists = false;
+                logger.LogWarning(ex, "Gagal mensinkronisasi riwayat migrasi.");
             }
 
-            if (categoriesTableExists)
-            {
-                await context.Database.ExecuteSqlRawAsync(@"
-                    CREATE TABLE IF NOT EXISTS `__EFMigrationsHistory` (
-                        `MigrationId` varchar(150) CHARACTER SET utf8mb4 NOT NULL,
-                        `ProductVersion` varchar(32) CHARACTER SET utf8mb4 NOT NULL,
-                        CONSTRAINT `PK___EFMigrationsHistory` PRIMARY KEY (`MigrationId`)
-                    ) CHARACTER SET=utf8mb4;
-                ");
-                await context.Database.ExecuteSqlRawAsync(@"
-                    INSERT IGNORE INTO `__EFMigrationsHistory` (`MigrationId`, `ProductVersion`) VALUES 
-                    ('20260522095935_SyncWithSqlDump', '9.0.0'),
-                    ('20260527063537_AddProductDescriptionAndVariants', '9.0.0'),
-                    ('20260604021546_AddTransactionsTable', '9.0.0'),
-                    ('20260605013419_AddHandoverFields', '9.0.0'),
-                    ('20260608062936_UpdateDatabase', '9.0.0'),
-                    ('20260608081019_AddAdminRoles', '9.0.0'),
-                    ('20260609013724_AddCategoryIdToUserAdminRole', '9.0.0'),
-                    ('20260609063238_FixTransactionStatusColumn', '9.0.0'),
-                    ('20260609090000_AddGiveawayWorkflowFields', '9.0.0'),
-                    ('20260610030048_RemoveUsersRoleCheckConstraint', '9.0.0'),
-                    ('20260610040000_MakeDocumentationPhotoText', '9.0.0'),
-                    ('20260610104700_AddHandoverUploadedBy', '9.0.0'),
-                    ('20260610110633_AddOriginalFieldsToTransaction', '9.0.0'),
-                    ('20260611000000_AddEventEndDate', '9.0.0'),
-                    ('20260611040021_AddIsHiddenToProduct', '9.0.0'),
-                    ('20260611044913_AddIsHiddenToVariant', '9.0.0'),
-                    ('20260706022150_AddPermissionsToAdminRoles', '9.0.0');
-                ");
-            }
+            logger.LogInformation("Menjalankan migrasi database...");
+            await context.Database.MigrateAsync();
         }
-        catch (Exception) {}
 
-        await context.Database.MigrateAsync();
-
+        // 2. Run the C# Seeder to populate the database
+        logger.LogInformation("Menjalankan database seeder...");
         var seeder = new UT_WMSDotnet.Data.DbSeeder(
             context,
             services.GetRequiredService<ILogger<UT_WMSDotnet.Data.DbSeeder>>());
 
         await seeder.SeedAsync();
+        
+        logger.LogInformation("Setup database dan seeding selesai.");
     }
     catch (Exception ex)
     {

@@ -4,15 +4,40 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace ut_wms_asp.net.Migrations
+namespace WMS_UnitedTracors_Blazor.Migrations
 {
     /// <inheritdoc />
-    public partial class SyncWithSqlDump : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AlterDatabase()
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
+                name: "admin_roles",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    RoleName = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    Description = table.Column<string>(type: "varchar(500)", maxLength: 500, nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    Permissions = table.Column<string>(type: "text", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    IsActive = table.Column<bool>(type: "tinyint(1)", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    CreatedBy = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    UpdatedBy = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_admin_roles", x => x.Id);
+                })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
@@ -105,7 +130,7 @@ namespace ut_wms_asp.net.Migrations
                     email_verified_at = table.Column<DateTime>(type: "datetime(6)", nullable: true),
                     password = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    role = table.Column<string>(type: "varchar(50)", maxLength: 50, nullable: false)
+                    role = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     division_id = table.Column<int>(type: "int", nullable: true),
                     remember_token = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: true)
@@ -142,6 +167,8 @@ namespace ut_wms_asp.net.Migrations
                     value = table.Column<int>(type: "int", nullable: false),
                     image = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
+                    description = table.Column<string>(type: "text", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
                     images = table.Column<string>(type: "json", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     category_id = table.Column<int>(type: "int", nullable: true),
@@ -153,6 +180,7 @@ namespace ut_wms_asp.net.Migrations
                     unit_id = table.Column<int>(type: "int", nullable: true),
                     is_returnable = table.Column<int>(type: "int", nullable: false),
                     min_stock = table.Column<int>(type: "int", nullable: false),
+                    is_hidden = table.Column<int>(type: "int", nullable: false),
                     created_at = table.Column<DateTime>(type: "datetime(6)", nullable: false),
                     updated_at = table.Column<DateTime>(type: "datetime(6)", nullable: false)
                 },
@@ -218,6 +246,42 @@ namespace ut_wms_asp.net.Migrations
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
+                name: "user_admin_roles",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    UserId = table.Column<int>(type: "int", nullable: false),
+                    AdminRoleId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    CategoryId = table.Column<int>(type: "int", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    CreatedBy = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_user_admin_roles", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_user_admin_roles_admin_roles_AdminRoleId",
+                        column: x => x.AdminRoleId,
+                        principalTable: "admin_roles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_user_admin_roles_categories_CategoryId",
+                        column: x => x.CategoryId,
+                        principalTable: "categories",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_user_admin_roles_users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "users",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
                 name: "product_variants",
                 columns: table => new
                 {
@@ -233,6 +297,7 @@ namespace ut_wms_asp.net.Migrations
                     image = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     stock = table.Column<int>(type: "int", nullable: false),
+                    is_hidden = table.Column<int>(type: "int", nullable: false),
                     created_at = table.Column<DateTime>(type: "datetime(6)", nullable: true),
                     updated_at = table.Column<DateTime>(type: "datetime(6)", nullable: true)
                 },
@@ -260,17 +325,33 @@ namespace ut_wms_asp.net.Migrations
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     request_type = table.Column<string>(type: "varchar(50)", maxLength: 50, nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    quantity = table.Column<int>(type: "int", nullable: false),
-                    returned_quantity = table.Column<int>(type: "int", nullable: false),
-                    pending_return_quantity = table.Column<int>(type: "int", nullable: false),
+                    quantity = table.Column<int>(type: "int", nullable: true),
+                    original_quantity = table.Column<int>(type: "int", nullable: true),
+                    returned_quantity = table.Column<int>(type: "int", nullable: true),
+                    pending_return_quantity = table.Column<int>(type: "int", nullable: true),
                     returned_at = table.Column<DateTime>(type: "datetime(6)", nullable: true),
                     return_photo = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
+                    handover_photo = table.Column<string>(type: "text", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    handover_notes = table.Column<string>(type: "text", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    handover_recipient_name = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    handover_timestamp = table.Column<DateTime>(type: "datetime(6)", nullable: true),
+                    handover_uploaded_by = table.Column<string>(type: "varchar(10)", maxLength: 10, nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    handover_approved_at = table.Column<DateTime>(type: "datetime(6)", nullable: true),
+                    documentation_photo = table.Column<string>(type: "text", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    documentation_notes = table.Column<string>(type: "text", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    documentation_uploaded_at = table.Column<DateTime>(type: "datetime(6)", nullable: true),
                     return_status = table.Column<string>(type: "varchar(50)", maxLength: 50, nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     return_reason = table.Column<string>(type: "varchar(500)", maxLength: 500, nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    is_return_draft = table.Column<int>(type: "int", nullable: false),
+                    is_return_draft = table.Column<int>(type: "int", nullable: true),
                     return_condition = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     status = table.Column<string>(type: "varchar(50)", maxLength: 50, nullable: false)
@@ -278,6 +359,14 @@ namespace ut_wms_asp.net.Migrations
                     rejection_reason = table.Column<string>(type: "varchar(500)", maxLength: 500, nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     return_rejection_reason = table.Column<string>(type: "varchar(500)", maxLength: 500, nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    admin_notes = table.Column<string>(type: "varchar(500)", maxLength: 500, nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    manager_notes = table.Column<string>(type: "varchar(500)", maxLength: 500, nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    staff_inventory_notes = table.Column<string>(type: "varchar(500)", maxLength: 500, nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    last_revision_stage = table.Column<string>(type: "varchar(50)", maxLength: 50, nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     requester_id = table.Column<int>(type: "int", nullable: false),
                     approver_id = table.Column<int>(type: "int", nullable: true),
@@ -292,12 +381,15 @@ namespace ut_wms_asp.net.Migrations
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     applicant_nrp = table.Column<string>(type: "varchar(50)", maxLength: 50, nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    borrow_duration_days = table.Column<int>(type: "int", nullable: false),
+                    borrow_duration_days = table.Column<int>(type: "int", nullable: true),
                     borrow_start_date = table.Column<DateTime>(type: "date", nullable: true),
                     expected_return_date = table.Column<DateTime>(type: "date", nullable: true),
+                    pickup_date = table.Column<DateTime>(type: "date", nullable: true),
+                    original_pickup_date = table.Column<DateTime>(type: "date", nullable: true),
                     event_name = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     event_date = table.Column<DateTime>(type: "date", nullable: true),
+                    event_end_date = table.Column<DateTime>(type: "date", nullable: true),
                     documentation_link = table.Column<string>(type: "varchar(500)", maxLength: 500, nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4")
                 },
@@ -434,6 +526,21 @@ namespace ut_wms_asp.net.Migrations
                 column: "requester_id");
 
             migrationBuilder.CreateIndex(
+                name: "IX_user_admin_roles_AdminRoleId",
+                table: "user_admin_roles",
+                column: "AdminRoleId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_user_admin_roles_CategoryId",
+                table: "user_admin_roles",
+                column: "CategoryId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_user_admin_roles_UserId",
+                table: "user_admin_roles",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_users_division_id",
                 table: "users",
                 column: "division_id");
@@ -449,7 +556,13 @@ namespace ut_wms_asp.net.Migrations
                 name: "stock_logs");
 
             migrationBuilder.DropTable(
+                name: "user_admin_roles");
+
+            migrationBuilder.DropTable(
                 name: "transactions");
+
+            migrationBuilder.DropTable(
+                name: "admin_roles");
 
             migrationBuilder.DropTable(
                 name: "product_variants");
