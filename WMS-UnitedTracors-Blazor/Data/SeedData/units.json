@@ -1,0 +1,206 @@
+[
+  {
+    "id": 1,
+    "name": "Mix (4 Bungkus Kecil, 1 Pack Besar, 3 Roll Bekas)",
+    "created_at": "2026-05-26 09:46:41",
+    "updated_at": "2026-05-26 09:46:41"
+  },
+  {
+    "id": 2,
+    "name": "Pack Jaring",
+    "created_at": "2026-05-26 09:46:41",
+    "updated_at": "2026-05-26 09:46:41"
+  },
+  {
+    "id": 3,
+    "name": "Pcs",
+    "created_at": "2026-05-26 09:46:41",
+    "updated_at": "2026-05-26 09:46:41"
+  },
+  {
+    "id": 4,
+    "name": "2M X 1M",
+    "created_at": "2026-05-26 09:46:41",
+    "updated_at": "2026-05-26 09:46:41"
+  },
+  {
+    "id": 5,
+    "name": "Pasang",
+    "created_at": "2026-05-26 09:46:41",
+    "updated_at": "2026-05-26 09:46:41"
+  },
+  {
+    "id": 6,
+    "name": "Bungkus",
+    "created_at": "2026-05-26 09:46:41",
+    "updated_at": "2026-05-26 09:46:41"
+  },
+  {
+    "id": 7,
+    "name": "Pack",
+    "created_at": "2026-05-26 09:46:41",
+    "updated_at": "2026-05-26 09:46:41"
+  },
+  {
+    "id": 8,
+    "name": "Sachet",
+    "created_at": "2026-05-26 09:46:41",
+    "updated_at": "2026-05-26 09:46:41"
+  },
+  {
+    "id": 9,
+    "name": "Sachet Kecil",
+    "created_at": "2026-05-26 09:46:41",
+    "updated_at": "2026-05-26 09:46:41"
+  },
+  {
+    "id": 10,
+    "name": "Box",
+    "created_at": "2026-05-26 09:46:41",
+    "updated_at": "2026-05-26 09:46:41"
+  },
+  {
+    "id": 11,
+    "name": "Lembar",
+    "created_at": "2026-05-26 09:46:41",
+    "updated_at": "2026-05-26 09:46:41"
+  },
+  {
+    "id": 12,
+    "name": "Buah",
+    "created_at": "2026-05-26 09:46:41",
+    "updated_at": "2026-05-26 09:46:41"
+  },
+  {
+    "id": 13,
+    "name": "Toples",
+    "created_at": "2026-05-26 09:46:42",
+    "updated_at": "2026-05-26 09:46:42"
+  },
+  {
+    "id": 14,
+    "name": "Set",
+    "created_at": "2026-05-26 09:46:42",
+    "updated_at": "2026-05-26 09:46:42"
+  },
+  {
+    "id": 15,
+    "name": "7 Pack (Warna-warni), 1 Pack Besar (Biru), 14 Roll",
+    "created_at": "2026-05-26 09:46:42",
+    "updated_at": "2026-05-26 09:46:42"
+  },
+  {
+    "id": 16,
+    "name": "Bundle",
+    "created_at": "2026-05-26 09:46:42",
+    "updated_at": "2026-05-26 09:46:42"
+  },
+  {
+    "id": 17,
+    "name": "Map",
+    "created_at": "2026-05-26 09:46:42",
+    "updated_at": "2026-05-26 09:46:42"
+  },
+  {
+    "id": 18,
+    "name": "Ikat",
+    "created_at": "2026-05-26 09:46:42",
+    "updated_at": "2026-05-26 09:46:42"
+  },
+  {
+    "id": 19,
+    "name": "Plastik",
+    "created_at": "2026-05-26 09:46:42",
+    "updated_at": "2026-05-26 09:46:42"
+  },
+  {
+    "id": 20,
+    "name": "Unit",
+    "created_at": "2026-05-26 09:46:42",
+    "updated_at": "2026-05-26 09:46:42"
+  },
+  {
+    "id": 21,
+    "name": "Board",
+    "created_at": "2026-05-26 09:46:43",
+    "updated_at": "2026-05-26 09:46:43"
+  },
+  {
+    "id": 22,
+    "name": "Roll",
+    "created_at": "2026-05-26 09:46:43",
+    "updated_at": "2026-05-26 09:46:43"
+  },
+  {
+    "id": 23,
+    "name": "Pax",
+    "created_at": "2026-05-26 09:46:43",
+    "updated_at": "2026-05-26 09:46:43"
+  },
+  {
+    "id": 24,
+    "name": "Parts",
+    "created_at": "2026-05-26 09:46:43",
+    "updated_at": "2026-05-26 09:46:43"
+  },
+  {
+    "id": 25,
+    "name": "Blok",
+    "created_at": "2026-05-26 09:46:43",
+    "updated_at": "2026-05-26 09:46:43"
+  },
+  {
+    "id": 26,
+    "name": "Stel",
+    "created_at": "2026-05-26 09:46:43",
+    "updated_at": "2026-05-26 09:46:43"
+  },
+  {
+    "id": 27,
+    "name": "Kaleng",
+    "created_at": "2026-05-26 09:46:43",
+    "updated_at": "2026-05-26 09:46:43"
+  },
+  {
+    "id": 28,
+    "name": "5",
+    "created_at": "2026-05-26 09:46:43",
+    "updated_at": "2026-05-26 09:46:43"
+  },
+  {
+    "id": 29,
+    "name": "Buku",
+    "created_at": "2026-05-26 09:46:43",
+    "updated_at": "2026-05-26 09:46:43"
+  },
+  {
+    "id": 30,
+    "name": "Kantong",
+    "created_at": "2026-05-26 09:46:44",
+    "updated_at": "2026-05-26 09:46:44"
+  },
+  {
+    "id": 31,
+    "name": "kg",
+    "created_at": "2026-05-26 09:46:46",
+    "updated_at": "2026-05-26 09:46:46"
+  },
+  {
+    "id": 32,
+    "name": "liter",
+    "created_at": "2026-05-26 09:46:46",
+    "updated_at": "2026-05-26 09:46:46"
+  },
+  {
+    "id": 33,
+    "name": "meter",
+    "created_at": "2026-05-26 09:46:46",
+    "updated_at": "2026-05-26 09:46:46"
+  },
+  {
+    "id": 34,
+    "name": "test",
+    "created_at": "2026-06-10 04:22:10",
+    "updated_at": "2026-06-10 04:22:10"
+  }
+]

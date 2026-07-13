@@ -9,11 +9,11 @@ using UT_WMSDotnet.Data;
 
 #nullable disable
 
-namespace ut_wms_asp.net.Migrations
+namespace WMS_UnitedTracors_Blazor.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260610104700_AddHandoverUploadedBy")]
-    partial class AddHandoverUploadedBy
+    [Migration("20260713032839_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -183,6 +183,9 @@ namespace ut_wms_asp.net.Migrations
                     b.Property<int>("initial_stock")
                         .HasColumnType("int");
 
+                    b.Property<int>("is_hidden")
+                        .HasColumnType("int");
+
                     b.Property<int>("is_returnable")
                         .HasColumnType("int");
 
@@ -248,6 +251,9 @@ namespace ut_wms_asp.net.Migrations
                     b.Property<string>("image")
                         .HasMaxLength(255)
                         .HasColumnType("varchar(255)");
+
+                    b.Property<int>("is_hidden")
+                        .HasColumnType("int");
 
                     b.Property<int>("product_id")
                         .HasColumnType("int");
@@ -408,6 +414,9 @@ namespace ut_wms_asp.net.Migrations
                     b.Property<DateTime?>("event_date")
                         .HasColumnType("date");
 
+                    b.Property<DateTime?>("event_end_date")
+                        .HasColumnType("date");
+
                     b.Property<string>("event_name")
                         .HasMaxLength(255)
                         .HasColumnType("varchar(255)");
@@ -449,6 +458,12 @@ namespace ut_wms_asp.net.Migrations
                     b.Property<string>("notes")
                         .HasMaxLength(500)
                         .HasColumnType("varchar(500)");
+
+                    b.Property<DateTime?>("original_pickup_date")
+                        .HasColumnType("date");
+
+                    b.Property<int?>("original_quantity")
+                        .HasColumnType("int");
 
                     b.Property<int?>("pending_return_quantity")
                         .HasColumnType("int");

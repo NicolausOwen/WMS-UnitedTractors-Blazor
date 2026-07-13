@@ -407,14 +407,26 @@
         try
         {
             var itemsToProcess = SelectedItems.ToList();
+            var processedItems = new List<(Transaction item, string action, string? reason)>();
+
             foreach (var id in itemsToProcess)
             {
+                var item = GroupItems.FirstOrDefault(x => x.id == id);
                 if (action == "APPROVE")
-                    await ApprovalService.ApproveAsync(id, null, CurrentUserId, UserRole);
+                    await ApprovalService.ApproveAsync(id, null, CurrentUserId, UserRole, false);
                 else
-                    await ApprovalService.RejectAsync(id, null, CurrentUserId, UserRole);
+                    await ApprovalService.RejectAsync(id, null, CurrentUserId, UserRole, false);
                 
+                if (item != null)
+                {
+                    processedItems.Add((item, action, null));
+                }
                 GroupItems.RemoveAll(x => x.id == id);
+            }
+            
+            if (processedItems.Any())
+            {
+                await ApprovalService.NotifyBatchResultAsync(processedItems);
             }
             
             SelectedItems.Clear();

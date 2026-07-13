@@ -8,7 +8,7 @@ using UT_WMSDotnet.Data;
 
 #nullable disable
 
-namespace ut_wms_asp.net.Migrations
+namespace WMS_UnitedTracors_Blazor.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
     partial class ApplicationDbContextModelSnapshot : ModelSnapshot
