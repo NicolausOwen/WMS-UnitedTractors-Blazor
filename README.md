@@ -1,4 +1,16 @@
-# WMS United Tractors
+<p align="center">
+  <img src="WMS-UnitedTracors-Blazor/wwwroot/img/logo.svg" alt="WMS United Tractors Logo" width="150" />
+</p>
+
+<h1 align="center">WMS United Tractors</h1>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet&logoColor=white" alt=".NET 10" />
+  <img src="https://img.shields.io/badge/Blazor-Web_App-512BD4?logo=blazor&logoColor=white" alt="Blazor" />
+  <img src="https://img.shields.io/badge/Database-MySQL-4479A1?logo=mysql&logoColor=white" alt="MySQL" />
+  <img src="https://img.shields.io/badge/ORM-EF_Core-512BD4?logo=nuget&logoColor=white" alt="Entity Framework Core" />
+  <img src="https://img.shields.io/badge/Deployed_on-Azure-0089D6?logo=microsoft-azure&logoColor=white" alt="Azure" />
+</p>
 
 Welcome to the WMS United Tractors repository. This project is a comprehensive Warehouse Management System (WMS) built using a modern .NET technology stack to provide robust inventory control and asset tracking.
 
