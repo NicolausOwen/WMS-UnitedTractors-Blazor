@@ -1,10 +1,13 @@
 @inherits LayoutComponentBase
 
-<div class="min-h-screen bg-[#f5f4f0]">
+<div class="min-h-screen" style="background: linear-gradient(rgba(245,244,240,0.82), rgba(245,244,240,0.82)), url('/images/bg/ut.png') center center / 140% no-repeat fixed;">
     <NavMenu />
 
     <!-- Page Content -->
     <main class="main-wrapper pb-[calc(60px+env(safe-area-inset-bottom))] md:pb-0 transition-all duration-300">
         @Body
     </main>
+
+    <!-- Global Cart Modal -->
+    <WMS_UnitedTracors_Blazor.Components.Shared.CartCheckout @rendermode="InteractiveServer" />
 </div>

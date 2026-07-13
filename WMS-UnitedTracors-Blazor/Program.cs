@@ -204,36 +204,66 @@ if (app.Environment.IsDevelopment() ||
         var dbFactory = services.GetRequiredService<IDbContextFactory<ApplicationDbContext>>();
         var context = dbFactory.CreateDbContext();
 
-        // Temporary Migration History Fix for pre-existing tables
-        try
+        // 1. Cek apakah ada command flag --reset-db
+        var isResetRequested = args.Contains("--reset-db");
+        var logger = services.GetRequiredService<ILogger<Program>>();
+
+        if (isResetRequested)
         {
-            await context.Database.ExecuteSqlRawAsync(@"
-                CREATE TABLE IF NOT EXISTS `__EFMigrationsHistory` (
-                    `MigrationId` varchar(150) CHARACTER SET utf8mb4 NOT NULL,
-                    `ProductVersion` varchar(32) CHARACTER SET utf8mb4 NOT NULL,
-                    CONSTRAINT `PK___EFMigrationsHistory` PRIMARY KEY (`MigrationId`)
-                ) CHARACTER SET=utf8mb4;
-            ");
-            await context.Database.ExecuteSqlRawAsync(@"
-                INSERT IGNORE INTO `__EFMigrationsHistory` (`MigrationId`, `ProductVersion`) VALUES 
-                ('20260522095935_SyncWithSqlDump', '9.0.0'),
-                ('20260527063537_AddProductDescriptionAndVariants', '9.0.0'),
-                ('20260604021546_AddTransactionsTable', '9.0.0'),
-                ('20260605013419_AddHandoverFields', '9.0.0'),
-                ('20260608062936_UpdateDatabase', '9.0.0'),
-                ('20260608081019_AddAdminRoles', '9.0.0'),
-                ('20260609063238_FixTransactionStatusColumn', '9.0.0');
-            ");
+            logger.LogWarning("Menghapus database (FRESH REWRITE) karena flag --reset-db aktif...");
+            await context.Database.EnsureDeletedAsync();
+            logger.LogInformation("Menjalankan migrasi database baru...");
+            await context.Database.MigrateAsync();
         }
-        catch (Exception) {}
+        else
+        {
+            logger.LogInformation("Memeriksa status database existing...");
+            
+            // Pengamanan agar EF Core tidak menabrak tabel yang sudah ada (karena file migrasi baru saja disquash)
+            try
+            {
+                var tablesExist = false;
+                try
+                {
+                    await context.Database.ExecuteSqlRawAsync("SELECT 1 FROM `categories` LIMIT 1;");
+                    tablesExist = true;
+                }
+                catch { }
 
-        await context.Database.MigrateAsync();
+                if (tablesExist)
+                {
+                    await context.Database.ExecuteSqlRawAsync(@"
+                        CREATE TABLE IF NOT EXISTS `__EFMigrationsHistory` (
+                            `MigrationId` varchar(150) CHARACTER SET utf8mb4 NOT NULL,
+                            `ProductVersion` varchar(32) CHARACTER SET utf8mb4 NOT NULL,
+                            CONSTRAINT `PK___EFMigrationsHistory` PRIMARY KEY (`MigrationId`)
+                        ) CHARACTER SET=utf8mb4;
+                    ");
+                    // Insert file migrasi terbaru agar EF Core tahu DB sudah up-to-date dengan InitialCreate
+                    await context.Database.ExecuteSqlRawAsync(@"
+                        INSERT IGNORE INTO `__EFMigrationsHistory` (`MigrationId`, `ProductVersion`) 
+                        VALUES ('20260713032839_InitialCreate', '9.0.0');
+                    ");
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Gagal mensinkronisasi riwayat migrasi.");
+            }
 
+            logger.LogInformation("Menjalankan migrasi database...");
+            await context.Database.MigrateAsync();
+        }
+
+        // 2. Run the C# Seeder to populate the database
+        logger.LogInformation("Menjalankan database seeder...");
         var seeder = new UT_WMSDotnet.Data.DbSeeder(
             context,
             services.GetRequiredService<ILogger<UT_WMSDotnet.Data.DbSeeder>>());
 
         await seeder.SeedAsync();
+        
+        logger.LogInformation("Setup database dan seeding selesai.");
     }
     catch (Exception ex)
     {

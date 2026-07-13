@@ -69,15 +69,29 @@ public class TrackingService
 
         bool isSuperAdmin = Permissions.All.All(p => perms.Contains(p));
         bool canManageOrApprove = perms.Contains(Permissions.ApprovalStage1) || perms.Contains(Permissions.ApprovalStage2) ||
-                                  perms.Contains(Permissions.ApprovalHandover) || perms.Contains(Permissions.ApprovalReturn) ||
+                                  perms.Contains(Permissions.ApprovalHandover) ||
                                   perms.Contains(Permissions.ProductsManage);
 
         IQueryable<Transaction> query;
 
         if (!canManageOrApprove && perms.Contains(Permissions.ApprovalManager))
         {
-            // Manager (only manager approval) -> giveaway in active states only.
-            query = activeStatusFilter.Where(t => t.request_type == "GIVEAWAY");
+            // Manager (only manager approval) -> giveaway in active states only + their own requests.
+            query = baseQuery.Where(t => 
+                (t.request_type == "GIVEAWAY" && (
+                    t.status == WorkflowStatuses.PendingStaffInventory ||
+                    t.status == WorkflowStatuses.PendingAdmin ||
+                    t.status == WorkflowStatuses.PendingManager ||
+                    t.status == WorkflowStatuses.Revision ||
+                    t.status == WorkflowStatuses.RevisionByStaffInventory ||
+                    t.status == WorkflowStatuses.RevisionByAdmin ||
+                    t.status == WorkflowStatuses.RevisionByManager ||
+                    t.status == WorkflowStatuses.WaitingHandover ||
+                    t.status == WorkflowStatuses.WaitingDocumentation ||
+                    t.status == WorkflowStatuses.DocumentationOverdue
+                )) || 
+                t.requester_id == currentUserId
+            );
         }
         else if (!canManageOrApprove)
         {
@@ -124,7 +138,7 @@ public class TrackingService
                 t.request_type == "GIVEAWAY" &&
                 t.status == WorkflowStatuses.WaitingDocumentation &&
                 t.event_date.HasValue &&
-                t.event_date.Value.Date.AddDays(3) < DateTime.Today)
+                t.event_date.Value.Date.AddDays(3) < WibHelper.Today)
             .ToListAsync();
 
         if (overdueItems.Any())
@@ -135,6 +149,25 @@ public class TrackingService
                 item.updated_at = DateTime.UtcNow;
             }
 
+            await _context.SaveChangesAsync();
+        }
+
+        // Auto-approve WAITING_HANDOVER_CONFIRM after 24 hours
+        var cutoff = DateTime.UtcNow.AddHours(-24);
+        var expiredHandovers = await _context.Transactions
+            .Where(t =>
+                t.request_type == "BORROW" &&
+                t.status == WorkflowStatuses.WaitingHandoverConfirm &&
+                t.updated_at <= cutoff)
+            .ToListAsync();
+
+        if (expiredHandovers.Any())
+        {
+            foreach (var item in expiredHandovers)
+            {
+                item.status = WorkflowStatuses.Approved;
+                item.updated_at = DateTime.UtcNow;
+            }
             await _context.SaveChangesAsync();
         }
 

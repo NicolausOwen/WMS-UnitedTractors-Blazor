@@ -21,6 +21,7 @@ public class ApprovalService
         using var _context = _factory.CreateDbContext();
         var query = _context.Transactions
             .Include(t => t.Product)
+                .ThenInclude(p => p.Category)
             .Include(t => t.Requester)
             .Include(t => t.Division)
             .OrderByDescending(t => t.created_at)
@@ -36,7 +37,6 @@ public class ApprovalService
                                 perms.Contains(Permissions.ApprovalStage2) || 
                                 perms.Contains(Permissions.ApprovalHandover) || 
                                 perms.Contains(Permissions.ApprovalHandoverFinal) || 
-                                perms.Contains(Permissions.ApprovalReturn) ||
                                 perms.Contains(Permissions.UsersManage);
 
         if (hasApprovalPerms || isSuperAdmin)
@@ -68,6 +68,31 @@ public class ApprovalService
             ));
 
         var transactions = await query.ToListAsync();
+
+        bool isSuper = string.Equals(userRole, "superadmin", StringComparison.OrdinalIgnoreCase) || 
+                       string.Equals(userRole, "Super Admin", StringComparison.OrdinalIgnoreCase);
+
+        if (!isSuper && perms.Contains(Permissions.ApprovalStage2))
+        {
+            transactions = transactions.Where(t => {
+                if (t.status == WorkflowStatuses.PendingAdmin || (t.request_type == "BORROW" && t.status == WorkflowStatuses.Pending))
+                {
+                    var categoryName = t.Product?.Category?.name;
+                    bool isElektronik = string.Equals(categoryName, "Elektronik", StringComparison.OrdinalIgnoreCase);
+                    
+                    if (isElektronik)
+                    {
+                        return string.Equals(userRole, "PIC Studio", StringComparison.OrdinalIgnoreCase);
+                    }
+                    else
+                    {
+                        return string.Equals(userRole, "Team Leader Infrastructure", StringComparison.OrdinalIgnoreCase);
+                    }
+                }
+                return true;
+            }).ToList();
+        }
+
         var groupedApprovals = transactions
             .GroupBy(t => $"{t.created_at:yyyy-MM-dd HH:mm}_{t.requester_id}_{t.applicant_name}")
             .ToDictionary(g => g.Key, g => g.ToList());
@@ -76,7 +101,7 @@ public class ApprovalService
         var pendingProfileRequests = new List<ProfileRequest>();
         var groupedHandovers = new Dictionary<string, List<Transaction>>();
 
-        if (perms.Contains(Permissions.ApprovalReturn))
+        if (perms.Contains(Permissions.ApprovalHandover))
         {
             var returnsQuery = _context.Transactions
                 .Include(t => t.Product)
@@ -161,17 +186,21 @@ public class ApprovalService
         return (groupedApprovals, pendingReturns, pendingProfileRequests, groupedHandovers, groupedDocumentations);
     }
 
-    public async Task<string?> ApproveAsync(int id, string? notes, int currentUserId, string? userRole)
+    public async Task<string?> ApproveAsync(int id, string? notes, int currentUserId, string? userRole, bool sendNotification = true)
     {
         using var _context = _factory.CreateDbContext();
-        var transaction = await _context.Transactions.Include(t => t.Product).Include(t => t.Requester).FirstOrDefaultAsync(t => t.id == id);
+        var transaction = await _context.Transactions
+            .Include(t => t.Product)
+                .ThenInclude(p => p.Category)
+            .Include(t => t.Requester)
+            .FirstOrDefaultAsync(t => t.id == id);
         if (transaction == null) return "Transaction not found.";
         var perms = await ResolvePermsAsync(_context, currentUserId);
-        if (!CanApprove(transaction, perms)) return "Transaction is no longer pending or is not assigned to your approval stage.";
+        if (!CanApprove(transaction, perms, userRole)) return "Transaction is no longer pending or is not assigned to your approval stage.";
 
         if (transaction.request_type == "GIVEAWAY")
         {
-            return await ApproveGiveawayAsync(_context, transaction, notes, currentUserId, perms);
+            return await ApproveGiveawayAsync(_context, transaction, notes, currentUserId, perms, sendNotification);
         }
 
         // BORROW stage 1: Staff Inventoris menyetujui -> lanjut ke tahap Admin (belum potong stok).
@@ -185,7 +214,10 @@ public class ApprovalService
             transaction.rejection_reason = null;
             _context.Transactions.Update(transaction);
             await _context.SaveChangesAsync();
-            _ = NotifyUserAsync(transaction, "Update Request WMS", "Request Anda telah disetujui pada tahap Staff Inventoris dan sedang menunggu tahap selanjutnya.");
+            if (sendNotification)
+            {
+                await NotifyBatchResultAsync(new List<(Transaction, string, string?)> { (transaction, "APPROVE", null) });
+            }
             return null;
         }
 
@@ -196,45 +228,33 @@ public class ApprovalService
             using var dbTransaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                var stockBefore = transaction.Product!.current_stock;
-
                 if (transaction.type == "IN")
                 {
+                    var stockBefore = transaction.Product!.current_stock;
                     transaction.Product!.current_stock += transaction.quantity ?? 0;
-                }
-                else
-                {
-                    if (transaction.Product!.current_stock < (transaction.quantity ?? 0)) throw new Exception("Insufficient stock");
-                    transaction.Product!.current_stock -= transaction.quantity ?? 0;
-                }
+                    _context.Products.Update(transaction.Product!);
 
-                _context.Products.Update(transaction.Product!);
-
-                if (transaction.product_variant_id.HasValue)
-                {
-                    var variant = await _context.ProductVariants.FindAsync(transaction.product_variant_id.Value);
-                    if (variant != null)
+                    if (transaction.product_variant_id.HasValue)
                     {
-                        if (transaction.type == "IN") variant.stock += transaction.quantity ?? 0;
-                        else
+                        var variant = await _context.ProductVariants.FindAsync(transaction.product_variant_id.Value);
+                        if (variant != null)
                         {
-                            if (variant.stock < (transaction.quantity ?? 0)) throw new Exception("Insufficient variant stock");
-                            variant.stock -= transaction.quantity ?? 0;
+                            variant.stock += transaction.quantity ?? 0;
+                            _context.ProductVariants.Update(variant);
                         }
-                        _context.ProductVariants.Update(variant);
                     }
-                }
 
-                var stockLog = new StockLog
-                {
-                    transaction_id = transaction.id,
-                    product_id = transaction.Product!.id,
-                    stock_before = stockBefore,
-                    stock_after = transaction.Product!.current_stock,
-                    created_at = DateTime.UtcNow,
-                    updated_at = DateTime.UtcNow
-                };
-                _context.StockLogs.Add(stockLog);
+                    var stockLog = new StockLog
+                    {
+                        transaction_id = transaction.id,
+                        product_id = transaction.Product!.id,
+                        stock_before = stockBefore,
+                        stock_after = transaction.Product!.current_stock,
+                        created_at = DateTime.UtcNow,
+                        updated_at = DateTime.UtcNow
+                    };
+                    _context.StockLogs.Add(stockLog);
+                }
 
                 // Borrowing (OUT + BORROW) requires a handover step before it is considered
                 // actively borrowed. Giveaways and stock-in are finalized immediately.
@@ -268,10 +288,10 @@ public class ApprovalService
                 await _context.SaveChangesAsync();
                 await dbTransaction.CommitAsync();
 
-                var msg = transaction.type == "OUT" && transaction.request_type == "BORROW" 
-                    ? "Request peminjaman Anda telah disetujui secara final. Silakan proses serah terima." 
-                    : "Request Anda telah disetujui secara final.";
-                _ = NotifyUserAsync(transaction, "Update Request WMS", msg);
+                if (sendNotification)
+                {
+                    await NotifyBatchResultAsync(new List<(Transaction, string, string?)> { (transaction, "APPROVE", null) });
+                }
 
                 return null;
             }
@@ -283,18 +303,19 @@ public class ApprovalService
         });
     }
 
-    public async Task<string?> RejectAsync(int id, string rejectionReason, int currentUserId, string? userRole)
+    public async Task<string?> RejectAsync(int id, string rejectionReason, int currentUserId, string? userRole, bool sendNotification = true)
     {
         using var _context = _factory.CreateDbContext();
-        var transaction = await _context.Transactions.Include(t => t.Product).Include(t => t.Requester).FirstOrDefaultAsync(t => t.id == id);
+        var transaction = await _context.Transactions
+            .Include(t => t.Product)
+                .ThenInclude(p => p.Category)
+            .Include(t => t.Requester)
+            .FirstOrDefaultAsync(t => t.id == id);
         if (transaction == null) return "Transaction not found.";
         var perms = await ResolvePermsAsync(_context, currentUserId);
-        if (!CanApprove(transaction, perms)) return "Transaction is no longer pending or is not assigned to your approval stage.";
+        if (!CanApprove(transaction, perms, userRole)) return "Transaction is no longer pending or is not assigned to your approval stage.";
 
-        if (perms.Contains(Permissions.ApprovalManager) && transaction.Product != null && transaction.Product.is_returnable == 1)
-        {
-            return "Managers cannot reject borrowing transactions. Only admins can.";
-        }
+        // Manager approval is giveaway-only; CanApprove() already blocks BORROW for Manager.
 
         var stageBefore = transaction.status;
 
@@ -305,6 +326,33 @@ public class ApprovalService
         transaction.last_revision_stage = null;
 
         ApplyStageNotes(transaction, stageBefore, rejectionReason);
+
+        if (transaction.type == "OUT" && transaction.Product != null)
+        {
+            var stockBefore = transaction.Product.current_stock;
+            transaction.Product.current_stock += transaction.quantity ?? 0;
+            _context.Products.Update(transaction.Product);
+
+            if (transaction.product_variant_id.HasValue)
+            {
+                var variant = await _context.ProductVariants.FindAsync(transaction.product_variant_id.Value);
+                if (variant != null)
+                {
+                    variant.stock += transaction.quantity ?? 0;
+                    _context.ProductVariants.Update(variant);
+                }
+            }
+
+            _context.StockLogs.Add(new StockLog
+            {
+                transaction_id = transaction.id,
+                product_id = transaction.Product.id,
+                stock_before = stockBefore,
+                stock_after = transaction.Product.current_stock,
+                created_at = DateTime.UtcNow,
+                updated_at = DateTime.UtcNow
+            });
+        }
 
         if (transaction.type == "OUT" && transaction.Product != null && transaction.Requester != null)
         {
@@ -322,36 +370,67 @@ public class ApprovalService
         _context.Transactions.Update(transaction);
         await _context.SaveChangesAsync();
         
-        _ = NotifyUserAsync(transaction, "Request Ditolak WMS", $"Request Anda telah ditolak. Alasan: {rejectionReason}");
+        if (sendNotification)
+        {
+            await NotifyBatchResultAsync(new List<(Transaction, string, string?)> { (transaction, "REJECT", rejectionReason) });
+        }
         
         return null;
     }
 
-    public async Task<string?> RequestRevisionAsync(int id, string revisionReason, int currentUserId, string? userRole)
+    public async Task<string?> RequestRevisionAsync(int id, string revisionReason, int currentUserId, string? userRole, bool sendNotification = true)
     {
-        return await RequestRevisionAsync(id, revisionReason, currentUserId, userRole, null, null);
+        return await RequestRevisionAsync(id, revisionReason, currentUserId, userRole, null, null, sendNotification);
     }
 
-    public async Task<string?> RequestRevisionAsync(int id, string revisionReason, int currentUserId, string? userRole, int? revisedQuantity)
+    public async Task<string?> RequestRevisionAsync(int id, string revisionReason, int currentUserId, string? userRole, int? revisedQuantity, bool sendNotification = true)
     {
-        return await RequestRevisionAsync(id, revisionReason, currentUserId, userRole, revisedQuantity, null);
+        return await RequestRevisionAsync(id, revisionReason, currentUserId, userRole, revisedQuantity, null, sendNotification);
     }
 
-    public async Task<string?> RequestRevisionAsync(int id, string revisionReason, int currentUserId, string? userRole, int? revisedQuantity, DateTime? revisedPickupDate)
+    public async Task<string?> RequestRevisionAsync(int id, string revisionReason, int currentUserId, string? userRole, int? revisedQuantity, DateTime? revisedPickupDate, bool sendNotification = true)
     {
         using var _context = _factory.CreateDbContext();
         var transaction = await _context.Transactions
             .Include(t => t.Product)
+                .ThenInclude(p => p.Category)
             .Include(t => t.Requester)
             .FirstOrDefaultAsync(t => t.id == id);
         if (transaction == null) return "Transaction not found.";
         var perms = await ResolvePermsAsync(_context, currentUserId);
-        if (!CanApprove(transaction, perms)) return "Transaction is no longer pending or is not assigned to your approval stage.";
+        if (!CanApprove(transaction, perms, userRole)) return "Transaction is no longer pending or is not assigned to your approval stage.";
 
-        if (perms.Contains(Permissions.ApprovalManager) && transaction.Product != null && transaction.Product.is_returnable == 1)
-            return "Managers cannot request revision for borrowing transactions. Only admins can.";
+        // Manager approval is giveaway-only; CanApprove() already blocks BORROW for Manager.
 
         if (string.IsNullOrWhiteSpace(revisionReason)) return "Catatan revisi wajib diisi.";
+
+        // Refund stock immediately back to inventory since it enters revision
+        if (transaction.type == "OUT" && transaction.Product != null)
+        {
+            var stockBefore = transaction.Product.current_stock;
+            transaction.Product.current_stock += transaction.quantity ?? 0;
+            _context.Products.Update(transaction.Product);
+
+            if (transaction.product_variant_id.HasValue)
+            {
+                var variant = await _context.ProductVariants.FindAsync(transaction.product_variant_id.Value);
+                if (variant != null)
+                {
+                    variant.stock += transaction.quantity ?? 0;
+                    _context.ProductVariants.Update(variant);
+                }
+            }
+
+            _context.StockLogs.Add(new StockLog
+            {
+                transaction_id = transaction.id,
+                product_id = transaction.Product.id,
+                stock_before = stockBefore,
+                stock_after = transaction.Product.current_stock,
+                created_at = DateTime.UtcNow,
+                updated_at = DateTime.UtcNow
+            });
+        }
 
         if (revisedQuantity.HasValue)
         {
@@ -382,7 +461,7 @@ public class ApprovalService
         {
             var pickupDate = revisedPickupDate.Value.Date;
 
-            if (pickupDate < DateTime.Today)
+            if (pickupDate < WibHelper.Today)
                 return "Tanggal pengambilan revisi tidak boleh sebelum hari ini.";
 
             if (transaction.event_date.HasValue && transaction.event_date.Value.Date < pickupDate)
@@ -408,6 +487,12 @@ public class ApprovalService
 
         _context.Transactions.Update(transaction);
         await _context.SaveChangesAsync();
+        
+        if (sendNotification)
+        {
+            await NotifyBatchResultAsync(new List<(Transaction, string, string?)> { (transaction, "REVISE", revisionReason) });
+        }
+        
         return null;
     }
 
@@ -418,7 +503,7 @@ public class ApprovalService
         if (transaction == null) return "Transaction not found.";
 
         var perms = await ResolvePermsAsync(_context, currentUserId);
-        if (!perms.Contains(Permissions.ApprovalReturn)) return "Unauthorized action.";
+        if (!perms.Contains(Permissions.ApprovalHandover)) return "Unauthorized action.";
         
         if (transaction.status != WorkflowStatuses.Approved || transaction.pending_return_quantity <= 0 || transaction.is_return_draft != 0)
             return "Transaction is not pending return approval.";
@@ -462,6 +547,32 @@ public class ApprovalService
             transaction.updated_at = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
+
+            // Kirim notifikasi email ke Admin (TL / PIC Studio)
+            try
+            {
+                var admins = await _context.Users
+                    .Where(u => u.role == "Team Leader Infrastructure" || u.role == "PIC Studio" || u.role == "admin")
+                    .Select(u => u.email)
+                    .ToListAsync();
+
+                if (admins.Any())
+                {
+                    var product = transaction.Product?.name ?? "Barang";
+                    var applicant = transaction.applicant_name ?? "User";
+                    var condition = transaction.return_condition ?? "baik";
+                    
+                    string mailTitle = "Notifikasi Pengembalian Barang";
+                    string mailMessage = $"Barang <strong>{product}</strong> sejumlah {qty} unit yang dipinjam oleh {applicant} telah dikembalikan dalam kondisi <strong>{condition}</strong>. Pengembalian telah diverifikasi oleh Staff Inventoris.";
+                    string html = GetEmailTemplate(mailTitle, mailMessage);
+                    _ = _emailService.SendEmailToMultipleAsync(admins, "Notifikasi Pengembalian Barang (WMS UT)", html);
+                }
+            }
+            catch (Exception)
+            {
+                // Jangan menggagalkan transaksi jika pengiriman email notifikasi gagal
+            }
+
             return null;
         }
         catch (Exception ex)
@@ -520,7 +631,7 @@ public class ApprovalService
         {
             if (isApproved)
             {
-                item.status = WorkflowStatuses.WaitingAdminHandover;
+                item.status = WorkflowStatuses.Approved;
                 item.rejection_reason = null;
             }
             else
@@ -539,7 +650,7 @@ public class ApprovalService
             var firstMatched = matched.First();
             if (isApproved)
             {
-                _ = NotifyUserAsync(firstMatched, "Konfirmasi Serah Terima", "Bukti serah terima Anda telah dikonfirmasi dan sedang menunggu verifikasi final dari Admin.");
+                _ = NotifyUserAsync(firstMatched, "Konfirmasi Serah Terima Selesai", "Bukti serah terima Anda telah dikonfirmasi dan proses peminjaman telah disetujui.");
             }
             else
             {
@@ -589,7 +700,7 @@ public class ApprovalService
         if (transaction == null) return "Transaction not found.";
 
         var perms = await ResolvePermsAsync(_context, currentUserId);
-        if (!perms.Contains(Permissions.ApprovalReturn)) return "Unauthorized action.";
+        if (!perms.Contains(Permissions.ApprovalHandover)) return "Unauthorized action.";
         
         if (transaction.status != WorkflowStatuses.Approved || transaction.pending_return_quantity <= 0 || transaction.is_return_draft != 0)
             return "Transaction is not pending return approval.";
@@ -662,22 +773,78 @@ public class ApprovalService
         return Permissions.Resolve(user.role, role?.Permissions);
     }
 
-    private static bool CanApprove(Transaction transaction, HashSet<string> perms)
+    private static bool CanApprove(Transaction transaction, HashSet<string> perms, string? userRole)
     {
+        if (transaction.status == WorkflowStatuses.WaitingHandover || 
+            transaction.status == WorkflowStatuses.WaitingHandoverConfirm || 
+            transaction.status == WorkflowStatuses.WaitingAdminHandover)
+        {
+            // Handover statuses are only for SI (Stage1/Handover) and TL (Stage2/HandoverFinal), NOT Manager.
+            return perms.Contains(Permissions.ApprovalStage2) || perms.Contains(Permissions.ApprovalHandoverFinal) ||
+                   perms.Contains(Permissions.ApprovalHandover) || perms.Contains(Permissions.ApprovalStage1);
+        }
+
         if (transaction.request_type == "GIVEAWAY")
         {
-            return (transaction.status == WorkflowStatuses.PendingStaffInventory && perms.Contains(Permissions.ApprovalStage1)) ||
-                   (transaction.status == WorkflowStatuses.PendingAdmin && perms.Contains(Permissions.ApprovalStage2)) ||
-                   (transaction.status == WorkflowStatuses.PendingManager && perms.Contains(Permissions.ApprovalManager));
+            bool allowed = (transaction.status == WorkflowStatuses.PendingStaffInventory && perms.Contains(Permissions.ApprovalStage1)) ||
+                           (transaction.status == WorkflowStatuses.PendingAdmin && perms.Contains(Permissions.ApprovalStage2)) ||
+                           (transaction.status == WorkflowStatuses.PendingManager && perms.Contains(Permissions.ApprovalManager));
+            if (!allowed) return false;
+
+            if (transaction.status == WorkflowStatuses.PendingAdmin)
+            {
+                bool isSuper = string.Equals(userRole, "superadmin", StringComparison.OrdinalIgnoreCase) || 
+                               string.Equals(userRole, "Super Admin", StringComparison.OrdinalIgnoreCase);
+                if (!isSuper)
+                {
+                    var categoryName = transaction.Product?.Category?.name;
+                    bool isElektronik = string.Equals(categoryName, "Elektronik", StringComparison.OrdinalIgnoreCase);
+                    if (isElektronik)
+                    {
+                        return string.Equals(userRole, "PIC Studio", StringComparison.OrdinalIgnoreCase);
+                    }
+                    else
+                    {
+                        return string.Equals(userRole, "Team Leader Infrastructure", StringComparison.OrdinalIgnoreCase);
+                    }
+                }
+            }
+            return true;
         }
 
         // BORROW: Stage 1 (approval.stage1) -> Stage 2 (approval.stage2). Legacy PENDING boleh oleh keduanya.
-        return (transaction.status == WorkflowStatuses.PendingStaffInventory && perms.Contains(Permissions.ApprovalStage1)) ||
-               (transaction.status == WorkflowStatuses.PendingAdmin && perms.Contains(Permissions.ApprovalStage2)) ||
-               (transaction.status == WorkflowStatuses.Pending && (perms.Contains(Permissions.ApprovalStage1) || perms.Contains(Permissions.ApprovalStage2)));
+        bool isPendingStage2 = transaction.status == WorkflowStatuses.PendingAdmin || 
+                              (transaction.status == WorkflowStatuses.Pending && perms.Contains(Permissions.ApprovalStage2));
+
+        bool canApproveBase = (transaction.status == WorkflowStatuses.PendingStaffInventory && perms.Contains(Permissions.ApprovalStage1)) ||
+                              (transaction.status == WorkflowStatuses.PendingAdmin && perms.Contains(Permissions.ApprovalStage2)) ||
+                              (transaction.status == WorkflowStatuses.Pending && (perms.Contains(Permissions.ApprovalStage1) || perms.Contains(Permissions.ApprovalStage2)));
+
+        if (!canApproveBase) return false;
+
+        if (isPendingStage2 && transaction.status != WorkflowStatuses.PendingStaffInventory)
+        {
+            bool isSuper = string.Equals(userRole, "superadmin", StringComparison.OrdinalIgnoreCase) || 
+                           string.Equals(userRole, "Super Admin", StringComparison.OrdinalIgnoreCase);
+            if (!isSuper)
+            {
+                var categoryName = transaction.Product?.Category?.name;
+                bool isElektronik = string.Equals(categoryName, "Elektronik", StringComparison.OrdinalIgnoreCase);
+                if (isElektronik)
+                {
+                    return string.Equals(userRole, "PIC Studio", StringComparison.OrdinalIgnoreCase);
+                }
+                else
+                {
+                    return string.Equals(userRole, "Team Leader Infrastructure", StringComparison.OrdinalIgnoreCase);
+                }
+            }
+        }
+
+        return true;
     }
 
-    private async Task<string?> ApproveGiveawayAsync(ApplicationDbContext _context, Transaction transaction, string? notes, int currentUserId, HashSet<string> perms)
+    private async Task<string?> ApproveGiveawayAsync(ApplicationDbContext _context, Transaction transaction, string? notes, int currentUserId, HashSet<string> perms, bool sendNotification = true)
     {
         switch (transaction.status)
         {
@@ -704,9 +871,10 @@ public class ApprovalService
         _context.Transactions.Update(transaction);
         await _context.SaveChangesAsync();
 
-        string stage = transaction.status == WorkflowStatuses.PendingAdmin ? "Staff Inventoris" :
-                       transaction.status == WorkflowStatuses.PendingManager ? "Admin" : "Manager (Final, silakan proses pengambilan/serah terima)";
-        _ = NotifyUserAsync(transaction, "Update Request WMS", $"Request Giveaway Anda telah disetujui oleh {stage}.");
+        if (sendNotification)
+        {
+            await NotifyBatchResultAsync(new List<(Transaction, string, string?)> { (transaction, "APPROVE", null) });
+        }
 
         return null;
     }
@@ -725,6 +893,68 @@ public class ApprovalService
         {
             var htmlMessage = GetEmailTemplate(subject, message);
             await _emailService.SendEmailAsync(requesterEmail, subject, htmlMessage);
+        }
+    }
+
+    public async Task NotifyBatchResultAsync(List<(Transaction item, string action, string? reason)> itemsProcessed)
+    {
+        if (itemsProcessed == null || !itemsProcessed.Any()) return;
+
+        var grouped = itemsProcessed.GroupBy(x => new { x.item.requester_id, x.item.event_name, x.item.group_id });
+
+        foreach (var group in grouped)
+        {
+            var firstItem = group.First().item;
+            
+            var requesterEmail = firstItem.Requester?.email;
+            if (string.IsNullOrWhiteSpace(requesterEmail))
+            {
+                using var context = _factory.CreateDbContext();
+                var user = await context.Users.FindAsync(firstItem.requester_id);
+                requesterEmail = user?.email;
+            }
+
+            if (string.IsNullOrWhiteSpace(requesterEmail)) continue;
+
+            string eventName = firstItem.event_name ?? "Tanpa Nama Event";
+            
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine($"<p>Berikut adalah hasil proses persetujuan untuk request Event: <strong>{eventName}</strong></p>");
+            sb.AppendLine("<ul style='list-style-type: none; padding-left: 0;'>");
+            
+            foreach(var (item, action, reason) in group)
+            {
+                string productName = item.Product?.name ?? "Barang";
+                string statusText = "";
+                
+                if (action == "APPROVE") 
+                {
+                    if (item.status == WorkflowStatuses.PendingAdmin || item.status == WorkflowStatuses.PendingManager)
+                        statusText = "<span style='color: #1a6b8a; font-weight: bold;'>DISETUJUI (Menunggu Tahap Selanjutnya)</span>";
+                    else
+                        statusText = "<span style='color: #1a7a30; font-weight: bold;'>DISETUJUI FINAL</span>";
+                }
+                else if (action == "REJECT")
+                {
+                    statusText = $"<span style='color: #d94040; font-weight: bold;'>DITOLAK</span> (Alasan: {reason})";
+                }
+                else if (action == "REVISE")
+                {
+                    statusText = $"<span style='color: #e8a000; font-weight: bold;'>DIREVISI</span> (Catatan: {reason})";
+                }
+                else 
+                {
+                    statusText = action;
+                }
+                                    
+                sb.AppendLine($"<li style='margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 8px;'>");
+                sb.AppendLine($"<strong>{productName}</strong> ({item.quantity} unit)<br/>Status: {statusText}");
+                sb.AppendLine($"</li>");
+            }
+            sb.AppendLine("</ul>");
+
+            var htmlMessage = GetEmailTemplate("Update Status Request WMS", sb.ToString());
+            await _emailService.SendEmailAsync(requesterEmail, "Update Request WMS", htmlMessage);
         }
     }
 

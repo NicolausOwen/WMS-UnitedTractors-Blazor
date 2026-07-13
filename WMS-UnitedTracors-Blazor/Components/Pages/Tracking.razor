@@ -15,7 +15,7 @@
 
 <PageTitle>WMS - Tracking Penggunaan</PageTitle>
 
-<div class="py-8 bg-[#f5f4f0] min-h-screen font-sans">
+<div class="py-8 min-h-screen font-sans">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         <div class="mb-6">
@@ -40,47 +40,49 @@
         }
 
         @* Filters *@
-        <div class="bg-white rounded-xl border border-[#e5e3dc] mb-6 overflow-hidden shadow-sm">
-            <div class="px-5 py-4">
-                <div class="flex flex-col lg:flex-row flex-wrap gap-3 items-end">
+        <div class="relative bg-white rounded-xl border border-[#e5e3dc] mb-4 overflow-hidden shadow-sm">
+            <div class="px-4 py-3">
+                <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
                     <div class="flex-1 min-w-[180px] w-full">
-                        <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Search Product</label>
                         <div class="relative">
-                            <input type="text" @bind="ProductSearch" placeholder="Name or SKU..."
+                            <input type="text" @bind="ProductSearch" placeholder="Search product or SKU" aria-label="Search product or SKU"
                                 class="block w-full pl-9 pr-3 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
-                            <svg class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                            <svg class="w-4 h-4 text-[#8a8880] absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                         </div>
                     </div>
-                    <div class="min-w-[150px] w-full lg:w-auto">
-                        <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Division</label>
-                        <select @bind="DivisionId" class="block w-full px-3 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
-                            <option value="">All Divisions</option>
-                            @foreach(var div in Divisions)
-                            {
-                                <option value="@div.id">@div.name</option>
-                            }
-                        </select>
-                    </div>
-                    @if (ActiveTrackingTab == "borrow")
+                    @if (UserRole != null && !IsStaffOrUser)
                     {
                         <div class="min-w-[150px] w-full lg:w-auto">
-                            <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Return Status</label>
-                            <select @bind="ReturnStatus" class="block w-full px-3 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
-                                <option value="">All Types</option>
-                                <option value="pending">Borrowed (Pending Return)</option>
-                                <option value="returned">Borrowed (Returned)</option>
+                            <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Division</label>
+                            <select @bind="DivisionId" class="block w-full px-3 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
+                                <option value="">All Divisions</option>
+                                @foreach(var div in Divisions)
+                                {
+                                    <option value="@div.id">@div.name</option>
+                                }
                             </select>
                         </div>
+                        @if (ActiveTrackingTab == "borrow")
+                        {
+                            <div class="min-w-[150px] w-full lg:w-auto">
+                                <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Return Status</label>
+                                <select @bind="ReturnStatus" class="block w-full px-3 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
+                                    <option value="">All Types</option>
+                                    <option value="pending">Borrowed (Pending Return)</option>
+                                    <option value="returned">Borrowed (Returned)</option>
+                                </select>
+                            </div>
+                        }
                     }
-                    <div class="min-w-[140px] w-full lg:w-auto">
+                    <div class="min-w-[140px] w-full lg:w-auto @(ShowDateFilter ? "block" : "hidden lg:block")">
                         <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">From</label>
                         <input type="date" @bind="DateFrom" class="block w-full px-3 py-1.5 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
                     </div>
-                    <div class="min-w-[140px] w-full lg:w-auto">
+                    <div class="min-w-[140px] w-full lg:w-auto @(ShowDateFilter ? "block" : "hidden lg:block")">
                         <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">To</label>
                         <input type="date" @bind="DateTo" class="block w-full px-3 py-1.5 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
                     </div>
-                    <div class="flex gap-2 w-full lg:w-auto justify-end">
+                    <div class="flex gap-2 w-full lg:w-auto justify-end @(ShowDateFilter ? "flex" : "hidden lg:flex")">
                         <button type="button" @onclick="LoadData" class="px-5 py-2 bg-[#e8a000] hover:bg-[#d49300] text-[#1a1a1a] text-xs font-bold rounded-lg transition active:scale-95 cursor-pointer whitespace-nowrap">
                             Apply
                         </button>
@@ -89,27 +91,25 @@
                         </button>
                     </div>
                 </div>
+                <div class="sm:hidden flex justify-center mt-3">
+                    <button type="button" @onclick="() => ShowDateFilter = !ShowDateFilter" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white text-[#1a1a1a] hover:bg-[#faf9f5] transition">
+                        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+                        <span class="text-[0.75rem] font-semibold">Filter</span>
+                    </button>
+                </div>
             </div>
         </div>
 
-        <div class="mb-6 bg-white rounded-xl border border-[#e5e3dc] overflow-hidden shadow-sm">
-            <div class="px-5 py-4 border-b border-[#f0ede5] flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                <div>
-                    <p class="text-[0.68rem] font-extrabold uppercase tracking-[0.16em] text-[#8a8880]">Mode Tracking</p>
-                    <p class="text-sm text-[#5a5855] mt-1">
-                        @(ActiveTrackingTab == "borrow"
-                            ? "Fokus pada peminjaman aktif, status serah terima, dan progres pengembalian."
-                            : "Fokus pada request giveaway, status serah terima, dan dokumentasi user.")
-                    </p>
-                </div>
-                <div class="flex items-center gap-2 overflow-x-auto pb-1">
-                    <button type="button" @onclick='() => SetActiveTrackingTab("borrow")' class="px-4 py-2 text-sm font-bold rounded-lg transition-all whitespace-nowrap @(ActiveTrackingTab == "borrow" ? "bg-[#1a1a1a] text-white" : "text-[#8a8880] hover:text-[#1a1a1a] hover:bg-[#faf9f5]")" aria-pressed="@(ActiveTrackingTab == "borrow")">
+        <div class="mb-4 bg-white rounded-xl border border-[#e5e3dc] overflow-hidden shadow-sm">
+            <div class="px-5 py-4">
+                <div class="grid grid-cols-2 gap-2">
+                    <button type="button" @onclick='() => SetActiveTrackingTab("borrow")' class="w-full px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap @(ActiveTrackingTab == "borrow" ? "bg-[#1a1a1a] text-white" : "text-[#8a8880] hover:text-[#1a1a1a] hover:bg-[#faf9f5]")" aria-pressed="@(ActiveTrackingTab == "borrow")">
                         Borrowing
-                        <span class="ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] @(ActiveTrackingTab == "borrow" ? "bg-[#e8a000] text-[#1a1a1a]" : "bg-[#e7f1fb] text-[#1a6b8a]")">@BorrowGroupCount</span>
+                        <span class="ml-2 inline-flex px-1 py-0.5 rounded-full text-[10px] @(ActiveTrackingTab == "borrow" ? "bg-[#e8a000] text-[#1a1a1a]" : "bg-[#e7f1fb] text-[#1a6b8a]")">@BorrowGroupCount</span>
                     </button>
-                    <button type="button" @onclick='() => SetActiveTrackingTab("giveaway")' class="px-4 py-2 text-sm font-bold rounded-lg transition-all whitespace-nowrap @(ActiveTrackingTab == "giveaway" ? "bg-[#1a1a1a] text-white" : "text-[#8a8880] hover:text-[#1a1a1a] hover:bg-[#faf9f5]")" aria-pressed="@(ActiveTrackingTab == "giveaway")">
+                    <button type="button" @onclick='() => SetActiveTrackingTab("giveaway")' class="w-full px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap @(ActiveTrackingTab == "giveaway" ? "bg-[#1a1a1a] text-white" : "text-[#8a8880] hover:text-[#1a1a1a] hover:bg-[#faf9f5]")" aria-pressed="@(ActiveTrackingTab == "giveaway")">
                         Giveaway
-                        <span class="ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] @(ActiveTrackingTab == "giveaway" ? "bg-[#e8a000] text-[#1a1a1a]" : "bg-[#eef9f0] text-[#1a7a30]")">@GiveawayGroupCount</span>
+                        <span class="ml-2 inline-flex px-1 py-0.5 rounded-full text-[10px] @(ActiveTrackingTab == "giveaway" ? "bg-[#e8a000] text-[#1a1a1a]" : "bg-[#eef9f0] text-[#1a7a30]")">@GiveawayGroupCount</span>
                     </button>
                 </div>
             </div>
@@ -171,8 +171,7 @@
                     var isWaitingAdminHandover = hasBorrow && borrowItemsOnly.Any(i => i.status == "WAITING_ADMIN_HANDOVER");
                     var handoverDone = hasBorrow && borrowItemsOnly.Any(i => i.status == "APPROVED" && !string.IsNullOrEmpty(i.handover_photo));
                     // Tombol upload hanya saat menunggu bukti dari user (WAITING_HANDOVER), bukan saat menunggu verifikasi admin.
-                    var canHandover = hasBorrow && borrowItemsOnly.Any(i => i.status == "WAITING_HANDOVER")
-                                      && firstItem.requester_id == CurrentUserId;
+                    var canHandover = false; // Hanya SI yang bisa mengunggah bukti serah terima melalui Dashboard Approval
                     var isWaitingUserConfirm = hasBorrow && borrowItemsOnly.Any(i =>
                         i.status == "WAITING_HANDOVER_CONFIRM" &&
                         (i.handover_uploaded_by == "SI" || string.IsNullOrEmpty(i.handover_uploaded_by)));
@@ -244,7 +243,7 @@
                                                 } else if(status == "WAITING_HANDOVER") {
                                                     <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#fff8e6] text-[#b37a00] border border-[#ffe099]">Menunggu Bukti Serah Terima</span>
                                                 } else if(status == "WAITING_HANDOVER_CONFIRM") {
-                                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#fce7f3] text-[#be185d] border border-[#fbcfe8] animate-pulse">⚠ Konfirmasi Penerimaan</span>
+                                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#e0f2fe] text-[#0369a1] border border-[#bae6fd]">Serah Terima Berjalan</span>
                                                 } else if(status == "WAITING_ADMIN_HANDOVER") {
                                                     <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#e0f2fe] text-[#1a6b8a] border border-[#bae6fd]">Menunggu Verifikasi Admin</span>
                                                 } else if(allReturned) {
@@ -332,6 +331,12 @@
                                                                 <span>Menunggu antrean</span>
                                                             }
                                                         </span>
+                                                        @if (step.CompletedAt.HasValue) {
+                                                            <span class="text-[9px] text-gray-400 mt-0.5 flex items-center gap-1">
+                                                                <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0"/></svg>
+                                                                @step.CompletedAt.Value.ToString("dd MMM yyyy HH:mm")
+                                                            </span>
+                                                        }
                                                     </div>
                                                 </div>
                                             }
@@ -494,7 +499,40 @@
                                                 }
                                             </div>
 
-                                            @if ((canHandover && !hasHandoverDraftPhoto) || (canGiveawayHandover && !hasGiveawayHandoverDraftPhoto) || isWaitingUserConfirm || canUploadDocumentation || groupItems.Any(i => i.returned_quantity > 0 || (i.pending_return_quantity > 0 && i.is_return_draft == 0)))
+                                            @if (isWaitingUserConfirm)
+                                            {
+                                                // Calculate remaining time until auto-confirm (24 hours from updated_at)
+                                                var firstWaitingItem = borrowItemsOnly.FirstOrDefault(i => i.status == WorkflowStatuses.WaitingHandoverConfirm);
+                                                var autoConfirmTime = firstWaitingItem != null ? firstWaitingItem.updated_at.AddHours(24) : WibHelper.Now;
+                                                var localAutoConfirmTime = autoConfirmTime; // already in WIB
+                                                var timeLeft = autoConfirmTime - WibHelper.Now; // both in WIB
+                                                var timeLeftStr = timeLeft.TotalSeconds > 0
+                                                    ? $"{(int)timeLeft.TotalHours} jam {timeLeft.Minutes} menit"
+                                                    : "segera";
+
+                                                <div class="flex flex-col sm:flex-row sm:items-center gap-3.5 bg-[#eef6fd] border border-[#bae6fd] p-4 rounded-xl w-full shadow-sm">
+                                                    <div class="flex items-start gap-2.5 text-[#1a6b8a] flex-1">
+                                                        <svg class="shrink-0 mt-0.5" style="width: 20px; height: 20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                        <div>
+                                                            <div class="text-xs font-extrabold uppercase tracking-wide">Penerimaan Barang Sedang Berlangsung</div>
+                                                            <div class="text-[11px] font-semibold mt-1 leading-relaxed text-[#2c5282]">
+                                                                Staff Inventoris telah menyerahkan barang. Jika benar sudah menerima, Anda tidak perlu melakukan aksi apa pun.
+                                                                Sistem akan menyetujui otomatis dalam <strong>@timeLeftStr</strong> (pada @localAutoConfirmTime.ToString("dd MMM yyyy, HH:mm") WIB).
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="shrink-0 self-end sm:self-center mt-2 sm:mt-0">
+                                                        <button type="button"
+                                                            @onclick="() => OpenDisputeModal(borrowItemsOnly)"
+                                                            disabled="@IsSubmitting"
+                                                            class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white text-[11px] font-extrabold rounded-xl transition active:scale-95 shadow-sm whitespace-nowrap">
+                                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                                            Saya Belum Menerima Barang
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            }
+                                            @if ((canHandover && !hasHandoverDraftPhoto) || (canGiveawayHandover && !hasGiveawayHandoverDraftPhoto) || canUploadDocumentation || groupItems.Any(i => i.returned_quantity > 0 || (i.pending_return_quantity > 0 && i.is_return_draft == 0)))
                                             {
                                                 <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[#f0ede5]">
                                                     <span class="text-xs font-bold text-[#8a8880]">Aksi Grup:</span>
@@ -512,24 +550,6 @@
                                                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
                                                                 Upload Bukti Serah Terima
                                                             </button>
-                                                        }
-                                                        @if (isWaitingUserConfirm)
-                                                        {
-                                                            <div class="flex items-center gap-2">
-                                                                <button type="button"
-                                                                    @onclick='() => AskConfirm("Konfirmasi Penerimaan Barang", "Apakah kamu sudah menerima barang dari Staff Inventoris? Konfirmasi ini akan meneruskan ke approval akhir.", () => ConfirmHandoverReceiptByUser(borrowItemsOnly, true), "Ya, Sudah Terima")'
-                                                                    disabled="@IsSubmitting"
-                                                                    class="inline-flex items-center gap-1.5 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-lg transition active:scale-95 shadow-sm whitespace-nowrap">
-                                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                                                    Konfirmasi Penerimaan
-                                                                </button>
-                                                                <button type="button"
-                                                                    @onclick='() => AskConfirm("Tolak Serah Terima", "Kamu menolak penerimaan barang? Permintaan akan dikembalikan ke Staff Inventoris.", () => ConfirmHandoverReceiptByUser(borrowItemsOnly, false), "Ya, Tolak")'
-                                                                    disabled="@IsSubmitting"
-                                                                    class="px-3 py-1.5 bg-white border border-red-200 text-red-600 hover:bg-red-50 text-xs font-bold rounded-lg transition">
-                                                                    Tolak
-                                                                </button>
-                                                            </div>
                                                         }
                                                         @if (canUploadDocumentation)
                                                         {
@@ -789,9 +809,9 @@
                                                                 </td>
                                                                 <td class="px-4 py-3 align-middle text-right">
                                                                     @{
-                                                                        var canReturn = usage.status == "APPROVED" && usage.request_type == "BORROW" && usage.returned_quantity < usage.quantity && (usage.pending_return_quantity ?? 0) == 0;
+                                                                        var canReturn = (usage.status == "APPROVED" || usage.status == "WAITING_HANDOVER_CONFIRM") && usage.request_type == "BORROW" && usage.returned_quantity < usage.quantity && (usage.pending_return_quantity ?? 0) == 0;
                                                                         var isReturnDraft = usage.status == "APPROVED" && usage.request_type == "BORROW" && (usage.pending_return_quantity ?? 0) > 0 && usage.is_return_draft == 1;
-                                                                        var canManageDraft = isReturnDraft && (usage.requester_id == CurrentUserId || userPrincipal.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalReturn));
+                                                                        var canManageDraft = isReturnDraft && (usage.requester_id == CurrentUserId || userPrincipal.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalHandover));
                                                                         var canRevise = usage.status == "REVISION" || usage.status == "REVISION_BY_STAFF_INVENTORY" || usage.status == "REVISION_BY_ADMIN" || usage.status == "REVISION_BY_MANAGER";
                                                                         var hasAction = canReturn || canManageDraft || canRevise;
                                                                     }
@@ -799,7 +819,7 @@
                                                                     {
                                                                         <div class="flex items-center justify-end gap-1.5 flex-wrap">
                                                                             <button type="button" @onclick="() => OpenReturnModal(usage, false)" class="text-[9px] px-2 py-0.5 bg-white border border-[#e5e3dc] rounded hover:border-[#1a1a1a] transition font-bold whitespace-nowrap">Return Item</button>
-                                                                            @if (userPrincipal.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalReturn))
+                                                                            @if (userPrincipal.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalHandover))
                                                                             {
                                                                                 <button type="button" @onclick="() => OpenReturnModal(usage, true)" class="text-[9px] px-2 py-0.5 bg-[#1a1a1a] text-white rounded hover:bg-[#333] transition font-bold whitespace-nowrap">Force Return</button>
                                                                             }
@@ -932,9 +952,9 @@
 
                                                         <!-- Action Buttons for mobile -->
                                                         @{
-                                                            var canReturnMobile = usage.status == "APPROVED" && usage.request_type == "BORROW" && usage.returned_quantity < usage.quantity && (usage.pending_return_quantity ?? 0) == 0;
+                                                            var canReturnMobile = (usage.status == "APPROVED" || usage.status == "WAITING_HANDOVER_CONFIRM") && usage.request_type == "BORROW" && usage.returned_quantity < usage.quantity && (usage.pending_return_quantity ?? 0) == 0;
                                                             var isReturnDraftMobile = usage.status == "APPROVED" && usage.request_type == "BORROW" && (usage.pending_return_quantity ?? 0) > 0 && usage.is_return_draft == 1;
-                                                            var canManageDraftMobile = isReturnDraftMobile && (usage.requester_id == CurrentUserId || userPrincipal.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalReturn));
+                                                            var canManageDraftMobile = isReturnDraftMobile && (usage.requester_id == CurrentUserId || userPrincipal.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalHandover));
                                                             var canReviseMobile = usage.status == "REVISION" || usage.status == "REVISION_BY_STAFF_INVENTORY" || usage.status == "REVISION_BY_ADMIN" || usage.status == "REVISION_BY_MANAGER";
                                                             var hasActionMobile = canReturnMobile || canManageDraftMobile || canReviseMobile;
                                                         }
@@ -944,7 +964,7 @@
                                                                 @if (canReturnMobile)
                                                                 {
                                                                     <button type="button" @onclick="() => OpenReturnModal(usage, false)" class="text-[9px] px-2 py-1 bg-white border border-[#e5e3dc] rounded hover:border-[#1a1a1a] transition font-bold whitespace-nowrap">Return Item</button>
-                                                                    @if (userPrincipal.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalReturn))
+                                                                    @if (userPrincipal.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalHandover))
                                                                     {
                                                                         <button type="button" @onclick="() => OpenReturnModal(usage, true)" class="text-[9px] px-2 py-1 bg-[#1a1a1a] text-white rounded hover:bg-[#333] transition font-bold whitespace-nowrap">Force Return</button>
                                                                     }
@@ -1157,6 +1177,34 @@
   </Footer>
 </Modal>
 
+<Modal Show="ShowDisputeModal" Size="md" ShowClose="true" ZIndex="110" OnClose="CloseDisputeModal">
+    <Header>Laporkan Belum Menerima Barang</Header>
+    <ChildContent>
+        @if (DisputeModalError != null)
+        {
+            <div class="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-2.5 rounded-xl text-xs font-semibold">
+                @DisputeModalError
+            </div>
+        }
+        <p class="text-xs text-gray-500 mb-3.5 leading-relaxed">
+            Apakah Anda yakin belum menerima barang fisik dari Staff Inventoris untuk pengajuan ini? 
+            Silakan tulis alasan atau keterangan detail di bawah agar Staff Inventoris dapat mengetahuinya dan melakukan serah terima ulang.
+        </p>
+        <div class="space-y-3">
+            <div>
+                <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Alasan/Catatan Keberatan <span class="text-red-500">*</span></label>
+                <textarea @bind="DisputeReasonText" class="w-full rounded-xl border border-gray-200 focus:border-red-500 focus:ring-1 focus:ring-red-500 p-3 text-sm outline-none transition-all" rows="3" placeholder="Contoh: Barang belum saya terima secara fisik di ruangan..."></textarea>
+            </div>
+        </div>
+    </ChildContent>
+    <Footer>
+        <button type="button" @onclick="CloseDisputeModal" class="px-4 py-2 text-xs font-bold text-gray-500 hover:text-gray-900 transition">Batal</button>
+        <button type="button" @onclick="SubmitDispute" disabled="@IsSubmitting" class="px-5 py-2.5 bg-red-600 text-white text-xs font-extrabold rounded-xl hover:bg-red-500 transition disabled:opacity-50 h-10 items-center justify-center flex">
+            @(IsSubmitting ? "Mengirim..." : "Kirim Laporan")
+        </button>
+    </Footer>
+</Modal>
+
 @code {
     // Reusable konfirmasi "apakah yakin" untuk aksi submit final.
     private bool ShowConfirm = false;
@@ -1164,6 +1212,66 @@
     private string ConfirmMessage = "";
     private string ConfirmButtonText = "Ya, Lanjutkan";
     private Func<Task>? ConfirmCallback;
+
+    // Dispute Modal State
+    private bool ShowDisputeModal = false;
+    private List<Transaction> DisputeTargetItems = new();
+    private string DisputeReasonText = "";
+    private string? DisputeModalError = null;
+
+    private void OpenDisputeModal(List<Transaction> items)
+    {
+        DisputeTargetItems = items;
+        DisputeReasonText = "";
+        DisputeModalError = null;
+        ShowDisputeModal = true;
+    }
+
+    private void CloseDisputeModal()
+    {
+        ShowDisputeModal = false;
+        DisputeTargetItems = new();
+        DisputeReasonText = "";
+        DisputeModalError = null;
+    }
+
+    private async Task SubmitDispute()
+    {
+        if (string.IsNullOrWhiteSpace(DisputeReasonText))
+        {
+            DisputeModalError = "Alasan wajib diisi.";
+            return;
+        }
+
+        if (IsSubmitting) return;
+        var groupId = DisputeTargetItems.FirstOrDefault(i => i.status == "WAITING_HANDOVER_CONFIRM")?.group_id;
+        if (string.IsNullOrEmpty(groupId)) return;
+
+        IsSubmitting = true;
+        DisputeModalError = null;
+        try
+        {
+            var err = await TransactionService.ConfirmHandoverReceiptByUserAsync(groupId, CurrentUserId, false, DisputeReasonText);
+            if (err == null)
+            {
+                SuccessMessage = "Keberatan berhasil dilaporkan. Transaksi dikembalikan ke Staff Inventoris.";
+                CloseDisputeModal();
+                await LoadData();
+            }
+            else
+            {
+                DisputeModalError = err;
+            }
+        }
+        catch (Exception ex)
+        {
+            DisputeModalError = "Terjadi kesalahan saat mengirim laporan: " + ex.Message;
+        }
+        finally
+        {
+            IsSubmitting = false;
+        }
+    }
 
     private void AskConfirm(string title, string message, Func<Task> callback, string buttonText = "Ya, Lanjutkan")
     {
@@ -1199,12 +1307,14 @@
     private string? ReturnStatus;
     private DateTime? DateFrom;
     private DateTime? DateTo;
+    private bool ShowDateFilter = false;
     
     private string? ErrorMessage;
     private string? SuccessMessage;
     
     private int CurrentUserId;
     private string? UserRole; private System.Security.Claims.ClaimsPrincipal userPrincipal = new System.Security.Claims.ClaimsPrincipal();
+    private bool IsStaffOrUser => string.Equals(UserRole, "staff", StringComparison.OrdinalIgnoreCase) || string.Equals(UserRole, "user", StringComparison.OrdinalIgnoreCase);
 
     private bool IsReturnModalOpen = false;
     private bool IsForceReturn = false;
@@ -1390,8 +1500,35 @@
     }
 
 
-    private void OpenReturnModal(Transaction transaction, bool force)
+    private async Task OpenReturnModal(Transaction transaction, bool force)
     {
+        if (transaction.status == WorkflowStatuses.WaitingHandoverConfirm)
+        {
+            IsSubmitting = true;
+            try
+            {
+                var err = await TransactionService.ConfirmHandoverReceiptByUserAsync(transaction.group_id, CurrentUserId, true, null);
+                if (err != null)
+                {
+                    ErrorMessage = err;
+                    return;
+                }
+                await LoadData();
+                if (GroupedUsages.TryGetValue(transaction.group_id, out var groupItems))
+                {
+                    var updatedTx = groupItems.FirstOrDefault(t => t.id == transaction.id);
+                    if (updatedTx != null)
+                    {
+                        transaction = updatedTx;
+                    }
+                }
+            }
+            finally
+            {
+                IsSubmitting = false;
+            }
+        }
+
         ReturnTransaction = transaction;
         IsForceReturn = force;
         IsReturnModalOpen = true;
@@ -1805,6 +1942,7 @@
     {
         public string Name { get; set; } = "";
         public string Status { get; set; } = "";
+        public DateTime? CompletedAt { get; set; }
     }
 
     private static bool IsRevisionStatus(string? status) =>
@@ -1854,7 +1992,7 @@
     {
         var firstItem = groupItems.First();
         var steps = new List<TrackingStep>();
-        steps.Add(new TrackingStep { Name = "Pengajuan", Status = "DONE" });
+        steps.Add(new TrackingStep { Name = "Pengajuan", Status = "DONE", CompletedAt = firstItem.created_at });
 
         if (firstItem.request_type == "GIVEAWAY")
         {
@@ -1865,49 +2003,49 @@
                 steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "PENDING" });
                 steps.Add(new TrackingStep { Name = "Dokumentasi User", Status = "PENDING" });
             } else if (firstItem.status == "PENDING_ADMIN") {
-                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE" });
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE", CompletedAt = firstItem.updated_at });
                 steps.Add(new TrackingStep { Name = "Approval Admin", Status = "ACTIVE" });
                 steps.Add(new TrackingStep { Name = "Approval Manager", Status = "PENDING" });
                 steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "PENDING" });
                 steps.Add(new TrackingStep { Name = "Dokumentasi User", Status = "PENDING" });
             } else if (firstItem.status == "PENDING_MANAGER") {
-                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE" });
-                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE" });
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE", CompletedAt = firstItem.updated_at });
+                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE", CompletedAt = firstItem.updated_at });
                 steps.Add(new TrackingStep { Name = "Approval Manager", Status = "ACTIVE" });
                 steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "PENDING" });
                 steps.Add(new TrackingStep { Name = "Dokumentasi User", Status = "PENDING" });
             } else if (firstItem.status == "REVISION" || firstItem.status == "REVISION_BY_STAFF_INVENTORY" || firstItem.status == "REVISION_BY_ADMIN" || firstItem.status == "REVISION_BY_MANAGER") {
-                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = firstItem.status == "REVISION_BY_STAFF_INVENTORY" ? "WARNING" : "DONE" });
-                steps.Add(new TrackingStep { Name = "Approval Admin", Status = firstItem.status == "REVISION_BY_ADMIN" ? "WARNING" : "PENDING" });
-                steps.Add(new TrackingStep { Name = "Approval Manager", Status = firstItem.status == "REVISION_BY_MANAGER" ? "WARNING" : "PENDING" });
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = firstItem.status == "REVISION_BY_STAFF_INVENTORY" ? "WARNING" : "DONE", CompletedAt = firstItem.status == "REVISION_BY_STAFF_INVENTORY" ? firstItem.updated_at : (firstItem.status == "PENDING_STAFF_INVENTORY" ? null : firstItem.updated_at) });
+                steps.Add(new TrackingStep { Name = "Approval Admin", Status = firstItem.status == "REVISION_BY_ADMIN" ? "WARNING" : "PENDING", CompletedAt = firstItem.status == "REVISION_BY_ADMIN" ? firstItem.updated_at : null });
+                steps.Add(new TrackingStep { Name = "Approval Manager", Status = firstItem.status == "REVISION_BY_MANAGER" ? "WARNING" : "PENDING", CompletedAt = firstItem.status == "REVISION_BY_MANAGER" ? firstItem.updated_at : null });
                 steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "PENDING" });
                 steps.Add(new TrackingStep { Name = "Dokumentasi User", Status = "PENDING" });
             } else if (firstItem.status == "WAITING_HANDOVER") {
-                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE" });
-                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE" });
-                steps.Add(new TrackingStep { Name = "Approval Manager", Status = "DONE" });
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE", CompletedAt = firstItem.updated_at });
+                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE", CompletedAt = firstItem.updated_at });
+                steps.Add(new TrackingStep { Name = "Approval Manager", Status = "DONE", CompletedAt = firstItem.updated_at });
                 steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "ACTIVE" });
                 steps.Add(new TrackingStep { Name = "Dokumentasi User", Status = "PENDING" });
             } else if (firstItem.status == "WAITING_DOCUMENTATION") {
-                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE" });
-                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE" });
-                steps.Add(new TrackingStep { Name = "Approval Manager", Status = "DONE" });
-                steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "DONE" });
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE", CompletedAt = firstItem.updated_at });
+                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE", CompletedAt = firstItem.updated_at });
+                steps.Add(new TrackingStep { Name = "Approval Manager", Status = "DONE", CompletedAt = firstItem.updated_at });
+                steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "DONE", CompletedAt = firstItem.handover_timestamp ?? firstItem.handover_approved_at ?? firstItem.updated_at });
                 steps.Add(new TrackingStep { Name = "Dokumentasi User", Status = "ACTIVE" });
             } else if (firstItem.status == "DOCUMENTATION_OVERDUE") {
-                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE" });
-                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE" });
-                steps.Add(new TrackingStep { Name = "Approval Manager", Status = "DONE" });
-                steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "DONE" });
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE", CompletedAt = firstItem.updated_at });
+                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE", CompletedAt = firstItem.updated_at });
+                steps.Add(new TrackingStep { Name = "Approval Manager", Status = "DONE", CompletedAt = firstItem.updated_at });
+                steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "DONE", CompletedAt = firstItem.handover_timestamp ?? firstItem.handover_approved_at ?? firstItem.updated_at });
                 steps.Add(new TrackingStep { Name = "Dokumentasi User", Status = "WARNING" });
             } else if (firstItem.status == "COMPLETED" || firstItem.status == "APPROVED") {
-                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE" });
-                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE" });
-                steps.Add(new TrackingStep { Name = "Approval Manager", Status = "DONE" });
-                steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "DONE" });
-                steps.Add(new TrackingStep { Name = "Dokumentasi User", Status = "DONE" });
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE", CompletedAt = firstItem.updated_at });
+                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE", CompletedAt = firstItem.updated_at });
+                steps.Add(new TrackingStep { Name = "Approval Manager", Status = "DONE", CompletedAt = firstItem.updated_at });
+                steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "DONE", CompletedAt = firstItem.handover_timestamp ?? firstItem.handover_approved_at ?? firstItem.updated_at });
+                steps.Add(new TrackingStep { Name = "Dokumentasi User", Status = "DONE", CompletedAt = firstItem.documentation_uploaded_at ?? firstItem.updated_at });
             } else if (firstItem.status == "REJECTED") {
-                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "WARNING" });
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "WARNING", CompletedAt = firstItem.updated_at });
             }
         }
         else // BORROW
@@ -1921,37 +2059,37 @@
                 steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "PENDING" });
                 steps.Add(new TrackingStep { Name = "Pengembalian", Status = "PENDING" });
             } else if (firstItem.status == "REVISION_BY_STAFF_INVENTORY") {
-                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "WARNING" });
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "WARNING", CompletedAt = firstItem.updated_at });
                 steps.Add(new TrackingStep { Name = "Approval Admin", Status = "PENDING" });
                 steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "PENDING" });
                 steps.Add(new TrackingStep { Name = "Pengembalian", Status = "PENDING" });
             } else if (firstItem.status == "PENDING_ADMIN" || firstItem.status == "PENDING") {
-                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE" });
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE", CompletedAt = firstItem.updated_at });
                 steps.Add(new TrackingStep { Name = "Approval Admin", Status = "ACTIVE" });
                 steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "PENDING" });
                 steps.Add(new TrackingStep { Name = "Pengembalian", Status = "PENDING" });
             } else if (firstItem.status == "REVISION_BY_ADMIN" || firstItem.status == "REVISION") {
-                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE" });
-                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "WARNING" });
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE", CompletedAt = firstItem.updated_at });
+                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "WARNING", CompletedAt = firstItem.updated_at });
                 steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "PENDING" });
                 steps.Add(new TrackingStep { Name = "Pengembalian", Status = "PENDING" });
             } else if (firstItem.status == "WAITING_HANDOVER" || firstItem.status == "WAITING_ADMIN_HANDOVER") {
-                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE" });
-                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE" });
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE", CompletedAt = firstItem.updated_at });
+                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE", CompletedAt = firstItem.updated_at });
                 steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "ACTIVE" });
                 steps.Add(new TrackingStep { Name = "Pengembalian", Status = "PENDING" });
             } else if (firstItem.status == "APPROVED") {
-                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE" });
-                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE" });
-                steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "DONE" });
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE", CompletedAt = firstItem.updated_at });
+                steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE", CompletedAt = firstItem.updated_at });
+                steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "DONE", CompletedAt = firstItem.handover_timestamp ?? firstItem.handover_approved_at ?? firstItem.updated_at });
 
                 if (totalReturned >= totalQty && totalQty > 0) {
-                    steps.Add(new TrackingStep { Name = "Pengembalian", Status = "DONE" });
+                    steps.Add(new TrackingStep { Name = "Pengembalian", Status = "DONE", CompletedAt = firstItem.returned_at ?? firstItem.updated_at });
                 } else {
                     steps.Add(new TrackingStep { Name = "Pengembalian", Status = "ACTIVE" });
                 }
             } else if (firstItem.status == "REJECTED") {
-                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "WARNING" });
+                steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "WARNING", CompletedAt = firstItem.updated_at });
                 steps.Add(new TrackingStep { Name = "Approval Admin", Status = "PENDING" });
                 steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "PENDING" });
                 steps.Add(new TrackingStep { Name = "Pengembalian", Status = "PENDING" });

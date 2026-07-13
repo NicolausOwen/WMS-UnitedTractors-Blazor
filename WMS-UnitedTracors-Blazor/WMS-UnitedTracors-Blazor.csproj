@@ -22,8 +22,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Exclude storage directory from dotnet watch to prevent hot reload crashes on uploaded files -->
-    <Content Update="wwwroot/storage/**" Watch="false" />
+    <!-- Exclude storage directory completely from MSBuild tracking to prevent dotnet watch hot reload crashes -->
+    <Content Remove="wwwroot/storage/**" />
+    <None Remove="wwwroot/storage/**" />
   </ItemGroup>
 
   <ItemGroup>

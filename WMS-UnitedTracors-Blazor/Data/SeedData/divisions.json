@@ -1,0 +1,100 @@
+[
+  {
+    "id": 1,
+    "name": "CCS",
+    "description": null,
+    "created_at": "2026-05-26 09:46:46",
+    "updated_at": "2026-05-26 09:46:46"
+  },
+  {
+    "id": 2,
+    "name": "CFA",
+    "description": null,
+    "created_at": "2026-05-26 09:46:46",
+    "updated_at": "2026-05-26 09:46:46"
+  },
+  {
+    "id": 3,
+    "name": "CHCU",
+    "description": null,
+    "created_at": "2026-05-26 09:46:46",
+    "updated_at": "2026-05-26 09:46:46"
+  },
+  {
+    "id": 4,
+    "name": "CRA",
+    "description": null,
+    "created_at": "2026-05-26 09:46:46",
+    "updated_at": "2026-05-26 09:46:46"
+  },
+  {
+    "id": 5,
+    "name": "CST",
+    "description": null,
+    "created_at": "2026-05-26 09:46:46",
+    "updated_at": "2026-05-26 09:46:46"
+  },
+  {
+    "id": 6,
+    "name": "DAD",
+    "description": null,
+    "created_at": "2026-05-26 09:46:46",
+    "updated_at": "2026-05-26 09:46:46"
+  },
+  {
+    "id": 7,
+    "name": "GLG",
+    "description": null,
+    "created_at": "2026-05-26 09:46:46",
+    "updated_at": "2026-05-26 09:46:46"
+  },
+  {
+    "id": 8,
+    "name": "MKT",
+    "description": null,
+    "created_at": "2026-05-26 09:46:46",
+    "updated_at": "2026-05-26 09:46:46"
+  },
+  {
+    "id": 9,
+    "name": "PIN",
+    "description": null,
+    "created_at": "2026-05-26 09:46:46",
+    "updated_at": "2026-05-26 09:46:46"
+  },
+  {
+    "id": 10,
+    "name": "PRT",
+    "description": null,
+    "created_at": "2026-05-26 09:46:46",
+    "updated_at": "2026-05-26 09:46:46"
+  },
+  {
+    "id": 11,
+    "name": "SOD",
+    "description": null,
+    "created_at": "2026-05-26 09:46:46",
+    "updated_at": "2026-05-26 09:46:46"
+  },
+  {
+    "id": 12,
+    "name": "SVC",
+    "description": null,
+    "created_at": "2026-05-26 09:46:46",
+    "updated_at": "2026-05-26 09:46:46"
+  },
+  {
+    "id": 13,
+    "name": "TMO",
+    "description": null,
+    "created_at": "2026-05-26 09:46:46",
+    "updated_at": "2026-05-26 09:46:46"
+  },
+  {
+    "id": 14,
+    "name": "TSO",
+    "description": null,
+    "created_at": "2026-05-26 09:46:46",
+    "updated_at": "2026-05-26 09:46:46"
+  }
+]

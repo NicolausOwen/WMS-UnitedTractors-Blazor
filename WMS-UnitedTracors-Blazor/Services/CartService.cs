@@ -22,6 +22,11 @@ public class CartService
     public IReadOnlyList<CartItem> Items => _items.AsReadOnly();
 
     public event Action? OnChange;
+    public event Action? OnShowCart;
+    public event Action<string>? OnShowToast;
+
+    public void ShowCart() => OnShowCart?.Invoke();
+    public void ShowToast(string message) => OnShowToast?.Invoke(message);
 
     public string? EventName { get; set; }
     public DateTime? EventStartDate { get; set; }

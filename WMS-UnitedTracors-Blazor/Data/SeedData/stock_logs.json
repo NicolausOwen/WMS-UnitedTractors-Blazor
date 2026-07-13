@@ -1,0 +1,263 @@
+[
+  {
+    "id": 1,
+    "transaction_id": 5,
+    "product_id": 294,
+    "stock_before": 2,
+    "stock_after": 1,
+    "created_at": "2026-06-04 00:35:39",
+    "updated_at": "2026-06-04 00:35:39"
+  },
+  {
+    "id": 2,
+    "transaction_id": 12,
+    "product_id": 72,
+    "stock_before": 5,
+    "stock_after": 4,
+    "created_at": "2026-06-04 00:40:48",
+    "updated_at": "2026-06-04 00:40:48"
+  },
+  {
+    "id": 3,
+    "transaction_id": 13,
+    "product_id": 72,
+    "stock_before": 4,
+    "stock_after": 2,
+    "created_at": "2026-06-04 00:47:59",
+    "updated_at": "2026-06-04 00:47:59"
+  },
+  {
+    "id": 4,
+    "transaction_id": 13,
+    "product_id": 72,
+    "stock_before": 2,
+    "stock_after": 4,
+    "created_at": "2026-06-04 00:48:09",
+    "updated_at": "2026-06-04 00:48:09"
+  },
+  {
+    "id": 5,
+    "transaction_id": 14,
+    "product_id": 400,
+    "stock_before": 27,
+    "stock_after": 26,
+    "created_at": "2026-06-04 00:48:41",
+    "updated_at": "2026-06-04 00:48:41"
+  },
+  {
+    "id": 6,
+    "transaction_id": 15,
+    "product_id": 400,
+    "stock_before": 26,
+    "stock_after": 23,
+    "created_at": "2026-06-04 01:08:22",
+    "updated_at": "2026-06-04 01:08:22"
+  },
+  {
+    "id": 7,
+    "transaction_id": 15,
+    "product_id": 400,
+    "stock_before": 23,
+    "stock_after": 20,
+    "created_at": "2026-06-04 01:08:52",
+    "updated_at": "2026-06-04 01:08:52"
+  },
+  {
+    "id": 8,
+    "transaction_id": 12,
+    "product_id": 72,
+    "stock_before": 4,
+    "stock_after": 5,
+    "created_at": "2026-06-04 01:09:20",
+    "updated_at": "2026-06-04 01:09:20"
+  },
+  {
+    "id": 9,
+    "transaction_id": 5,
+    "product_id": 294,
+    "stock_before": 1,
+    "stock_after": 2,
+    "created_at": "2026-06-04 01:09:38",
+    "updated_at": "2026-06-04 01:09:38"
+  },
+  {
+    "id": 10,
+    "transaction_id": 8,
+    "product_id": 231,
+    "stock_before": 25,
+    "stock_after": 26,
+    "created_at": "2026-06-04 01:20:13",
+    "updated_at": "2026-06-04 01:20:13"
+  },
+  {
+    "id": 11,
+    "transaction_id": 6,
+    "product_id": 50,
+    "stock_before": 41,
+    "stock_after": 42,
+    "created_at": "2026-06-04 01:20:18",
+    "updated_at": "2026-06-04 01:20:18"
+  },
+  {
+    "id": 13,
+    "transaction_id": 17,
+    "product_id": 400,
+    "stock_before": 20,
+    "stock_after": 19,
+    "created_at": "2026-06-04 01:52:03",
+    "updated_at": "2026-06-04 01:52:03"
+  },
+  {
+    "id": 14,
+    "transaction_id": 17,
+    "product_id": 400,
+    "stock_before": 19,
+    "stock_after": 18,
+    "created_at": "2026-06-04 01:58:22",
+    "updated_at": "2026-06-04 01:58:22"
+  },
+  {
+    "id": 15,
+    "transaction_id": 18,
+    "product_id": 400,
+    "stock_before": 18,
+    "stock_after": 17,
+    "created_at": "2026-06-04 02:08:15",
+    "updated_at": "2026-06-04 02:08:15"
+  },
+  {
+    "id": 16,
+    "transaction_id": 19,
+    "product_id": 400,
+    "stock_before": 17,
+    "stock_after": 16,
+    "created_at": "2026-06-04 17:35:56",
+    "updated_at": "2026-06-04 17:35:56"
+  },
+  {
+    "id": 17,
+    "transaction_id": 20,
+    "product_id": 124,
+    "stock_before": 1,
+    "stock_after": 0,
+    "created_at": "2026-06-04 18:59:29",
+    "updated_at": "2026-06-04 18:59:29"
+  },
+  {
+    "id": 18,
+    "transaction_id": 21,
+    "product_id": 72,
+    "stock_before": 5,
+    "stock_after": 4,
+    "created_at": "2026-06-10 01:12:50",
+    "updated_at": "2026-06-10 01:12:50"
+  },
+  {
+    "id": 19,
+    "transaction_id": 23,
+    "product_id": 72,
+    "stock_before": 4,
+    "stock_after": 3,
+    "created_at": "2026-06-10 03:22:56",
+    "updated_at": "2026-06-10 03:22:56"
+  },
+  {
+    "id": 20,
+    "transaction_id": 24,
+    "product_id": 50,
+    "stock_before": 42,
+    "stock_after": 41,
+    "created_at": "2026-06-10 03:32:11",
+    "updated_at": "2026-06-10 03:32:11"
+  },
+  {
+    "id": 21,
+    "transaction_id": 24,
+    "product_id": 50,
+    "stock_before": 41,
+    "stock_after": 42,
+    "created_at": "2026-06-10 03:33:12",
+    "updated_at": "2026-06-10 03:33:12"
+  },
+  {
+    "id": 22,
+    "transaction_id": 25,
+    "product_id": 72,
+    "stock_before": 3,
+    "stock_after": 2,
+    "created_at": "2026-06-10 03:34:52",
+    "updated_at": "2026-06-10 03:34:52"
+  },
+  {
+    "id": 23,
+    "transaction_id": 25,
+    "product_id": 72,
+    "stock_before": 2,
+    "stock_after": 3,
+    "created_at": "2026-06-10 03:36:10",
+    "updated_at": "2026-06-10 03:36:10"
+  },
+  {
+    "id": 24,
+    "transaction_id": 28,
+    "product_id": 42,
+    "stock_before": 1,
+    "stock_after": 0,
+    "created_at": "2026-07-06 04:16:44",
+    "updated_at": "2026-07-06 04:16:44"
+  },
+  {
+    "id": 25,
+    "transaction_id": 29,
+    "product_id": 30,
+    "stock_before": 1,
+    "stock_after": 0,
+    "created_at": "2026-07-06 04:16:45",
+    "updated_at": "2026-07-06 04:16:45"
+  },
+  {
+    "id": 26,
+    "transaction_id": 30,
+    "product_id": 116,
+    "stock_before": 6,
+    "stock_after": 5,
+    "created_at": "2026-07-06 04:16:45",
+    "updated_at": "2026-07-06 04:16:45"
+  },
+  {
+    "id": 27,
+    "transaction_id": 31,
+    "product_id": 137,
+    "stock_before": 1,
+    "stock_after": 0,
+    "created_at": "2026-07-06 04:16:45",
+    "updated_at": "2026-07-06 04:16:45"
+  },
+  {
+    "id": 28,
+    "transaction_id": 36,
+    "product_id": 288,
+    "stock_before": 3,
+    "stock_after": 2,
+    "created_at": "2026-07-07 03:23:43",
+    "updated_at": "2026-07-07 03:23:43"
+  },
+  {
+    "id": 29,
+    "transaction_id": 37,
+    "product_id": 53,
+    "stock_before": 6,
+    "stock_after": 4,
+    "created_at": "2026-07-07 03:24:10",
+    "updated_at": "2026-07-07 03:24:10"
+  },
+  {
+    "id": 30,
+    "transaction_id": 36,
+    "product_id": 288,
+    "stock_before": 2,
+    "stock_after": 3,
+    "created_at": "2026-07-07 04:12:09",
+    "updated_at": "2026-07-07 04:12:09"
+  }
+]
