@@ -83,12 +83,26 @@ public class DbSeeder
                     }
                 }
 
-                // Kembalikan current_stock ke initial_stock untuk produk agar clean
+                // Kembalikan current_stock dengan me-reverse transaksi yang ada agar clean
                 if (data is List<Product> products)
                 {
-                    foreach (var p in products)
+                    var txPath = Path.Combine(Directory.GetCurrentDirectory(), "Data", "SeedData", "transactions.json");
+                    if (File.Exists(txPath))
                     {
-                        p.current_stock = p.initial_stock;
+                        var txJson = await File.ReadAllTextAsync(txPath);
+                        var txs = JsonSerializer.Deserialize<List<Transaction>>(txJson, options);
+                        if (txs != null)
+                        {
+                            var validStatuses = new[] { "APPROVED", "COMPLETED", "HANDOVER" };
+                            foreach (var tx in txs.Where(t => validStatuses.Contains(t.status)))
+                            {
+                                var product = products.FirstOrDefault(p => p.id == tx.product_id);
+                                if (product != null)
+                                {
+                                    product.current_stock += tx.quantity ?? 0;
+                                }
+                            }
+                        }
                     }
                 }
 
