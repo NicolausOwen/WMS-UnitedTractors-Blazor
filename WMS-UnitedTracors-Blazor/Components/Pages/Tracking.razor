@@ -588,9 +588,7 @@
                                                     </div>
                                                 </div>
                                                 <div class="flex gap-2 shrink-0 w-full sm:w-auto">
-                                                    <button type="button" @onclick='() => AskConfirm("Revisi Semua Permintaan?", "Semua item yang butuh revisi akan dipindahkan ke keranjang untuk diperbaiki dan permintaan ini akan dihapus. Lanjutkan?", () => ReviseAllToCart(groupItems), "Ya, Revisi Semua")' class="px-4 py-2 bg-[#e8a000] hover:bg-[#d49300] text-[#1a1a1a] text-xs font-bold rounded-lg shadow-sm transition whitespace-nowrap">
-                                                        Revise All
-                                                    </button>
+                                                    <!-- Removed Revise All button -->
                                                 </div>
                                             </div>
                                         }
@@ -835,7 +833,7 @@
                                                                     }
                                                                     else if (canRevise)
                                                                     {
-                                                                        <button type="button" @onclick='() => AskConfirm("Revisi Permintaan?", "Revisi permintaan ini?", () => ReviseToCart(usage), "Ya, Revisi")' class="px-2.5 py-0.5 bg-[#e8a000] hover:bg-[#d49300] text-[#1a1a1a] text-[9px] font-bold rounded shadow-sm transition whitespace-nowrap">Revisi</button>
+                                                                        <button type="button" @onclick="() => OpenRevisionModal(usage)" class="px-2.5 py-0.5 bg-[#e8a000] hover:bg-[#d49300] text-[#1a1a1a] text-[9px] font-bold rounded shadow-sm transition whitespace-nowrap">Revisi</button>
                                                                     }
                                                                     @if (!hasAction)
                                                                     {
@@ -977,7 +975,7 @@
                                                                 }
                                                                 else if (canReviseMobile)
                                                                 {
-                                                                    <button type="button" @onclick='() => AskConfirm("Revisi Permintaan?", "Revisi permintaan ini?", () => ReviseToCart(usage), "Ya, Revisi")' class="px-2.5 py-1 bg-[#e8a000] hover:bg-[#d49300] text-[#1a1a1a] text-[9px] font-bold rounded shadow-sm transition whitespace-nowrap">Revisi</button>
+                                                                    <button type="button" @onclick="() => OpenRevisionModal(usage)" class="px-2.5 py-1 bg-[#e8a000] hover:bg-[#d49300] text-[#1a1a1a] text-[9px] font-bold rounded shadow-sm transition whitespace-nowrap">Revisi</button>
                                                                 }
                                                             </div>
                                                         }
@@ -1203,6 +1201,73 @@
             @(IsSubmitting ? "Mengirim..." : "Kirim Laporan")
         </button>
     </Footer>
+</Modal>
+
+<Modal Show="@(ShowRevisionModal && RevisionItem != null)" Title="Revisi Permintaan" Size="xl" OnClose="CloseRevisionModal">
+  <ChildContent>
+    @if (RevisionItem != null)
+    {
+                <div class="p-4 bg-[#fffbeb] border border-[#fde68a] text-[#92400e] text-xs rounded-xl flex items-start gap-3">
+                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                    <div>
+                        <div class="font-bold">Alasan Revisi:</div>
+                        <div class="mt-1 italic">"@RevisionItem.rejection_reason"</div>
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(ModalErrorMessage))
+                {
+                    <div class="p-4 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl flex items-start gap-3 mt-4">
+                        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <div>
+                            <div class="font-bold">Gagal Mengirim Perbaikan</div>
+                            <div class="mt-1">@ModalErrorMessage</div>
+                        </div>
+                    </div>
+                }
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Nama Pemohon</label>
+                        <input type="text" @bind="RevisionModel.applicant_name" class="w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] border border-[#e5e3dc] rounded-lg outline-none focus:border-[#e8a000]" />
+                    </div>
+                    <div>
+                        <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">NRP</label>
+                        <input type="text" @bind="RevisionModel.applicant_nrp" class="w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] border border-[#e5e3dc] rounded-lg outline-none focus:border-[#e8a000]" />
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Kuantitas</label>
+                        <input type="number" @bind="RevisionModel.quantity" class="w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] border border-[#e5e3dc] rounded-lg outline-none focus:border-[#e8a000]" />
+                    </div>
+                    <div>
+                        <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Division</label>
+                        <select @bind="RevisionModel.division_id" class="w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] border border-[#e5e3dc] rounded-lg outline-none focus:border-[#e8a000]">
+                            <option value="">Select Division</option>
+                            @foreach(var div in Divisions) { <option value="@div.id">@div.name</option> }
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Event / Program</label>
+                    <input type="text" @bind="RevisionModel.event_name" class="w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] border border-[#e5e3dc] rounded-lg outline-none focus:border-[#e8a000]" />
+                </div>
+
+                <div>
+                    <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Catatan Perbaikan (Opsional)</label>
+                    <textarea @bind="RevisionModel.notes" rows="3" class="w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] border border-[#e5e3dc] rounded-lg outline-none focus:border-[#e8a000]" placeholder="Tambahkan catatan..."></textarea>
+                </div>
+    }
+  </ChildContent>
+  <Footer>
+        <button type="button" @onclick="CloseRevisionModal" class="px-5 py-2.5 text-sm font-bold text-gray-600 hover:text-gray-900 bg-white border border-[#e5e3dc] rounded-xl transition">Batal</button>
+        <button type="button" @onclick="SubmitRevision" disabled="@IsSubmitting" class="px-6 py-2.5 bg-[#e8a000] hover:bg-[#d49300] active:scale-[0.98] text-[#1a1a1a] text-sm font-bold tracking-wider rounded-xl transition shadow-sm disabled:opacity-50">
+            @(IsSubmitting ? "Mengirim..." : "Kirim Perbaikan")
+        </button>
+  </Footer>
 </Modal>
 
 @code {
@@ -1909,33 +1974,65 @@
         }
     }
 
-    private async Task ReviseToCart(Transaction usage)
-    {
-        if (usage.Product != null)
-        {
-            CartService.EventName = usage.event_name;
-            CartService.EventDate = usage.event_date;
-            CartService.Notes = usage.notes;
-            CartService.DocumentationLink = usage.documentation_link;
-            CartService.BorrowStartDate = usage.borrow_start_date;
-            CartService.BorrowEndDate = usage.expected_return_date;
-            CartService.GiveawayPickupDate = usage.pickup_date;
+    private bool ShowRevisionModal = false;
+    private Transaction? RevisionItem;
+    private UT_WMSDotnet.ViewModels.TransactionRequestViewModel RevisionModel = new();
+    private string? ModalErrorMessage;
 
-            CartService.AddToCart(new CartItem
-            {
-                Sku = usage.Product.sku ?? "",
-                Name = usage.Product.name ?? "",
-                Quantity = usage.quantity ?? 1,
-                RequestType = usage.request_type ?? "BORROW",
-                BaseCredit = usage.Product.value,
-                MaxStock = usage.Product.current_stock,
-                UnitName = usage.Product.Unit?.name ?? "unit",
-                ProductVariantId = usage.product_variant_id
-            });
-        }
+    private void OpenRevisionModal(Transaction item)
+    {
+        RevisionItem = item;
+        ModalErrorMessage = null;
+        RevisionModel = new UT_WMSDotnet.ViewModels.TransactionRequestViewModel
+        {
+            applicant_name = item.applicant_name,
+            applicant_nrp = item.applicant_nrp,
+            event_name = item.event_name,
+            event_date = item.event_date,
+            quantity = item.quantity,
+            request_type = item.request_type,
+            division_id = item.division_id,
+            documentation_link = item.documentation_link,
+            notes = item.notes
+        };
+        ShowRevisionModal = true;
+    }
+
+    private void CloseRevisionModal()
+    {
+        ShowRevisionModal = false;
+        RevisionItem = null;
+        ModalErrorMessage = null;
+    }
+
+    private async Task SubmitRevision()
+    {
+        if (RevisionItem == null) return;
         
-        await TransactionService.DeleteTransactionAsync(usage.id);
-        Navigation.NavigateTo("/");
+        IsSubmitting = true;
+        ModalErrorMessage = null;
+        try
+        {
+            var error = await TransactionService.UpdateRevisionAsync(RevisionItem.id, RevisionModel);
+            if (error != null) 
+            {
+                ModalErrorMessage = error;
+            }
+            else
+            {
+                SuccessMessage = "Revision submitted successfully.";
+                await LoadData();
+                CloseRevisionModal();
+            }
+        }
+        catch (Exception ex)
+        {
+            ModalErrorMessage = "Terjadi kesalahan: " + ex.Message;
+        }
+        finally
+        {
+            IsSubmitting = false;
+        }
     }
 
     public class TrackingStep
@@ -2177,48 +2274,4 @@
         }
     }
 
-    private async Task ReviseAllToCart(List<Transaction> items)
-    {
-        bool cartModified = false;
-        foreach (var item in items)
-        {
-            var canRevise = item.status == "REVISION" || item.status == "REVISION_BY_STAFF_INVENTORY" || item.status == "REVISION_BY_ADMIN" || item.status == "REVISION_BY_MANAGER";
-            if (!canRevise) continue;
-
-            if (item.Product != null)
-            {
-                CartService.EventName = item.event_name;
-                CartService.EventDate = item.event_date;
-                CartService.Notes = item.notes;
-                CartService.DocumentationLink = item.documentation_link;
-                CartService.BorrowStartDate = item.borrow_start_date;
-                CartService.BorrowEndDate = item.expected_return_date;
-                CartService.GiveawayPickupDate = item.pickup_date;
-
-                CartService.AddToCart(new CartItem
-                {
-                    Sku = item.Product.sku ?? "",
-                    Name = item.Product.name ?? "",
-                    Quantity = item.quantity ?? 1,
-                    RequestType = item.request_type ?? "BORROW",
-                    BaseCredit = item.Product.value,
-                    MaxStock = item.Product.current_stock,
-                    UnitName = item.Product.Unit?.name ?? "unit",
-                    ProductVariantId = item.product_variant_id
-                });
-                cartModified = true;
-            }
-
-            await TransactionService.DeleteTransactionAsync(item.id);
-        }
-
-        if (cartModified)
-        {
-            Navigation.NavigateTo("/");
-        }
-        else
-        {
-            await LoadData();
-        }
-    }
 }

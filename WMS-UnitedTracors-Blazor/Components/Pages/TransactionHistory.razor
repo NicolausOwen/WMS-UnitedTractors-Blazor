@@ -548,6 +548,17 @@
                     </div>
                 </div>
 
+                @if (!string.IsNullOrEmpty(ModalErrorMessage))
+                {
+                    <div class="p-4 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl flex items-start gap-3 mt-4">
+                        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <div>
+                            <div class="font-bold">Gagal Mengirim Perbaikan</div>
+                            <div class="mt-1">@ModalErrorMessage</div>
+                        </div>
+                    </div>
+                }
+
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Nama Pemohon</label>
@@ -576,6 +587,11 @@
                 <div>
                     <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Event / Program</label>
                     <input type="text" @bind="RevisionModel.event_name" class="w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] border border-[#e5e3dc] rounded-lg outline-none focus:border-[#e8a000]" />
+                </div>
+
+                <div>
+                    <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Catatan Perbaikan (Opsional)</label>
+                    <textarea @bind="RevisionModel.notes" rows="3" class="w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] border border-[#e5e3dc] rounded-lg outline-none focus:border-[#e8a000]" placeholder="Tambahkan catatan..."></textarea>
                 </div>
     }
   </ChildContent>
@@ -625,6 +641,7 @@
     
     private string? ErrorMessage { get; set; }
     private string? SuccessMessage { get; set; }
+    private string? ModalErrorMessage { get; set; }
 
     private bool ShowRevisionModal = false;
     private Transaction? RevisionItem;
@@ -726,6 +743,7 @@
     private void OpenRevisionModal(Transaction item)
     {
         RevisionItem = item;
+        ModalErrorMessage = null;
         RevisionModel = new UT_WMSDotnet.ViewModels.TransactionRequestViewModel
         {
             applicant_name = item.applicant_name,
@@ -750,9 +768,13 @@
     private async Task SubmitRevision()
     {
         if (RevisionItem == null) return;
+        ModalErrorMessage = null;
         
         var error = await TransactionService.UpdateRevisionAsync(RevisionItem.id, RevisionModel);
-        if (error != null) ErrorMessage = error;
+        if (error != null) 
+        {
+            ModalErrorMessage = error;
+        }
         else
         {
             SuccessMessage = "Revision submitted successfully.";

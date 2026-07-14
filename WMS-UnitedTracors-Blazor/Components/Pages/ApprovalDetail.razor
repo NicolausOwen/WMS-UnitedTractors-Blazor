@@ -191,6 +191,11 @@
                                 </div>
 
                                 <div class="flex items-center gap-2 shrink-0">
+                                    <button type="button" @onclick='() => PromptSingleAction(item.id, "REVISE")' disabled="@IsProcessing"
+                                            class="px-3 py-1.5 border border-amber-200 hover:bg-amber-50 text-amber-600 text-xs font-extrabold rounded-lg transition disabled:opacity-50 flex items-center gap-1.5">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                        <span>Revisi</span>
+                                    </button>
                                     <button type="button" @onclick='() => PromptSingleAction(item.id, "REJECT")' disabled="@IsProcessing"
                                             class="px-3 py-1.5 border border-red-200 hover:bg-red-50 text-red-600 text-xs font-extrabold rounded-lg transition disabled:opacity-50 flex items-center gap-1.5">
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -210,6 +215,10 @@
                     <div class="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-2xl flex items-center justify-between shadow-sm">
                         <span class="text-xs font-bold text-gray-600">@SelectedItems.Count item terpilih</span>
                         <div class="flex items-center gap-2">
+                            <button type="button" @onclick='() => PromptBatchAction("REVISE")' disabled="@(IsProcessing || SelectedItems.Count == 0)"
+                                    class="px-4 py-2 border text-xs font-extrabold rounded-xl transition disabled:opacity-50 @(SelectedItems.Count > 0 ? "border-amber-200 text-amber-600 hover:bg-amber-50 cursor-pointer" : "border-gray-200 text-gray-400 bg-gray-100 cursor-not-allowed")">
+                                Revisi Terpilih
+                            </button>
                             <button type="button" @onclick='() => PromptBatchAction("REJECT")' disabled="@(IsProcessing || SelectedItems.Count == 0)"
                                     class="px-4 py-2 border text-xs font-extrabold rounded-xl transition disabled:opacity-50 @(SelectedItems.Count > 0 ? "border-red-200 text-red-600 hover:bg-red-50 cursor-pointer" : "border-gray-200 text-gray-400 bg-gray-100 cursor-not-allowed")">
                                 Tolak Terpilih
@@ -234,24 +243,41 @@
                 <div class="w-12 h-1.5 bg-gray-300 rounded-full mx-auto my-3 sm:hidden shrink-0"></div>
                 
                 <div class="p-5 flex items-start gap-4">
-                    <div class="w-10 h-10 rounded-full @(ConfirmActionType == "APPROVE" ? "bg-emerald-50 border-emerald-200 text-[#1a7a30]" : "bg-red-50 border-red-200 text-red-600") flex items-center justify-center shrink-0 border">
-                        <svg class="w-5.5 h-5.5 text-current" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                        </svg>
+                    <div class="w-10 h-10 rounded-full @(ConfirmActionType == "APPROVE" ? "bg-emerald-50 border-emerald-200 text-[#1a7a30]" : ConfirmActionType == "REVISE" ? "bg-amber-50 border-amber-200 text-amber-600" : "bg-red-50 border-red-200 text-red-600") flex items-center justify-center shrink-0 border">
+                        @if (ConfirmActionType == "APPROVE") {
+                            <svg class="w-5.5 h-5.5 text-current" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                        } else if (ConfirmActionType == "REVISE") {
+                            <svg class="w-5.5 h-5.5 text-current" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                        } else {
+                            <svg class="w-5.5 h-5.5 text-current" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                        }
                     </div>
                     <div class="min-w-0">
                         <h3 class="text-base font-extrabold text-[#1a1a1a]">Konfirmasi Keputusan</h3>
                         <p class="text-xs text-gray-500 font-semibold mt-1">
-                            Apakah Anda yakin ingin @(ConfirmActionType == "APPROVE" ? "menyetujui" : "menolak") @(ConfirmScope == "BATCH" ? $"{SelectedItems.Count} item terpilih" : "item ini")? Tindakan ini tidak dapat dibatalkan.
+                            Apakah Anda yakin ingin @(ConfirmActionType == "APPROVE" ? "menyetujui" : ConfirmActionType == "REVISE" ? "merevisi" : "menolak") @(ConfirmScope == "BATCH" ? $"{SelectedItems.Count} item terpilih" : "item ini")? Tindakan ini tidak dapat dibatalkan.
                         </p>
                     </div>
                 </div>
                 
+                <div class="px-5 pb-4">
+                    <label class="block text-xs font-bold text-gray-700 mb-1">Catatan @(ConfirmActionType == "REVISE" || ConfirmActionType == "REJECT" ? "(Wajib)" : "(Opsional)")</label>
+                    <textarea @bind="ActionNotes" @bind:event="oninput" rows="3" class="w-full text-sm rounded-xl border border-gray-300 px-3 py-2 focus:ring-[#1a6b8a] focus:border-[#1a6b8a]" placeholder="Masukkan catatan..."></textarea>
+                    @if (!string.IsNullOrEmpty(ModalErrorMessage))
+                    {
+                        <p class="text-xs text-red-500 mt-1 font-bold">@ModalErrorMessage</p>
+                    }
+                </div>
+                
                 <div class="p-4 bg-[#faf9f5] border-t border-[#e5e3dc] flex gap-3">
+                    @{
+                        bool isNotesRequired = ConfirmActionType == "REVISE" || ConfirmActionType == "REJECT";
+                        bool isSubmitReady = !isNotesRequired || !string.IsNullOrWhiteSpace(ActionNotes);
+                    }
                     <button type="button" @onclick="CloseConfirmModal" class="flex-1 px-4 py-2.5 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm font-extrabold rounded-xl transition">
                         Batal
                     </button>
-                    <button type="button" @onclick="ConfirmAction" disabled="@IsProcessing" class="flex-1 px-4 py-2.5 @(ConfirmActionType == "APPROVE" ? "bg-[#1a7a30] hover:bg-[#16692a]" : "bg-red-600 hover:bg-red-700") text-white text-sm font-extrabold rounded-xl transition disabled:opacity-50">
+                    <button type="button" @onclick="ConfirmAction" disabled="@(IsProcessing || !isSubmitReady)" class="flex-1 px-4 py-2.5 @(isSubmitReady ? "bg-[#1a7a30] hover:bg-[#16692a] text-white" : "bg-gray-300 text-gray-500 cursor-not-allowed") text-sm font-extrabold rounded-xl transition disabled:opacity-50">
                         @(IsProcessing ? "Memproses..." : "Ya, Lanjutkan")
                     </button>
                 </div>
@@ -274,6 +300,8 @@
     private string ConfirmActionType = "";
     private string ConfirmScope = ""; // "SINGLE" or "BATCH"
     private int ConfirmItemId = 0;
+    private string ActionNotes = "";
+    private string ModalErrorMessage = "";
     
     private ClaimsPrincipal? userPrincipal;
     private int CurrentUserId = 0;
@@ -345,6 +373,8 @@
         ConfirmActionType = action;
         ConfirmScope = "SINGLE";
         ConfirmItemId = id;
+        ActionNotes = "";
+        ModalErrorMessage = "";
         ShowConfirmModal = true;
     }
 
@@ -352,6 +382,8 @@
     {
         ConfirmActionType = action;
         ConfirmScope = "BATCH";
+        ActionNotes = "";
+        ModalErrorMessage = "";
         ShowConfirmModal = true;
     }
 
@@ -362,6 +394,13 @@
 
     private async Task ConfirmAction()
     {
+        ModalErrorMessage = "";
+        if ((ConfirmActionType == "REVISE" || ConfirmActionType == "REJECT") && string.IsNullOrWhiteSpace(ActionNotes))
+        {
+            ModalErrorMessage = "Catatan wajib diisi.";
+            return;
+        }
+
         if (ConfirmScope == "SINGLE")
         {
             await ProcessSingleAction(ConfirmItemId, ConfirmActionType);
@@ -379,9 +418,11 @@
         try
         {
             if (action == "APPROVE")
-                await ApprovalService.ApproveAsync(id, null, CurrentUserId, UserRole);
-            else
-                await ApprovalService.RejectAsync(id, null, CurrentUserId, UserRole);
+                await ApprovalService.ApproveAsync(id, ActionNotes, CurrentUserId, UserRole);
+            else if (action == "REJECT")
+                await ApprovalService.RejectAsync(id, ActionNotes, CurrentUserId, UserRole);
+            else if (action == "REVISE")
+                await ApprovalService.RequestRevisionAsync(id, ActionNotes, CurrentUserId, UserRole);
             
             GroupItems.RemoveAll(x => x.id == id);
             SelectedItems.Remove(id);
@@ -413,13 +454,15 @@
             {
                 var item = GroupItems.FirstOrDefault(x => x.id == id);
                 if (action == "APPROVE")
-                    await ApprovalService.ApproveAsync(id, null, CurrentUserId, UserRole, false);
-                else
-                    await ApprovalService.RejectAsync(id, null, CurrentUserId, UserRole, false);
+                    await ApprovalService.ApproveAsync(id, ActionNotes, CurrentUserId, UserRole, false);
+                else if (action == "REJECT")
+                    await ApprovalService.RejectAsync(id, ActionNotes, CurrentUserId, UserRole, false);
+                else if (action == "REVISE")
+                    await ApprovalService.RequestRevisionAsync(id, ActionNotes, CurrentUserId, UserRole, false);
                 
                 if (item != null)
                 {
-                    processedItems.Add((item, action, null));
+                    processedItems.Add((item, action, ActionNotes));
                 }
                 GroupItems.RemoveAll(x => x.id == id);
             }

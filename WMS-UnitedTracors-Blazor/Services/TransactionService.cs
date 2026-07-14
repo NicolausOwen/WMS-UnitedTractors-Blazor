@@ -1088,13 +1088,6 @@ public class TransactionService
 
         transaction.quantity = newQty;
         transaction.request_type = newRequestType;
-        transaction.applicant_name = model.applicant_name;
-        transaction.applicant_nrp = model.applicant_nrp;
-        transaction.event_name = model.event_name;
-        transaction.event_date = model.event_date;
-        transaction.division_id = model.division_id ?? transaction.division_id;
-        transaction.documentation_link = model.documentation_link;
-        transaction.notes = model.notes;
         transaction.status = GetResubmittedStatus(transaction);
         transaction.updated_at = DateTime.UtcNow;
         transaction.rejection_reason = null;
@@ -1111,6 +1104,35 @@ public class TransactionService
                 transaction.borrow_duration_days = duration > 0 ? duration : 1;
             }
         }
+
+        _context.Transactions.Update(transaction);
+
+        // Update shared fields for all items in the same group to prevent splitting
+        string groupId = transaction.group_id;
+        var groupItems = await _context.Transactions
+            .Where(t => t.created_at == transaction.created_at && t.requester_id == transaction.requester_id && t.id != transaction.id)
+            .ToListAsync();
+
+        foreach (var item in groupItems.Where(t => t.group_id == groupId))
+        {
+            item.applicant_name = model.applicant_name;
+            item.applicant_nrp = model.applicant_nrp;
+            item.event_name = model.event_name;
+            item.event_date = model.event_date;
+            item.division_id = model.division_id ?? item.division_id;
+            item.documentation_link = model.documentation_link;
+            // Notes are NOT updated here to preserve original item notes
+            _context.Transactions.Update(item);
+        }
+
+        // Apply shared fields to the main transaction too
+        transaction.applicant_name = model.applicant_name;
+        transaction.applicant_nrp = model.applicant_nrp;
+        transaction.event_name = model.event_name;
+        transaction.event_date = model.event_date;
+        transaction.division_id = model.division_id ?? transaction.division_id;
+        transaction.documentation_link = model.documentation_link;
+        transaction.notes = model.notes;
 
         _context.Transactions.Update(transaction);
         await _context.SaveChangesAsync();
