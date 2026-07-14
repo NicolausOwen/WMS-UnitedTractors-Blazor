@@ -1003,7 +1003,7 @@ public class TransactionService
                         t.pending_return_quantity > 0 && t.is_return_draft == 1)
             .ToListAsync();
 
-        var grouped = transactions.GroupBy(t => CreateGroupId(t.created_at, t.requester_id, t.applicant_name ?? ""));
+        var grouped = transactions.GroupBy(t => t.group_id);
         var group = grouped.FirstOrDefault(g => g.Key == groupId);
 
         if (group == null)
@@ -1165,14 +1165,6 @@ public class TransactionService
         _context.Transactions.Update(transaction);
         await _context.SaveChangesAsync();
         return null;
-    }
-
-    public string CreateGroupId(DateTime createdAt, int requesterId, string applicantName)
-    {
-        var raw = $"{createdAt:yyyy-MM-dd HH:mm}_{requesterId}_{applicantName}";
-        using var md5 = MD5.Create();
-        var hashBytes = md5.ComputeHash(Encoding.UTF8.GetBytes(raw));
-        return BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
     }
 
     public async Task<int> MarkGiveawayDocumentationOverdueAsync()
