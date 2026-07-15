@@ -532,24 +532,48 @@
                                                     </div>
                                                 </div>
                                             }
-                                            @if ((canHandover && !hasHandoverDraftPhoto) || (canGiveawayHandover && !hasGiveawayHandoverDraftPhoto) || canUploadDocumentation || groupItems.Any(i => i.returned_quantity > 0 || (i.pending_return_quantity > 0 && i.is_return_draft == 0)))
+                                            @if (canHandover || canGiveawayHandover || canUploadDocumentation || groupItems.Any(i => i.returned_quantity > 0 || (i.pending_return_quantity > 0 && i.is_return_draft == 0)))
                                             {
                                                 <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[#f0ede5]">
                                                     <span class="text-xs font-bold text-[#8a8880]">Aksi Grup:</span>
                                                     <div class="flex flex-wrap gap-2">
-                                                        @if (canHandover && !hasHandoverDraftPhoto)
+                                                        @if (canHandover)
                                                         {
-                                                            <button type="button" @onclick="() => OpenHandoverModal(borrowItemsOnly)" class="inline-flex items-center gap-1.5 px-4 py-2 bg-[#e8a000] hover:bg-[#d49300] text-[#1a1a1a] text-xs font-bold rounded-lg transition active:scale-95 shadow-sm whitespace-nowrap">
-                                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-                                                                Upload Bukti Serah Terima
-                                                            </button>
+                                                            @if (!hasHandoverDraftPhoto)
+                                                            {
+                                                                <button type="button" @onclick="() => OpenHandoverModal(borrowItemsOnly)" class="inline-flex items-center gap-1.5 px-4 py-2 bg-[#e8a000] hover:bg-[#d49300] text-[#1a1a1a] text-xs font-bold rounded-lg transition active:scale-95 shadow-sm whitespace-nowrap">
+                                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                                                                    Upload Bukti Serah Terima
+                                                                </button>
+                                                            }
+                                                            else
+                                                            {
+                                                                <button type="button" @onclick="() => OpenHandoverModal(borrowItemsOnly)" class="inline-flex items-center gap-1.5 px-3 py-2 bg-white border border-[#e5e3dc] text-[#3a3835] hover:border-[#1a1a1a] text-xs font-bold rounded-lg transition">
+                                                                    Ganti Foto
+                                                                </button>
+                                                                <button type="button" @onclick='() => AskConfirm("Submit Bukti Serah Terima", "Kirim bukti serah terima ke admin?", () => SubmitHandoverToAdmin(borrowItemsOnly), "Ya, Submit")' disabled="@IsSubmitting" class="inline-flex items-center gap-1.5 px-4 py-2 bg-[#1a7a30] hover:bg-[#166528] text-white text-xs font-bold rounded-lg shadow-sm transition disabled:opacity-50">
+                                                                    Submit ke Admin
+                                                                </button>
+                                                            }
                                                         }
-                                                        @if (canGiveawayHandover && !hasGiveawayHandoverDraftPhoto)
+                                                        @if (canGiveawayHandover)
                                                         {
-                                                            <button type="button" @onclick="() => OpenHandoverModal(giveawayItemsOnly)" class="inline-flex items-center gap-1.5 px-4 py-2 bg-[#e8a000] hover:bg-[#d49300] text-[#1a1a1a] text-xs font-bold rounded-lg transition active:scale-95 shadow-sm whitespace-nowrap">
-                                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-                                                                Upload Bukti Serah Terima
-                                                            </button>
+                                                            @if (!hasGiveawayHandoverDraftPhoto)
+                                                            {
+                                                                <button type="button" @onclick="() => OpenHandoverModal(giveawayItemsOnly)" class="inline-flex items-center gap-1.5 px-4 py-2 bg-[#e8a000] hover:bg-[#d49300] text-[#1a1a1a] text-xs font-bold rounded-lg transition active:scale-95 shadow-sm whitespace-nowrap">
+                                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                                                                    Upload Bukti Serah Terima
+                                                                </button>
+                                                            }
+                                                            else
+                                                            {
+                                                                <button type="button" @onclick="() => OpenHandoverModal(giveawayItemsOnly)" class="inline-flex items-center gap-1.5 px-3 py-2 bg-white border border-[#e5e3dc] text-[#3a3835] hover:border-[#1a1a1a] text-xs font-bold rounded-lg transition">
+                                                                    Ganti Foto
+                                                                </button>
+                                                                <button type="button" @onclick='() => AskConfirm("Submit Bukti Serah Terima", "Selesaikan serah terima giveaway ini?", () => SubmitHandoverToAdmin(giveawayItemsOnly), "Ya, Selesaikan")' disabled="@IsSubmitting" class="inline-flex items-center gap-1.5 px-4 py-2 bg-[#1a7a30] hover:bg-[#166528] text-white text-xs font-bold rounded-lg shadow-sm transition disabled:opacity-50">
+                                                                    Selesaikan Serah Terima
+                                                                </button>
+                                                            }
                                                         }
                                                         @if (canUploadDocumentation)
                                                         {
@@ -611,63 +635,7 @@
                                             </div>
                                         }
 
-                                        <!-- Preview File / Foto Serah Terima -->
-                                        @if(TransactionService.ParseStoredFiles(firstItem.handover_photo).Any())
-                                        {
-                                            var handoverFiles = TransactionService.ParseStoredFiles(firstItem.handover_photo);
-                                            <div class="p-4 bg-white rounded-xl border border-[#e5e3dc] shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                                                <div class="flex items-start gap-4">
-                                                    <div class="grid grid-cols-2 gap-2 shrink-0">
-                                                        @foreach (var handoverFile in handoverFiles.Take(4))
-                                                        {
-                                                            var handoverPhotoSrc = ImageHelper.Resolve(handoverFile);
-                                                            @if (handoverFile.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
-                                                            {
-                                                                <a href="@handoverPhotoSrc" target="_blank" class="block w-20 h-20 rounded border border-gray-200 overflow-hidden bg-red-50 flex items-center justify-center hover:opacity-95 transition cursor-pointer" title="Klik untuk membuka dokumen">
-                                                                    <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                                                                </a>
-                                                            }
-                                                            else
-                                                            {
-                                                                <a href="@handoverPhotoSrc" data-image-popup class="block w-20 h-20 rounded border border-gray-200 overflow-hidden bg-gray-50 hover:opacity-95 transition cursor-pointer" title="Klik untuk memperbesar foto bukti">
-                                                                    <img src="@handoverPhotoSrc" alt="Bukti Serah Terima" class="w-full h-full object-cover">
-                                                                </a>
-                                                            }
-                                                        }
-                                                    </div>
-                                                    <div>
-                                                        <div class="flex items-center gap-2 mb-1">
-                                                            <h4 class="text-xs font-bold text-gray-900 tracking-wider uppercase">Bukti Serah Terima</h4>
-                                                            @if (status == "WAITING_HANDOVER")
-                                                            {
-                                                                <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#ede9fe] text-[#6d28d9] border border-[#c4b5fd]">DRAFT — Belum Dikirim</span>
-                                                            }
-                                                            else if (status == "WAITING_ADMIN_HANDOVER")
-                                                            {
-                                                                <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#e0f2fe] text-[#1a6b8a] border border-[#bae6fd]">Menunggu Verifikasi Admin</span>
-                                                            }
-                                                            else if (status == "WAITING_DOCUMENTATION" || status == "DOCUMENTATION_OVERDUE")
-                                                            {
-                                                                <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#e8f5e9] text-[#2e7d32] border border-[#c8e6c9]">Serah Terima Selesai</span>
-                                                            }
-                                                        </div>
-                                                        <p class="text-xs text-gray-600 leading-relaxed max-w-xl italic">"@firstItem.handover_notes"</p>
-                                                        <p class="text-[11px] text-gray-500 mt-1">Penerima: @(firstItem.handover_recipient_name ?? firstItem.applicant_name ?? "-") | Waktu: @(firstItem.handover_timestamp?.ToString("dd MMM yyyy HH:mm") ?? "-")</p>
-                                                        @if (handoverFiles.Count > 4)
-                                                        {
-                                                            <p class="text-[11px] text-gray-400 mt-1">+@(handoverFiles.Count - 4) file lainnya</p>
-                                                        }
-                                                    </div>
-                                                </div>
-                                                @if ((canHandover || canGiveawayHandover) && status == "WAITING_HANDOVER")
-                                                {
-                                                    <div class="flex gap-2 shrink-0 w-full sm:w-auto">
-                                                        <button type="button" @onclick="() => OpenHandoverModal(isGiveaway ? giveawayItemsOnly : borrowItemsOnly)" class="px-3 py-2 bg-white border border-[#e5e3dc] text-[#3a3835] hover:border-[#1a1a1a] text-xs font-bold rounded-lg transition">Ganti Foto</button>
-                                                        <button type="button" @onclick='() => AskConfirm("Submit Bukti Serah Terima", isGiveaway ? "Selesaikan serah terima giveaway ini? Stok akan dipotong dan sistem akan menunggu dokumentasi dari user." : "Kirim bukti serah terima ke admin untuk diverifikasi? Setelah dikirim Anda tidak bisa menggantinya lagi kecuali ditolak admin.", () => SubmitHandoverToAdmin(isGiveaway ? giveawayItemsOnly : borrowItemsOnly), isGiveaway ? "Ya, Selesaikan" : "Ya, Submit")' disabled="@IsSubmitting" class="px-4 py-2 bg-[#1a7a30] hover:bg-[#166528] text-white text-xs font-bold rounded-lg shadow-sm transition disabled:opacity-50">@(isGiveaway ? "Selesaikan Serah Terima" : "Submit ke Admin")</button>
-                                                    </div>
-                                                }
-                                            </div>
-                                        }
+
 
                                         <!-- Preview Dokumentasi User -->
                                         @if (isGiveaway && TransactionService.ParseStoredFiles(firstItem.documentation_photo).Any())
@@ -717,6 +685,7 @@
                                                             <th class="px-4 py-2.5 text-[0.65rem] font-bold tracking-wider uppercase text-[#8a8780]">Product</th>
                                                             <th class="px-4 py-2.5 text-[0.65rem] font-bold tracking-wider uppercase text-[#8a8780] w-24">Qty</th>
                                                             <th class="px-4 py-2.5 text-[0.65rem] font-bold tracking-wider uppercase text-[#8a8780] w-48">Status Detail</th>
+                                                            <th class="px-4 py-2.5 text-[0.65rem] font-bold tracking-wider uppercase text-[#8a8780] w-44">Bukti Serah Terima</th>
                                                             <th class="px-4 py-2.5 text-[0.65rem] font-bold tracking-wider uppercase text-[#8a8780]">Catatan</th>
                                                             <th class="px-4 py-2.5 text-[0.65rem] font-bold tracking-wider uppercase text-[#8a8780] text-right w-44">Aksi</th>
                                                         </tr>
@@ -780,7 +749,14 @@
                                                                     } else if (usage.status == "PENDING_MANAGER") {
                                                                         <span class="inline-flex items-center px-1.5 py-0.5 border border-[#c4b5fd] rounded text-[9px] font-bold bg-[#ede9fe] text-[#6d28d9]">Menunggu Manager</span>
                                                                     } else if (usage.status == "WAITING_HANDOVER") {
-                                                                        <span class="inline-flex items-center px-1.5 py-0.5 border border-[#fde68a] rounded text-[9px] font-bold bg-[#fef3c7] text-[#92400e]">Menunggu Bukti Serah Terima</span>
+                                                                        if (TransactionService.HasStoredFiles(usage.handover_photo))
+                                                                        {
+                                                                            <span class="inline-flex items-center px-1.5 py-0.5 border border-[#c4b5fd] rounded text-[9px] font-bold bg-[#ede9fe] text-[#6d28d9]">DRAFT - Belum Dikirim</span>
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <span class="inline-flex items-center px-1.5 py-0.5 border border-[#fde68a] rounded text-[9px] font-bold bg-[#fef3c7] text-[#92400e]">Menunggu Bukti Serah Terima</span>
+                                                                        }
                                                                     } else if (usage.status == "WAITING_ADMIN_HANDOVER") {
                                                                         <span class="inline-flex items-center px-1.5 py-0.5 border border-[#bae6fd] rounded text-[9px] font-bold bg-[#e0f2fe] text-[#1a6b8a]">Menunggu Verifikasi Admin</span>
                                                                     } else if (usage.status == "WAITING_DOCUMENTATION") {
@@ -812,6 +788,49 @@
                                                                             <span class="inline-flex items-center px-1.5 py-0.5 border border-[#fde68a] rounded text-[9px] font-bold bg-[#fffbeb] text-[#d97706]">Butuh Revisi</span>
                                                                             <div class="text-[10px] font-semibold text-[#b45309]">Oleh @GetRevisionActorLabel(usage)</div>
                                                                         </div>
+                                                                    }
+                                                                </td>
+                                                                <td class="px-4 py-3 align-middle">
+                                                                    @{
+                                                                        var handoverFiles = TransactionService.ParseStoredFiles(usage.handover_photo);
+                                                                    }
+                                                                    @if (handoverFiles.Any())
+                                                                    {
+                                                                        <div class="flex flex-col gap-1">
+                                                                            <div class="flex items-center gap-1.5 flex-wrap">
+                                                                                @foreach (var file in handoverFiles.Take(3))
+                                                                                {
+                                                                                    var fileSrc = ImageHelper.Resolve(file);
+                                                                                    <div class="w-8 h-8 rounded border border-[#e5e3dc] overflow-hidden bg-white shrink-0 shadow-sm hover:scale-105 transition duration-150">
+                                                                                        @if (file.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+                                                                                        {
+                                                                                            <a href="@fileSrc" target="_blank" class="w-full h-full flex items-center justify-center bg-red-50 text-red-500">
+                                                                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                                                                                            </a>
+                                                                                        }
+                                                                                        else
+                                                                                        {
+                                                                                            <a href="@fileSrc" target="_blank" data-image-popup class="w-full h-full block">
+                                                                                                <img src="@fileSrc" class="w-full h-full object-cover" />
+                                                                                            </a>
+                                                                                        }
+                                                                                    </div>
+                                                                                }
+                                                                                @if (handoverFiles.Count > 3)
+                                                                                {
+                                                                                    <span class="text-[9px] font-bold text-gray-400">+@(handoverFiles.Count - 3)</span>
+                                                                                }
+                                                                            </div>
+                                                                            @if (!string.IsNullOrEmpty(usage.handover_notes))
+                                                                            {
+                                                                                <span class="text-[9px] text-gray-500 italic max-w-[130px] truncate block" title="@usage.handover_notes">"@usage.handover_notes"</span>
+                                                                            }
+                                                                            <span class="text-[9px] text-gray-400 block font-semibold truncate max-w-[130px]" title="@usage.handover_recipient_name">Recv: @(usage.handover_recipient_name ?? "-")</span>
+                                                                        </div>
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        <span class="text-[10px] text-gray-400 italic">Belum ada</span>
                                                                     }
                                                                 </td>
                                                                 <td class="px-4 py-3 align-middle text-[11px] text-gray-500 space-y-0.5">
@@ -923,7 +942,14 @@
                                                                 } else if (usage.status == "PENDING_MANAGER") {
                                                                     <span class="inline-flex items-center px-1.5 py-0.5 border border-[#c4b5fd] rounded text-[9px] font-bold bg-[#ede9fe] text-[#6d28d9]">Menunggu Manager</span>
                                                                 } else if (usage.status == "WAITING_HANDOVER") {
-                                                                    <span class="inline-flex items-center px-1.5 py-0.5 border border-[#fde68a] rounded text-[9px] font-bold bg-[#fef3c7] text-[#92400e]">Menunggu Bukti Serah Terima</span>
+                                                                    if (TransactionService.HasStoredFiles(usage.handover_photo))
+                                                                    {
+                                                                        <span class="inline-flex items-center px-1.5 py-0.5 border border-[#c4b5fd] rounded text-[9px] font-bold bg-[#ede9fe] text-[#6d28d9]">DRAFT - Belum Dikirim</span>
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        <span class="inline-flex items-center px-1.5 py-0.5 border border-[#fde68a] rounded text-[9px] font-bold bg-[#fef3c7] text-[#92400e]">Menunggu Bukti Serah Terima</span>
+                                                                    }
                                                                 } else if (usage.status == "WAITING_ADMIN_HANDOVER") {
                                                                     <span class="inline-flex items-center px-1.5 py-0.5 border border-[#bae6fd] rounded text-[9px] font-bold bg-[#e0f2fe] text-[#1a6b8a]">Menunggu Verifikasi Admin</span>
                                                                 } else if (usage.status == "WAITING_DOCUMENTATION") {
@@ -964,7 +990,43 @@
                                                             </div>
                                                         }
 
-                                                        <!-- Action Buttons for mobile -->
+                                                        <!-- Handover Proof for mobile -->
+                                                         @{
+                                                             var handoverFilesMobile = TransactionService.ParseStoredFiles(usage.handover_photo);
+                                                         }
+                                                         @if (handoverFilesMobile.Any())
+                                                         {
+                                                             <div class="border-t border-[#f0ede5] pt-2 space-y-1 mb-2.5">
+                                                                 <span class="text-[10px] text-gray-500 font-semibold block">Bukti Serah Terima:</span>
+                                                                 <div class="flex flex-wrap gap-1.5">
+                                                                     @foreach (var file in handoverFilesMobile)
+                                                                     {
+                                                                         var fileSrc = ImageHelper.Resolve(file);
+                                                                         <div class="w-9 h-9 rounded border border-[#e5e3dc] overflow-hidden bg-white shrink-0 shadow-sm hover:scale-105 transition duration-150">
+                                                                             @if (file.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+                                                                             { 
+                                                                                 <a href="@fileSrc" target="_blank" class="w-full h-full flex items-center justify-center bg-red-50 text-red-500">
+                                                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                                                                                 </a>
+                                                                             }
+                                                                             else
+                                                                             {
+                                                                                 <a href="@fileSrc" target="_blank" data-image-popup class="w-full h-full block">
+                                                                                     <img src="@fileSrc" class="w-full h-full object-cover" />
+                                                                                 </a>
+                                                                             }
+                                                                         </div>
+                                                                     }
+                                                                 </div>
+                                                                 @if (!string.IsNullOrEmpty(usage.handover_notes))
+                                                                 {
+                                                                     <div class="text-[10px] text-gray-500 italic">"@usage.handover_notes"</div>
+                                                                 }
+                                                                 <div class="text-[9px] text-gray-400 font-semibold">Penerima: @(usage.handover_recipient_name ?? "-")</div>
+                                                             </div>
+                                                         }
+
+                                                         <!-- Action Buttons for mobile -->
                                                         @{
                                                             var canReturnMobile = (usage.status == "APPROVED" || usage.status == "WAITING_HANDOVER_CONFIRM") && usage.request_type == "BORROW" && usage.returned_quantity < usage.quantity && (usage.pending_return_quantity ?? 0) == 0;
                                                             var isReturnDraftMobile = usage.status == "APPROVED" && usage.request_type == "BORROW" && (usage.pending_return_quantity ?? 0) > 0 && usage.is_return_draft == 1;
