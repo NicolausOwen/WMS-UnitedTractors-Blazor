@@ -13,6 +13,8 @@ public class CartItem
     public int MaxStock { get; set; }
     public string UnitName { get; set; } = "unit";
     public int? ProductVariantId { get; set; }
+    public string? VariantColor { get; set; }
+    public string? VariantSize { get; set; }
 }
 
 public class CartService

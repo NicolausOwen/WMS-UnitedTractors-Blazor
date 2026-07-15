@@ -22,6 +22,7 @@ public class ApprovalService
         var query = _context.Transactions
             .Include(t => t.Product)
                 .ThenInclude(p => p.Category)
+            .Include(t => t.ProductVariant)
             .Include(t => t.Requester)
             .Include(t => t.Division)
             .OrderByDescending(t => t.created_at)

@@ -182,10 +182,22 @@
                                     </div>
                                     <div class="min-w-0">
                                         <h5 class="font-extrabold text-sm text-[#1a1a1a] truncate">@(item.Product?.name ?? "Unknown Product")</h5>
-                                        <div class="text-[10px] text-gray-500 font-semibold mt-0.5 truncate">
-                                            Req: <span class="text-[#e8a000] font-black">@item.quantity</span> pcs
-                                            <span class="mx-1">•</span>
-                                            Stock: <span class="@(isShortage ? "text-red-600 font-black" : "text-emerald-600")">@(item.Product?.current_stock ?? 0)</span>
+                                        <div class="text-[10px] text-gray-500 font-semibold mt-0.5 flex flex-wrap items-center gap-1.5">
+                                            <span>Req: <span class="text-[#e8a000] font-black">@item.quantity</span> pcs</span>
+                                            <span class="text-gray-300">•</span>
+                                            <span>Stock: <span class="@(isShortage ? "text-red-600 font-black" : "text-emerald-600")">@(item.Product?.current_stock ?? 0)</span></span>
+                                            @if (item.ProductVariant != null && (!string.IsNullOrEmpty(item.ProductVariant.color) || !string.IsNullOrEmpty(item.ProductVariant.size)))
+                                            {
+                                                <span class="text-gray-300">•</span>
+                                                @if (!string.IsNullOrEmpty(item.ProductVariant.color))
+                                                {
+                                                    <span class="bg-[#f5f4f0] px-1 py-0.5 rounded text-[8px] border border-[#e5e3dc] leading-none font-bold text-[#5a5855]">Warna: @item.ProductVariant.color</span>
+                                                }
+                                                @if (!string.IsNullOrEmpty(item.ProductVariant.size))
+                                                {
+                                                    <span class="bg-[#f5f4f0] px-1 py-0.5 rounded text-[8px] border border-[#e5e3dc] leading-none font-bold text-[#5a5855]">Ukuran: @item.ProductVariant.size</span>
+                                                }
+                                            }
                                         </div>
                                     </div>
                                 </div>
