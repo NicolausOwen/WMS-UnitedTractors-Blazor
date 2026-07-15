@@ -1342,13 +1342,26 @@ public class TransactionService
 
         await _context.SaveChangesAsync();
     }
-    public async Task<(List<Transaction> items, int totalItems, int totalPages)> GetDamagedGoodsAsync(string? search, int page = 1, int pageSize = 10)
+    public async Task<(List<Transaction> items, int totalItems, int totalPages)> GetDamagedGoodsAsync(string? search, string? filterCategory = null, string? sortBy = "newest", int page = 1, int pageSize = 10)
     {
         using var _context = _factory.CreateDbContext();
         var query = _context.Transactions
             .Include(t => t.Product)
             .Include(t => t.Requester)
-            .Where(t => t.return_status == "rusak" || t.return_status == "hilang" || t.return_condition == "rusak" || t.return_condition == "hilang");
+            .AsQueryable();
+
+        if (filterCategory == "rusak")
+        {
+            query = query.Where(t => t.return_status == "rusak" || t.return_condition == "rusak");
+        }
+        else if (filterCategory == "hilang")
+        {
+            query = query.Where(t => t.return_status == "hilang" || t.return_condition == "hilang");
+        }
+        else
+        {
+            query = query.Where(t => t.return_status == "rusak" || t.return_status == "hilang" || t.return_condition == "rusak" || t.return_condition == "hilang");
+        }
 
         if (!string.IsNullOrWhiteSpace(search))
         {
@@ -1359,11 +1372,27 @@ public class TransactionService
                 (t.return_reason != null && t.return_reason.ToLower().Contains(s)));
         }
 
+        switch (sortBy)
+        {
+            case "oldest":
+                query = query.OrderBy(t => t.returned_at ?? t.updated_at);
+                break;
+            case "name_asc":
+                query = query.OrderBy(t => t.Product.name);
+                break;
+            case "name_desc":
+                query = query.OrderByDescending(t => t.Product.name);
+                break;
+            case "newest":
+            default:
+                query = query.OrderByDescending(t => t.returned_at ?? t.updated_at);
+                break;
+        }
+
         var totalItems = await query.CountAsync();
         var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
 
         var items = await query
-            .OrderByDescending(t => t.returned_at ?? t.updated_at)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
