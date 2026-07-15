@@ -49,6 +49,7 @@ public static class WorkflowStatuses
         IsRevision(status) ||
         status == WaitingHandover ||
         status == WaitingAdminHandover ||
+        status == WaitingHandoverConfirm ||
         status == Approved;
 
     public static string GetRevisionStage(string? status) =>

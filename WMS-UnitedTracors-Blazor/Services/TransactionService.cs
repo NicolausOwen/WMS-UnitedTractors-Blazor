@@ -620,29 +620,34 @@ public class TransactionService
             using var dbTransaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                var stockBefore = transaction.Product!.current_stock;
-                transaction.Product.current_stock += returnQty;
-                _context.Products.Update(transaction.Product);
-
-                if (transaction.product_variant_id.HasValue)
+                bool isDamagedOrLost = status == "rusak" || status == "hilang";
+                
+                if (!isDamagedOrLost)
                 {
-                    var variant = await _context.ProductVariants.FindAsync(transaction.product_variant_id.Value);
-                    if (variant != null)
+                    var stockBefore = transaction.Product!.current_stock;
+                    transaction.Product.current_stock += returnQty;
+                    _context.Products.Update(transaction.Product);
+
+                    if (transaction.product_variant_id.HasValue)
                     {
-                        variant.stock += returnQty;
-                        _context.ProductVariants.Update(variant);
+                        var variant = await _context.ProductVariants.FindAsync(transaction.product_variant_id.Value);
+                        if (variant != null)
+                        {
+                            variant.stock += returnQty;
+                            _context.ProductVariants.Update(variant);
+                        }
                     }
-                }
 
-                _context.StockLogs.Add(new StockLog
-                {
-                    transaction_id = transaction.id,
-                    product_id = transaction.Product.id,
-                    stock_before = stockBefore,
-                    stock_after = transaction.Product.current_stock,
-                    created_at = DateTime.UtcNow,
-                    updated_at = DateTime.UtcNow
-                });
+                    _context.StockLogs.Add(new StockLog
+                    {
+                        transaction_id = transaction.id,
+                        product_id = transaction.Product.id,
+                        stock_before = stockBefore,
+                        stock_after = transaction.Product.current_stock,
+                        created_at = DateTime.UtcNow,
+                        updated_at = DateTime.UtcNow
+                    });
+                }
 
                 transaction.returned_quantity = (transaction.returned_quantity ?? 0) + returnQty;
                 transaction.approver_id = adminId;
@@ -1341,5 +1346,62 @@ public class TransactionService
         }
 
         await _context.SaveChangesAsync();
+    }
+    public async Task<(List<Transaction> items, int totalItems, int totalPages)> GetDamagedGoodsAsync(string? search, string? filterCategory = null, string? sortBy = "newest", int page = 1, int pageSize = 10)
+    {
+        using var _context = _factory.CreateDbContext();
+        var query = _context.Transactions
+            .Include(t => t.Product)
+            .Include(t => t.Requester)
+            .AsQueryable();
+
+        if (filterCategory == "rusak")
+        {
+            query = query.Where(t => t.return_status == "rusak" || t.return_condition == "rusak");
+        }
+        else if (filterCategory == "hilang")
+        {
+            query = query.Where(t => t.return_status == "hilang" || t.return_condition == "hilang");
+        }
+        else
+        {
+            query = query.Where(t => t.return_status == "rusak" || t.return_status == "hilang" || t.return_condition == "rusak" || t.return_condition == "hilang");
+        }
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var s = search.ToLower();
+            query = query.Where(t => 
+                (t.Product != null && t.Product.name.ToLower().Contains(s)) ||
+                (t.applicant_name != null && t.applicant_name.ToLower().Contains(s)) ||
+                (t.return_reason != null && t.return_reason.ToLower().Contains(s)));
+        }
+
+        switch (sortBy)
+        {
+            case "oldest":
+                query = query.OrderBy(t => t.returned_at ?? t.updated_at);
+                break;
+            case "name_asc":
+                query = query.OrderBy(t => t.Product.name);
+                break;
+            case "name_desc":
+                query = query.OrderByDescending(t => t.Product.name);
+                break;
+            case "newest":
+            default:
+                query = query.OrderByDescending(t => t.returned_at ?? t.updated_at);
+                break;
+        }
+
+        var totalItems = await query.CountAsync();
+        var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
+        var items = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return (items, totalItems, totalPages);
     }
 }

@@ -209,9 +209,9 @@ public class DashboardService
                 actionItems.Add(new ActionItemModel
                 {
                     Type = "handover",
-                    Title = t.event_name ?? "Serah Terima Berjalan",
+                    Title = t.event_name ?? "Berita Acara Serah Terima",
                     BadgeClass = "bg-[#e0f2fe] text-[#0369a1] border border-[#bae6fd]",
-                    Badge = "Serah Terima Berjalan",
+                    Badge = "Berita Acara Serah Terima",
                     Description = $"Barang telah diserahkan. Harap cek kecocokan fisik untuk {t.quantity}x {(t.Product != null ? t.Product.name : "")}.",
                     Date = t.created_at,
                     BtnUrl = "Tracking",

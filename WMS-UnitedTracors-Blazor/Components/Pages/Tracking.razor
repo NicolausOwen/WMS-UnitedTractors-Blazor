@@ -243,7 +243,7 @@
                                                 } else if(status == "WAITING_HANDOVER") {
                                                     <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#fff8e6] text-[#b37a00] border border-[#ffe099]">Menunggu Bukti Serah Terima</span>
                                                 } else if(status == "WAITING_HANDOVER_CONFIRM") {
-                                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#e0f2fe] text-[#0369a1] border border-[#bae6fd]">Serah Terima Berjalan</span>
+                                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#e0f2fe] text-[#0369a1] border border-[#bae6fd]">Berita Acara Serah Terima</span>
                                                 } else if(status == "WAITING_ADMIN_HANDOVER") {
                                                     <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#e0f2fe] text-[#1a6b8a] border border-[#bae6fd]">Menunggu Verifikasi Admin</span>
                                                 } else if(allReturned) {
@@ -2117,7 +2117,7 @@
                 steps.Add(new TrackingStep { Name = "Approval Manager", Status = firstItem.status == "REVISION_BY_MANAGER" ? "WARNING" : "PENDING", CompletedAt = firstItem.status == "REVISION_BY_MANAGER" ? firstItem.updated_at : null });
                 steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "PENDING" });
                 steps.Add(new TrackingStep { Name = "Dokumentasi User", Status = "PENDING" });
-            } else if (firstItem.status == "WAITING_HANDOVER") {
+            } else if (firstItem.status == "WAITING_HANDOVER" || firstItem.status == "WAITING_ADMIN_HANDOVER" || firstItem.status == "WAITING_HANDOVER_CONFIRM") {
                 steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE", CompletedAt = firstItem.updated_at });
                 steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE", CompletedAt = firstItem.updated_at });
                 steps.Add(new TrackingStep { Name = "Approval Manager", Status = "DONE", CompletedAt = firstItem.updated_at });
@@ -2170,7 +2170,7 @@
                 steps.Add(new TrackingStep { Name = "Approval Admin", Status = "WARNING", CompletedAt = firstItem.updated_at });
                 steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "PENDING" });
                 steps.Add(new TrackingStep { Name = "Pengembalian", Status = "PENDING" });
-            } else if (firstItem.status == "WAITING_HANDOVER" || firstItem.status == "WAITING_ADMIN_HANDOVER") {
+            } else if (firstItem.status == "WAITING_HANDOVER" || firstItem.status == "WAITING_ADMIN_HANDOVER" || firstItem.status == "WAITING_HANDOVER_CONFIRM") {
                 steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE", CompletedAt = firstItem.updated_at });
                 steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE", CompletedAt = firstItem.updated_at });
                 steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "ACTIVE" });

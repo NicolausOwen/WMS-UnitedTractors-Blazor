@@ -1,0 +1,299 @@
+@page "/MasterData/DamagedGoods"
+@using UT_WMSDotnet.Models
+@using WMS_UnitedTracors_Blazor.Services
+@inject TransactionService TransactionService
+@inject IJSRuntime JSRuntime
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+
+<PageTitle>WMS - Barang Rusak & Hilang</PageTitle>
+
+<div class="py-8 min-h-screen">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
+            <div>
+                <h2 class="font-semibold text-xl text-gray-800 leading-tight font-syne">
+                    Barang Rusak & Hilang
+                </h2>
+                <p class="text-sm text-gray-500 mt-1">Daftar pengembalian barang dengan kondisi rusak atau hilang.</p>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="bg-white p-5 rounded-xl border border-[#e5e3dc] shadow-sm mb-6 flex flex-col md:flex-row gap-4 items-end">
+            <div class="flex-1 w-full">
+                <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Pencarian</label>
+                <div class="relative">
+                    <input type="text" @bind="searchTerm" @bind:event="oninput" @onkeyup="HandleSearch" placeholder="Cari nama barang, peminjam, alasan..." 
+                           class="w-full pl-9 pr-4 py-2 bg-white border border-[#e5e3dc] rounded-lg text-[#1a1a1a] text-sm focus:border-[#e8a000] focus:ring-1 focus:ring-[#e8a000] outline-none transition-all">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                </div>
+            </div>
+            <div class="w-full md:w-48">
+                <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Status</label>
+                <select @bind="filterCategory" @bind:after="OnFilterChanged" class="w-full px-3 py-2 bg-white border border-[#e5e3dc] rounded-lg text-[#1a1a1a] text-sm focus:border-[#e8a000] focus:ring-1 focus:ring-[#e8a000] outline-none transition-all">
+                    <option value="">Semua Status</option>
+                    <option value="rusak">Rusak</option>
+                    <option value="hilang">Hilang</option>
+                </select>
+            </div>
+            <div class="w-full md:w-48">
+                <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Urutkan</label>
+                <select @bind="sortBy" @bind:after="OnFilterChanged" class="w-full px-3 py-2 bg-white border border-[#e5e3dc] rounded-lg text-[#1a1a1a] text-sm focus:border-[#e8a000] focus:ring-1 focus:ring-[#e8a000] outline-none transition-all">
+                    <option value="newest">Terbaru</option>
+                    <option value="oldest">Terlama</option>
+                    <option value="name_asc">Nama (A-Z)</option>
+                    <option value="name_desc">Nama (Z-A)</option>
+                </select>
+            </div>
+        </div>
+
+        @if (isLoading)
+        {
+            <div class="flex justify-center items-center py-16 bg-white rounded-xl border border-[#e5e3dc] shadow-sm">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[#e8a000]"></div>
+            </div>
+        }
+        else if (damagedGoods == null || !damagedGoods.Any())
+        {
+            <div class="px-6 py-16 text-center bg-white rounded-xl border border-[#e5e3dc] shadow-sm">
+                <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                </svg>
+                <h3 class="text-gray-800 font-medium mb-1">Tidak ada data</h3>
+                <p class="text-sm text-gray-500">Belum ada pengembalian barang rusak atau hilang.</p>
+            </div>
+        }
+        else
+        {
+            <div class="bg-transparent md:bg-white md:rounded-xl md:border md:border-[#e5e3dc] md:overflow-hidden md:shadow-sm">
+                <!-- Desktop Table View -->
+                <div class="hidden md:block overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-[#1a1a1a]">
+                                <th class="px-6 py-3.5 text-[0.68rem] font-bold tracking-wider uppercase text-[#c8c5bc]">Barang</th>
+                                <th class="px-6 py-3.5 text-[0.68rem] font-bold tracking-wider uppercase text-[#c8c5bc]">Peminjam</th>
+                                <th class="px-6 py-3.5 text-[0.68rem] font-bold tracking-wider uppercase text-[#c8c5bc] text-center">Qty</th>
+                                <th class="px-6 py-3.5 text-[0.68rem] font-bold tracking-wider uppercase text-[#c8c5bc] text-center">Status</th>
+                                <th class="px-6 py-3.5 text-[0.68rem] font-bold tracking-wider uppercase text-[#c8c5bc]">Alasan</th>
+                                <th class="px-6 py-3.5 text-[0.68rem] font-bold tracking-wider uppercase text-[#c8c5bc]">Tgl Kembali</th>
+                                <th class="px-6 py-3.5 text-[0.68rem] font-bold tracking-wider uppercase text-[#c8c5bc] text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-[#f0ede5]">
+                            @foreach (var item in damagedGoods)
+                            {
+                                var status = item.return_status == "rusak" || item.return_status == "hilang" ? item.return_status : item.return_condition;
+                                var isLost = status?.ToLower() == "hilang";
+
+                                <tr class="hover:bg-[#faf9f5] border-b border-[#f0ede5] transition-colors duration-100">
+                                    <td class="px-6 py-4">
+                                        <div class="font-semibold text-[#1a1a1a] text-sm">@(item.Product?.name ?? "-")</div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <div class="text-sm font-medium text-[#1a1a1a]">@(item.applicant_name ?? "-")</div>
+                                        <div class="text-xs text-gray-500">@(item.applicant_nrp ?? "-")</div>
+                                    </td>
+                                    <td class="px-6 py-4 text-center">
+                                        <span class="text-sm font-bold text-[#1a1a1a]">@(item.returned_quantity > 0 ? item.returned_quantity : item.pending_return_quantity)</span>
+                                    </td>
+                                    <td class="px-6 py-4 text-center">
+                                        <span class="px-2 py-1 text-[0.68rem] font-bold rounded-md @(isLost ? "bg-[#fef0f0] border border-[#f8c0c0] text-[#d94040]" : "bg-[#fff7e6] border border-[#ffe099] text-[#cc7a00]") uppercase">
+                                            @status
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <div class="text-sm text-gray-600 max-w-xs truncate" title="@item.return_reason">
+                                            @(string.IsNullOrEmpty(item.return_reason) ? "-" : item.return_reason)
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <div class="text-sm text-gray-600">
+                                            @(item.returned_at?.ToString("dd MMM yyyy") ?? "-")
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 text-center">
+                                        @if (!string.IsNullOrEmpty(item.return_photo))
+                                        {
+                                            <button @onclick="() => ShowPhoto(item.return_photo)" class="p-1.5 text-gray-500 hover:text-[#e8a000] bg-white border border-[#e5e3dc] rounded hover:bg-[#faf9f5] transition-colors" title="Lihat Foto">
+                                                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                                    <polyline points="21 15 16 10 5 21"></polyline>
+                                                </svg>
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-xs text-gray-400">-</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Mobile Card View -->
+                <div class="block md:hidden space-y-3">
+                    @foreach (var item in damagedGoods)
+                    {
+                        var status = item.return_status == "rusak" || item.return_status == "hilang" ? item.return_status : item.return_condition;
+                        var isLost = status?.ToLower() == "hilang";
+
+                        <div class="p-5 bg-white border border-[#e5e3dc] rounded-xl shadow-sm hover:shadow transition-shadow">
+                            <div class="flex justify-between items-start mb-3">
+                                <div>
+                                    <h4 class="text-sm font-semibold text-[#1a1a1a]">@(item.Product?.name ?? "-")</h4>
+                                    <div class="text-xs text-gray-500 mt-1">@(item.applicant_name ?? "-") (@(item.applicant_nrp ?? "-"))</div>
+                                </div>
+                                <span class="px-2 py-1 text-[0.68rem] font-bold rounded-md @(isLost ? "bg-[#fef0f0] border border-[#f8c0c0] text-[#d94040]" : "bg-[#fff7e6] border border-[#ffe099] text-[#cc7a00]") uppercase shrink-0">
+                                    @status
+                                </span>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-3 mb-3 text-sm border-t border-[#f0ede5] pt-3">
+                                <div>
+                                    <div class="text-[0.62rem] font-bold text-gray-400 uppercase tracking-wider">Qty</div>
+                                    <div class="font-bold text-[#1a1a1a]">@(item.returned_quantity > 0 ? item.returned_quantity : item.pending_return_quantity)</div>
+                                </div>
+                                <div>
+                                    <div class="text-[0.62rem] font-bold text-gray-400 uppercase tracking-wider">Tgl Kembali</div>
+                                    <div class="text-gray-700">@(item.returned_at?.ToString("dd MMM yyyy") ?? "-")</div>
+                                </div>
+                            </div>
+                            
+                            <div class="text-sm border-t border-[#f0ede5] pt-3 mb-3">
+                                <div class="text-[0.62rem] font-bold text-gray-400 uppercase tracking-wider">Alasan</div>
+                                <div class="text-gray-700 mt-1">@(string.IsNullOrEmpty(item.return_reason) ? "-" : item.return_reason)</div>
+                            </div>
+
+                            @if (!string.IsNullOrEmpty(item.return_photo))
+                            {
+                                <div class="border-t border-[#f0ede5] pt-3 flex justify-end">
+                                    <button @onclick="() => ShowPhoto(item.return_photo)" class="flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-[#3a3835] hover:text-[#1a1a1a] rounded bg-white border border-[#e5e3dc] hover:bg-[#f0ede5] transition cursor-pointer">
+                                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                            <polyline points="21 15 16 10 5 21"></polyline>
+                                        </svg>
+                                        Lihat Foto
+                                    </button>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+
+                @if (totalPages > 1)
+                {
+                    <div class="mt-4 md:mt-0 px-6 py-4 md:border-t md:border-[#e5e3dc] rounded-xl md:rounded-none flex justify-between items-center bg-white shadow-sm md:shadow-none">
+                        <span class="text-xs text-[#8a8880]">Halaman @currentPage dari @totalPages</span>
+                        <div class="flex gap-2">
+                            <button disabled="@(currentPage == 1)" @onclick="PrevPage" class="px-3 py-1 bg-white border border-[#e5e3dc] rounded text-sm disabled:opacity-50 hover:bg-gray-50 transition-colors">Prev</button>
+                            <button disabled="@(currentPage == totalPages)" @onclick="NextPage" class="px-3 py-1 bg-white border border-[#e5e3dc] rounded text-sm disabled:opacity-50 hover:bg-gray-50 transition-colors">Next</button>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@if (showPhotoModal)
+{
+    <div class="fixed inset-0 z-[999] bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm transition-opacity" @onclick="ClosePhotoModal">
+        <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full overflow-hidden transform transition-all" @onclick:stopPropagation>
+            <div class="flex items-center justify-between p-4 border-b border-[#e5e3dc] bg-[#faf9f5]">
+                <h3 class="text-[#1a1a1a] font-bold font-syne">Foto Pengembalian</h3>
+                <button @onclick="ClosePhotoModal" class="text-gray-400 hover:text-gray-700 bg-white border border-[#e5e3dc] rounded p-1 hover:bg-gray-50 transition-colors">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="p-4 flex justify-center bg-gray-50 min-h-[300px] items-center">
+                <img src="/@selectedPhotoUrl" alt="Foto Pengembalian" class="max-w-full max-h-[70vh] rounded shadow-sm object-contain" />
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<Transaction> damagedGoods = new();
+    private bool isLoading = true;
+    private string searchTerm = "";
+    private string filterCategory = ""; // "", "rusak", "hilang"
+    private string sortBy = "newest"; // "newest", "oldest", "name_asc", "name_desc"
+    private int currentPage = 1;
+    private int pageSize = 10;
+    private int totalPages = 1;
+
+    private bool showPhotoModal = false;
+    private string selectedPhotoUrl = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        isLoading = true;
+        
+        var result = await TransactionService.GetDamagedGoodsAsync(searchTerm, filterCategory, sortBy, currentPage, pageSize);
+        damagedGoods = result.items;
+        totalPages = result.totalPages;
+        
+        isLoading = false;
+    }
+
+    private async Task OnFilterChanged()
+    {
+        currentPage = 1;
+        await LoadData();
+    }
+
+    private async Task HandleSearch(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            currentPage = 1;
+            await LoadData();
+        }
+    }
+
+    private async Task NextPage()
+    {
+        if (currentPage < totalPages)
+        {
+            currentPage++;
+            await LoadData();
+        }
+    }
+
+    private async Task PrevPage()
+    {
+        if (currentPage > 1)
+        {
+            currentPage--;
+            await LoadData();
+        }
+    }
+
+    private void ShowPhoto(string url)
+    {
+        selectedPhotoUrl = url;
+        showPhotoModal = true;
+    }
+
+    private void ClosePhotoModal()
+    {
+        showPhotoModal = false;
+        selectedPhotoUrl = "";
+    }
+}
