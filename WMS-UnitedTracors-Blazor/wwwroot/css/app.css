@@ -305,3 +305,7 @@
     @apply bg-[#d94040] text-white hover:bg-[#b83535] focus:ring-[#fca5a5];
   }
 }
+
+.z-sticky {
+  z-index: 90 !important;
+}
