@@ -2117,7 +2117,7 @@
                 steps.Add(new TrackingStep { Name = "Approval Manager", Status = firstItem.status == "REVISION_BY_MANAGER" ? "WARNING" : "PENDING", CompletedAt = firstItem.status == "REVISION_BY_MANAGER" ? firstItem.updated_at : null });
                 steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "PENDING" });
                 steps.Add(new TrackingStep { Name = "Dokumentasi User", Status = "PENDING" });
-            } else if (firstItem.status == "WAITING_HANDOVER") {
+            } else if (firstItem.status == "WAITING_HANDOVER" || firstItem.status == "WAITING_ADMIN_HANDOVER" || firstItem.status == "WAITING_HANDOVER_CONFIRM") {
                 steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE", CompletedAt = firstItem.updated_at });
                 steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE", CompletedAt = firstItem.updated_at });
                 steps.Add(new TrackingStep { Name = "Approval Manager", Status = "DONE", CompletedAt = firstItem.updated_at });
@@ -2170,7 +2170,7 @@
                 steps.Add(new TrackingStep { Name = "Approval Admin", Status = "WARNING", CompletedAt = firstItem.updated_at });
                 steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "PENDING" });
                 steps.Add(new TrackingStep { Name = "Pengembalian", Status = "PENDING" });
-            } else if (firstItem.status == "WAITING_HANDOVER" || firstItem.status == "WAITING_ADMIN_HANDOVER") {
+            } else if (firstItem.status == "WAITING_HANDOVER" || firstItem.status == "WAITING_ADMIN_HANDOVER" || firstItem.status == "WAITING_HANDOVER_CONFIRM") {
                 steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE", CompletedAt = firstItem.updated_at });
                 steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE", CompletedAt = firstItem.updated_at });
                 steps.Add(new TrackingStep { Name = "Serah Terima Barang", Status = "ACTIVE" });
