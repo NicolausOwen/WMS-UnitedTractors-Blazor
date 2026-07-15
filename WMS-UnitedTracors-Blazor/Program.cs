@@ -129,13 +129,13 @@ app.MapPost("/api/auth/login", async (HttpContext context, [Microsoft.AspNetCore
         return Results.Redirect("/");
     }
     return Results.Redirect("/login?error=1");
-}).AllowAnonymous();
+}).AllowAnonymous().DisableAntiforgery();
 
 app.MapPost("/Logout", async (HttpContext context) =>
 {
     await Microsoft.AspNetCore.Authentication.AuthenticationHttpContextExtensions.SignOutAsync(context, Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme);
     return Results.Redirect("/login");
-}).AllowAnonymous();
+}).AllowAnonymous().DisableAntiforgery();
 
 app.MapGet("/auth/microsoft", () =>
 {
