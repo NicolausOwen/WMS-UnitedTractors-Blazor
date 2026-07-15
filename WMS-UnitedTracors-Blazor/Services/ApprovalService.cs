@@ -516,26 +516,31 @@ public class ApprovalService
             // sehingga tidak perlu transaksi manual + execution strategy yang rentan error.
             var qty = transaction.pending_return_quantity ?? 0;
             var stockBefore = transaction.Product.current_stock;
-            transaction.Product.current_stock += qty;
+            bool isDamagedOrLost = transaction.return_status == "rusak" || transaction.return_status == "hilang" || transaction.return_condition == "rusak" || transaction.return_condition == "hilang";
 
-            if (transaction.product_variant_id.HasValue)
+            if (!isDamagedOrLost)
             {
-                var variant = await _context.ProductVariants.FindAsync(transaction.product_variant_id.Value);
-                if (variant != null)
+                transaction.Product.current_stock += qty;
+
+                if (transaction.product_variant_id.HasValue)
                 {
-                    variant.stock += qty;
+                    var variant = await _context.ProductVariants.FindAsync(transaction.product_variant_id.Value);
+                    if (variant != null)
+                    {
+                        variant.stock += qty;
+                    }
                 }
-            }
 
-            _context.StockLogs.Add(new StockLog
-            {
-                transaction_id = transaction.id,
-                product_id = transaction.Product.id,
-                stock_before = stockBefore,
-                stock_after = transaction.Product.current_stock,
-                created_at = DateTime.UtcNow,
-                updated_at = DateTime.UtcNow
-            });
+                _context.StockLogs.Add(new StockLog
+                {
+                    transaction_id = transaction.id,
+                    product_id = transaction.Product.id,
+                    stock_before = stockBefore,
+                    stock_after = transaction.Product.current_stock,
+                    created_at = DateTime.UtcNow,
+                    updated_at = DateTime.UtcNow
+                });
+            }
 
             transaction.returned_quantity = (transaction.returned_quantity ?? 0) + qty;
             transaction.pending_return_quantity = 0;

@@ -620,29 +620,34 @@ public class TransactionService
             using var dbTransaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                var stockBefore = transaction.Product!.current_stock;
-                transaction.Product.current_stock += returnQty;
-                _context.Products.Update(transaction.Product);
-
-                if (transaction.product_variant_id.HasValue)
+                bool isDamagedOrLost = status == "rusak" || status == "hilang";
+                
+                if (!isDamagedOrLost)
                 {
-                    var variant = await _context.ProductVariants.FindAsync(transaction.product_variant_id.Value);
-                    if (variant != null)
+                    var stockBefore = transaction.Product!.current_stock;
+                    transaction.Product.current_stock += returnQty;
+                    _context.Products.Update(transaction.Product);
+
+                    if (transaction.product_variant_id.HasValue)
                     {
-                        variant.stock += returnQty;
-                        _context.ProductVariants.Update(variant);
+                        var variant = await _context.ProductVariants.FindAsync(transaction.product_variant_id.Value);
+                        if (variant != null)
+                        {
+                            variant.stock += returnQty;
+                            _context.ProductVariants.Update(variant);
+                        }
                     }
-                }
 
-                _context.StockLogs.Add(new StockLog
-                {
-                    transaction_id = transaction.id,
-                    product_id = transaction.Product.id,
-                    stock_before = stockBefore,
-                    stock_after = transaction.Product.current_stock,
-                    created_at = DateTime.UtcNow,
-                    updated_at = DateTime.UtcNow
-                });
+                    _context.StockLogs.Add(new StockLog
+                    {
+                        transaction_id = transaction.id,
+                        product_id = transaction.Product.id,
+                        stock_before = stockBefore,
+                        stock_after = transaction.Product.current_stock,
+                        created_at = DateTime.UtcNow,
+                        updated_at = DateTime.UtcNow
+                    });
+                }
 
                 transaction.returned_quantity = (transaction.returned_quantity ?? 0) + returnQty;
                 transaction.approver_id = adminId;
