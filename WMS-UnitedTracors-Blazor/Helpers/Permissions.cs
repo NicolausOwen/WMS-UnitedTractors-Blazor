@@ -21,6 +21,7 @@ public static class Permissions
     public const string DashboardView = "dashboard.view";
     public const string ProductsManage = "products.manage";
     public const string MasterDataManage = "masterdata.manage"; // kategori/lokasi/unit/divisi
+    public const string DamagedGoodsView = "damagedgoods.view";
     public const string ReportsView = "reports.view";
     public const string ScannerUse = "scanner.use";
     public const string UsersManage = "users.manage";
@@ -44,6 +45,7 @@ public static class Permissions
         new(DashboardView,    "Lihat Dashboard / Katalog",                 "Kelola Data", 110),
         new(ProductsManage,   "Kelola Produk",                             "Kelola Data", 120),
         new(MasterDataManage, "Kelola Master Data (Kategori/Lokasi/Unit/Divisi)", "Kelola Data", 130),
+        new(DamagedGoodsView, "Lihat Barang Rusak",                        "Kelola Data", 135),
         new(ReportsView,      "Lihat Laporan",                             "Kelola Data", 140),
         new(ScannerUse,       "Gunakan Scanner",                           "Kelola Data", 150),
         new(UsersManage,      "Kelola User",                               "Kelola Data", 160),
@@ -88,7 +90,7 @@ public static class Permissions
         {
             RequestCreate, TrackingView, ApprovalStage1, ApprovalStage2, ApprovalReturn,
             ApprovalHandover, ApprovalHandoverFinal, ApprovalManager, SettingsGeneral,
-            DashboardView, ProductsManage, MasterDataManage, ReportsView, ScannerUse
+            DashboardView, ProductsManage, MasterDataManage, DamagedGoodsView, ReportsView, ScannerUse
         },
         "manager" => new[] { DashboardView, TrackingView, ApprovalManager, ReportsView },
         "staff" => new[] { DashboardView, RequestCreate, TrackingView },
