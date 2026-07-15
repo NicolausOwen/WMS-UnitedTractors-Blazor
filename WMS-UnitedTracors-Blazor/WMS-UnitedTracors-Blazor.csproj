@@ -8,7 +8,7 @@
     <AssemblyName>$(AssemblyName.Replace(' ', '_'))</AssemblyName>
     <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
     <NoWarn>NU1608</NoWarn>
-    <DefaultItemExcludes>$(DefaultItemExcludes);scratch\**</DefaultItemExcludes>
+    <DefaultItemExcludes>$(DefaultItemExcludes);scratch\**;wwwroot\storage\**</DefaultItemExcludes>
   </PropertyGroup>
 
   <ItemGroup>
@@ -26,6 +26,8 @@
     <!-- Exclude storage directory completely from MSBuild tracking to prevent dotnet watch hot reload crashes -->
     <Content Remove="wwwroot/storage/**" />
     <None Remove="wwwroot/storage/**" />
+    <Watch Remove="wwwroot\storage\**" />
+    <Content Update="wwwroot\storage\**" Watch="false" />
   </ItemGroup>
 
   <ItemGroup>

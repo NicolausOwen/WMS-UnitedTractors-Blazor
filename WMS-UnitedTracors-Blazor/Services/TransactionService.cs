@@ -727,20 +727,25 @@ public class TransactionService
         }
 
         List<string> photoPaths = existingPhotos != null ? new List<string>(existingPhotos) : new List<string>();
+        
+        async Task<string> SavePhotoAsync(Microsoft.AspNetCore.Components.Forms.IBrowserFile photo, string uploadDir)
+        {
+            var fileName = Guid.NewGuid().ToString() + Path.GetExtension(photo.Name);
+            var filePath = Path.Combine(uploadDir, fileName);
+            using var fileStream = new FileStream(filePath, FileMode.Create);
+            await photo.OpenReadStream(MaxUploadBytes).CopyToAsync(fileStream);
+            return "storage/handovers/" + fileName;
+        }
+
         try
         {
             var uploads = Path.Combine(_env.WebRootPath, "storage", "handovers");
             if (!Directory.Exists(uploads)) Directory.CreateDirectory(uploads);
             if (photos != null && photos.Count > 0)
             {
-                foreach (var photo in photos)
-                {
-                    var fileName = Guid.NewGuid().ToString() + Path.GetExtension(photo.Name);
-                    var filePath = Path.Combine(uploads, fileName);
-                    using var fileStream = new FileStream(filePath, FileMode.Create);
-                    await photo.OpenReadStream(MaxUploadBytes).CopyToAsync(fileStream);
-                    photoPaths.Add("storage/handovers/" + fileName);
-                }
+                var tasks = photos.Select(p => SavePhotoAsync(p, uploads)).ToList();
+                var uploadedPaths = await Task.WhenAll(tasks);
+                photoPaths.AddRange(uploadedPaths);
             }
         }
         catch (Exception ex)
@@ -925,6 +930,16 @@ public class TransactionService
             return "Maksimal 5 file dokumentasi.";
 
         var photoPaths = new List<string>();
+        
+        async Task<string> SaveDocPhotoAsync(Microsoft.AspNetCore.Components.Forms.IBrowserFile photo, string uploadDir)
+        {
+            var fileName = Guid.NewGuid() + Path.GetExtension(photo.Name);
+            var filePath = Path.Combine(uploadDir, fileName);
+            using var fileStream = new FileStream(filePath, FileMode.Create);
+            await photo.OpenReadStream(MaxUploadBytes).CopyToAsync(fileStream);
+            return "storage/documentation/" + fileName;
+        }
+
         try
         {
             var uploads = Path.Combine(_env.WebRootPath, "storage", "documentation");
@@ -934,13 +949,11 @@ public class TransactionService
             {
                 var uploadError = ValidateUploadFile(photo);
                 if (uploadError != null) return uploadError;
-
-                var fileName = Guid.NewGuid() + Path.GetExtension(photo.Name);
-                var filePath = Path.Combine(uploads, fileName);
-                using var fileStream = new FileStream(filePath, FileMode.Create);
-                await photo.OpenReadStream(MaxUploadBytes).CopyToAsync(fileStream);
-                photoPaths.Add("storage/documentation/" + fileName);
             }
+
+            var tasks = photos.Select(p => SaveDocPhotoAsync(p, uploads)).ToList();
+            var uploadedPaths = await Task.WhenAll(tasks);
+            photoPaths.AddRange(uploadedPaths);
         }
         catch (Exception ex)
         {

@@ -611,7 +611,17 @@
     {
         selectedImages = e.GetMultipleFiles(10);
         imagePreviews.Clear();
+        var tasks = new List<Task>();
         foreach (var file in selectedImages)
+        {
+            tasks.Add(LoadImagePreviewAsync(file));
+        }
+        await Task.WhenAll(tasks);
+    }
+
+    private async Task LoadImagePreviewAsync(Microsoft.AspNetCore.Components.Forms.IBrowserFile file)
+    {
+        try
         {
             var format = "image/jpeg";
             var resizedImageFile = await file.RequestImageFileAsync(format, 400, 400);
@@ -619,6 +629,7 @@
             await resizedImageFile.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024).CopyToAsync(ms);
             imagePreviews.Add($"data:{format};base64,{Convert.ToBase64String(ms.ToArray())}");
         }
+        catch { }
     }
 
     private void RemoveExistingImage(string imagePath)
