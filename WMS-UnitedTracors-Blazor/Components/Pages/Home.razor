@@ -40,11 +40,11 @@
                         <p class="text-[0.6rem] font-semibold text-[#7a3d00]/80 uppercase tracking-widest">Selamat datang kembali 👋</p>
                         <h2 class="text-xl font-extrabold font-syne leading-tight mt-0.5 drop-shadow-sm text-[#92400e]">@ApplicantName</h2>
                     </div>
-                    <div class="w-10 h-10 rounded-full bg-[#f7f7f7] text-[#7a3d00] flex items-center justify-center shadow-sm">
+                    <a href="Profile" class="w-10 h-10 rounded-full bg-[#f7f7f7] hover:bg-gray-200 text-[#7a3d00] flex items-center justify-center shadow-sm transition-colors cursor-pointer">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                         </svg>
-                    </div>
+                    </a>
                 </div>
 
                 @* Sisa Kredit *@
@@ -273,29 +273,8 @@
             }
         </div>
     
-    @* Quick Actions *@
-    <div class="@(IsStaffOrUser ? "hidden md:flex" : "flex") flex-wrap items-center gap-3 mb-8">
-        <a href="/Catalog/Borrow" class="inline-flex items-center gap-2 px-[1.1rem] py-[0.6rem] bg-[#1a1a1a] hover:bg-[#333333] active:scale-[0.98] text-white text-[0.75rem] font-bold tracking-[0.06em] uppercase rounded-lg transition">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
-            Katalog Pinjam
-        </a>
-        <a href="/Catalog/Giveaway" class="inline-flex items-center gap-2 px-[1.1rem] py-[0.6rem] bg-[#1a1a1a] hover:bg-[#333333] active:scale-[0.98] text-white text-[0.75rem] font-bold tracking-[0.06em] uppercase rounded-lg transition">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-            Redeem Credit
-        </a>
-        @if (userPrincipal.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.TrackingView)) {
-        <a href="Tracking" class="inline-flex items-center gap-2 px-[1.1rem] py-[0.6rem] bg-[#1a1a1a] hover:bg-[#333333] active:scale-[0.98] text-white text-[0.75rem] font-bold tracking-[0.06em] uppercase rounded-lg transition">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
-            Return Item
-        </a>
-        }
-        @if (userPrincipal.HasAnyPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalStage1, WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalStage2, WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalManager)) {
-        <a href="Approval" class="inline-flex items-center gap-2 px-[1.1rem] py-[0.6rem] bg-[#1a1a1a] hover:bg-[#333333] active:scale-[0.98] text-white text-[0.75rem] font-bold tracking-[0.06em] uppercase rounded-lg transition">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
-            Review Approvals
-        </a>
-        }
-    </div>
+
+
 
     @if (userPrincipal.HasAnyPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalStage1, WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalStage2, WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalManager))
     {

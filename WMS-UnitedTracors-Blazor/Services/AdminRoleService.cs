@@ -55,7 +55,11 @@ public class AdminRoleService
         var dtoList = new List<AdminRoleDto>();
         foreach (var role in roles)
         {
-            int totalUser = await _context.UserAdminRoles.CountAsync(uar => uar.AdminRoleId == role.Id);
+            int totalUser = await _context.UserAdminRoles
+                .Where(uar => uar.AdminRoleId == role.Id)
+                .Select(uar => uar.UserId)
+                .Distinct()
+                .CountAsync();
             
             dtoList.Add(new AdminRoleDto
             {
@@ -80,7 +84,11 @@ public class AdminRoleService
         var role = await _context.AdminRoles.FindAsync(id);
         if (role == null) return null;
 
-        int totalUser = await _context.UserAdminRoles.CountAsync(uar => uar.AdminRoleId == role.Id);
+        int totalUser = await _context.UserAdminRoles
+            .Where(uar => uar.AdminRoleId == role.Id)
+            .Select(uar => uar.UserId)
+            .Distinct()
+            .CountAsync();
 
         return new AdminRoleDto
         {
@@ -253,6 +261,115 @@ public class AdminRoleService
         if (mapping == null) return "User tidak terasosiasi dengan Role dan Kategori ini.";
 
         _context.UserAdminRoles.Remove(mapping);
+        await _context.SaveChangesAsync();
+        return null;
+    }
+
+    /// <summary>
+    /// Edit category assignment for an already-assigned user.
+    /// Removes the old assignment and creates the new one(s) atomically.
+    /// </summary>
+    public async Task<string?> UpdateUserCategoryInRoleAsync(Guid roleId, int userId, int? oldCategoryId, List<int>? newCategoryIds, string updatedBy)
+    {
+        using var _context = _factory.CreateDbContext();
+
+        // Remove the existing assignment
+        var existing = await _context.UserAdminRoles
+            .FirstOrDefaultAsync(uar => uar.AdminRoleId == roleId && uar.UserId == userId && uar.CategoryId == oldCategoryId);
+        if (existing != null)
+            _context.UserAdminRoles.Remove(existing);
+
+        // Create the new assignment(s)
+        if (newCategoryIds == null || !newCategoryIds.Any())
+        {
+            // Global (no category restriction)
+            _context.UserAdminRoles.Add(new UserAdminRole
+            {
+                Id = Guid.NewGuid(),
+                AdminRoleId = roleId,
+                UserId = userId,
+                CategoryId = null,
+                CreatedAt = DateTime.UtcNow,
+                CreatedBy = updatedBy
+            });
+        }
+        else
+        {
+            foreach (var catId in newCategoryIds)
+            {
+                _context.UserAdminRoles.Add(new UserAdminRole
+                {
+                    Id = Guid.NewGuid(),
+                    AdminRoleId = roleId,
+                    UserId = userId,
+                    CategoryId = catId,
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedBy = updatedBy
+                });
+            }
+        }
+
+        await _context.SaveChangesAsync();
+        return null;
+    }
+
+    /// <summary>Removes ALL category assignments for a given user from a role.</summary>
+    public async Task<string?> RemoveAllUserAssignmentsFromRoleAsync(Guid roleId, int userId)
+    {
+        using var _context = _factory.CreateDbContext();
+        var mappings = await _context.UserAdminRoles
+            .Where(uar => uar.AdminRoleId == roleId && uar.UserId == userId)
+            .ToListAsync();
+        if (!mappings.Any()) return "User tidak terasosiasi dengan Role ini.";
+
+        _context.UserAdminRoles.RemoveRange(mappings);
+        await _context.SaveChangesAsync();
+        return null;
+    }
+
+    /// <summary>
+    /// Replaces ALL category assignments for a user in one atomic operation:
+    /// removes every existing entry then inserts the new selection.
+    /// </summary>
+    public async Task<string?> ReplaceUserAssignmentsInRoleAsync(Guid roleId, int userId, List<int>? newCategoryIds, string updatedBy)
+    {
+        using var _context = _factory.CreateDbContext();
+
+        // Remove all existing
+        var existing = await _context.UserAdminRoles
+            .Where(uar => uar.AdminRoleId == roleId && uar.UserId == userId)
+            .ToListAsync();
+        _context.UserAdminRoles.RemoveRange(existing);
+
+        // Insert new
+        if (newCategoryIds == null || !newCategoryIds.Any())
+        {
+            _context.UserAdminRoles.Add(new UserAdminRole
+            {
+                Id = Guid.NewGuid(),
+                AdminRoleId = roleId,
+                UserId = userId,
+                CategoryId = null,
+                CreatedAt = DateTime.UtcNow,
+                CreatedBy = updatedBy
+            });
+        }
+        else
+        {
+            foreach (var catId in newCategoryIds)
+            {
+                _context.UserAdminRoles.Add(new UserAdminRole
+                {
+                    Id = Guid.NewGuid(),
+                    AdminRoleId = roleId,
+                    UserId = userId,
+                    CategoryId = catId,
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedBy = updatedBy
+                });
+            }
+        }
+
         await _context.SaveChangesAsync();
         return null;
     }
