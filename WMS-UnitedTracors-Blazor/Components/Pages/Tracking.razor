@@ -617,24 +617,7 @@
                                             var handoverFiles = TransactionService.ParseStoredFiles(firstItem.handover_photo);
                                             <div class="p-4 bg-white rounded-xl border border-[#e5e3dc] shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                                                 <div class="flex items-start gap-4">
-                                                    <div class="grid grid-cols-2 gap-2 shrink-0">
-                                                        @foreach (var handoverFile in handoverFiles.Take(4))
-                                                        {
-                                                            var handoverPhotoSrc = ImageHelper.Resolve(handoverFile);
-                                                            @if (handoverFile.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
-                                                            {
-                                                                <a href="@handoverPhotoSrc" target="_blank" class="block w-20 h-20 rounded border border-gray-200 overflow-hidden bg-red-50 flex items-center justify-center hover:opacity-95 transition cursor-pointer" title="Klik untuk membuka dokumen">
-                                                                    <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                                                                </a>
-                                                            }
-                                                            else
-                                                            {
-                                                                <a href="@handoverPhotoSrc" data-image-popup class="block w-20 h-20 rounded border border-gray-200 overflow-hidden bg-gray-50 hover:opacity-95 transition cursor-pointer" title="Klik untuk memperbesar foto bukti">
-                                                                    <img src="@handoverPhotoSrc" alt="Bukti Serah Terima" class="w-full h-full object-cover">
-                                                                </a>
-                                                            }
-                                                        }
-                                                    </div>
+                                                    <!-- Foto telah dipindah ke masing-masing item -->
                                                     <div>
                                                         <div class="flex items-center gap-2 mb-1">
                                                             <h4 class="text-xs font-bold text-gray-900 tracking-wider uppercase">Bukti Serah Terima</h4>
