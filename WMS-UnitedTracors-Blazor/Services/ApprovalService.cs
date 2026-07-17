@@ -70,29 +70,7 @@ public class ApprovalService
 
         var transactions = await query.ToListAsync();
 
-        bool isSuper = string.Equals(userRole, "superadmin", StringComparison.OrdinalIgnoreCase) || 
-                       string.Equals(userRole, "Super Admin", StringComparison.OrdinalIgnoreCase);
 
-        if (!isSuper && perms.Contains(Permissions.ApprovalStage2))
-        {
-            transactions = transactions.Where(t => {
-                if (t.status == WorkflowStatuses.PendingAdmin || (t.request_type == "BORROW" && t.status == WorkflowStatuses.Pending))
-                {
-                    var categoryName = t.Product?.Category?.name;
-                    bool isElektronik = string.Equals(categoryName, "Elektronik", StringComparison.OrdinalIgnoreCase);
-                    
-                    if (isElektronik)
-                    {
-                        return string.Equals(userRole, "PIC Studio", StringComparison.OrdinalIgnoreCase);
-                    }
-                    else
-                    {
-                        return string.Equals(userRole, "Team Leader Infrastructure", StringComparison.OrdinalIgnoreCase);
-                    }
-                }
-                return true;
-            }).ToList();
-        }
 
         var groupedApprovals = transactions
             .GroupBy(t => $"{t.created_at:yyyy-MM-dd HH:mm}_{t.requester_id}_{t.applicant_name}")
@@ -218,6 +196,7 @@ public class ApprovalService
             if (sendNotification)
             {
                 await NotifyBatchResultAsync(new List<(Transaction, string, string?)> { (transaction, "APPROVE", null) });
+                await NotifyNextApproversAsync(_context, transaction, WorkflowStatuses.PendingAdmin);
             }
             return null;
         }
@@ -500,7 +479,10 @@ public class ApprovalService
     public async Task<string?> ApproveReturnAsync(int id, int currentUserId, string? userRole)
     {
         using var _context = _factory.CreateDbContext();
-        var transaction = await _context.Transactions.Include(t => t.Product).FirstOrDefaultAsync(t => t.id == id);
+        var transaction = await _context.Transactions
+            .Include(t => t.Product)
+                .ThenInclude(p => p.Category)
+            .FirstOrDefaultAsync(t => t.id == id);
         if (transaction == null) return "Transaction not found.";
 
         var perms = await ResolvePermsAsync(_context, currentUserId);
@@ -557,8 +539,12 @@ public class ApprovalService
             // Kirim notifikasi email ke Admin (TL / PIC Studio)
             try
             {
+                var categoryName = transaction.Product?.Category?.name;
+                bool isElektronik = string.Equals(categoryName, "Elektronik", StringComparison.OrdinalIgnoreCase);
+                var targetRole = isElektronik ? "PIC Studio" : "Team Leader Infrastructure";
+
                 var admins = await _context.Users
-                    .Where(u => u.role == "Team Leader Infrastructure" || u.role == "PIC Studio" || u.role == "admin")
+                    .Where(u => u.role == targetRole)
                     .Select(u => u.email)
                     .ToListAsync();
 
@@ -797,24 +783,6 @@ public class ApprovalService
                            (transaction.status == WorkflowStatuses.PendingManager && perms.Contains(Permissions.ApprovalManager));
             if (!allowed) return false;
 
-            if (transaction.status == WorkflowStatuses.PendingAdmin)
-            {
-                bool isSuper = string.Equals(userRole, "superadmin", StringComparison.OrdinalIgnoreCase) || 
-                               string.Equals(userRole, "Super Admin", StringComparison.OrdinalIgnoreCase);
-                if (!isSuper)
-                {
-                    var categoryName = transaction.Product?.Category?.name;
-                    bool isElektronik = string.Equals(categoryName, "Elektronik", StringComparison.OrdinalIgnoreCase);
-                    if (isElektronik)
-                    {
-                        return string.Equals(userRole, "PIC Studio", StringComparison.OrdinalIgnoreCase);
-                    }
-                    else
-                    {
-                        return string.Equals(userRole, "Team Leader Infrastructure", StringComparison.OrdinalIgnoreCase);
-                    }
-                }
-            }
             return true;
         }
 
@@ -828,39 +796,23 @@ public class ApprovalService
 
         if (!canApproveBase) return false;
 
-        if (isPendingStage2 && transaction.status != WorkflowStatuses.PendingStaffInventory)
-        {
-            bool isSuper = string.Equals(userRole, "superadmin", StringComparison.OrdinalIgnoreCase) || 
-                           string.Equals(userRole, "Super Admin", StringComparison.OrdinalIgnoreCase);
-            if (!isSuper)
-            {
-                var categoryName = transaction.Product?.Category?.name;
-                bool isElektronik = string.Equals(categoryName, "Elektronik", StringComparison.OrdinalIgnoreCase);
-                if (isElektronik)
-                {
-                    return string.Equals(userRole, "PIC Studio", StringComparison.OrdinalIgnoreCase);
-                }
-                else
-                {
-                    return string.Equals(userRole, "Team Leader Infrastructure", StringComparison.OrdinalIgnoreCase);
-                }
-            }
-        }
-
         return true;
     }
 
     private async Task<string?> ApproveGiveawayAsync(ApplicationDbContext _context, Transaction transaction, string? notes, int currentUserId, HashSet<string> perms, bool sendNotification = true)
     {
+        string? nextStage = null;
         switch (transaction.status)
         {
             case WorkflowStatuses.PendingStaffInventory when perms.Contains(Permissions.ApprovalStage1):
                 transaction.status = WorkflowStatuses.PendingAdmin;
                 transaction.staff_inventory_notes = notes;
+                nextStage = WorkflowStatuses.PendingAdmin;
                 break;
             case WorkflowStatuses.PendingAdmin when perms.Contains(Permissions.ApprovalStage2):
                 transaction.status = WorkflowStatuses.PendingManager;
                 transaction.admin_notes = notes;
+                nextStage = WorkflowStatuses.PendingManager;
                 break;
             case WorkflowStatuses.PendingManager when perms.Contains(Permissions.ApprovalManager):
                 transaction.status = WorkflowStatuses.WaitingHandover;
@@ -880,6 +832,10 @@ public class ApprovalService
         if (sendNotification)
         {
             await NotifyBatchResultAsync(new List<(Transaction, string, string?)> { (transaction, "APPROVE", null) });
+            if (nextStage != null)
+            {
+                await NotifyNextApproversAsync(_context, transaction, nextStage);
+            }
         }
 
         return null;
@@ -899,6 +855,53 @@ public class ApprovalService
         {
             var htmlMessage = GetEmailTemplate(subject, message);
             await _emailService.SendEmailAsync(requesterEmail, subject, htmlMessage);
+        }
+    }
+
+    private async Task NotifyNextApproversAsync(ApplicationDbContext context, Transaction transaction, string nextStage)
+    {
+        var emails = new List<string>();
+        
+        if (nextStage == WorkflowStatuses.PendingAdmin)
+        {
+            var categoryName = transaction.Product?.Category?.name;
+            bool isElektronik = string.Equals(categoryName, "Elektronik", StringComparison.OrdinalIgnoreCase);
+            var targetRole = isElektronik ? "PIC Studio" : "Team Leader Infrastructure";
+
+            emails = await context.Users
+                .Where(u => u.role == targetRole)
+                .Select(u => u.email)
+                .Where(e => !string.IsNullOrEmpty(e))
+                .ToListAsync();
+        }
+        else if (nextStage == WorkflowStatuses.PendingManager)
+        {
+            emails = await context.Users
+                .Where(u => u.role == "manager")
+                .Select(u => u.email)
+                .Where(e => !string.IsNullOrEmpty(e))
+                .ToListAsync();
+        }
+
+        if (emails.Any())
+        {
+            var productName = transaction.Product?.name ?? "Barang";
+            var eventName = transaction.event_name ?? "Tanpa Nama Event";
+            var applicant = transaction.applicant_name ?? "User";
+            
+            string mailTitle = "Notifikasi Persetujuan Request WMS";
+            string mailMessage = $"Ada request baru yang membutuhkan persetujuan Anda.<br/><br/>" +
+                                 $"<strong>Event:</strong> {eventName}<br/>" +
+                                 $"<strong>Pemohon:</strong> {applicant}<br/>" +
+                                 $"<strong>Barang:</strong> {productName} ({transaction.quantity} unit)<br/><br/>" +
+                                 $"Silakan login ke sistem WMS untuk melakukan persetujuan pada menu Approval.";
+                                 
+            string html = GetEmailTemplate(mailTitle, mailMessage);
+            var validEmails = emails.Where(e => !string.IsNullOrWhiteSpace(e)).Distinct().ToList();
+            if (validEmails.Any())
+            {
+                _ = _emailService.SendEmailToMultipleAsync(validEmails, "Notifikasi Persetujuan Request (WMS UT)", html);
+            }
         }
     }
 

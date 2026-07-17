@@ -1,4 +1,4 @@
-﻿@page "/MasterData/RoleAdmin/{Id:guid}"
+@page "/MasterData/RoleAdmin/{Id:guid}"
 @using UT_WMSDotnet.ViewModels
 @using WMS_UnitedTracors_Blazor.Services
 @inject AdminRoleService AdminRoleService
@@ -225,10 +225,18 @@
                                 }
                                 else
                                 {
+                                    var grouped = AssignedUsers
+                                        .GroupBy(u => u.Id)
+                                        .Select(g => new {
+                                            User = g.First(),
+                                            AllAssignments = g.ToList()
+                                        })
+                                        .ToList();
                                     int index = 0;
-                                    foreach (var user in AssignedUsers)
+                                    foreach (var grp in grouped)
                                     {
                                         index++;
+                                        var user = grp.User;
                                         <tr class="hover:bg-[#faf9f5] border-b border-[#f0ede5] transition-colors duration-100">
                                             <td class="px-6 py-4 text-xs text-gray-400 align-middle">@index</td>
                                             <td class="px-6 py-4 text-xs font-semibold text-[#1a1a1a] align-middle">@user.Name</td>
@@ -236,24 +244,80 @@
                                             <td class="px-6 py-4 text-xs text-gray-600 align-middle">@user.Email</td>
                                             <td class="px-6 py-4 text-xs text-gray-600 align-middle">@(user.DivisionName ?? "--")</td>
                                             <td class="px-6 py-4 text-xs text-gray-600 align-middle">
-                                                @if (user.CategoryId.HasValue)
+                                                @if (EditingUserId == user.Id)
                                                 {
-                                                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-bold bg-[#eef9f0] border border-[#b8e8c0] text-[#1a7a30] text-[10px]">
-                                                        @user.CategoryName
-                                                    </span>
+                                                    @* Inline edit form – all categories for this user *@
+                                                    <div class="flex flex-col gap-1.5">
+                                                        <label class="flex items-center gap-1.5 text-[10px] font-semibold text-gray-700 cursor-pointer">
+                                                            <input type="checkbox"
+                                                                   checked="@EditingCategoryIds.Contains(0)"
+                                                                   @onchange="(e) => ToggleEditCategory(0, e.Value)" />
+                                                            All Categories (Global)
+                                                        </label>
+                                                        @if (Categories != null)
+                                                        {
+                                                            foreach (var cat in Categories)
+                                                            {
+                                                                var catId = cat.Id;
+                                                                <label class="flex items-center gap-1.5 text-[10px] font-semibold text-gray-700 cursor-pointer">
+                                                                    <input type="checkbox"
+                                                                           checked="@EditingCategoryIds.Contains(catId)"
+                                                                           @onchange="(e) => ToggleEditCategory(catId, e.Value)" />
+                                                                    @cat.Name
+                                                                </label>
+                                                            }
+                                                        }
+                                                    </div>
                                                 }
                                                 else
                                                 {
-                                                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-bold bg-[#f5f4f0] border border-[#e5e3dc] text-gray-600 text-[10px]">
-                                                        All Categories (Global)
-                                                    </span>
+                                                    @* Show all assigned category badges in one row *@
+                                                    <div class="flex flex-wrap gap-1">
+                                                        @foreach (var assignment in grp.AllAssignments)
+                                                        {
+                                                            @if (assignment.CategoryId.HasValue)
+                                                            {
+                                                                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-bold bg-[#eef9f0] border border-[#b8e8c0] text-[#1a7a30] text-[10px]">
+                                                                    @assignment.CategoryName
+                                                                </span>
+                                                            }
+                                                            else
+                                                            {
+                                                                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-bold bg-[#f5f4f0] border border-[#e5e3dc] text-gray-600 text-[10px]">
+                                                                    All Categories (Global)
+                                                                </span>
+                                                            }
+                                                        }
+                                                    </div>
                                                 }
                                             </td>
                                             <td class="px-6 py-4 text-right align-middle">
-                                                <button type="button" @onclick="() => RemoveUser(user)"
-                                                        class="text-[10px] font-bold text-[#d94040] hover:text-[#b83535] px-2.5 py-1 rounded bg-[#fef0f0] border border-[#f8c0c0] hover:bg-[#fee2e2] transition cursor-pointer">
-                                                    Remove
-                                                </button>
+                                                @if (EditingUserId == user.Id)
+                                                {
+                                                    <div class="flex items-center justify-end gap-1.5">
+                                                        <button type="button" @onclick="SaveEditUser"
+                                                                class="text-[10px] font-bold text-white px-2.5 py-1 rounded bg-[#1a7a30] hover:bg-[#155e25] border border-[#1a7a30] transition cursor-pointer">
+                                                            Save
+                                                        </button>
+                                                        <button type="button" @onclick="CloseEditRow"
+                                                                class="text-[10px] font-bold text-gray-600 px-2.5 py-1 rounded bg-[#f5f4f0] border border-[#e5e3dc] hover:bg-[#eae8e0] transition cursor-pointer">
+                                                            Cancel
+                                                        </button>
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <div class="flex items-center justify-end gap-1.5">
+                                                        <button type="button" @onclick="() => OpenEditRow(grp.AllAssignments)"
+                                                                class="text-[10px] font-bold text-[#1a6b8a] hover:text-[#145878] px-2.5 py-1 rounded bg-[#e0f2fe] border border-[#bae6fd] hover:bg-[#bae6fd] transition cursor-pointer">
+                                                            Edit
+                                                        </button>
+                                                        <button type="button" @onclick="() => RemoveUser(user)"
+                                                                class="text-[10px] font-bold text-[#d94040] hover:text-[#b83535] px-2.5 py-1 rounded bg-[#fef0f0] border border-[#f8c0c0] hover:bg-[#fee2e2] transition cursor-pointer">
+                                                            Remove
+                                                        </button>
+                                                    </div>
+                                                }
                                             </td>
                                         </tr>
                                     }
@@ -280,6 +344,11 @@
     private int SelectedUserIdToAssign = 0;
     private List<int> SelectedCategoryIdsToAssign = new() { 0 };
     private string? AssignErrorMessage;
+
+    // ── Inline Edit State ──
+    private int EditingUserId = 0;
+    private List<int> EditingCategoryIds = new() { 0 };
+    private string? EditErrorMessage;
 
     private HashSet<string> SelectedPermissions = new();
     private string? PermSavedMessage;
@@ -391,11 +460,11 @@
     private async Task RemoveUser(UserAssignmentDto user)
     {
         AssignErrorMessage = null;
-        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Apakah Anda yakin ingin menghapus User \"{user.Name}\" dari Role ini?");
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Apakah Anda yakin ingin menghapus User \"{user.Name}\" dari Role ini? Semua assignment kategorinya akan dihapus.");
         
         if (confirmed)
         {
-            var error = await AdminRoleService.RemoveUserFromRoleAsync(Id, user.Id, user.CategoryId);
+            var error = await AdminRoleService.RemoveAllUserAssignmentsFromRoleAsync(Id, user.Id);
             if (error != null)
             {
                 AssignErrorMessage = error;
@@ -404,6 +473,89 @@
             {
                 await LoadRoleData();
             }
+        }
+    }
+
+    private void OpenEditRow(List<UserAssignmentDto> assignments)
+    {
+        var first = assignments.First();
+        EditingUserId = first.Id;
+        EditErrorMessage = null;
+        // Pre-populate from ALL current assignments for this user
+        var hasGlobal = assignments.Any(a => !a.CategoryId.HasValue);
+        if (hasGlobal)
+        {
+            EditingCategoryIds = new List<int> { 0 };
+        }
+        else
+        {
+            EditingCategoryIds = assignments
+                .Where(a => a.CategoryId.HasValue)
+                .Select(a => a.CategoryId!.Value)
+                .ToList();
+        }
+    }
+
+    private void CloseEditRow()
+    {
+        EditingUserId = 0;
+        EditingCategoryIds = new List<int> { 0 };
+        EditErrorMessage = null;
+    }
+
+    private void ToggleEditCategory(int categoryId, object? isCheckedObj)
+    {
+        bool isChecked = isCheckedObj is bool b && b;
+        if (categoryId == 0)
+        {
+            if (isChecked)
+            {
+                EditingCategoryIds.Clear();
+                EditingCategoryIds.Add(0);
+            }
+            else
+            {
+                EditingCategoryIds.Remove(0);
+            }
+        }
+        else
+        {
+            if (isChecked)
+            {
+                EditingCategoryIds.Remove(0);
+                if (!EditingCategoryIds.Contains(categoryId))
+                    EditingCategoryIds.Add(categoryId);
+            }
+            else
+            {
+                EditingCategoryIds.Remove(categoryId);
+            }
+        }
+    }
+
+    private async Task SaveEditUser()
+    {
+        if (EditingUserId == 0) return;
+        EditErrorMessage = null;
+
+        List<int>? newCategoryIds = null;
+        if (!EditingCategoryIds.Contains(0) && EditingCategoryIds.Any())
+        {
+            newCategoryIds = EditingCategoryIds.ToList();
+        }
+
+        // Full replace: remove all old assignments for this user then create new ones
+        var error = await AdminRoleService.ReplaceUserAssignmentsInRoleAsync(
+            Id, EditingUserId, newCategoryIds, CurrentUsername);
+
+        if (error != null)
+        {
+            EditErrorMessage = error;
+        }
+        else
+        {
+            CloseEditRow();
+            await LoadRoleData();
         }
     }
 

@@ -1,8 +1,11 @@
 @page "/MasterData/DamagedGoods"
 @using UT_WMSDotnet.Models
 @using WMS_UnitedTracors_Blazor.Services
+@inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Navigation
 @inject TransactionService TransactionService
 @inject IJSRuntime JSRuntime
+@using WMS_UnitedTracors_Blazor.Helpers
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
 
 <PageTitle>WMS - Barang Rusak & Hilang</PageTitle>
@@ -238,6 +241,13 @@
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (!user.HasPermission(Permissions.DamagedGoodsView))
+        {
+            Navigation.NavigateTo("/");
+            return;
+        }
         await LoadData();
     }
 
