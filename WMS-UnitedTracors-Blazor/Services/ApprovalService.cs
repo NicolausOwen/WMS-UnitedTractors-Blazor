@@ -74,7 +74,7 @@ public class ApprovalService
 
 
         var groupedApprovals = transactions
-            .GroupBy(t => $"{t.created_at:yyyy-MM-dd HH:mm}_{t.requester_id}_{t.applicant_name}")
+            .GroupBy(t => t.group_id)
             .ToDictionary(g => g.Key, g => g.ToList());
 
         var pendingReturns = new List<Transaction>();
