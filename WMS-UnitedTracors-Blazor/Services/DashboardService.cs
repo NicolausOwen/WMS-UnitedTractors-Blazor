@@ -303,10 +303,10 @@ public class DashboardService
                 actionItems.Add(new ActionItemModel
                 {
                     Type = "handover",
-                    Title = t.event_name ?? "Serah Terima Barang",
+                    Title = t.event_name ?? "Berita Acara Serah Terima",
                     BadgeClass = "bg-[#fef3c7] text-[#d97706] border border-[#fde68a]",
                     Badge = "Butuh Serah Terima",
-                    Description = $"Kirim bukti serah terima barang untuk {t.quantity}x {(t.Product != null ? t.Product.name : "")} (Penerima: {t.Requester?.name ?? "User"})",
+                    Description = $"Kirim bukti berita acara serah terima untuk {t.quantity}x {(t.Product != null ? t.Product.name : "")} (Penerima: {t.Requester?.name ?? "User"})",
                     Date = t.created_at,
                     BtnUrl = "Approvals",
                     BtnText = "Isi Bukti"

@@ -24,6 +24,7 @@ public class ApprovalService
                 .ThenInclude(p => p.Category)
             .Include(t => t.ProductVariant)
             .Include(t => t.Requester)
+            .Include(t => t.Approver)
             .Include(t => t.Division)
             .OrderByDescending(t => t.created_at)
             .AsQueryable();
