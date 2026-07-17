@@ -69,29 +69,7 @@ public class ApprovalService
 
         var transactions = await query.ToListAsync();
 
-        bool isSuper = string.Equals(userRole, "superadmin", StringComparison.OrdinalIgnoreCase) || 
-                       string.Equals(userRole, "Super Admin", StringComparison.OrdinalIgnoreCase);
 
-        if (!isSuper && perms.Contains(Permissions.ApprovalStage2))
-        {
-            transactions = transactions.Where(t => {
-                if (t.status == WorkflowStatuses.PendingAdmin || (t.request_type == "BORROW" && t.status == WorkflowStatuses.Pending))
-                {
-                    var categoryName = t.Product?.Category?.name;
-                    bool isElektronik = string.Equals(categoryName, "Elektronik", StringComparison.OrdinalIgnoreCase);
-                    
-                    if (isElektronik)
-                    {
-                        return string.Equals(userRole, "PIC Studio", StringComparison.OrdinalIgnoreCase);
-                    }
-                    else
-                    {
-                        return string.Equals(userRole, "Team Leader Infrastructure", StringComparison.OrdinalIgnoreCase);
-                    }
-                }
-                return true;
-            }).ToList();
-        }
 
         var groupedApprovals = transactions
             .GroupBy(t => $"{t.created_at:yyyy-MM-dd HH:mm}_{t.requester_id}_{t.applicant_name}")
@@ -804,24 +782,6 @@ public class ApprovalService
                            (transaction.status == WorkflowStatuses.PendingManager && perms.Contains(Permissions.ApprovalManager));
             if (!allowed) return false;
 
-            if (transaction.status == WorkflowStatuses.PendingAdmin)
-            {
-                bool isSuper = string.Equals(userRole, "superadmin", StringComparison.OrdinalIgnoreCase) || 
-                               string.Equals(userRole, "Super Admin", StringComparison.OrdinalIgnoreCase);
-                if (!isSuper)
-                {
-                    var categoryName = transaction.Product?.Category?.name;
-                    bool isElektronik = string.Equals(categoryName, "Elektronik", StringComparison.OrdinalIgnoreCase);
-                    if (isElektronik)
-                    {
-                        return string.Equals(userRole, "PIC Studio", StringComparison.OrdinalIgnoreCase);
-                    }
-                    else
-                    {
-                        return string.Equals(userRole, "Team Leader Infrastructure", StringComparison.OrdinalIgnoreCase);
-                    }
-                }
-            }
             return true;
         }
 
@@ -834,25 +794,6 @@ public class ApprovalService
                               (transaction.status == WorkflowStatuses.Pending && (perms.Contains(Permissions.ApprovalStage1) || perms.Contains(Permissions.ApprovalStage2)));
 
         if (!canApproveBase) return false;
-
-        if (isPendingStage2 && transaction.status != WorkflowStatuses.PendingStaffInventory)
-        {
-            bool isSuper = string.Equals(userRole, "superadmin", StringComparison.OrdinalIgnoreCase) || 
-                           string.Equals(userRole, "Super Admin", StringComparison.OrdinalIgnoreCase);
-            if (!isSuper)
-            {
-                var categoryName = transaction.Product?.Category?.name;
-                bool isElektronik = string.Equals(categoryName, "Elektronik", StringComparison.OrdinalIgnoreCase);
-                if (isElektronik)
-                {
-                    return string.Equals(userRole, "PIC Studio", StringComparison.OrdinalIgnoreCase);
-                }
-                else
-                {
-                    return string.Equals(userRole, "Team Leader Infrastructure", StringComparison.OrdinalIgnoreCase);
-                }
-            }
-        }
 
         return true;
     }

@@ -796,7 +796,7 @@ public class TransactionService
                 {
                     if (item.request_type == "BORROW")
                     {
-                        item.status = WorkflowStatuses.WaitingHandoverConfirm;
+                        item.status = WorkflowStatuses.Approved;
                     }
                     else if (item.request_type == "GIVEAWAY")
                     {
@@ -825,12 +825,14 @@ public class TransactionService
         if (!isApproved && string.IsNullOrWhiteSpace(rejectionReason)) return "Alasan penolakan wajib diisi.";
 
         var query = await _context.Transactions
-            .Where(t => t.status == WorkflowStatuses.WaitingHandoverConfirm &&
+            .Where(t => (t.status == WorkflowStatuses.WaitingHandoverConfirm || t.status == WorkflowStatuses.Approved) &&
                         (t.handover_uploaded_by == "SI" || t.handover_uploaded_by == null) &&
                         t.type == "OUT" && t.request_type == "BORROW")
             .ToListAsync();
 
-        var matched = query.Where(t => t.group_id == groupId).ToList();
+        var matched = query.Where(t => t.group_id == groupId && 
+                                     (!t.handover_timestamp.HasValue || (WibHelper.Now - t.handover_timestamp.Value).TotalHours < 24))
+                           .ToList();
 
         if (matched.Count == 0) return "Tidak ada transaksi serah terima yang menunggu konfirmasi Anda pada event ini.";
 
