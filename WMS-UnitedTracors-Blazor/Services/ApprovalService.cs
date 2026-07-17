@@ -184,7 +184,7 @@ public class ApprovalService
         }
 
         // BORROW stage 1: Staff Inventoris menyetujui -> lanjut ke tahap Admin (belum potong stok).
-        if (transaction.status == WorkflowStatuses.PendingStaffInventory && perms.Contains(Permissions.ApprovalStage1))
+        if ((transaction.status == WorkflowStatuses.PendingStaffInventory || (transaction.type == "OUT" && transaction.status == WorkflowStatuses.Pending)) && perms.Contains(Permissions.ApprovalStage1))
         {
             transaction.status = WorkflowStatuses.PendingAdmin;
             transaction.staff_inventory_notes = notes;
