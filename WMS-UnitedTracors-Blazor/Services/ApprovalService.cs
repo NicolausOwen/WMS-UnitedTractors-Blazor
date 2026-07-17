@@ -537,17 +537,22 @@ public class ApprovalService
 
             await _context.SaveChangesAsync();
 
-            // Kirim notifikasi email ke Admin (TL / PIC Studio)
+            // Kirim notifikasi email ke Admin yang bertanggung jawab pada kategori barang ini
             try
             {
-                var categoryName = transaction.Product?.Category?.name;
-                bool isElektronik = string.Equals(categoryName, "Elektronik", StringComparison.OrdinalIgnoreCase);
-                var targetRole = isElektronik ? "PIC Studio" : "Team Leader Infrastructure";
-
-                var admins = await _context.Users
-                    .Where(u => u.role == targetRole)
-                    .Select(u => u.email)
+                var categoryId = transaction.Product?.category_id;
+                var userRoles = await _context.UserAdminRoles
+                    .Include(uar => uar.User)
+                    .Include(uar => uar.AdminRole)
+                    .Where(uar => uar.CategoryId == categoryId || uar.CategoryId == null)
                     .ToListAsync();
+
+                var admins = userRoles
+                    .Where(uar => Permissions.Resolve(uar.User?.role, uar.AdminRole?.Permissions).Contains(Permissions.ApprovalHandover))
+                    .Select(uar => uar.User?.email)
+                    .Where(e => !string.IsNullOrEmpty(e))
+                    .Distinct()
+                    .ToList();
 
                 if (admins.Any())
                 {
@@ -863,25 +868,37 @@ public class ApprovalService
     {
         var emails = new List<string>();
         
+        var categoryId = transaction.Product?.category_id;
+        
         if (nextStage == WorkflowStatuses.PendingAdmin)
         {
-            var categoryName = transaction.Product?.Category?.name;
-            bool isElektronik = string.Equals(categoryName, "Elektronik", StringComparison.OrdinalIgnoreCase);
-            var targetRole = isElektronik ? "PIC Studio" : "Team Leader Infrastructure";
-
-            emails = await context.Users
-                .Where(u => u.role == targetRole)
-                .Select(u => u.email)
-                .Where(e => !string.IsNullOrEmpty(e))
+            var userRoles = await context.UserAdminRoles
+                .Include(uar => uar.User)
+                .Include(uar => uar.AdminRole)
+                .Where(uar => uar.CategoryId == categoryId || uar.CategoryId == null)
                 .ToListAsync();
+
+            emails = userRoles
+                .Where(uar => Permissions.Resolve(uar.User?.role, uar.AdminRole?.Permissions).Contains(Permissions.ApprovalStage2))
+                .Select(uar => uar.User?.email)
+                .Where(e => !string.IsNullOrEmpty(e))
+                .Distinct()
+                .ToList();
         }
         else if (nextStage == WorkflowStatuses.PendingManager)
         {
-            emails = await context.Users
-                .Where(u => u.role == "manager")
-                .Select(u => u.email)
-                .Where(e => !string.IsNullOrEmpty(e))
+            var userRoles = await context.UserAdminRoles
+                .Include(uar => uar.User)
+                .Include(uar => uar.AdminRole)
+                .Where(uar => uar.CategoryId == categoryId || uar.CategoryId == null)
                 .ToListAsync();
+
+            emails = userRoles
+                .Where(uar => Permissions.Resolve(uar.User?.role, uar.AdminRole?.Permissions).Contains(Permissions.ApprovalManager))
+                .Select(uar => uar.User?.email)
+                .Where(e => !string.IsNullOrEmpty(e))
+                .Distinct()
+                .ToList();
         }
 
         if (emails.Any())

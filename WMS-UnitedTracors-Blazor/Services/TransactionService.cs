@@ -342,16 +342,31 @@ public class TransactionService
                 _ = _emailService.SendEmailAsync(requester.email, "Request Berhasil Dibuat", requesterHtml);
             }
 
-            var adminManagerEmails = await _context.Users
-                .Where(u => u.role == "Admin" || u.role == "Manager")
+            var staffInventoryEmails = await _context.Users
+                .Where(u => u.role == "admin" || u.role == "superadmin" || u.role == "Super Admin")
                 .Select(u => u.email)
                 .ToListAsync();
 
-            if (adminManagerEmails.Any())
+            var rolesWithStage1 = await _context.AdminRoles
+                .Where(r => r.Permissions != null && r.Permissions.Contains("approval.stage1"))
+                .Select(r => r.RoleName)
+                .ToListAsync();
+                
+            var dynamicStaffEmails = await _context.Users
+                .Where(u => u.role != null && rolesWithStage1.Contains(u.role))
+                .Select(u => u.email)
+                .ToListAsync();
+
+            var allStaffEmails = staffInventoryEmails.Concat(dynamicStaffEmails)
+                .Where(e => !string.IsNullOrWhiteSpace(e))
+                .Distinct()
+                .ToList();
+
+            if (allStaffEmails.Any())
             {
-                string adminMessage = $"Terdapat request peminjaman/pengambilan barang baru dari <strong>{model.applicant_name ?? requester?.name}</strong>. Silakan login ke sistem WMS untuk meninjau dan melakukan persetujuan.";
+                string adminMessage = $"Terdapat request peminjaman/pengambilan barang baru dari <strong>{model.applicant_name ?? requester?.name}</strong>. Silakan login ke sistem WMS untuk meninjau dan melakukan persetujuan pada tahap Staff Inventoris.";
                 string adminHtml = GetEmailTemplate("Request Baru Menunggu Persetujuan", adminMessage);
-                _ = _emailService.SendEmailToMultipleAsync(adminManagerEmails, "Request Baru (WMS UT)", adminHtml);
+                _ = _emailService.SendEmailToMultipleAsync(allStaffEmails, "Request Baru (WMS UT)", adminHtml);
             }
         }
 
