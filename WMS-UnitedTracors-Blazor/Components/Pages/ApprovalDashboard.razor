@@ -236,9 +236,9 @@
                                             </div>
                                             <!-- Request Info -->
                                             <div class="min-w-0">
-                                                <h4 class="font-extrabold text-xs text-[#1a1a1a] truncate">Request #@group.Key.Substring(0, Math.Min(8, group.Key.Length))</h4>
+                                                <h4 class="font-extrabold text-xs text-[#1a1a1a] truncate">@(firstItem.event_name ?? "-")</h4>
                                                 <div class="text-[11px] text-gray-500 font-semibold mt-0.5 truncate">
-                                                    @(firstItem.applicant_name ?? firstItem.Requester?.name ?? "Staff User") • Event: @(firstItem.event_name ?? "-")
+                                                    @(firstItem.applicant_name ?? firstItem.Requester?.name ?? "Staff User")
                                                     @if (isBorrow && firstItem.borrow_duration_days.HasValue && firstItem.borrow_duration_days.Value > 0)
                                                     {
                                                         <span> • Lama Pinjam: @firstItem.borrow_duration_days.Value Hari</span>
