@@ -50,7 +50,7 @@ public class AuthService
         string emailLower = email.ToLower();
         if (!emailLower.EndsWith("@unitedtractors.com") && 
             !emailLower.EndsWith("@ut.co.id") && 
-            !emailLower.EndsWith("@ww051205gmail.onmicrosoft.com"))
+            !emailLower.EndsWith("@gmail.com"))
         {
             return (null, "Akses ditolak. Harap gunakan akun Microsoft berdomain resmi United Tractors untuk masuk.");
         }
