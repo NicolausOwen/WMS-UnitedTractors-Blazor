@@ -342,16 +342,13 @@ public class TransactionService
                 _ = _emailService.SendEmailAsync(requester.email, "Request Berhasil Dibuat", requesterHtml);
             }
 
-            var adminManagerEmails = await _context.Users
-                .Where(u => u.role == "Admin" || u.role == "Manager")
-                .Select(u => u.email)
-                .ToListAsync();
+            var allStaffEmails = await GetEmailsWithPermissionAsync(Helpers.Permissions.ApprovalStage1);
 
-            if (adminManagerEmails.Any())
+            if (allStaffEmails.Any())
             {
-                string adminMessage = $"Terdapat request peminjaman/pengambilan barang baru dari <strong>{model.applicant_name ?? requester?.name}</strong>. Silakan login ke sistem WMS untuk meninjau dan melakukan persetujuan.";
+                string adminMessage = $"Terdapat request peminjaman/pengambilan barang baru dari <strong>{model.applicant_name ?? requester?.name}</strong>. Silakan login ke sistem WMS untuk meninjau dan melakukan persetujuan pada tahap Staff Inventoris.";
                 string adminHtml = GetEmailTemplate("Request Baru Menunggu Persetujuan", adminMessage);
-                _ = _emailService.SendEmailToMultipleAsync(adminManagerEmails, "Request Baru (WMS UT)", adminHtml);
+                _ = _emailService.SendEmailToMultipleAsync(allStaffEmails, "Request Baru (WMS UT)", adminHtml);
             }
         }
 
@@ -1156,6 +1153,17 @@ public class TransactionService
 
         _context.Transactions.Update(transaction);
         await _context.SaveChangesAsync();
+
+        // Ambil email Staff Inventaris untuk notifikasi resubmission
+        var allStaffEmails = await GetEmailsWithPermissionAsync(Helpers.Permissions.ApprovalStage1);
+
+        if (allStaffEmails.Any())
+        {
+            string adminMessage = $"Terdapat request WMS (Event: {transaction.event_name ?? "-"}) yang telah <strong>direvisi dan disubmit ulang</strong> oleh pemohon <strong>{transaction.applicant_name ?? transaction.Requester?.name ?? "-"}</strong>. Silakan login ke sistem WMS untuk meninjau kembali.";
+            string adminHtml = GetEmailTemplate("Revisi Request Disubmit Ulang", adminMessage);
+            _ = _emailService.SendEmailToMultipleAsync(allStaffEmails!, "Revisi Request (WMS UT)", adminHtml);
+        }
+
         return null;
     }
 
@@ -1213,18 +1221,8 @@ public class TransactionService
 
     private static string GetResubmittedStatus(Transaction transaction)
     {
-        if (transaction.request_type == "GIVEAWAY")
-        {
-            return transaction.last_revision_stage switch
-            {
-                "STAFF_INVENTORY" => WorkflowStatuses.PendingStaffInventory,
-                "ADMIN" => WorkflowStatuses.PendingAdmin,
-                "MANAGER" => WorkflowStatuses.PendingManager,
-                _ => WorkflowStatuses.PendingStaffInventory
-            };
-        }
-
-        return WorkflowStatuses.Pending;
+        // Selalu kembali ke tahap pertama (Staff Inventaris)
+        return WorkflowStatuses.PendingStaffInventory;
     }
 
     public async Task<string?> DeleteTransactionAsync(int id)
@@ -1418,5 +1416,33 @@ public class TransactionService
             .ToListAsync();
 
         return (items, totalItems, totalPages);
+    }
+
+    private async Task<List<string>> GetEmailsWithPermissionAsync(string requiredPermission)
+    {
+        using var _context = _factory.CreateDbContext();
+        var allUsers = await _context.Users
+            .Where(u => !string.IsNullOrEmpty(u.email))
+            .ToListAsync();
+            
+        var allRoles = await _context.AdminRoles
+            .Where(r => r.IsActive)
+            .ToDictionaryAsync(r => r.RoleName);
+
+        var emails = new List<string>();
+        foreach (var user in allUsers)
+        {
+            if (string.IsNullOrWhiteSpace(user.role)) continue;
+            
+            allRoles.TryGetValue(user.role, out var adminRole);
+            var perms = Helpers.Permissions.Resolve(user.role, adminRole?.Permissions);
+            
+            if (perms.Contains(requiredPermission))
+            {
+                emails.Add(user.email!);
+            }
+        }
+        
+        return emails.Distinct().ToList();
     }
 }

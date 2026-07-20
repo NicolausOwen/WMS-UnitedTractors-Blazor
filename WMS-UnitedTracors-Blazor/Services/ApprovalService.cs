@@ -22,7 +22,9 @@ public class ApprovalService
         var query = _context.Transactions
             .Include(t => t.Product)
                 .ThenInclude(p => p.Category)
+            .Include(t => t.ProductVariant)
             .Include(t => t.Requester)
+            .Include(t => t.Approver)
             .Include(t => t.Division)
             .OrderByDescending(t => t.created_at)
             .AsQueryable();
@@ -72,7 +74,7 @@ public class ApprovalService
 
 
         var groupedApprovals = transactions
-            .GroupBy(t => $"{t.created_at:yyyy-MM-dd HH:mm}_{t.requester_id}_{t.applicant_name}")
+            .GroupBy(t => t.group_id)
             .ToDictionary(g => g.Key, g => g.ToList());
 
         var pendingReturns = new List<Transaction>();
@@ -182,7 +184,7 @@ public class ApprovalService
         }
 
         // BORROW stage 1: Staff Inventoris menyetujui -> lanjut ke tahap Admin (belum potong stok).
-        if (transaction.status == WorkflowStatuses.PendingStaffInventory && perms.Contains(Permissions.ApprovalStage1))
+        if ((transaction.status == WorkflowStatuses.PendingStaffInventory || (transaction.type == "OUT" && transaction.status == WorkflowStatuses.Pending)) && perms.Contains(Permissions.ApprovalStage1))
         {
             transaction.status = WorkflowStatuses.PendingAdmin;
             transaction.staff_inventory_notes = notes;
@@ -195,6 +197,7 @@ public class ApprovalService
             if (sendNotification)
             {
                 await NotifyBatchResultAsync(new List<(Transaction, string, string?)> { (transaction, "APPROVE", null) });
+                await NotifyNextApproversAsync(_context, transaction, WorkflowStatuses.PendingAdmin);
             }
             return null;
         }
@@ -477,7 +480,10 @@ public class ApprovalService
     public async Task<string?> ApproveReturnAsync(int id, int currentUserId, string? userRole)
     {
         using var _context = _factory.CreateDbContext();
-        var transaction = await _context.Transactions.Include(t => t.Product).FirstOrDefaultAsync(t => t.id == id);
+        var transaction = await _context.Transactions
+            .Include(t => t.Product)
+                .ThenInclude(p => p.Category)
+            .FirstOrDefaultAsync(t => t.id == id);
         if (transaction == null) return "Transaction not found.";
 
         var perms = await ResolvePermsAsync(_context, currentUserId);
@@ -531,13 +537,22 @@ public class ApprovalService
 
             await _context.SaveChangesAsync();
 
-            // Kirim notifikasi email ke Admin (TL / PIC Studio)
+            // Kirim notifikasi email ke Admin yang bertanggung jawab pada kategori barang ini
             try
             {
-                var admins = await _context.Users
-                    .Where(u => u.role == "Team Leader Infrastructure" || u.role == "PIC Studio" || u.role == "admin")
-                    .Select(u => u.email)
+                var categoryId = transaction.Product?.category_id;
+                var userRoles = await _context.UserAdminRoles
+                    .Include(uar => uar.User)
+                    .Include(uar => uar.AdminRole)
+                    .Where(uar => uar.CategoryId == categoryId || uar.CategoryId == null)
                     .ToListAsync();
+
+                var admins = userRoles
+                    .Where(uar => Permissions.Resolve(uar.User?.role, uar.AdminRole?.Permissions).Contains(Permissions.ApprovalHandover))
+                    .Select(uar => uar.User?.email)
+                    .Where(e => !string.IsNullOrEmpty(e))
+                    .Distinct()
+                    .ToList();
 
                 if (admins.Any())
                 {
@@ -792,15 +807,18 @@ public class ApprovalService
 
     private async Task<string?> ApproveGiveawayAsync(ApplicationDbContext _context, Transaction transaction, string? notes, int currentUserId, HashSet<string> perms, bool sendNotification = true)
     {
+        string? nextStage = null;
         switch (transaction.status)
         {
             case WorkflowStatuses.PendingStaffInventory when perms.Contains(Permissions.ApprovalStage1):
                 transaction.status = WorkflowStatuses.PendingAdmin;
                 transaction.staff_inventory_notes = notes;
+                nextStage = WorkflowStatuses.PendingAdmin;
                 break;
             case WorkflowStatuses.PendingAdmin when perms.Contains(Permissions.ApprovalStage2):
                 transaction.status = WorkflowStatuses.PendingManager;
                 transaction.admin_notes = notes;
+                nextStage = WorkflowStatuses.PendingManager;
                 break;
             case WorkflowStatuses.PendingManager when perms.Contains(Permissions.ApprovalManager):
                 transaction.status = WorkflowStatuses.WaitingHandover;
@@ -820,6 +838,10 @@ public class ApprovalService
         if (sendNotification)
         {
             await NotifyBatchResultAsync(new List<(Transaction, string, string?)> { (transaction, "APPROVE", null) });
+            if (nextStage != null)
+            {
+                await NotifyNextApproversAsync(_context, transaction, nextStage);
+            }
         }
 
         return null;
@@ -839,6 +861,65 @@ public class ApprovalService
         {
             var htmlMessage = GetEmailTemplate(subject, message);
             await _emailService.SendEmailAsync(requesterEmail, subject, htmlMessage);
+        }
+    }
+
+    private async Task NotifyNextApproversAsync(ApplicationDbContext context, Transaction transaction, string nextStage)
+    {
+        var emails = new List<string>();
+        
+        var categoryId = transaction.Product?.category_id;
+        
+        if (nextStage == WorkflowStatuses.PendingAdmin)
+        {
+            var userRoles = await context.UserAdminRoles
+                .Include(uar => uar.User)
+                .Include(uar => uar.AdminRole)
+                .Where(uar => uar.CategoryId == categoryId || uar.CategoryId == null)
+                .ToListAsync();
+
+            emails = userRoles
+                .Where(uar => Permissions.Resolve(uar.User?.role, uar.AdminRole?.Permissions).Contains(Permissions.ApprovalStage2))
+                .Select(uar => uar.User?.email)
+                .Where(e => !string.IsNullOrEmpty(e))
+                .Distinct()
+                .ToList();
+        }
+        else if (nextStage == WorkflowStatuses.PendingManager)
+        {
+            var userRoles = await context.UserAdminRoles
+                .Include(uar => uar.User)
+                .Include(uar => uar.AdminRole)
+                .Where(uar => uar.CategoryId == categoryId || uar.CategoryId == null)
+                .ToListAsync();
+
+            emails = userRoles
+                .Where(uar => Permissions.Resolve(uar.User?.role, uar.AdminRole?.Permissions).Contains(Permissions.ApprovalManager))
+                .Select(uar => uar.User?.email)
+                .Where(e => !string.IsNullOrEmpty(e))
+                .Distinct()
+                .ToList();
+        }
+
+        if (emails.Any())
+        {
+            var productName = transaction.Product?.name ?? "Barang";
+            var eventName = transaction.event_name ?? "Tanpa Nama Event";
+            var applicant = transaction.applicant_name ?? "User";
+            
+            string mailTitle = "Notifikasi Persetujuan Request WMS";
+            string mailMessage = $"Ada request baru yang membutuhkan persetujuan Anda.<br/><br/>" +
+                                 $"<strong>Event:</strong> {eventName}<br/>" +
+                                 $"<strong>Pemohon:</strong> {applicant}<br/>" +
+                                 $"<strong>Barang:</strong> {productName} ({transaction.quantity} unit)<br/><br/>" +
+                                 $"Silakan login ke sistem WMS untuk melakukan persetujuan pada menu Approval.";
+                                 
+            string html = GetEmailTemplate(mailTitle, mailMessage);
+            var validEmails = emails.Where(e => !string.IsNullOrWhiteSpace(e)).Distinct().ToList();
+            if (validEmails.Any())
+            {
+                _ = _emailService.SendEmailToMultipleAsync(validEmails, "Notifikasi Persetujuan Request (WMS UT)", html);
+            }
         }
     }
 

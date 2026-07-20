@@ -70,7 +70,21 @@
                                             <div class="flex items-center justify-between gap-2">
                                                 <div class="min-w-0 flex-1">
                                                     <p class="text-xs font-bold text-[#1a1a1a] truncate">@item.Name</p>
-                                                    <p class="text-[10px] text-[#8a8880]">@item.Sku</p>
+                                                    <div class="flex items-center gap-1 text-[9px] text-[#8a8880] flex-wrap mt-0.5">
+                                                        <span>@item.Sku</span>
+                                                        @if (!string.IsNullOrEmpty(item.VariantColor) || !string.IsNullOrEmpty(item.VariantSize))
+                                                        {
+                                                            <span class="w-[3px] h-[3px] rounded-full bg-[#d1cec7] mx-0.5"></span>
+                                                            @if (!string.IsNullOrEmpty(item.VariantColor))
+                                                            {
+                                                                <span class="bg-[#f5f4f0] px-1 py-0.5 rounded text-[8px] border border-[#e5e3dc] leading-none">Warna: @item.VariantColor</span>
+                                                            }
+                                                            @if (!string.IsNullOrEmpty(item.VariantSize))
+                                                            {
+                                                                <span class="bg-[#f5f4f0] px-1 py-0.5 rounded text-[8px] border border-[#e5e3dc] leading-none">Ukuran: @item.VariantSize</span>
+                                                            }
+                                                        }
+                                                    </div>
                                                 </div>
                                                 <div class="flex items-center border border-[#e5e3dc] rounded-lg overflow-hidden bg-white h-7 shrink-0">
                                                     <button type="button" @onclick="() => { if(item.Quantity > 1) { item.Quantity--; CartService.NotifyChange(); } }" class="w-6 h-full flex items-center justify-center text-xs text-[#5a5855] hover:bg-[#f5f4f0] transition font-bold">-</button>
@@ -86,12 +100,26 @@
                                             <div>
                                                 <label class="block text-[0.6rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1">Tgl Pinjam <span class="text-red-500">*</span></label>
                                                 <input type="date" @bind="CartService.BorrowStartDate" min="@TodayDateString"
-                                                       class="w-full px-2 py-1.5 text-[10px] bg-[#f5f4f0] border border-[#e5e3dc] rounded-lg outline-none focus:border-[#e8a000]">
+                                                       class=@($"w-full px-2 py-1.5 text-[10px] bg-[#f5f4f0] border {(string.IsNullOrEmpty(BorrowStartDateError) ? "border-[#e5e3dc] focus:border-[#e8a000]" : "border-[#d94040] focus:border-[#d94040]")} rounded-lg outline-none")>
+                                                @if (!string.IsNullOrEmpty(BorrowStartDateError))
+                                                {
+                                                    <div class="mt-1 flex items-start gap-1 bg-[#fef0f0] border border-[#f8c0c0] text-[#d94040] px-2 py-1 rounded-md text-[9px] font-semibold leading-tight">
+                                                        <svg class="w-3 h-3 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                                        <span>@BorrowStartDateError</span>
+                                                    </div>
+                                                }
                                             </div>
                                             <div>
                                                 <label class="block text-[0.6rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1">Tgl Kembali <span class="text-red-500">*</span></label>
                                                 <input type="date" @bind="CartService.BorrowEndDate"
-                                                       class="w-full px-2 py-1.5 text-[10px] bg-[#f5f4f0] border border-[#e5e3dc] rounded-lg outline-none focus:border-[#e8a000]">
+                                                       class=@($"w-full px-2 py-1.5 text-[10px] bg-[#f5f4f0] border {(string.IsNullOrEmpty(BorrowEndDateError) ? "border-[#e5e3dc] focus:border-[#e8a000]" : "border-[#d94040] focus:border-[#d94040]")} rounded-lg outline-none")>
+                                                @if (!string.IsNullOrEmpty(BorrowEndDateError))
+                                                {
+                                                    <div class="mt-1 flex items-start gap-1 bg-[#fef0f0] border border-[#f8c0c0] text-[#d94040] px-2 py-1 rounded-md text-[9px] font-semibold leading-tight">
+                                                        <svg class="w-3 h-3 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                                        <span>@BorrowEndDateError</span>
+                                                    </div>
+                                                }
                                             </div>
                                         </div>
                                     </div>
@@ -113,7 +141,21 @@
                                             <div class="flex items-center justify-between gap-2">
                                                 <div class="min-w-0 flex-1">
                                                     <p class="text-xs font-bold text-[#1a1a1a] truncate">@item.Name</p>
-                                                    <p class="text-[10px] text-[#8a8880]">@item.Sku</p>
+                                                    <div class="flex items-center gap-1 text-[9px] text-[#8a8880] flex-wrap mt-0.5">
+                                                        <span>@item.Sku</span>
+                                                        @if (!string.IsNullOrEmpty(item.VariantColor) || !string.IsNullOrEmpty(item.VariantSize))
+                                                        {
+                                                            <span class="w-[3px] h-[3px] rounded-full bg-[#d1cec7] mx-0.5"></span>
+                                                            @if (!string.IsNullOrEmpty(item.VariantColor))
+                                                            {
+                                                                <span class="bg-[#f5f4f0] px-1 py-0.5 rounded text-[8px] border border-[#e5e3dc] leading-none">Warna: @item.VariantColor</span>
+                                                            }
+                                                            @if (!string.IsNullOrEmpty(item.VariantSize))
+                                                            {
+                                                                <span class="bg-[#f5f4f0] px-1 py-0.5 rounded text-[8px] border border-[#e5e3dc] leading-none">Ukuran: @item.VariantSize</span>
+                                                            }
+                                                        }
+                                                    </div>
                                                 </div>
                                                 <div class="flex items-center border border-[#e5e3dc] rounded-lg overflow-hidden bg-white h-7 shrink-0">
                                                     <button type="button" @onclick="() => { if(item.Quantity > 1) { item.Quantity--; CartService.NotifyChange(); } }" class="w-6 h-full flex items-center justify-center text-xs text-[#5a5855] hover:bg-[#f5f4f0] transition font-bold">-</button>
@@ -153,17 +195,41 @@
 
                                 <div>
                                     <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Nama Event / Program <span class="text-red-500">*</span></label>
-                                    <input type="text" @bind="CartService.EventName" placeholder="Nama event atau program" class="w-full px-3 py-2 text-xs bg-[#f5f4f0] border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none text-[#1a1a1a]">
+                                    <input type="text" @bind="CartService.EventName" placeholder="Nama event atau program" 
+                                           class=@($"w-full px-3 py-2 text-xs bg-[#f5f4f0] border {(string.IsNullOrEmpty(EventNameError) ? "border-[#e5e3dc] focus:border-[#e8a000]" : "border-[#d94040] focus:border-[#d94040]")} rounded-lg outline-none text-[#1a1a1a]")>
+                                    @if (!string.IsNullOrEmpty(EventNameError))
+                                    {
+                                        <div class="mt-1 flex items-start gap-1.5 bg-[#fef0f0] border border-[#f8c0c0] text-[#d94040] px-2.5 py-1.5 rounded-md text-[10px] font-semibold leading-tight">
+                                            <svg class="w-3.5 h-3.5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                            <span>@EventNameError</span>
+                                        </div>
+                                    }
                                 </div>
 
                                 <div class="grid grid-cols-2 gap-3">
                                     <div>
                                         <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Tanggal Mulai Event <span class="text-red-500">*</span></label>
-                                        <input type="date" @bind="CartService.EventStartDate" min="@TodayDateString" class="w-full px-3 py-2 text-xs bg-[#f5f4f0] border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none text-[#1a1a1a]">
+                                        <input type="date" @bind="CartService.EventStartDate" min="@TodayDateString" 
+                                               class=@($"w-full px-3 py-2 text-xs bg-[#f5f4f0] border {(string.IsNullOrEmpty(EventStartDateError) ? "border-[#e5e3dc] focus:border-[#e8a000]" : "border-[#d94040] focus:border-[#d94040]")} rounded-lg outline-none text-[#1a1a1a]")>
+                                        @if (!string.IsNullOrEmpty(EventStartDateError))
+                                        {
+                                            <div class="mt-1 flex items-start gap-1.5 bg-[#fef0f0] border border-[#f8c0c0] text-[#d94040] px-2.5 py-1.5 rounded-md text-[10px] font-semibold leading-tight">
+                                                <svg class="w-3.5 h-3.5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                                <span>@EventStartDateError</span>
+                                            </div>
+                                        }
                                     </div>
                                     <div>
                                         <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Tanggal Selesai Event</label>
-                                        <input type="date" @bind="CartService.EventEndDate" class="w-full px-3 py-2 text-xs bg-[#f5f4f0] border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none text-[#1a1a1a]">
+                                        <input type="date" @bind="CartService.EventEndDate" 
+                                               class=@($"w-full px-3 py-2 text-xs bg-[#f5f4f0] border {(string.IsNullOrEmpty(EventEndDateError) ? "border-[#e5e3dc] focus:border-[#e8a000]" : "border-[#d94040] focus:border-[#d94040]")} rounded-lg outline-none text-[#1a1a1a]")>
+                                        @if (!string.IsNullOrEmpty(EventEndDateError))
+                                        {
+                                            <div class="mt-1 flex items-start gap-1.5 bg-[#fef0f0] border border-[#f8c0c0] text-[#d94040] px-2.5 py-1.5 rounded-md text-[10px] font-semibold leading-tight">
+                                                <svg class="w-3.5 h-3.5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                                <span>@EventEndDateError</span>
+                                            </div>
+                                        }
                                     </div>
                                 </div>
 
@@ -201,6 +267,11 @@
     private bool ShowCartModal = false;
     private bool IsSubmitting = false;
     private string? ErrorMessage;
+    private string? EventNameError;
+    private string? EventStartDateError;
+    private string? EventEndDateError;
+    private string? BorrowStartDateError;
+    private string? BorrowEndDateError;
     private string? CartToast;
 
     private string? ApplicantName;
@@ -251,7 +322,17 @@
     private void CloseCartModal()
     {
         ShowCartModal = false;
+        ClearErrors();
+    }
+
+    private void ClearErrors()
+    {
         ErrorMessage = null;
+        EventNameError = null;
+        EventStartDateError = null;
+        EventEndDateError = null;
+        BorrowStartDateError = null;
+        BorrowEndDateError = null;
     }
 
     private void OpenCartModal()
@@ -277,71 +358,107 @@
     {
         try
         {
-            ErrorMessage = null;
+            ClearErrors();
+            bool hasError = false;
 
             if (!CartService.Items.Any())
             {
                 ErrorMessage = "Keranjang kosong.";
-                return;
+                hasError = true;
             }
             if (string.IsNullOrWhiteSpace(ApplicantName))
             {
                 ErrorMessage = "Tidak dapat mengidentifikasi pemohon.";
-                return;
+                hasError = true;
             }
             if (string.IsNullOrWhiteSpace(CartService.EventName))
             {
-                ErrorMessage = "Nama Event/Program wajib diisi.";
-                return;
+                EventNameError = "Nama Event/Program wajib diisi.";
+                hasError = true;
             }
             if (!CartService.EventStartDate.HasValue)
             {
-                ErrorMessage = "Tanggal Mulai Event wajib diisi.";
-                return;
+                EventStartDateError = "Tanggal Mulai Event wajib diisi.";
+                hasError = true;
             }
-            if (CartService.EventStartDate.Value.Date < DateTime.Today)
+            else if (CartService.EventStartDate.Value.Date < DateTime.Today)
             {
-                ErrorMessage = "Tanggal Event tidak boleh sebelum hari ini.";
-                return;
+                EventStartDateError = "Tanggal Event tidak boleh sebelum hari ini.";
+                hasError = true;
             }
+
+            if (CartService.EventStartDate.HasValue && CartService.EventEndDate.HasValue)
+            {
+                if (CartService.EventEndDate.Value.Date < CartService.EventStartDate.Value.Date)
+                {
+                    EventEndDateError = "Tanggal selesai event tidak boleh sebelum tanggal mulai event.";
+                    hasError = true;
+                }
+            }
+
             if (CartService.Items.Any(i => i.RequestType == "BORROW"))
             {
-                if (!CartService.BorrowStartDate.HasValue || !CartService.BorrowEndDate.HasValue)
+                bool borrowDatesMissing = false;
+                if (!CartService.BorrowStartDate.HasValue)
                 {
-                    ErrorMessage = "Tanggal pinjam dan tanggal kembali wajib diisi untuk item pinjaman.";
-                    return;
+                    BorrowStartDateError = "Tanggal pinjam wajib diisi.";
+                    hasError = true;
+                    borrowDatesMissing = true;
                 }
-                if (CartService.BorrowStartDate.Value.Date < DateTime.Today)
+                if (!CartService.BorrowEndDate.HasValue)
                 {
-                    ErrorMessage = "Tanggal pinjam tidak boleh sebelum hari ini.";
-                    return;
-                }
-                if (CartService.BorrowEndDate.Value.Date <= CartService.BorrowStartDate.Value.Date)
-                {
-                    ErrorMessage = "Tanggal kembali harus setelah tanggal pinjam.";
-                    return;
-                }
-                
-                // Durasi peminjaman maksimal 10 hari
-                var borrowDays = (CartService.BorrowEndDate.Value.Date - CartService.BorrowStartDate.Value.Date).Days;
-                if (borrowDays > 10)
-                {
-                    ErrorMessage = "Durasi peminjaman maksimal adalah 10 hari.";
-                    return;
+                    BorrowEndDateError = "Tanggal kembali wajib diisi.";
+                    hasError = true;
+                    borrowDatesMissing = true;
                 }
 
-                // Tanggal event harus berada di dalam rentang tanggal peminjaman
-                if (CartService.EventStartDate.HasValue)
+                if (!borrowDatesMissing)
                 {
-                    if (CartService.BorrowStartDate.Value.Date > CartService.EventStartDate.Value.Date ||
-                        (CartService.EventEndDate.HasValue 
-                            ? CartService.EventEndDate.Value.Date > CartService.BorrowEndDate.Value.Date 
-                            : CartService.EventStartDate.Value.Date > CartService.BorrowEndDate.Value.Date))
+                    if (CartService.BorrowStartDate.Value.Date < DateTime.Today)
                     {
-                        ErrorMessage = "Tanggal event (mulai dan selesai) harus berada di dalam rentang tanggal peminjaman.";
-                        return;
+                        BorrowStartDateError = "Tanggal pinjam tidak boleh sebelum hari ini.";
+                        hasError = true;
+                    }
+                    if (CartService.BorrowEndDate.Value.Date <= CartService.BorrowStartDate.Value.Date)
+                    {
+                        BorrowEndDateError = "Tanggal kembali harus setelah tanggal pinjam.";
+                        hasError = true;
+                    }
+                    else
+                    {
+                        var borrowDays = (CartService.BorrowEndDate.Value.Date - CartService.BorrowStartDate.Value.Date).Days;
+                        if (borrowDays > 10)
+                        {
+                            BorrowEndDateError = "Durasi peminjaman maksimal adalah 10 hari.";
+                            hasError = true;
+                        }
+                    }
+
+                    if (CartService.EventStartDate.HasValue && string.IsNullOrEmpty(BorrowStartDateError) && string.IsNullOrEmpty(BorrowEndDateError))
+                    {
+                        if (CartService.EventStartDate.Value.Date < CartService.BorrowStartDate.Value.Date || 
+                            CartService.EventStartDate.Value.Date > CartService.BorrowEndDate.Value.Date)
+                        {
+                            EventStartDateError = "Tanggal event harus berada di dalam rentang tanggal peminjaman.";
+                            hasError = true;
+                        }
+
+                        if (CartService.EventEndDate.HasValue)
+                        {
+                            if (CartService.EventEndDate.Value.Date < CartService.BorrowStartDate.Value.Date || 
+                                CartService.EventEndDate.Value.Date > CartService.BorrowEndDate.Value.Date)
+                            {
+                                EventEndDateError = "Tanggal event harus berada di dalam rentang tanggal peminjaman.";
+                                hasError = true;
+                            }
+                        }
                     }
                 }
+            }
+
+            if (hasError)
+            {
+                return;
             }
 
             IsSubmitting = true;
