@@ -76,6 +76,10 @@ builder.Services.AddAuthentication(options =>
         options.SaveTokens = true;
         options.Scope.Add("email");
         options.Scope.Add("profile");
+        options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+        {
+            ValidateIssuer = false
+        };
         options.Events = new OpenIdConnectEvents
         {
             OnTokenValidated = context => Task.CompletedTask
