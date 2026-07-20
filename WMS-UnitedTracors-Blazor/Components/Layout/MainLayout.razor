@@ -1,4 +1,6 @@
 @inherits LayoutComponentBase
+@inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Navigation
 
 <div class="min-h-screen" style="background: linear-gradient(rgba(245,244,240,0.82), rgba(245,244,240,0.82)), url('/images/bg/ut.png') center center / 140% no-repeat fixed;">
     <NavMenu />
@@ -11,3 +13,20 @@
     <!-- Global Cart Modal -->
     <WMS_UnitedTracors_Blazor.Components.Shared.CartCheckout @rendermode="InteractiveServer" />
 </div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        
+        if (user.Identity != null && user.Identity.IsAuthenticated)
+        {
+            var isNewUser = user.Claims.Any(c => c.Type == "is_new_user" && c.Value == "true");
+            if (isNewUser)
+            {
+                Navigation.NavigateTo("/complete-profile", true);
+            }
+        }
+    }
+}

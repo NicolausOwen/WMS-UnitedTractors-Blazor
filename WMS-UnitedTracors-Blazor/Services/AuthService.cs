@@ -56,9 +56,10 @@ public class AuthService
         }
 
         var user = await _context.Users.Include(u => u.Division).FirstOrDefaultAsync(u => u.email == email);
-
+        bool isNewUser = false;
         if (user == null)
         {
+            isNewUser = true;
             user = new User
             {
                 name = name ?? "SSO User",
@@ -73,11 +74,11 @@ public class AuthService
             await _context.SaveChangesAsync();
         }
 
-        var principal = await CreateClaimsPrincipalAsync(_context, user);
+        var principal = await CreateClaimsPrincipalAsync(_context, user, isNewUser);
         return (principal, null);
     }
 
-    private async Task<ClaimsPrincipal> CreateClaimsPrincipalAsync(ApplicationDbContext _context, User user)
+    public async Task<ClaimsPrincipal> CreateClaimsPrincipalAsync(ApplicationDbContext _context, User user, bool isNewUser = false)
     {
         var claims = new List<Claim>
         {
@@ -97,6 +98,11 @@ public class AuthService
         foreach (var p in perms)
         {
             claims.Add(new Claim("perm", p));
+        }
+
+        if (isNewUser)
+        {
+            claims.Add(new Claim("is_new_user", "true"));
         }
 
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
