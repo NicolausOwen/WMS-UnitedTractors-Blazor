@@ -11,6 +11,8 @@
 @inject NavigationManager Navigation
 @inject ApprovalService ApprovalService
 @inject IJSRuntime JSRuntime
+@inject DashboardStateService DashboardState
+@implements IDisposable
 @rendermode InteractiveServer
 
 <PageTitle>WMS - Tracking Penggunaan</PageTitle>
@@ -1549,7 +1551,24 @@
         }
 
         Divisions = await DivisionService.GetAllDivisionsAsync();
+        
+        DashboardState.OnDashboardUpdated += DashboardUpdated;
+        
         await LoadData();
+    }
+
+    private async void DashboardUpdated()
+    {
+        await InvokeAsync(async () =>
+        {
+            await LoadData();
+            StateHasChanged();
+        });
+    }
+
+    public void Dispose()
+    {
+        DashboardState.OnDashboardUpdated -= DashboardUpdated;
     }
 
     private async Task LoadData()

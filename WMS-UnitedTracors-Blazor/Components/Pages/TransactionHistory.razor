@@ -8,6 +8,8 @@
 @inject DivisionService DivisionService
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthStateProvider
+@inject DashboardStateService DashboardState
+@implements IDisposable
 @rendermode InteractiveServer
 
 <PageTitle>WMS - Transaction History</PageTitle>
@@ -661,7 +663,23 @@
 
         Divisions = await DivisionService.GetAllDivisionsAsync();
         ShowFilters = HasActiveFilters;
+        
+        DashboardState.OnDashboardUpdated += DashboardUpdated;
         await LoadData(1);
+    }
+
+    private async void DashboardUpdated()
+    {
+        await InvokeAsync(async () =>
+        {
+            await LoadData(CurrentPage);
+            StateHasChanged();
+        });
+    }
+
+    public void Dispose()
+    {
+        DashboardState.OnDashboardUpdated -= DashboardUpdated;
     }
 
     private bool IsLoading = false;

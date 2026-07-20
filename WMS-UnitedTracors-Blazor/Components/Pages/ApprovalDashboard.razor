@@ -4,10 +4,12 @@
 @using System.Security.Claims
 @using UT_WMSDotnet.Models
 @using WMS_UnitedTracors_Blazor.Services
+@implements IDisposable
 @inject ApprovalService ApprovalService
 @inject TransactionService TransactionService
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthStateProvider
+@inject DashboardStateService DashboardState
 @rendermode InteractiveServer
 
 <PageTitle>WMS - Persetujuan Admin</PageTitle>
@@ -1622,6 +1624,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        DashboardState.OnDashboardUpdated += DashboardUpdated;
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
 
@@ -2572,5 +2575,19 @@
             OpenGroupConfirmModal(groupId);
         }
         await Task.CompletedTask;
+    }
+
+    private async void DashboardUpdated()
+    {
+        await InvokeAsync(async () =>
+        {
+            await LoadData();
+            StateHasChanged();
+        });
+    }
+
+    public void Dispose()
+    {
+        DashboardState.OnDashboardUpdated -= DashboardUpdated;
     }
 }

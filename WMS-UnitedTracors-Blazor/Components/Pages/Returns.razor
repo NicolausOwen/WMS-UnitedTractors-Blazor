@@ -8,6 +8,8 @@
 @inject TransactionService TransactionService
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthStateProvider
+@inject DashboardStateService DashboardState
+@implements IDisposable
 @rendermode InteractiveServer
 
 <PageTitle>WMS - Tracking & Returns</PageTitle>
@@ -391,7 +393,22 @@
             UserRole = user.FindFirst(ClaimTypes.Role)?.Value;
         }
 
+        DashboardState.OnDashboardUpdated += DashboardUpdated;
         await LoadData(1);
+    }
+
+    private async void DashboardUpdated()
+    {
+        await InvokeAsync(async () =>
+        {
+            await LoadData(CurrentPage);
+            StateHasChanged();
+        });
+    }
+
+    public void Dispose()
+    {
+        DashboardState.OnDashboardUpdated -= DashboardUpdated;
     }
 
     private void HandleFileSelected(InputFileChangeEventArgs e)
