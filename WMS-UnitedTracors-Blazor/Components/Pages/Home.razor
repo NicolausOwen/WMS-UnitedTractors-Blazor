@@ -11,6 +11,7 @@
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthStateProvider
 @inject IJSRuntime JSRuntime
+@inject DashboardStateService DashboardState
 @rendermode InteractiveServer
 
 <PageTitle>WMS - Home Page</PageTitle>
@@ -790,6 +791,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        DashboardState.OnDashboardUpdated += DashboardUpdated;
         CartService.OnChange += StateHasChanged;
         
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
@@ -1209,8 +1211,18 @@
         await InvokeAsync(StateHasChanged);
     }
     
+    private async void DashboardUpdated()
+    {
+        await InvokeAsync(async () =>
+        {
+            await LoadData(CurrentPage);
+            StateHasChanged();
+        });
+    }
+
     public void Dispose()
     {
+        DashboardState.OnDashboardUpdated -= DashboardUpdated;
         CartService.OnChange -= StateHasChanged;
     }
 

@@ -32,6 +32,7 @@ builder.Services.AddScoped<WMS_UnitedTracors_Blazor.Services.TrackingService>();
 builder.Services.AddScoped<WMS_UnitedTracors_Blazor.Services.PdfReportService>();
 builder.Services.AddScoped<WMS_UnitedTracors_Blazor.Services.PdfReceiptService>();
 builder.Services.AddScoped<WMS_UnitedTracors_Blazor.Services.AdminRoleService>();
+builder.Services.AddSingleton<WMS_UnitedTracors_Blazor.Services.DashboardStateService>();
 
 builder.Services.Configure<WMS_UnitedTracors_Blazor.Services.SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
 builder.Services.AddScoped<WMS_UnitedTracors_Blazor.Services.IEmailService, WMS_UnitedTracors_Blazor.Services.EmailService>();

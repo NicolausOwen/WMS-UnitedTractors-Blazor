@@ -14,12 +14,14 @@ public class TransactionService
     private readonly IDbContextFactory<ApplicationDbContext> _factory;
     private readonly IWebHostEnvironment _env;
     private readonly IEmailService _emailService;
+    private readonly DashboardStateService _dashboardState;
 
-    public TransactionService(IDbContextFactory<ApplicationDbContext> factory, IWebHostEnvironment env, IEmailService emailService)
+    public TransactionService(IDbContextFactory<ApplicationDbContext> factory, IWebHostEnvironment env, IEmailService emailService, DashboardStateService dashboardState)
     {
         _factory = factory;
         _env = env;
         _emailService = emailService;
+        _dashboardState = dashboardState;
     }
 
     // Shared upload constraints for proof photos/PDFs (handover & return).
@@ -332,6 +334,8 @@ public class TransactionService
             return result;
         }
 
+        _dashboardState.NotifyDashboardUpdated();
+
         if (model.type == "OUT")
         {
             var requester = await _context.Users.FindAsync(currentUserId);
@@ -575,6 +579,7 @@ public class TransactionService
 
         _context.Transactions.Update(transaction);
         await _context.SaveChangesAsync();
+        _dashboardState.NotifyDashboardUpdated();
         return null;
     }
 
@@ -657,6 +662,7 @@ public class TransactionService
 
                 await _context.SaveChangesAsync();
                 await dbTransaction.CommitAsync();
+                _dashboardState.NotifyDashboardUpdated();
                 return null;
             }
             catch (Exception ex)

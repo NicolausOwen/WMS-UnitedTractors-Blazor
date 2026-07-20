@@ -9,11 +9,13 @@ public class ApprovalService
 {
     private readonly IDbContextFactory<ApplicationDbContext> _factory;
     private readonly IEmailService _emailService;
+    private readonly DashboardStateService _dashboardState;
 
-    public ApprovalService(IDbContextFactory<ApplicationDbContext> factory, IEmailService emailService)
+    public ApprovalService(IDbContextFactory<ApplicationDbContext> factory, IEmailService emailService, DashboardStateService dashboardState)
     {
         _factory = factory;
         _emailService = emailService;
+        _dashboardState = dashboardState;
     }
 
     public async Task<(Dictionary<string, List<Transaction>> GroupedApprovals, List<Transaction> PendingReturns, List<ProfileRequest> PendingProfileRequests, Dictionary<string, List<Transaction>> GroupedHandovers, Dictionary<string, List<Transaction>> GroupedDocumentations)> GetApprovalsAsync(int currentUserId, string? userRole)
@@ -199,6 +201,7 @@ public class ApprovalService
                 await NotifyBatchResultAsync(new List<(Transaction, string, string?)> { (transaction, "APPROVE", null) });
                 await NotifyNextApproversAsync(_context, transaction, WorkflowStatuses.PendingAdmin);
             }
+            _dashboardState.NotifyDashboardUpdated();
             return null;
         }
 
@@ -274,6 +277,7 @@ public class ApprovalService
                     await NotifyBatchResultAsync(new List<(Transaction, string, string?)> { (transaction, "APPROVE", null) });
                 }
 
+                _dashboardState.NotifyDashboardUpdated();
                 return null;
             }
             catch (Exception ex)
@@ -356,6 +360,7 @@ public class ApprovalService
             await NotifyBatchResultAsync(new List<(Transaction, string, string?)> { (transaction, "REJECT", rejectionReason) });
         }
         
+        _dashboardState.NotifyDashboardUpdated();
         return null;
     }
 
@@ -474,6 +479,7 @@ public class ApprovalService
             await NotifyBatchResultAsync(new List<(Transaction, string, string?)> { (transaction, "REVISE", revisionReason) });
         }
         
+        _dashboardState.NotifyDashboardUpdated();
         return null;
     }
 
@@ -571,6 +577,7 @@ public class ApprovalService
                 // Jangan menggagalkan transaksi jika pengiriman email notifikasi gagal
             }
 
+            _dashboardState.NotifyDashboardUpdated();
             return null;
         }
         catch (Exception ex)
@@ -608,6 +615,7 @@ public class ApprovalService
             _ = NotifyUserAsync(matched.First(), "Serah Terima Selesai", "Proses serah terima barang peminjaman Anda telah diverifikasi oleh Admin.");
         }
 
+        _dashboardState.NotifyDashboardUpdated();
         return null;
     }
 
@@ -656,6 +664,7 @@ public class ApprovalService
             }
         }
 
+        _dashboardState.NotifyDashboardUpdated();
         return null;
     }
 
@@ -688,6 +697,7 @@ public class ApprovalService
             _ = NotifyUserAsync(matched.First(), "Serah Terima Ditolak Admin", $"Proses serah terima Anda ditolak oleh Admin. Alasan: {rejectionReason}");
         }
 
+        _dashboardState.NotifyDashboardUpdated();
         return null;
     }
 
@@ -709,6 +719,7 @@ public class ApprovalService
 
         _context.Transactions.Update(transaction);
         await _context.SaveChangesAsync();
+        _dashboardState.NotifyDashboardUpdated();
         return null;
     }
 
@@ -739,6 +750,7 @@ public class ApprovalService
         _context.ProfileRequests.Update(request);
         await _context.SaveChangesAsync();
 
+        _dashboardState.NotifyDashboardUpdated();
         return null;
     }
 
@@ -759,6 +771,7 @@ public class ApprovalService
         _context.ProfileRequests.Update(request);
         await _context.SaveChangesAsync();
 
+        _dashboardState.NotifyDashboardUpdated();
         return null;
     }
 
@@ -1100,6 +1113,7 @@ public class ApprovalService
             _ = NotifyUserAsync(matched.First(), "Dokumentasi Giveaway Disetujui", "Dokumentasi foto penyerahan barang giveaway Anda telah disetujui oleh Admin.");
         }
 
+        _dashboardState.NotifyDashboardUpdated();
         return null;
     }
 
@@ -1134,6 +1148,7 @@ public class ApprovalService
             _ = NotifyUserAsync(matched.First(), "Dokumentasi Giveaway Ditolak", $"Dokumentasi foto giveaway Anda ditolak oleh Admin. Alasan: {rejectionReason}");
         }
 
+        _dashboardState.NotifyDashboardUpdated();
         return null;
     }
 
@@ -1157,6 +1172,8 @@ public class ApprovalService
 
         await _context.SaveChangesAsync();
         _ = NotifyUserAsync(transaction, "Dokumentasi Giveaway Disetujui", "Dokumentasi foto penyerahan barang giveaway Anda telah disetujui oleh Admin.");
+        
+        _dashboardState.NotifyDashboardUpdated();
         return null;
     }
 
@@ -1180,6 +1197,8 @@ public class ApprovalService
 
         await _context.SaveChangesAsync();
         _ = NotifyUserAsync(transaction, "Dokumentasi Giveaway Ditolak", $"Dokumentasi foto giveaway Anda ditolak oleh Admin. Alasan: {rejectionReason}");
+        
+        _dashboardState.NotifyDashboardUpdated();
         return null;
     }
 }
