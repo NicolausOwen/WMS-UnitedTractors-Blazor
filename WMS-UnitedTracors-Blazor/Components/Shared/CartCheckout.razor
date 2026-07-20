@@ -1,3 +1,4 @@
+@rendermode InteractiveServer
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
 @using UT_WMSDotnet.Models
@@ -9,14 +10,32 @@
 @inject AuthenticationStateProvider AuthStateProvider
 @implements IDisposable
 
+<WMS_UnitedTracors_Blazor.Components.Shared.LoadingOverlay IsVisible="IsSubmitting" Message="Memproses Transaksi Permintaan..." SubMessage="Mohon tunggu sebentar..." />
+
 @* Toast *@
 @if (!string.IsNullOrEmpty(CartToast))
 {
-    <div class="fixed bottom-44 sm:bottom-28 right-8 z-[250] bg-[#1a7a30] text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2 max-w-xs">
+    <div class="fixed bottom-24 right-6 z-[250] bg-[#1a7a30] text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2 max-w-xs">
         <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
         <span class="truncate">@CartToast</span>
     </div>
 }
+
+@* Floating Sticky Cart Button (Desktop & iPad only - Bottom Right) *@
+<button type="button" @onclick="OpenCartModal"
+        style="position: fixed !important; bottom: 24px !important; right: 24px !important; z-index: 999999 !important;"
+        class="hidden md:flex items-center justify-center w-14 h-14 rounded-full bg-[#e8a000] hover:bg-[#d49300] active:scale-95 text-[#1a1a1a] transition-all shadow-2xl border-2 border-white cursor-pointer group"
+        title="Keranjang Permintaan" aria-label="Buka Keranjang">
+    <svg class="w-6 h-6 text-[#1a1a1a] group-hover:scale-110 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+    </svg>
+    @if (CartService.Items.Any())
+    {
+        <span class="absolute -top-1 -right-1 inline-flex items-center justify-center min-w-[1.4rem] h-[1.4rem] px-1 bg-[#d94040] text-white text-[0.7rem] font-extrabold rounded-full shadow-md border-2 border-white animate-bounce">
+            @CartService.Items.Sum(i => i.Quantity)
+        </span>
+    }
+</button>
 
 
 

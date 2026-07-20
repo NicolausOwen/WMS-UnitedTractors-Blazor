@@ -85,4 +85,27 @@ public class ProfileService
         await _context.SaveChangesAsync();
         return null;
     }
+
+    public async Task<string?> CompleteFirstLoginAsync(int userId, string name, string nrp, int? divisionId, string newPassword)
+    {
+        using var _context = _factory.CreateDbContext();
+        var user = await _context.Users.FindAsync(userId);
+        if (user == null) return "User tidak ditemukan.";
+
+        if (string.IsNullOrWhiteSpace(name)) return "Nama wajib diisi.";
+        if (string.IsNullOrWhiteSpace(nrp)) return "NRP wajib diisi.";
+        if (!divisionId.HasValue || divisionId == 0) return "Divisi wajib dipilih.";
+        if (string.IsNullOrWhiteSpace(newPassword) || newPassword.Length < 6) return "Password baru minimal 6 karakter.";
+
+        user.name = name.Trim();
+        user.nrp = nrp.Trim();
+        user.division_id = divisionId;
+        user.password = BCrypt.Net.BCrypt.HashPassword(newPassword);
+        user.updated_at = DateTime.UtcNow;
+
+        _context.Update(user);
+        await _context.SaveChangesAsync();
+        return null;
+    }
 }
+
