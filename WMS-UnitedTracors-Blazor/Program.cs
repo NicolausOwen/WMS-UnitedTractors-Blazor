@@ -86,7 +86,15 @@ builder.Services.AddAuthentication(options =>
         };
         options.Events = new OpenIdConnectEvents
         {
-            OnTokenValidated = context => Task.CompletedTask
+            OnTokenValidated = context => Task.CompletedTask,
+            OnRedirectToIdentityProvider = context =>
+            {
+                if (context.ProtocolMessage.RedirectUri.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
+                {
+                    context.ProtocolMessage.RedirectUri = context.ProtocolMessage.RedirectUri.Replace("http://", "https://", StringComparison.OrdinalIgnoreCase);
+                }
+                return Task.CompletedTask;
+            }
         };
     });
 
@@ -165,6 +173,7 @@ app.MapPost("/Logout", async (HttpContext context) =>
 app.MapGet("/auth/microsoft", () =>
 {
     var properties = new Microsoft.AspNetCore.Authentication.AuthenticationProperties { RedirectUri = "/auth/microsoft/callback" };
+    properties.Items["IsSecure"] = "true";
     return Results.Challenge(properties, new[] { "Microsoft" });
 }).AllowAnonymous();
 
