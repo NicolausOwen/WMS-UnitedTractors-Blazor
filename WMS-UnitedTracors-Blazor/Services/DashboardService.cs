@@ -171,6 +171,16 @@ public class DashboardService
         using var _context = _factory.CreateDbContext();
         var actionItems = new List<ActionItemModel>();
 
+        // Determine category-level restriction for admins / approvers
+        var userAdminRoles = await _context.UserAdminRoles.Where(uar => uar.UserId == userId).ToListAsync();
+        bool isSuperAdmin = user != null && Permissions.All.All(p => user.HasPermission(p));
+        bool isGlobalAdmin = isSuperAdmin || userAdminRoles.Any(uar => uar.CategoryId == null);
+        List<int>? allowedCategoryIds = null;
+        if (!isGlobalAdmin)
+        {
+            allowedCategoryIds = userAdminRoles.Where(uar => uar.CategoryId != null).Select(uar => uar.CategoryId!.Value).ToList();
+        }
+
         // 1. General User Tasks (Requester role / their own requests)
         var pendingTransactions = await _context.Transactions
             .Include(t => t.Product)
@@ -268,12 +278,15 @@ public class DashboardService
         if (user != null && (user.HasPermission(Permissions.ApprovalStage1) || user.HasPermission(Permissions.ApprovalHandover)))
         {
             // A. Menunggu Approval Tahap 1
-            var toApproveStage1 = await _context.Transactions
+            var qStage1 = _context.Transactions
                 .Include(t => t.Product)
                 .Include(t => t.Requester)
-                .Where(t => t.status == WorkflowStatuses.PendingStaffInventory || t.status == WorkflowStatuses.Pending)
-                .OrderByDescending(t => t.updated_at)
-                .ToListAsync();
+                .Where(t => t.status == WorkflowStatuses.PendingStaffInventory || t.status == WorkflowStatuses.Pending);
+            if (!isGlobalAdmin && allowedCategoryIds != null)
+            {
+                qStage1 = qStage1.Where(t => t.Product != null && t.Product.category_id != null && allowedCategoryIds.Contains(t.Product.category_id.Value));
+            }
+            var toApproveStage1 = await qStage1.OrderByDescending(t => t.updated_at).ToListAsync();
 
             foreach (var t in toApproveStage1)
             {
@@ -291,12 +304,15 @@ public class DashboardService
             }
 
             // B. Menunggu Serah Terima (SI harus isi bukti serah terima)
-            var toHandover = await _context.Transactions
+            var qHandover = _context.Transactions
                 .Include(t => t.Product)
                 .Include(t => t.Requester)
-                .Where(t => t.status == WorkflowStatuses.WaitingHandover)
-                .OrderByDescending(t => t.updated_at)
-                .ToListAsync();
+                .Where(t => t.status == WorkflowStatuses.WaitingHandover);
+            if (!isGlobalAdmin && allowedCategoryIds != null)
+            {
+                qHandover = qHandover.Where(t => t.Product != null && t.Product.category_id != null && allowedCategoryIds.Contains(t.Product.category_id.Value));
+            }
+            var toHandover = await qHandover.OrderByDescending(t => t.updated_at).ToListAsync();
 
             foreach (var t in toHandover)
             {
@@ -314,12 +330,15 @@ public class DashboardService
             }
 
             // C. Dispute Serah Terima (User dispute "Saya Belum Menerima Barang")
-            var disputes = await _context.Transactions
+            var qDisputes = _context.Transactions
                 .Include(t => t.Product)
                 .Include(t => t.Requester)
-                .Where(t => t.status == WorkflowStatuses.WaitingHandoverConfirm && !string.IsNullOrEmpty(t.rejection_reason))
-                .OrderByDescending(t => t.updated_at)
-                .ToListAsync();
+                .Where(t => t.status == WorkflowStatuses.WaitingHandoverConfirm && !string.IsNullOrEmpty(t.rejection_reason));
+            if (!isGlobalAdmin && allowedCategoryIds != null)
+            {
+                qDisputes = qDisputes.Where(t => t.Product != null && t.Product.category_id != null && allowedCategoryIds.Contains(t.Product.category_id.Value));
+            }
+            var disputes = await qDisputes.OrderByDescending(t => t.updated_at).ToListAsync();
 
             foreach (var t in disputes)
             {
@@ -337,12 +356,15 @@ public class DashboardService
             }
 
             // D. Approval Return (Returns waiting for ACC)
-            var pendingReturns = await _context.Transactions
+            var qReturns = _context.Transactions
                 .Include(t => t.Product)
                 .Include(t => t.Requester)
-                .Where(t => t.status == WorkflowStatuses.Approved && t.pending_return_quantity > 0 && t.is_return_draft == 0)
-                .OrderByDescending(t => t.updated_at)
-                .ToListAsync();
+                .Where(t => t.status == WorkflowStatuses.Approved && t.pending_return_quantity > 0 && t.is_return_draft == 0);
+            if (!isGlobalAdmin && allowedCategoryIds != null)
+            {
+                qReturns = qReturns.Where(t => t.Product != null && t.Product.category_id != null && allowedCategoryIds.Contains(t.Product.category_id.Value));
+            }
+            var pendingReturns = await qReturns.OrderByDescending(t => t.updated_at).ToListAsync();
 
             foreach (var t in pendingReturns)
             {
@@ -364,12 +386,15 @@ public class DashboardService
         if (user != null && (user.HasPermission(Permissions.ApprovalStage2) || user.HasPermission(Permissions.ApprovalHandoverFinal)))
         {
             // A. Approval Tahap 2
-            var toApproveStage2 = await _context.Transactions
+            var qStage2 = _context.Transactions
                 .Include(t => t.Product)
                 .Include(t => t.Requester)
-                .Where(t => t.status == WorkflowStatuses.PendingAdmin)
-                .OrderByDescending(t => t.updated_at)
-                .ToListAsync();
+                .Where(t => t.status == WorkflowStatuses.PendingAdmin);
+            if (!isGlobalAdmin && allowedCategoryIds != null)
+            {
+                qStage2 = qStage2.Where(t => t.Product != null && t.Product.category_id != null && allowedCategoryIds.Contains(t.Product.category_id.Value));
+            }
+            var toApproveStage2 = await qStage2.OrderByDescending(t => t.updated_at).ToListAsync();
 
             foreach (var t in toApproveStage2)
             {
@@ -387,12 +412,15 @@ public class DashboardService
             }
 
             // B. Verifikasi Bukti Serah Terima Final
-            var verifyHandovers = await _context.Transactions
+            var qVerifyHandovers = _context.Transactions
                 .Include(t => t.Product)
                 .Include(t => t.Requester)
-                .Where(t => t.status == WorkflowStatuses.WaitingAdminHandover)
-                .OrderByDescending(t => t.updated_at)
-                .ToListAsync();
+                .Where(t => t.status == WorkflowStatuses.WaitingAdminHandover);
+            if (!isGlobalAdmin && allowedCategoryIds != null)
+            {
+                qVerifyHandovers = qVerifyHandovers.Where(t => t.Product != null && t.Product.category_id != null && allowedCategoryIds.Contains(t.Product.category_id.Value));
+            }
+            var verifyHandovers = await qVerifyHandovers.OrderByDescending(t => t.updated_at).ToListAsync();
 
             foreach (var t in verifyHandovers)
             {
@@ -413,12 +441,15 @@ public class DashboardService
         // 4. Manager Tasks
         if (user != null && user.HasPermission(Permissions.ApprovalManager))
         {
-            var toApproveManager = await _context.Transactions
+            var qManager = _context.Transactions
                 .Include(t => t.Product)
                 .Include(t => t.Requester)
-                .Where(t => t.status == WorkflowStatuses.PendingManager)
-                .OrderByDescending(t => t.updated_at)
-                .ToListAsync();
+                .Where(t => t.status == WorkflowStatuses.PendingManager);
+            if (!isGlobalAdmin && allowedCategoryIds != null)
+            {
+                qManager = qManager.Where(t => t.Product != null && t.Product.category_id != null && allowedCategoryIds.Contains(t.Product.category_id.Value));
+            }
+            var toApproveManager = await qManager.OrderByDescending(t => t.updated_at).ToListAsync();
 
             foreach (var t in toApproveManager)
             {
