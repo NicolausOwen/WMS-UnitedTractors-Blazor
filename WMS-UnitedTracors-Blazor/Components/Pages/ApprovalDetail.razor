@@ -39,7 +39,7 @@
                 <div class="flex flex-col lg:flex-row lg:items-center justify-between pb-4 border-b border-[#f0ede5] gap-4">
                     <div class="min-w-0">
                         <div class="flex items-center gap-2 flex-wrap">
-                            <h2 class="font-extrabold text-lg sm:text-xl text-[#1a1a1a]">Request #@GroupId.Substring(0, Math.Min(8, GroupId.Length))</h2>
+                            <h2 class="font-extrabold text-lg sm:text-xl text-[#1a1a1a]">@(firstItem.event_name ?? "-")</h2>
                             <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black shrink-0 @badgeClass">@GroupItems.Count Item</span>
                         </div>
                         <div class="text-xs text-[#8a8880] font-semibold mt-1">
