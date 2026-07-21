@@ -837,21 +837,21 @@
                                                                          {
                                                                              <div class="text-[11px] leading-tight flex items-center gap-1">
                                                                                  <span class="font-bold text-[#e8a000] text-[10px] uppercase">Staff Inv:</span> 
-                                                                                 <span class="text-[#1a1a1a] font-semibold">@(usage.Approver?.role?.Contains("staff") == true ? usage.Approver.name : "Disetujui")</span>
+                                                                                 <span class="text-[#1a1a1a] font-semibold">@(usage.StaffInventoryApprover != null ? usage.StaffInventoryApprover.name : (usage.Approver?.role?.Contains("staff") == true ? usage.Approver.name : "Disetujui"))</span>
                                                                              </div>
                                                                          }
                                                                          @if (usage.status == "PENDING_MANAGER" || usage.status == "WAITING_HANDOVER" || usage.status == "WAITING_ADMIN_HANDOVER" || usage.status == "WAITING_DOCUMENTATION" || usage.status == "APPROVED" || usage.status == "COMPLETED")
                                                                          {
                                                                              <div class="text-[11px] leading-tight flex items-center gap-1">
                                                                                  <span class="font-bold text-[#e8a000] text-[10px] uppercase">Admin:</span> 
-                                                                                 <span class="text-[#1a1a1a] font-semibold">@(usage.Approver?.role?.Contains("admin") == true ? usage.Approver.name : "Disetujui")</span>
+                                                                                 <span class="text-[#1a1a1a] font-semibold">@(usage.AdminApprover != null ? usage.AdminApprover.name : (usage.Approver?.role?.Contains("admin") == true ? usage.Approver.name : "Disetujui"))</span>
                                                                              </div>
                                                                          }
                                                                          @if (usage.request_type == "GIVEAWAY" && (usage.status == "WAITING_HANDOVER" || usage.status == "WAITING_ADMIN_HANDOVER" || usage.status == "WAITING_DOCUMENTATION" || usage.status == "APPROVED" || usage.status == "COMPLETED"))
                                                                          {
                                                                              <div class="text-[11px] leading-tight flex items-center gap-1">
                                                                                  <span class="font-bold text-[#e8a000] text-[10px] uppercase">Manager:</span> 
-                                                                                 <span class="text-[#1a1a1a] font-semibold">@(usage.Approver?.role?.Contains("manager") == true ? usage.Approver.name : "Disetujui")</span>
+                                                                                 <span class="text-[#1a1a1a] font-semibold">@(usage.ManagerApprover != null ? usage.ManagerApprover.name : (usage.Approver?.role?.Contains("manager") == true ? usage.Approver.name : "Disetujui"))</span>
                                                                              </div>
                                                                          }
                                                                          @if (usage.status == "PENDING_STAFF_INVENTORY" || usage.status == "PENDING_ADMIN" || usage.status == "PENDING")
@@ -1417,7 +1417,7 @@
     }
   </ChildContent>
   <Footer>
-        <button type="button" @onclick="CloseRevisionModal" class="px-5 py-2.5 text-sm font-bold text-gray-600 hover:text-gray-900 bg-white border border-[#e5e3dc] rounded-xl transition">Batal</button>
+        <button type="button" @onclick="CloseRevisionModal" class="px-5 py-2.5 text-sm font-bold text-gray-600 hover:text-gray-900 bg-white border border-gray-200 hover:bg-gray-50 rounded-xl transition">Batal</button>
         <button type="button" @onclick="SubmitRevision" disabled="@IsSubmitting" class="px-6 py-2.5 bg-[#e8a000] hover:bg-[#d49300] active:scale-[0.98] text-[#1a1a1a] text-sm font-bold tracking-wider rounded-xl transition shadow-sm disabled:opacity-50">
             @(IsSubmitting ? "Mengirim..." : "Kirim Perbaikan")
         </button>
@@ -2253,6 +2253,7 @@
         public string Name { get; set; } = "";
         public string Status { get; set; } = "";
         public DateTime? CompletedAt { get; set; }
+        public string? ApproverName { get; set; }
         /// <summary>Optional small progress hint shown below the status label, e.g. "2/5 item dikembalikan".</summary>
         public string? SubLabel { get; set; }
     }
@@ -2483,9 +2484,20 @@
                 steps.Add(new TrackingStep { Name = "Pengembalian", Status = "PENDING" });
             }
         }
+
+        foreach (var step in steps)
+        {
+            if (step.Status == "DONE" || step.Status == "WARNING")
+            {
+                if (step.Name == "Approval Staff Inv") step.ApproverName = firstItem.StaffInventoryApprover?.name ?? (firstItem.Approver?.role?.Contains("staff") == true ? firstItem.Approver.name : null);
+                else if (step.Name == "Approval Admin") step.ApproverName = firstItem.AdminApprover?.name ?? (firstItem.Approver?.role?.Contains("admin") == true ? firstItem.Approver.name : null);
+                else if (step.Name == "Approval Manager") step.ApproverName = firstItem.ManagerApprover?.name ?? (firstItem.Approver?.role?.Contains("manager") == true ? firstItem.Approver.name : null);
+            }
+        }
+
         return steps;
     }
-
+    
     private async Task SubmitHandoverToAdmin(Transaction item)
     {
         if (IsSubmitting) return;

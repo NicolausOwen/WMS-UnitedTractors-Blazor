@@ -57,6 +57,24 @@ public class ApplicationDbContext : DbContext
             .WithMany()
             .HasForeignKey(t => t.approver_id)
             .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Transaction>()
+            .HasOne(t => t.StaffInventoryApprover)
+            .WithMany()
+            .HasForeignKey(t => t.staff_inventory_approver_id)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Transaction>()
+            .HasOne(t => t.AdminApprover)
+            .WithMany()
+            .HasForeignKey(t => t.admin_approver_id)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Transaction>()
+            .HasOne(t => t.ManagerApprover)
+            .WithMany()
+            .HasForeignKey(t => t.manager_approver_id)
+            .OnDelete(DeleteBehavior.Restrict);
             
         modelBuilder.Entity<Product>()
             .HasMany(p => p.Transactions)
