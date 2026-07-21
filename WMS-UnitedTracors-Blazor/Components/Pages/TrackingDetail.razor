@@ -55,8 +55,18 @@
             Kembali ke Tracking
         </button>
         <div class="bg-white rounded-xl border border-[#e5e3dc] overflow-hidden shadow-sm">
+            
+            <style>
+                .desktop-timeline { display: none; }
+                .mobile-timeline { display: block; }
+                @@media (min-width: 1024px) {
+                    .desktop-timeline { display: block; }
+                    .mobile-timeline { display: none; }
+                }
+            </style>
+
                             <!-- HORIZONTAL TIMELINE (DESKTOP) -->
-                            <div class="bg-[#faf9f5] p-5 hidden lg:block border-b border-[#e5e3dc]">
+                            <div class="desktop-timeline bg-[#faf9f5] p-5 border-b border-[#e5e3dc]">
                                 <h4 class="text-xs font-bold text-[#1a1a1a] uppercase tracking-wider mb-5 pb-2 border-b border-[#f0ede5] flex items-center gap-2">
                                     <svg class="w-4 h-4 text-[#e8a000]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
                                     Status Pelacakan
@@ -130,7 +140,7 @@
                             </div>
 
                             <!-- VERTICAL TIMELINE (MOBILE) -->
-                            <div class="bg-[#faf9f5] p-5 block lg:hidden border-b border-[#e5e3dc]">
+                            <div class="mobile-timeline bg-[#faf9f5] p-5 border-b border-[#e5e3dc]">
                                 <h4 class="text-xs font-bold text-[#1a1a1a] uppercase tracking-wider mb-5 pb-2 border-b border-[#f0ede5] flex items-center gap-2">
                                     <svg class="w-4 h-4 text-[#e8a000]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
                                     Status Pelacakan

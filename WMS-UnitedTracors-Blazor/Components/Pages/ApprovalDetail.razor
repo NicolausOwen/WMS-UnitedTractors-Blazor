@@ -83,7 +83,17 @@
                 </div>
 
                 <!-- Timeline & Flow section -->
-                <div class="border border-[#e5e3dc] rounded-2xl p-5 bg-white overflow-hidden">
+                <style>
+                    .desktop-timeline { display: none; }
+                    .mobile-timeline { display: block; }
+                    @@media (min-width: 1024px) {
+                        .desktop-timeline { display: block; }
+                        .mobile-timeline { display: none; }
+                    }
+                </style>
+
+                <!-- HORIZONTAL (DESKTOP) -->
+                <div class="desktop-timeline border border-[#e5e3dc] rounded-2xl p-5 bg-white overflow-hidden">
                     <h4 class="font-extrabold text-sm text-[#1a1a1a] mb-4 pb-2 border-b border-[#f0ede5] flex items-center gap-2">
                         <svg class="w-4 h-4 text-[#e8a000]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
                         Timeline & Approval Flow
@@ -149,6 +159,66 @@
                                 </div>
                             }
                         </div>
+                    </div>
+                </div>
+
+                <!-- VERTICAL (MOBILE) -->
+                <div class="mobile-timeline border border-[#e5e3dc] rounded-2xl p-5 bg-white">
+                    <h4 class="font-extrabold text-sm text-[#1a1a1a] mb-4 pb-2 border-b border-[#f0ede5] flex items-center gap-2">
+                        <svg class="w-4 h-4 text-[#e8a000]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                        Timeline & Approval Flow
+                    </h4>
+                    <div class="relative flex flex-col space-y-6 my-2 pl-2">
+                        <!-- Vertical connecting line -->
+                        <div class="absolute top-2 bottom-2 bg-gray-300 z-0" style="width: 2px; left: 15px;"></div>
+
+                        @{ var stepsMobile = GetGroupSteps(GroupItems); }
+                        @for (int i = 0; i < stepsMobile.Count; i++)
+                        {
+                            var step = stepsMobile[i];
+                            <div class="flex items-start gap-4 relative z-10">
+                                <!-- Circle indicator wrapper -->
+                                <div class="w-4 h-4 flex items-center justify-center shrink-0 mt-0.5 bg-white border rounded-full z-10
+                                    @(step.Status == "DONE" ? "border-emerald-600" :
+                                      step.Status == "ACTIVE" ? "border-blue-600 animate-pulse" :
+                                      step.Status == "WARNING" ? "border-rose-600" :
+                                      "border-gray-300")">
+                                    @if (step.Status == "DONE") {
+                                        <div class="w-full h-full rounded-full bg-[#1a7a30] flex items-center justify-center shrink-0">
+                                            <svg class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                                        </div>
+                                    } else if (step.Status == "ACTIVE") {
+                                        <span class="relative flex h-2 w-2 items-center justify-center">
+                                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                                            <span class="relative inline-flex rounded-full h-2 w-2 bg-blue-600"></span>
+                                        </span>
+                                    } else if (step.Status == "WARNING") {
+                                        <div class="w-full h-full rounded-full bg-[#d94040] flex items-center justify-center shrink-0">
+                                            <svg class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                        </div>
+                                    } else {
+                                        <div class="w-1.5 h-1.5 rounded-full bg-gray-300"></div>
+                                    }
+                                </div>
+                                <!-- Text Info -->
+                                <div class="flex flex-col min-w-0">
+                                    <span class="text-xs font-bold @(step.Status == "DONE" ? "text-[#1a7a30]" : step.Status == "ACTIVE" ? "text-blue-600" : step.Status == "WARNING" ? "text-[#d94040]" : "text-gray-500")">@step.Name</span>
+                                    <span class="text-[10px] text-gray-400 leading-tight mt-0.5">
+                                        @if (step.Status == "DONE" && step.CompletedAt.HasValue) {
+                                            <span>@(string.IsNullOrEmpty(step.ApproverName) ? "Selesai:" : $"Reviewed By {step.ApproverName} pada") @step.CompletedAt.Value.ToString("dd MMM HH:mm")</span>
+                                        } else if (step.Status == "DONE") {
+                                            <span>@(string.IsNullOrEmpty(step.ApproverName) ? "Selesai dilakukan" : $"Reviewed By {step.ApproverName}")</span>
+                                        } else if (step.Status == "ACTIVE") {
+                                            <span>Sedang diproses</span>
+                                        } else if (step.Status == "WARNING") {
+                                            <span>Butuh perhatian / ditolak</span>
+                                        } else {
+                                            <span>Sedang diproses</span>
+                                        }
+                                    </span>
+                                </div>
+                            </div>
+                        }
                     </div>
                 </div>
 
