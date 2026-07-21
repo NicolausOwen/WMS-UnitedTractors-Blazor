@@ -20,7 +20,7 @@
         <p class="text-sm text-[#8a8880] mt-1">Items available for borrowing and return</p>
     </div>
 
-    <div class="sticky top-[60px] md:top-0 z-sticky bg-[#f5f4f0] py-3 -mx-4 px-4 md:-mx-10 md:px-10 border-b border-[#e5e3dc] flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6 transition-all duration-200">
+    <div class="sticky top-[60px] md:top-0 bg-[#f5f4f0] py-3 -mx-4 px-4 md:-mx-10 md:px-10 border-b border-[#e5e3dc] flex flex-row items-center justify-between gap-3 mb-6 transition-all duration-200" style="z-index: 40;">
         <div class="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 flex-1 min-w-0 [&::-webkit-scrollbar]:hidden"
              style="scrollbar-width: none;">
             <button @onclick="() => FilterByCategory(null)"
@@ -39,8 +39,8 @@
             }
         </div>
         <div class="flex items-center gap-2">
-            <!-- Header Cart Button -->
-            <button type="button" @onclick="CartService.ShowCart" class="flex items-center justify-center w-[38px] h-[38px] rounded-full bg-[#e8a000] hover:bg-[#d49300] border border-[#d49300]/20 text-[#1a1a1a] transition-all shadow-sm cursor-pointer relative shrink-0" title="Keranjang" aria-label="Buka Keranjang">
+            <!-- Header Cart Button (Desktop Only) -->
+            <button type="button" @onclick="CartService.ShowCart" class="hidden md:flex items-center justify-center w-[38px] h-[38px] rounded-full bg-[#e8a000] hover:bg-[#d49300] border border-[#d49300]/20 text-[#1a1a1a] transition-all shadow-sm cursor-pointer relative shrink-0" title="Keranjang" aria-label="Buka Keranjang">
                 <svg class="w-5 h-5 text-[#1a1a1a]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
                 </svg>
@@ -51,7 +51,7 @@
                     </span>
                 }
             </button>
-            <div class="w-60 md:w-72 shrink-0 relative">
+            <div class="w-44 sm:w-60 md:w-72 shrink-0 relative">
                 <input type="text" value="@SearchQuery" @oninput="OnSearchInput" placeholder="Cari nama barang atau SKU..."
                        class="w-full pl-10 pr-4 py-2 bg-[#f9f8f6] border border-[#e5e3dc] rounded-full text-sm font-semibold text-[#5a5855] focus:outline-none focus:ring-2 focus:ring-[#3b82f6] focus:bg-white transition-all shadow-sm" />
                 <svg class="w-4 h-4 text-[#8a8880] absolute left-3.5 top-1/2 -translate-y-1/2" fill="none"
