@@ -14,12 +14,14 @@ public class TransactionService
     private readonly IDbContextFactory<ApplicationDbContext> _factory;
     private readonly IWebHostEnvironment _env;
     private readonly IEmailService _emailService;
+    private readonly DashboardStateService _dashboardState;
 
-    public TransactionService(IDbContextFactory<ApplicationDbContext> factory, IWebHostEnvironment env, IEmailService emailService)
+    public TransactionService(IDbContextFactory<ApplicationDbContext> factory, IWebHostEnvironment env, IEmailService emailService, DashboardStateService dashboardState)
     {
         _factory = factory;
         _env = env;
         _emailService = emailService;
+        _dashboardState = dashboardState;
     }
 
     // Shared upload constraints for proof photos/PDFs (handover & return).
@@ -332,6 +334,8 @@ public class TransactionService
             return result;
         }
 
+        _dashboardState.NotifyDashboardUpdated();
+
         if (model.type == "OUT")
         {
             var requester = await _context.Users.FindAsync(currentUserId);
@@ -528,7 +532,7 @@ public class TransactionService
         string photoPath = transaction.return_photo ?? "";
         if (model.return_photo != null)
         {
-            var uploads = Path.Combine(_env.WebRootPath, "storage", "returns");
+            var uploads = Path.Combine(_env.ContentRootPath, "Storage", "returns");
             if (!Directory.Exists(uploads)) Directory.CreateDirectory(uploads);
             var fileName = Guid.NewGuid().ToString() + Path.GetExtension(model.return_photo.FileName);
             var filePath = Path.Combine(uploads, fileName);
@@ -536,14 +540,14 @@ public class TransactionService
             {
                 await model.return_photo.CopyToAsync(fileStream);
             }
-            photoPath = "storage/returns/" + fileName;
+            photoPath = "/storage/returns/" + fileName;
         }
         else if (model.return_photo_browser != null)
         {
             var uploadError = ValidateUploadFile(model.return_photo_browser);
             if (uploadError != null) return uploadError;
 
-            var uploads = Path.Combine(_env.WebRootPath, "storage", "returns");
+            var uploads = Path.Combine(_env.ContentRootPath, "Storage", "returns");
             if (!Directory.Exists(uploads)) Directory.CreateDirectory(uploads);
             var fileName = Guid.NewGuid().ToString() + Path.GetExtension(model.return_photo_browser.Name);
             var filePath = Path.Combine(uploads, fileName);
@@ -551,7 +555,7 @@ public class TransactionService
             {
                 await model.return_photo_browser.OpenReadStream(MaxUploadBytes).CopyToAsync(fileStream);
             }
-            photoPath = "storage/returns/" + fileName;
+            photoPath = "/storage/returns/" + fileName;
         }
         else if (string.IsNullOrEmpty(photoPath))
         {
@@ -575,6 +579,7 @@ public class TransactionService
 
         _context.Transactions.Update(transaction);
         await _context.SaveChangesAsync();
+        _dashboardState.NotifyDashboardUpdated();
         return null;
     }
 
@@ -657,6 +662,7 @@ public class TransactionService
 
                 await _context.SaveChangesAsync();
                 await dbTransaction.CommitAsync();
+                _dashboardState.NotifyDashboardUpdated();
                 return null;
             }
             catch (Exception ex)
@@ -731,12 +737,12 @@ public class TransactionService
             var filePath = Path.Combine(uploadDir, fileName);
             using var fileStream = new FileStream(filePath, FileMode.Create);
             await photo.OpenReadStream(MaxUploadBytes).CopyToAsync(fileStream);
-            return "storage/handovers/" + fileName;
+            return "/storage/handovers/" + fileName;
         }
 
         try
         {
-            var uploads = Path.Combine(_env.WebRootPath, "storage", "handovers");
+            var uploads = Path.Combine(_env.ContentRootPath, "Storage", "handovers");
             if (!Directory.Exists(uploads)) Directory.CreateDirectory(uploads);
             if (photos != null && photos.Count > 0)
             {
@@ -936,12 +942,12 @@ public class TransactionService
             var filePath = Path.Combine(uploadDir, fileName);
             using var fileStream = new FileStream(filePath, FileMode.Create);
             await photo.OpenReadStream(MaxUploadBytes).CopyToAsync(fileStream);
-            return "storage/documentation/" + fileName;
+            return "/storage/documentation/" + fileName;
         }
 
         try
         {
-            var uploads = Path.Combine(_env.WebRootPath, "storage", "documentation");
+            var uploads = Path.Combine(_env.ContentRootPath, "Storage", "documentation");
             if (!Directory.Exists(uploads)) Directory.CreateDirectory(uploads);
 
             foreach (var photo in photos)

@@ -142,7 +142,19 @@ namespace WMS_UnitedTracors_Blazor.Services
             if (string.IsNullOrWhiteSpace(resolved)) return null;
 
             var rel = resolved.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
-            var full = Path.Combine(wwwrootPath, rel);
+            string full;
+            if (rel.StartsWith("storage" + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) || 
+                rel.Equals("storage", StringComparison.OrdinalIgnoreCase))
+            {
+                var appRoot = Directory.GetParent(wwwrootPath.TrimEnd(Path.DirectorySeparatorChar))?.FullName ?? string.Empty;
+                var subPath = rel.Substring("storage".Length).TrimStart(Path.DirectorySeparatorChar);
+                full = Path.Combine(appRoot, "Storage", subPath);
+            }
+            else
+            {
+                full = Path.Combine(wwwrootPath, rel);
+            }
+
             var ext = Path.GetExtension(full).ToLowerInvariant();
             if (ext != ".jpg" && ext != ".jpeg" && ext != ".png" && ext != ".webp") return null;
             return File.Exists(full) ? full : null;

@@ -1,3 +1,4 @@
+@rendermode InteractiveServer
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
 @using UT_WMSDotnet.Models
@@ -9,14 +10,18 @@
 @inject AuthenticationStateProvider AuthStateProvider
 @implements IDisposable
 
+<WMS_UnitedTracors_Blazor.Components.Shared.LoadingOverlay IsVisible="IsSubmitting" Message="Memproses Transaksi Permintaan..." SubMessage="Mohon tunggu sebentar..." />
+
 @* Toast *@
 @if (!string.IsNullOrEmpty(CartToast))
 {
-    <div class="fixed bottom-44 sm:bottom-28 right-8 z-[250] bg-[#1a7a30] text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2 max-w-xs">
+    <div class="fixed bottom-24 right-6 z-[250] bg-[#1a7a30] text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2 max-w-xs">
         <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
         <span class="truncate">@CartToast</span>
     </div>
 }
+
+
 
 
 

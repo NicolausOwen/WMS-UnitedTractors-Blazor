@@ -11,22 +11,8 @@
     </main>
 
     <!-- Global Cart Modal -->
-    <WMS_UnitedTracors_Blazor.Components.Shared.CartCheckout @rendermode="InteractiveServer" />
-</div>
+    <WMS_UnitedTracors_Blazor.Components.Shared.CartCheckout />
 
-@code {
-    protected override async Task OnInitializedAsync()
-    {
-        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
-        
-        if (user.Identity != null && user.Identity.IsAuthenticated)
-        {
-            var isNewUser = user.Claims.Any(c => c.Type == "is_new_user" && c.Value == "true");
-            if (isNewUser)
-            {
-                Navigation.NavigateTo("/complete-profile", true);
-            }
-        }
-    }
-}
+    <!-- First Login Profile Completion Modal -->
+    <WMS_UnitedTracors_Blazor.Components.Shared.FirstLoginModal />
+</div>

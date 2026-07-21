@@ -7,12 +7,15 @@
 @inject ProductService ProductService
 @inject CategoryService CategoryService
 @inject LocationService LocationService
+@inject UnitService UnitService
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
 @inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthStateProvider
 @rendermode InteractiveServer
 
 <PageTitle>WMS - Add Product</PageTitle>
+
+<WMS_UnitedTracors_Blazor.Components.Shared.LoadingOverlay IsVisible="IsSubmitting" Message="Menyimpan Produk..." SubMessage="Mohon tunggu sebentar..." />
 
 <header class="bg-transparent">
     <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
@@ -24,7 +27,7 @@
 </header>
 
 <div class="py-8">
-    <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="bg-white rounded-xl border border-gray-200 shadow-sm">
             <div class="px-6 py-5 border-b border-gray-100 flex items-center gap-4">
                 <button @onclick="NavigateBack" class="p-2 bg-white border border-gray-200 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition shrink-0">
@@ -36,239 +39,275 @@
                 </div>
             </div>
             <div class="px-6 py-6">
-    @if (Categories == null || Locations == null)
-    {
-        <div class="p-6 text-center text-gray-500 flex flex-col items-center">
-            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-4"></div>
-            Loading form...
-        </div>
-    }
-    else
-    {
-        <EditForm Model="Model" OnValidSubmit="HandleSubmit" class="p-6">
-            <DataAnnotationsValidator />
-            
-            @if (!string.IsNullOrEmpty(ErrorMessage))
-            {
-                <div class="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm" role="alert">
-                    @ErrorMessage
-                </div>
-            }
-
-            <div class="space-y-5">
-                @* SKU *@
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1.5">SKU / Barcode ID</label>
-                    <div class="flex gap-2">
-                        <InputText id="skuInput" @bind-Value="Model.sku" class="block w-full py-2 px-3 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#e8a000] focus:border-[#e8a000] outline-none transition placeholder:text-gray-400" placeholder="UT-YYMMDD-XXXX (Leave blank to auto-generate)" />
-                        <button type="button" id="startButton" class="px-4 py-2 bg-gray-900 text-white rounded-lg font-medium text-sm hover:bg-gray-800 transition whitespace-nowrap">
-                            Scan
-                        </button>
-                        <button type="button" id="resetButton" class="hidden px-4 py-2 bg-gray-200 text-gray-800 rounded-lg font-medium text-sm hover:bg-gray-300 transition whitespace-nowrap">
-                            Stop
-                        </button>
+                @if (Categories == null || Locations == null)
+                {
+                    <div class="p-6 text-center text-gray-500 flex flex-col items-center">
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[#e8a000] mb-4"></div>
+                        Loading form...
                     </div>
-                    <p class="text-xs text-gray-400 mt-1">Leave empty to automatically generate a standard SKU (Format: UT-YYMMDD-0001) or scan/type a custom one.</p>
-                    <div id="scannerContainer" class="hidden mt-3 relative bg-black w-full rounded-lg overflow-hidden" style="padding-top: 60%;">
-                        <video id="video" autoplay muted playsinline class="absolute top-0 left-0 w-full h-full object-cover"></video>
-                        <div class="absolute inset-0 border-2 border-white/30 m-4 rounded pointer-events-none"></div>
-                    </div>
-                    <ValidationMessage For="@(() => Model.sku)" class="text-red-600 text-xs mt-1 block" />
-                </div>
-
-                @* Barcode Type *@
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Barcode Type <span class="text-red-500">*</span></label>
-                    <InputSelect @bind-Value="Model.barcode_type" required class="block w-full py-2 px-3 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#e8a000] focus:border-[#e8a000] outline-none transition">
-                        <option value="TYPE_CODE_128">Code 128 (Recommended)</option>
-                        <option value="TYPE_CODE_39">Code 39</option>
-                        <option value="TYPE_EAN_13">EAN-13</option>
-                        <option value="TYPE_UPC_A">UPC-A</option>
-                    </InputSelect>
-                    <ValidationMessage For="@(() => Model.barcode_type)" class="text-red-600 text-xs mt-1 block" />
-                </div>
-
-                @* Product Name & Point Value *@
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Product Name <span class="text-red-500">*</span></label>
-                        <InputText @bind-Value="Model.name" required class="block w-full py-2 px-3 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#e8a000] focus:border-[#e8a000] outline-none transition" />
-                        <ValidationMessage For="@(() => Model.name)" class="text-red-600 text-xs mt-1 block" />
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Point Value <span class="text-red-500">*</span></label>
-                        <InputNumber @bind-Value="Model.value" min="0" placeholder="0" class="block w-full py-2 px-3 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#e8a000] focus:border-[#e8a000] outline-none transition" />
-                        <ValidationMessage For="@(() => Model.value)" class="text-red-600 text-xs mt-1 block" />
-                    </div>
-                </div>
-
-                @* Unit *@
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Unit <span class="text-red-500">*</span></label>
-                    <InputText @bind-Value="Model.unit" required class="block w-full py-2 px-3 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#e8a000] focus:border-[#e8a000] outline-none transition" placeholder="e.g. PCS, BOX, LTR" />
-                    <ValidationMessage For="@(() => Model.unit)" class="text-red-600 text-xs mt-1 block" />
-                </div>
-
-                @* Category & Transaction Type *@
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Category <span class="text-red-500">*</span></label>
-                        <InputSelect @bind-Value="Model.category_id" required class="block w-full py-2 px-3 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#e8a000] focus:border-[#e8a000] outline-none transition">
-                            <option value="0">Select category (required)</option>
-                            @foreach (var cat in Categories)
-                            {
-                                <option value="@cat.Id">@cat.Name</option>
-                            }
-                        </InputSelect>
-                        <ValidationMessage For="@(() => Model.category_id)" class="text-red-600 text-xs mt-1 block" />
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Transaction Type</label>
-                        <InputSelect @bind-Value="Model.transaction_type" class="block w-full py-2 px-3 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#e8a000] focus:border-[#e8a000] outline-none transition">
-                            <option value="">Default (Borrow & Request)</option>
-                            <option value="BORROW">Peminjaman (Borrow Only)</option>
-                            <option value="REQUEST">Permintaan (Request Only)</option>
-                        </InputSelect>
-                        <ValidationMessage For="@(() => Model.transaction_type)" class="text-red-600 text-xs mt-1 block" />
-                    </div>
-                </div>
-
-                @* Description *@
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Product Description</label>
-                    <InputTextArea @bind-Value="Model.description" rows="4" placeholder="Tuliskan kondisi, spesifikasi, atau catatan penting barang..." class="block w-full rounded-3xl border border-[#e5e3dc] bg-[#faf9f5] px-4 py-3 text-sm text-[#1a1a1a] focus:border-[#e8a000] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#fef3c7] transition duration-200"></InputTextArea>
-                    <ValidationMessage For="@(() => Model.description)" class="text-red-600 text-xs mt-1 block" />
-                    <p class="text-xs text-gray-400 mt-2">Deskripsi ini membantu tim approval dan gudang memahami kondisi / catatan barang.</p>
-                </div>
-
-                @* Is Returnable *@
-                <div>
-                    <label class="flex items-center gap-2 cursor-pointer w-max">
-                        <InputCheckbox @bind-Value="Model.is_returnable" class="rounded border-gray-300 text-gray-900 focus:ring-gray-900 w-4 h-4 transition outline-none" />
-                        <span class="text-sm font-medium text-gray-700">Item is Returnable <span class="text-xs text-gray-500 font-normal">(Uncheck this for Merchandise/Giveaways)</span></span>
-                    </label>
-                </div>
-
-                @* Location & Position Image *@
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Location</label>
-                        <InputSelect @bind-Value="Model.location_id" class="block w-full py-2 px-3 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#e8a000] focus:border-[#e8a000] outline-none transition">
-                            <option value="">Select location (optional)</option>
-                            @foreach (var loc in Locations)
-                            {
-                                <option value="@loc.Id">@loc.Name</option>
-                            }
-                        </InputSelect>
-                        <ValidationMessage For="@(() => Model.location_id)" class="text-red-600 text-xs mt-1 block" />
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Position Image</label>
-                        <InputFile OnChange="HandlePositionImageSelected" accept="image/jpg,image/jpeg,image/png,image/webp" class="block w-full text-sm text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 transition cursor-pointer" />
-                    </div>
-                </div>
-
-                @* Product Images *@
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Product Images</label>
-                    <InputFile OnChange="HandleImageSelected" multiple accept="image/jpg,image/jpeg,image/png,image/webp" class="block w-full text-sm text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 transition cursor-pointer" />
-                    <p class="text-xs text-gray-400 mt-1">Upload one or multiple product images. JPG, PNG or WebP. Max 10MB each.</p>
-                    @if (imagePreviews.Any())
-                    {
-                        <div class="mt-3 flex flex-wrap gap-2">
-                            @foreach (var prev in imagePreviews)
-                            {
-                                <div class="w-16 h-16 rounded border border-gray-200 overflow-hidden">
-                                    <img src="@prev" class="w-full h-full object-cover" />
-                                </div>
-                            }
-                        </div>
-                    }
-                </div>
-
-                @* Stock Info *@
-                <div class="p-4 bg-gray-50 border border-gray-200 rounded-lg">
-                    <p class="text-xs font-medium text-gray-500 mb-2">Stock Information</p>
-                    <div class="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1.5">Initial Stock <span class="text-red-500">*</span></label>
-                            <InputNumber @bind-Value="Model.initial_stock" required min="0" class="block w-full py-2 px-3 text-sm bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#e8a000] focus:border-[#e8a000] outline-none transition" />
-                            <ValidationMessage For="@(() => Model.initial_stock)" class="text-red-600 text-xs mt-1 block" />
-                        </div>
-                    </div>
-                </div>
-
-                @* Product Variants *@
-                <div class="pt-4 border-t border-gray-100">
-                    <div class="flex justify-between items-center mb-4">
-                        <div>
-                            <h4 class="text-sm font-semibold text-gray-900">Product Variants</h4>
-                            <p class="text-xs text-gray-500 mt-0.5">Add sizes, colors, and specific stock/images for this product.</p>
-                        </div>
-                        <button type="button" @onclick="AddVariant" class="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-200 transition">
-                            + Add Variant
-                        </button>
-                    </div>
-                    
-                    <div class="space-y-3">
-                        @for (int i = 0; i < Model.variants.Count; i++)
+                }
+                else
+                {
+                    <EditForm Model="Model" OnValidSubmit="HandleSubmit" FormName="CreateProductForm">
+                        <AntiforgeryToken />
+                        <DataAnnotationsValidator />
+                        
+                        @if (!string.IsNullOrEmpty(ErrorMessage))
                         {
-                            var index = i;
-                            var variant = Model.variants[index];
-                            <div class="flex items-end gap-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                                <div class="flex-1">
-                                    <label class="block text-xs font-medium text-gray-700 mb-1">Color</label>
-                                    <InputText @bind-Value="variant.color" placeholder="e.g. Red" class="block w-full py-1.5 px-2 text-sm bg-white border border-gray-200 rounded-md focus:ring-[#e8a000] focus:border-[#e8a000] outline-none" />
+                            <div class="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm" role="alert">
+                                @ErrorMessage
+                            </div>
+                        }
+
+                        <div class="space-y-5">
+                            @* SKU *@
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">SKU / Barcode ID</label>
+                                <div class="flex gap-2">
+                                    <InputText id="skuInput" @bind-Value="Model.sku" class="block w-full py-2 px-3 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#e8a000] focus:border-[#e8a000] outline-none transition placeholder:text-gray-400" placeholder="UT-YYMMDD-XXXX (Kosongkan untuk otomatis)" />
+                                    <button type="button" id="startButton" class="px-4 py-2 bg-gray-900 text-white rounded-lg font-medium text-sm hover:bg-gray-800 transition whitespace-nowrap">
+                                        Scan
+                                    </button>
+                                    <button type="button" id="resetButton" class="hidden px-4 py-2 bg-gray-200 text-gray-800 rounded-lg font-medium text-sm hover:bg-gray-300 transition whitespace-nowrap">
+                                        Stop
+                                    </button>
                                 </div>
-                                <div class="flex-1">
-                                    <label class="block text-xs font-medium text-gray-700 mb-1">Size</label>
-                                    <InputText @bind-Value="variant.size" placeholder="e.g. L" class="block w-full py-1.5 px-2 text-sm bg-white border border-gray-200 rounded-md focus:ring-[#e8a000] focus:border-[#e8a000] outline-none" />
+                                <p class="text-xs text-gray-400 mt-1">Kosongkan untuk membuat SKU otomatis (Format: UT-YYMMDD-0001) atau scan/ketik SKU custom.</p>
+                                <div id="scannerContainer" class="hidden mt-3 relative bg-black w-full rounded-lg overflow-hidden" style="padding-top: 60%;">
+                                    <video id="video" autoplay muted playsinline class="absolute top-0 left-0 w-full h-full object-cover"></video>
+                                    <div class="absolute inset-0 border-2 border-white/30 m-4 rounded pointer-events-none"></div>
                                 </div>
-                                <div class="w-24">
-                                    <label class="block text-xs font-medium text-gray-700 mb-1">Stock <span class="text-red-500">*</span></label>
-                                    <InputNumber @bind-Value="variant.stock" min="0" class="block w-full py-1.5 px-2 text-sm bg-white border border-gray-200 rounded-md focus:ring-[#e8a000] focus:border-[#e8a000] outline-none" />
+                                <ValidationMessage For="@(() => Model.sku)" class="text-red-600 text-xs mt-1 block" />
+                            </div>
+
+                            @* Barcode Type *@
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">Barcode Type <span class="text-red-500">*</span></label>
+                                <InputSelect @bind-Value="Model.barcode_type" required class="block w-full py-2 px-3 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#e8a000] focus:border-[#e8a000] outline-none transition">
+                                    <option value="TYPE_CODE_128">Code 128 (Recommended)</option>
+                                    <option value="TYPE_CODE_39">Code 39</option>
+                                    <option value="TYPE_EAN_13">EAN-13</option>
+                                    <option value="TYPE_UPC_A">UPC-A</option>
+                                </InputSelect>
+                                <ValidationMessage For="@(() => Model.barcode_type)" class="text-red-600 text-xs mt-1 block" />
+                            </div>
+
+                            @* Product Name & Point Value *@
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Product Name <span class="text-red-500">*</span></label>
+                                    <InputText @bind-Value="Model.name" required class="block w-full py-2 px-3 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#e8a000] focus:border-[#e8a000] outline-none transition" />
+                                    <ValidationMessage For="@(() => Model.name)" class="text-red-600 text-xs mt-1 block" />
                                 </div>
-                                <div class="flex-1">
-                                    <label class="block text-xs font-medium text-gray-700 mb-1">Variant Image</label>
-                                    <div class="flex items-center gap-2 mb-1.5">
-                                        @if (!string.IsNullOrEmpty(variant.image_preview_url))
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Point Value <span class="text-red-500">*</span></label>
+                                    <InputNumber @bind-Value="Model.value" min="0" placeholder="0" class="block w-full py-2 px-3 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#e8a000] focus:border-[#e8a000] outline-none transition" />
+                                    <ValidationMessage For="@(() => Model.value)" class="text-red-600 text-xs mt-1 block" />
+                                </div>
+                            </div>
+
+                            @* Unit *@
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">Unit <span class="text-red-500">*</span></label>
+                                @if (ShowNewUnitInput)
+                                {
+                                    <div class="relative mt-1">
+                                        <InputText @bind-Value="Model.unit" placeholder="Type new unit..." class="block w-full py-2 px-3 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#e8a000] focus:border-[#e8a000] outline-none transition pr-10" />
+                                        <button type="button" @onclick="CancelNewUnit" class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600 transition" title="Cancel and select existing">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                        </button>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <InputSelect Value="SelectedUnitOption" ValueExpression="() => SelectedUnitOption" ValueChanged="(string val) => HandleUnitSelect(val)" required class="block w-full py-2 px-3 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#e8a000] focus:border-[#e8a000] outline-none transition">
+                                        <option value="">Select unit</option>
+                                        @if (Units != null)
                                         {
-                                            <div class="w-10 h-10 rounded border border-gray-200 overflow-hidden shrink-0 bg-white shadow-sm">
-                                                <img src="@variant.image_preview_url" class="w-full h-full object-cover">
+                                            @foreach(var u in Units)
+                                            {
+                                                <option value="@u.Name">@u.Name</option>
+                                            }
+                                        }
+                                        <option value="NEW_UNIT_OPTION" class="font-bold text-gray-900 bg-gray-100">+ Type New Unit...</option>
+                                    </InputSelect>
+                                }
+                                <ValidationMessage For="@(() => Model.unit)" class="text-red-600 text-xs mt-1 block" />
+                            </div>
+
+                            @* Category & Transaction Type *@
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Category <span class="text-red-500">*</span></label>
+                                    <InputSelect @bind-Value="Model.category_id" required class="block w-full py-2 px-3 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#e8a000] focus:border-[#e8a000] outline-none transition">
+                                        <option value="0">Select category (required)</option>
+                                        @foreach (var cat in Categories)
+                                        {
+                                            <option value="@cat.Id">@cat.Name</option>
+                                        }
+                                    </InputSelect>
+                                    <ValidationMessage For="@(() => Model.category_id)" class="text-red-600 text-xs mt-1 block" />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Transaction Type</label>
+                                    <InputSelect @bind-Value="Model.transaction_type" class="block w-full py-2 px-3 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#e8a000] focus:border-[#e8a000] outline-none transition">
+                                        <option value="">Default (Borrow & Request)</option>
+                                        <option value="BORROW">Peminjaman (Borrow Only)</option>
+                                        <option value="REQUEST">Permintaan (Request Only)</option>
+                                    </InputSelect>
+                                    <ValidationMessage For="@(() => Model.transaction_type)" class="text-red-600 text-xs mt-1 block" />
+                                </div>
+                            </div>
+
+                            @* Description *@
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">Product Description</label>
+                                <InputTextArea @bind-Value="Model.description" rows="4" placeholder="Tuliskan kondisi, spesifikasi, atau catatan penting barang..." class="block w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 focus:border-[#e8a000] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#e8a000] transition duration-200"></InputTextArea>
+                                <ValidationMessage For="@(() => Model.description)" class="text-red-600 text-xs mt-1 block" />
+                                <p class="text-xs text-gray-400 mt-2">Deskripsi ini membantu tim approval dan gudang memahami kondisi / catatan barang.</p>
+                            </div>
+
+                            @* Is Returnable *@
+                            <div>
+                                <label class="flex items-center gap-2 cursor-pointer w-max">
+                                    <InputCheckbox @bind-Value="Model.is_returnable" class="rounded border-gray-300 text-[#e8a000] focus:ring-[#e8a000] w-4 h-4 transition outline-none" />
+                                    <span class="text-sm font-medium text-gray-700">Item is Returnable <span class="text-xs text-gray-500 font-normal">(Hilangkan centang untuk Merchandise/Giveaway)</span></span>
+                                </label>
+                            </div>
+
+                            @* Location & Position Image *@
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Location</label>
+                                    <InputSelect @bind-Value="Model.location_id" class="block w-full py-2 px-3 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#e8a000] focus:border-[#e8a000] outline-none transition">
+                                        <option value="">Select location (optional)</option>
+                                        @foreach (var loc in Locations)
+                                        {
+                                            <option value="@loc.Id">@loc.Name</option>
+                                        }
+                                    </InputSelect>
+                                    <ValidationMessage For="@(() => Model.location_id)" class="text-red-600 text-xs mt-1 block" />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Position Image</label>
+                                    <InputFile OnChange="HandlePositionImageSelected" accept="image/jpg,image/jpeg,image/png,image/webp" class="block w-full text-sm text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 transition cursor-pointer" />
+                                </div>
+                            </div>
+
+                            @* Product Images *@
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">Product Images</label>
+                                <InputFile OnChange="HandleImageSelected" multiple accept="image/jpg,image/jpeg,image/png,image/webp" class="block w-full text-sm text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 transition cursor-pointer" />
+                                <p class="text-xs text-gray-400 mt-1">Upload one or multiple product images. JPG, PNG or WebP. Max 10MB each.</p>
+                                @if (imagePreviews.Any())
+                                {
+                                    <div class="mt-3 flex flex-wrap gap-2">
+                                        @foreach (var prev in imagePreviews)
+                                        {
+                                            <div class="w-16 h-16 rounded border border-gray-200 overflow-hidden">
+                                                <img src="@prev" class="w-full h-full object-cover" />
                                             </div>
                                         }
                                     </div>
-                                    <InputFile OnChange="@(e => HandleVariantImageSelected(e, variant))" accept="image/*" class="block w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-gray-200" />
-                                </div>
-                                <div>
-                                    <button type="button" @onclick="() => RemoveVariant(variant)" class="px-2 py-1.5 text-red-600 hover:bg-red-50 rounded-md transition" title="Remove">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                    </button>
+                                }
+                            </div>
+
+                            @* Stock Info *@
+                            <div class="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                                <p class="text-xs font-medium text-gray-500 mb-2">Stock Information</p>
+                                <div class="grid grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Initial Stock <span class="text-red-500">*</span></label>
+                                        <InputNumber @bind-Value="Model.initial_stock" required min="0" class="block w-full py-2 px-3 text-sm bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#e8a000] focus:border-[#e8a000] outline-none transition" />
+                                        <ValidationMessage For="@(() => Model.initial_stock)" class="text-red-600 text-xs mt-1 block" />
+                                    </div>
                                 </div>
                             </div>
-                        }
-                    </div>
-                </div>
-            </div>
 
-            <div class="flex justify-end items-center gap-3 border-t border-gray-100 pt-5 mt-6">
-                <button type="button" @onclick="NavigateBack" class="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg font-medium text-sm hover:bg-gray-50 transition">
-                    Cancel
-                </button>
-                <button type="submit" disabled="@IsSubmitting" class="px-4 py-2 bg-gray-900 text-white rounded-lg font-medium text-sm hover:bg-gray-800 transition disabled:opacity-70 flex items-center gap-2 justify-center min-w-[120px]">
-                    @if (IsSubmitting)
-                    {
-                        <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        <span>Processing...</span>
-                    }
-                    else
-                    {
-                        <span>Save Product</span>
-                    }
-                </button>
-            </div>
-        </EditForm>
-    }
+                            @* Product Variants (Standardized Color Variant Group) *@
+                            <div class="pt-4 border-t border-gray-100">
+                                <div class="flex justify-between items-center mb-4">
+                                    <div>
+                                        <h4 class="text-sm font-semibold text-gray-900">Product Variants</h4>
+                                        <p class="text-xs text-gray-500 mt-0.5">Tambahkan varian warna, ukuran, dan stok khusus untuk produk ini.</p>
+                                    </div>
+                                    <button type="button" @onclick="AddColorGroup" class="px-4 py-2 bg-[#e8a000] text-white rounded-lg text-sm font-medium hover:bg-[#d69300] transition shadow-sm cursor-pointer">
+                                        + Add Color Variant
+                                    </button>
+                                </div>
+                                
+                                <div class="space-y-4">
+                                    @foreach (var group in VariantGroups)
+                                    {
+                                        <div class="p-5 bg-white border border-gray-200 rounded-xl shadow-sm relative">
+                                            <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-100">
+                                                <h5 class="text-sm font-bold text-gray-700 uppercase tracking-wider">VARIAN WARNA</h5>
+                                                <button type="button" @onclick="() => RemoveColorGroup(group)" class="text-red-500 text-sm font-medium hover:text-red-700 transition cursor-pointer">Hapus Warna</button>
+                                            </div>
+                                            
+                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <!-- Left Column: Color Name and Image -->
+                                                <div class="space-y-4">
+                                                    <div>
+                                                        <label class="block text-sm text-gray-700 mb-1">Nama Warna</label>
+                                                        <InputText @bind-Value="group.ColorName" placeholder="Contoh: Hijau / Merah" class="block w-full py-2 px-3 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#e8a000] focus:border-[#e8a000] outline-none transition bg-white" />
+                                                    </div>
+                                                    <div>
+                                                        <label class="block text-sm text-gray-700 mb-1">Foto Varian Warna</label>
+                                                        <div class="flex flex-col gap-3">
+                                                            @if (!string.IsNullOrEmpty(group.ImagePreviewUrl))
+                                                            {
+                                                                <div class="w-20 h-20 rounded-lg border border-gray-200 overflow-hidden shrink-0 bg-white">
+                                                                    <img src="@group.ImagePreviewUrl" class="w-full h-full object-cover">
+                                                                </div>
+                                                            }
+                                                            else
+                                                            {
+                                                                <div class="w-20 h-20 rounded-lg border border-gray-200 overflow-hidden shrink-0 bg-gray-50 flex items-center justify-center text-gray-300">
+                                                                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                                                </div>
+                                                            }
+                                                            <InputFile OnChange="@(e => HandleGroupImageSelected(e, group))" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 transition cursor-pointer" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Right Column: Sizes & Stock -->
+                                                <div class="min-w-0">
+                                                    <label class="block text-sm text-gray-700 mb-3">Ukuran & Stok <span class="text-red-500">*</span></label>
+                                                    <div class="space-y-2">
+                                                        @foreach (var size in group.Sizes)
+                                                        {
+                                                            <div class="flex items-center gap-2 sm:gap-3">
+                                                                <InputText @bind-Value="size.Size" placeholder="Size (e.g. L, XL, 42)" class="block flex-1 min-w-0 py-2 px-3 text-sm bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#e8a000] focus:border-[#e8a000] outline-none transition" />
+                                                                <InputNumber @bind-Value="size.Stock" min="0" placeholder="Stock" class="block w-24 min-w-0 py-2 px-3 text-sm bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#e8a000] focus:border-[#e8a000] outline-none transition" />
+                                                                <button type="button" @onclick="() => RemoveSize(group, size)" class="text-red-500 hover:text-red-700 transition px-2 shrink-0 cursor-pointer">
+                                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                                                </button>
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                    <button type="button" @onclick="() => AddSize(group)" class="mt-3 text-xs font-semibold text-[#e8a000] hover:text-[#d69300] transition flex items-center gap-1 cursor-pointer">
+                                                        + Tambah Ukuran
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end items-center gap-3 border-t border-gray-100 pt-5 mt-6">
+                            <button type="button" @onclick="NavigateBack" class="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg font-medium text-sm hover:bg-gray-50 transition cursor-pointer">
+                                Cancel
+                            </button>
+                            <button type="submit" disabled="@IsSubmitting" class="px-5 py-2.5 bg-[#e8a000] text-white rounded-lg font-medium text-sm hover:bg-[#d69300] transition disabled:opacity-70 flex items-center gap-2 justify-center min-w-[140px] cursor-pointer shadow-sm">
+                                <span>Save Product</span>
+                            </button>
+                        </div>
+                    </EditForm>
+                }
             </div>
         </div>
     </div>
@@ -278,13 +317,19 @@
     private ProductCreateViewModel Model = new() { barcode_type = "TYPE_CODE_128" };
     private List<WMS_UnitedTracors_Blazor.Services.CategoryDto>? Categories;
     private List<WMS_UnitedTracors_Blazor.Services.LocationDto>? Locations;
+    private List<WMS_UnitedTracors_Blazor.Services.UnitDto>? Units;
     
+    private string SelectedUnitOption = "";
+    private bool ShowNewUnitInput = false;
+
     private string? ErrorMessage;
     private bool IsSubmitting;
 
     private IReadOnlyList<Microsoft.AspNetCore.Components.Forms.IBrowserFile>? selectedImages;
     private List<string> imagePreviews = new();
     private Microsoft.AspNetCore.Components.Forms.IBrowserFile? selectedPositionImage;
+
+    private List<VariantGroupUI> VariantGroups = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -296,7 +341,6 @@
             return;
         }
 
-        
         if (!user.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ProductsManage))
         {
             NavigationManager.NavigateTo("/");
@@ -308,6 +352,9 @@
         
         var locResult = await LocationService.GetLocationsAsync(1, 100);
         Locations = locResult.Locations;
+
+        var unitResult = await UnitService.GetUnitsAsync(1, 100);
+        Units = unitResult.Units;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -316,6 +363,28 @@
         {
             await JSRuntime.InvokeVoidAsync("initProductScanner");
         }
+    }
+
+    private void HandleUnitSelect(string val)
+    {
+        if (val == "NEW_UNIT_OPTION")
+        {
+            ShowNewUnitInput = true;
+            Model.unit = "";
+        }
+        else
+        {
+            SelectedUnitOption = val;
+            Model.unit = val;
+            ShowNewUnitInput = false;
+        }
+    }
+
+    private void CancelNewUnit()
+    {
+        ShowNewUnitInput = false;
+        Model.unit = "";
+        SelectedUnitOption = "";
     }
 
     private async Task HandleImageSelected(Microsoft.AspNetCore.Components.Forms.InputFileChangeEventArgs e)
@@ -334,11 +403,11 @@
     {
         try
         {
-            var format = "image/png";
-            var resizedImageFile = await file.RequestImageFileAsync(format, 100, 100);
-            var buffer = new byte[resizedImageFile.Size];
-            await resizedImageFile.OpenReadStream().ReadAsync(buffer);
-            imagePreviews.Add($"data:{format};base64,{Convert.ToBase64String(buffer)}");
+            var format = "image/jpeg";
+            var resizedImageFile = await file.RequestImageFileAsync(format, 400, 400);
+            using var ms = new System.IO.MemoryStream();
+            await resizedImageFile.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024).CopyToAsync(ms);
+            imagePreviews.Add($"data:{format};base64,{Convert.ToBase64String(ms.ToArray())}");
         }
         catch { }
     }
@@ -348,33 +417,50 @@
         selectedPositionImage = e.File;
     }
 
-    private void AddVariant()
+    private void AddColorGroup()
     {
-        Model.variants.Add(new ProductVariantViewModel());
+        var group = new VariantGroupUI();
+        group.Sizes.Add(new VariantSizeUI());
+        VariantGroups.Add(group);
     }
 
-    private void RemoveVariant(ProductVariantViewModel variant)
+    private void RemoveColorGroup(VariantGroupUI group)
     {
-        Model.variants.Remove(variant);
+        VariantGroups.Remove(group);
     }
 
-    private async Task HandleVariantImageSelected(Microsoft.AspNetCore.Components.Forms.InputFileChangeEventArgs e, ProductVariantViewModel variant)
+    private void AddSize(VariantGroupUI group)
+    {
+        group.Sizes.Add(new VariantSizeUI());
+    }
+
+    private void RemoveSize(VariantGroupUI group, VariantSizeUI size)
+    {
+        group.Sizes.Remove(size);
+    }
+
+    private async Task HandleGroupImageSelected(Microsoft.AspNetCore.Components.Forms.InputFileChangeEventArgs e, VariantGroupUI group)
     {
         var format = "image/jpeg";
         var resizedForUpload = await e.File.RequestImageFileAsync(format, 1024, 1024);
-        variant.image = resizedForUpload;
+        group.ImageFile = resizedForUpload;
         
         var resizedForPreview = await e.File.RequestImageFileAsync(format, 100, 100);
         using var ms = new System.IO.MemoryStream();
         await resizedForPreview.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024).CopyToAsync(ms);
-        variant.image_preview_url = $"data:{format};base64,{Convert.ToBase64String(ms.ToArray())}";
+        group.ImagePreviewUrl = $"data:{format};base64,{Convert.ToBase64String(ms.ToArray())}";
     }
 
     private async Task HandleSubmit()
     {
         if (Model.category_id == 0)
         {
-            ErrorMessage = "Please select a category.";
+            ErrorMessage = "Mohon pilih kategori produk.";
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(Model.unit))
+        {
+            ErrorMessage = "Mohon tentukan satuan/unit produk.";
             return;
         }
 
@@ -414,13 +500,29 @@
             };
         }
 
+        // Standardized variant mapping
+        Model.variants.Clear();
+        foreach (var group in VariantGroups)
+        {
+            foreach (var size in group.Sizes)
+            {
+                Model.variants.Add(new ProductVariantViewModel
+                {
+                    color = group.ColorName,
+                    size = size.Size,
+                    stock = size.Stock,
+                    image = group.ImageFile,
+                    image_preview_url = group.ImagePreviewUrl
+                });
+            }
+        }
+
         var result = await ProductService.CreateProductAsync(Model);
         
         IsSubmitting = false;
 
         if (result == null)
         {
-            await JSRuntime.InvokeVoidAsync("alert", "Produk berhasil ditambahkan!");
             NavigationManager.NavigateTo("/Product?success=created");
         }
         else
@@ -432,5 +534,19 @@
     private void NavigateBack()
     {
         NavigationManager.NavigateTo("/Product");
+    }
+
+    public class VariantGroupUI
+    {
+        public string ColorName { get; set; } = "";
+        public Microsoft.AspNetCore.Components.Forms.IBrowserFile? ImageFile { get; set; }
+        public string? ImagePreviewUrl { get; set; }
+        public List<VariantSizeUI> Sizes { get; set; } = new();
+    }
+
+    public class VariantSizeUI
+    {
+        public string Size { get; set; } = "";
+        public int Stock { get; set; }
     }
 }

@@ -32,6 +32,7 @@ builder.Services.AddScoped<WMS_UnitedTracors_Blazor.Services.TrackingService>();
 builder.Services.AddScoped<WMS_UnitedTracors_Blazor.Services.PdfReportService>();
 builder.Services.AddScoped<WMS_UnitedTracors_Blazor.Services.PdfReceiptService>();
 builder.Services.AddScoped<WMS_UnitedTracors_Blazor.Services.AdminRoleService>();
+builder.Services.AddSingleton<WMS_UnitedTracors_Blazor.Services.DashboardStateService>();
 
 builder.Services.Configure<WMS_UnitedTracors_Blazor.Services.SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
 builder.Services.AddScoped<WMS_UnitedTracors_Blazor.Services.IEmailService, WMS_UnitedTracors_Blazor.Services.EmailService>();
@@ -76,13 +77,44 @@ builder.Services.AddAuthentication(options =>
         options.SaveTokens = true;
         options.Scope.Add("email");
         options.Scope.Add("profile");
+
+        options.NonceCookie.SecurePolicy = CookieSecurePolicy.Always;
+        options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.Always;
+
+        options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+        {
+            ValidateIssuer = false
+        };
         options.Events = new OpenIdConnectEvents
         {
-            OnTokenValidated = context => Task.CompletedTask
+            OnTokenValidated = context => Task.CompletedTask,
+            OnRedirectToIdentityProvider = context =>
+            {
+                if (context.ProtocolMessage.RedirectUri.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
+                {
+                    context.ProtocolMessage.RedirectUri = context.ProtocolMessage.RedirectUri.Replace("http://", "https://", StringComparison.OrdinalIgnoreCase);
+                }
+                return Task.CompletedTask;
+            }
         };
     });
 
+builder.Services.Configure<CookiePolicyOptions>(options =>
+{
+    options.MinimumSameSitePolicy = SameSiteMode.None;
+    options.Secure = CookieSecurePolicy.Always;
+});
+
+builder.Services.Configure<Microsoft.AspNetCore.Builder.ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto | Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
 var app = builder.Build();
+
+app.UseForwardedHeaders();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
@@ -92,6 +124,8 @@ if (!app.Environment.IsDevelopment())
 }
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 app.UseHttpsRedirection();
+
+app.UseCookiePolicy();
 
 app.UseAntiforgery();
 
@@ -156,6 +190,7 @@ app.MapPost("/api/auth/complete-profile", async (HttpContext context, [Microsoft
 app.MapGet("/auth/microsoft", () =>
 {
     var properties = new Microsoft.AspNetCore.Authentication.AuthenticationProperties { RedirectUri = "/auth/microsoft/callback" };
+    properties.Items["IsSecure"] = "true";
     return Results.Challenge(properties, new[] { "Microsoft" });
 }).AllowAnonymous();
 

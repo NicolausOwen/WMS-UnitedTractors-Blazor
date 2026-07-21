@@ -1,0 +1,187 @@
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@using UT_WMSDotnet.Models
+@using WMS_UnitedTracors_Blazor.Services
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ProfileService ProfileService
+@inject DivisionService DivisionService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<WMS_UnitedTracors_Blazor.Components.Shared.LoadingOverlay IsVisible="IsSubmitting" Message="Menyimpan Profil..." SubMessage="Mohon tunggu sebentar..." />
+
+@if (ShowModal)
+{
+    <div class="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-gray-100 relative">
+            <div class="text-center mb-6">
+                <div class="w-14 h-14 bg-[#fff8e6] text-[#e8a000] rounded-full flex items-center justify-center mx-auto mb-3 shadow-inner">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-bold text-gray-900">Lengkapi Profil & Ubah Password</h3>
+                <p class="text-xs text-gray-500 mt-1">Data profil Anda belum lengkap. Silakan lengkapi Nama, NRP, Divisi & ubah Password Anda terlebih dahulu.</p>
+            </div>
+
+            @if (!string.IsNullOrEmpty(ErrorMessage))
+            {
+                <div class="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl font-semibold text-center">
+                    @ErrorMessage
+                </div>
+            }
+
+            <form @onsubmit="HandleSubmit" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Nama Lengkap <span class="text-red-500">*</span></label>
+                    <input type="text" @bind="Name" required placeholder="Masukkan Nama Lengkap"
+                           class="w-full px-3.5 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-[#e8a000] focus:ring-2 focus:ring-[#e8a000]/20 outline-none transition" />
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">NRP (Nomor Registrasi Pokok) <span class="text-red-500">*</span></label>
+                    <input type="text" @bind="Nrp" required placeholder="Masukkan NRP Anda"
+                           class="w-full px-3.5 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-[#e8a000] focus:ring-2 focus:ring-[#e8a000]/20 outline-none transition" />
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Divisi <span class="text-red-500">*</span></label>
+                    <select @bind="DivisionId" required class="w-full px-3.5 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-[#e8a000] focus:ring-2 focus:ring-[#e8a000]/20 outline-none transition text-gray-900">
+                        <option value="0">-- Pilih Divisi --</option>
+                        @if (Divisions != null)
+                        {
+                            @foreach (var div in Divisions)
+                            {
+                                <option value="@div.Id">@div.Name</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Password Baru <span class="text-red-500">*</span></label>
+                    <input type="password" @bind="NewPassword" required placeholder="Minimal 6 karakter"
+                           class="w-full px-3.5 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-[#e8a000] focus:ring-2 focus:ring-[#e8a000]/20 outline-none transition" />
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Konfirmasi Password Baru <span class="text-red-500">*</span></label>
+                    <input type="password" @bind="ConfirmPassword" required placeholder="Ulangi password baru"
+                           class="w-full px-3.5 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-[#e8a000] focus:ring-2 focus:ring-[#e8a000]/20 outline-none transition" />
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" disabled="@IsSubmitting"
+                            class="w-full py-3 bg-[#e8a000] hover:bg-[#d69300] text-white text-xs font-bold rounded-xl transition shadow-md disabled:opacity-50 cursor-pointer">
+                        @if (IsSubmitting)
+                        {
+                            <span>Menyimpan...</span>
+                        }
+                        else
+                        {
+                            <span>Simpan Profil & Lanjutkan</span>
+                        }
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+}
+
+@code {
+    private bool ShowModal = false;
+    private int UserId;
+    private string Name = "";
+    private string Nrp = "";
+    private int DivisionId = 0;
+    private string NewPassword = "";
+    private string ConfirmPassword = "";
+    private string? ErrorMessage;
+    private bool IsSubmitting = false;
+
+    private List<UT_WMSDotnet.ViewModels.DivisionDto>? Divisions;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity != null && user.Identity.IsAuthenticated)
+        {
+            var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (int.TryParse(userIdClaim, out int id))
+            {
+                UserId = id;
+                var dbUser = await ProfileService.GetUserProfileAsync(UserId);
+                var divResult = await DivisionService.GetDivisionsAsync(1, 200);
+                Divisions = divResult.Divisions;
+
+                if (dbUser != null)
+                {
+                    Name = dbUser.name ?? "";
+                    Nrp = dbUser.nrp ?? "";
+                    DivisionId = dbUser.division_id ?? 0;
+
+                    // Trigger Modal if ANY required profile field is empty or null (First Login / Incomplete Profile)
+                    if (string.IsNullOrWhiteSpace(dbUser.nrp) || 
+                        string.IsNullOrWhiteSpace(dbUser.name) || 
+                        !dbUser.division_id.HasValue || 
+                        dbUser.division_id == 0)
+                    {
+                        ShowModal = true;
+                    }
+                }
+            }
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        ErrorMessage = null;
+        if (string.IsNullOrWhiteSpace(Name))
+        {
+            ErrorMessage = "Nama tidak boleh kosong.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(Nrp))
+        {
+            ErrorMessage = "NRP tidak boleh kosong.";
+            return;
+        }
+
+        if (DivisionId == 0)
+        {
+            ErrorMessage = "Divisi wajib dipilih.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(NewPassword) || NewPassword.Length < 6)
+        {
+            ErrorMessage = "Password baru minimal 6 karakter.";
+            return;
+        }
+
+        if (NewPassword != ConfirmPassword)
+        {
+            ErrorMessage = "Konfirmasi password baru tidak cocok.";
+            return;
+        }
+
+        IsSubmitting = true;
+        StateHasChanged();
+
+        var result = await ProfileService.CompleteFirstLoginAsync(UserId, Name, Nrp, DivisionId, NewPassword);
+        IsSubmitting = false;
+
+        if (result == null)
+        {
+            ShowModal = false;
+            Navigation.NavigateTo("/", forceLoad: true);
+        }
+        else
+        {
+            ErrorMessage = result;
+        }
+    }
+}

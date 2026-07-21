@@ -15,6 +15,9 @@
 
 <PageTitle>WMS - Edit Product</PageTitle>
 
+<WMS_UnitedTracors_Blazor.Components.Shared.LoadingOverlay IsVisible="IsSubmitting" Message="Menyimpan Perubahan Produk..." SubMessage="Mohon tunggu sebentar..." />
+
+
 <header class="bg-transparent">
     <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div class="mb-1">
@@ -55,7 +58,8 @@
                     </div>
                 </div>
                 <div class="px-6 py-6">
-                    <EditForm Model="Model" OnValidSubmit="HandleSubmit">
+                    <EditForm Model="Model" OnValidSubmit="HandleSubmit" FormName="EditProductForm">
+                        <AntiforgeryToken />
                         <DataAnnotationsValidator />
                         
                         @if (!string.IsNullOrEmpty(ErrorMessage))
@@ -598,7 +602,6 @@
 
         if (result == null)
         {
-            await JSRuntime.InvokeVoidAsync("alert", "Perubahan produk berhasil disimpan!");
             NavigationManager.NavigateTo("/Product?success=updated");
         }
         else
