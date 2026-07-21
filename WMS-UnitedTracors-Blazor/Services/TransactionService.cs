@@ -396,6 +396,9 @@ public class TransactionService
             .Include(t => t.ProductVariant)
             .Include(t => t.Requester)
             .Include(t => t.Approver)
+            .Include(t => t.StaffInventoryApprover)
+            .Include(t => t.AdminApprover)
+            .Include(t => t.ManagerApprover)
             .Include(t => t.Division)
             .Where(t =>
                 t.status == WorkflowStatuses.Rejected ||
@@ -1263,6 +1266,9 @@ public class TransactionService
             .ThenInclude(p => p!.Unit)
             .Include(t => t.Requester)
             .Include(t => t.Approver)
+            .Include(t => t.StaffInventoryApprover)
+            .Include(t => t.AdminApprover)
+            .Include(t => t.ManagerApprover)
             .Include(t => t.Division)
             .ToListAsync();
 
@@ -1277,6 +1283,9 @@ public class TransactionService
             .ThenInclude(p => p!.Unit)
             .Include(t => t.Requester)
             .Include(t => t.Approver)
+            .Include(t => t.StaffInventoryApprover)
+            .Include(t => t.AdminApprover)
+            .Include(t => t.ManagerApprover)
             .Include(t => t.Division)
             .ToListAsync();
         var transactions = allTransactions.Where(t => t.group_id == groupId).ToList();

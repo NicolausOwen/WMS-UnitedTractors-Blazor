@@ -191,6 +191,7 @@ public class ApprovalService
             transaction.status = WorkflowStatuses.PendingAdmin;
             transaction.staff_inventory_notes = notes;
             transaction.approver_id = currentUserId;
+            transaction.staff_inventory_approver_id = currentUserId;
             transaction.updated_at = DateTime.UtcNow;
             transaction.last_revision_stage = null;
             transaction.rejection_reason = null;
@@ -261,10 +262,12 @@ public class ApprovalService
                 if (perms.Contains(Permissions.ApprovalStage2))
                 {
                     transaction.admin_notes = notes;
+                    transaction.admin_approver_id = currentUserId;
                 }
                 else if (perms.Contains(Permissions.ApprovalManager))
                 {
                     transaction.manager_notes = notes;
+                    transaction.manager_approver_id = currentUserId;
                 }
 
                 _context.Transactions.Update(transaction);
@@ -826,16 +829,19 @@ public class ApprovalService
             case WorkflowStatuses.PendingStaffInventory when perms.Contains(Permissions.ApprovalStage1):
                 transaction.status = WorkflowStatuses.PendingAdmin;
                 transaction.staff_inventory_notes = notes;
+                transaction.staff_inventory_approver_id = currentUserId;
                 nextStage = WorkflowStatuses.PendingAdmin;
                 break;
             case WorkflowStatuses.PendingAdmin when perms.Contains(Permissions.ApprovalStage2):
                 transaction.status = WorkflowStatuses.PendingManager;
                 transaction.admin_notes = notes;
+                transaction.admin_approver_id = currentUserId;
                 nextStage = WorkflowStatuses.PendingManager;
                 break;
             case WorkflowStatuses.PendingManager when perms.Contains(Permissions.ApprovalManager):
                 transaction.status = WorkflowStatuses.WaitingHandover;
                 transaction.manager_notes = notes;
+                transaction.manager_approver_id = currentUserId;
                 transaction.rejection_reason = null;
                 break;
             default:

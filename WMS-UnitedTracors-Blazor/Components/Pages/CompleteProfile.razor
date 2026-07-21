@@ -1,0 +1,56 @@
+@page "/complete-profile"
+@layout Layout.AuthLayout
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Navigation
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+
+<PageTitle>Lengkapi Profil - UT WMS</PageTitle>
+
+<div class="auth-header mb-6">
+    <h2 class="auth-title">Lengkapi Profil Anda</h2>
+    <p class="auth-subtitle">Silakan isi nama lengkap Anda untuk melanjutkan.</p>
+</div>
+
+<form action="/api/auth/complete-profile" method="post" class="space-y-4">
+    <div class="space-y-1.5">
+        <label for="name" class="block text-[11px] font-extrabold text-[#5a5855] uppercase tracking-wider">Nama Lengkap</label>
+        <div class="relative">
+            <input type="text" id="name" name="name" value="@currentName" required
+                   class="w-full h-11 pl-4 pr-4 bg-white border border-[#e5e3dc] rounded-xl text-sm font-semibold text-[#1a1a1a] placeholder:text-[#a09e99] focus:outline-none focus:border-[#e8a000] focus:ring-4 focus:ring-[#e8a000]/10 transition-all"
+                   placeholder="Masukkan nama lengkap Anda..." />
+        </div>
+    </div>
+
+    <button type="submit"
+            class="w-full h-11 bg-[#e8a000] hover:bg-[#d49300] text-[#1a1a1a] font-black rounded-xl text-sm transition-all flex items-center justify-center gap-2 mt-2 shadow-[0_4px_12px_rgba(232,160,0,0.3)]">
+        <span>Simpan & Lanjutkan</span>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+    </button>
+</form>
+
+@code {
+    private string currentName = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        
+        if (user.Identity != null && user.Identity.IsAuthenticated)
+        {
+            var isNewUser = user.Claims.Any(c => c.Type == "is_new_user" && c.Value == "true");
+            if (!isNewUser)
+            {
+                // If they are not a new user, they shouldn't be here
+                Navigation.NavigateTo("/", true);
+                return;
+            }
+            
+            var nameClaim = user.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Name)?.Value;
+            if (nameClaim != "SSO User")
+            {
+                currentName = nameClaim ?? "";
+            }
+        }
+    }
+}

@@ -24,11 +24,11 @@
     <script src="js/dashboard.js"></script>
 
     <ImportMap />
-    <HeadOutlet />
+    <HeadOutlet @rendermode="InteractiveServer" />
 </head>
 
 <body class="font-sans antialiased">
-    <Routes />
+    <Routes @rendermode="InteractiveServer" />
     <ReconnectModal />
     <script src="@Assets["_framework/blazor.web.js"]"></script>
     

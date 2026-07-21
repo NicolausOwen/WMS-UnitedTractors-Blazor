@@ -107,6 +107,12 @@ public class Transaction
 
     public int? approver_id { get; set; }
 
+    public int? staff_inventory_approver_id { get; set; }
+
+    public int? admin_approver_id { get; set; }
+
+    public int? manager_approver_id { get; set; }
+
     [StringLength(500)]
     public string? notes { get; set; }
 
@@ -163,6 +169,15 @@ public class Transaction
 
     [ForeignKey("approver_id")]
     public virtual User? Approver { get; set; }
+
+    [ForeignKey("staff_inventory_approver_id")]
+    public virtual User? StaffInventoryApprover { get; set; }
+
+    [ForeignKey("admin_approver_id")]
+    public virtual User? AdminApprover { get; set; }
+
+    [ForeignKey("manager_approver_id")]
+    public virtual User? ManagerApprover { get; set; }
 
     [ForeignKey("division_id")]
     public virtual Division? Division { get; set; }

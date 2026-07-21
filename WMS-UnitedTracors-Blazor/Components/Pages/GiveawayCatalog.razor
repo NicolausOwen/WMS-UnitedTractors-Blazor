@@ -20,7 +20,7 @@
         <p class="text-sm text-[#8a8880] mt-1">Items available for collection (merchandise / souvenirs)</p>
     </div>
 
-    <div class="sticky top-[60px] md:top-0 z-sticky bg-[#f5f4f0] py-3 -mx-4 px-4 md:-mx-10 md:px-10 border-b border-[#e5e3dc] flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6 transition-all duration-200">
+    <div class="sticky top-[60px] md:top-0 bg-[#f5f4f0] py-3 -mx-4 px-4 md:-mx-10 md:px-10 border-b border-[#e5e3dc] flex flex-row items-center justify-between gap-3 mb-6 transition-all duration-200" style="z-index: 40;">
         <div class="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 flex-1 min-w-0 [&::-webkit-scrollbar]:hidden"
              style="scrollbar-width: none;">
             <button @onclick="() => FilterByCategory(null)"
@@ -39,19 +39,19 @@
             }
         </div>
         <div class="flex items-center gap-2">
-            <!-- Cart Button next to search (Desktop/Tablet, on the left) -->
+            <!-- Header Cart Button (Desktop Only) -->
             <button type="button" @onclick="CartService.ShowCart" class="hidden md:flex items-center justify-center w-[38px] h-[38px] rounded-full bg-[#e8a000] hover:bg-[#d49300] border border-[#d49300]/20 text-[#1a1a1a] transition-all shadow-sm cursor-pointer relative shrink-0" title="Keranjang" aria-label="Buka Keranjang">
                 <svg class="w-5 h-5 text-[#1a1a1a]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
                 </svg>
-                @if (CartService.Items.Any())
+                @if (CartService.Items != null && CartService.Items.Any())
                 {
                     <span class="absolute -top-1 -right-1 inline-flex items-center justify-center min-w-[1.25rem] h-[1.25rem] px-1 bg-[#d94040] text-white text-[0.62rem] font-bold rounded-full shadow-sm border border-white">
                         @CartService.Items.Sum(i => i.Quantity)
                     </span>
                 }
             </button>
-            <div class="w-60 md:w-72 shrink-0 relative">
+            <div class="w-44 sm:w-60 md:w-72 shrink-0 relative">
                 <input type="text" value="@SearchQuery" @oninput="OnSearchInput" placeholder="Cari nama barang atau SKU..."
                        class="w-full pl-10 pr-4 py-2 bg-[#f9f8f6] border border-[#e5e3dc] rounded-full text-sm font-semibold text-[#5a5855] focus:outline-none focus:ring-2 focus:ring-[#e8a000] focus:bg-white transition-all shadow-sm" />
                 <svg class="w-4 h-4 text-[#8a8880] absolute left-3.5 top-1/2 -translate-y-1/2" fill="none"
@@ -216,14 +216,6 @@
                                         }
                                     </div>
                                 }
-                                @if (!string.IsNullOrEmpty(SelectedProduct.description))
-                                {
-                                    <div class="bg-[#f9f8f6] border border-[#e5e3dc] rounded-xl p-4">
-                                        <h5 class="text-xs font-bold text-[#1a1a1a] mb-1.5">Deskripsi Produk</h5>
-                                        <p class="text-xs text-[#5a5855] leading-relaxed whitespace-pre-wrap">
-                                            @SelectedProduct.description</p>
-                                        </div>
-                                    }
                                 </div>
 
                                 <div class="flex flex-col gap-3 md:gap-4">
@@ -236,11 +228,18 @@
                                                     <span class="text-[0.6rem] font-normal text-[#8a8880] ml-0.5">pts</span></div>
                                                 </div>
                                             </div>
-                                            <code
-                                            class="text-[0.65rem] font-medium text-[#8a8880] bg-[#f0ede5] px-1.5 py-0.5 rounded">@SelectedProduct.sku</code>
-                                        </div>
+                                            <code class="text-[0.65rem] font-medium text-[#8a8880] bg-[#f0ede5] px-1.5 py-0.5 rounded">@SelectedProduct.sku</code>
+                                        
+                                        @if (!string.IsNullOrEmpty(SelectedProduct.description))
+                                        {
+                                            <div class="mt-3 bg-[#f9f8f6] border border-[#e5e3dc] rounded-xl p-3.5">
+                                                <h5 class="text-xs font-bold text-[#1a1a1a] mb-1">Deskripsi Produk</h5>
+                                                <p class="text-xs text-[#5a5855] leading-relaxed whitespace-pre-wrap">@SelectedProduct.description</p>
+                                            </div>
+                                        }
+                                    </div>
 
-                                        <div class="h-px bg-[#f0ede5]"></div>
+                                    <div class="h-px bg-[#f0ede5]"></div>
 
                                         @if (SelectedProduct.ProductVariants != null && SelectedProduct.ProductVariants.Any())
                                         {
@@ -292,7 +291,7 @@
                                                             class="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center text-[#5a5855] hover:bg-[#f5f4f0] transition">-</button>
                                                     <input type="number" @bind="SelectedQuantity" @bind:event="oninput" min="1"
                                                            max="@GetMaxStock()"
-                                                           class="flex-1 text-center py-1 text-xs md:text-sm outline-none bg-transparent">
+                                                           class="flex-1 text-center py-1 text-xs md:text-sm outline-none bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
                                                     <button type="button"
                                                             @onclick="() => { if(SelectedQuantity < GetMaxStock()) SelectedQuantity++; }"
                                                             class="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center text-[#5a5855] hover:bg-[#f5f4f0] transition">+</button>
@@ -312,8 +311,8 @@
                                                         class="text-[0.6rem] font-normal text-[#8a8880]">pts</span></div>
                                                 </div>
                                                 <button type="button" @onclick="AddToCart" disabled="@(GetMaxStock() <= 0)"
-                                                        class="px-3 py-1.5 md:px-4 md:py-2 bg-[#e8a000] hover:bg-[#d49300] active:scale-[0.98] text-[#1a1a1a] text-[11px] md:text-xs font-bold rounded-lg transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
-                                                    + Keranjang
+                                                        class="px-3 py-1.5 md:px-4 md:py-2 bg-[#e8a000] hover:bg-[#d49300] active:scale-[0.98] text-[#1a1a1a] text-[11px] md:text-xs font-bold rounded-lg transition shadow-sm disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed">
+                                                    @(GetMaxStock() <= 0 ? "Stok Habis" : "+ Keranjang")
                                                 </button>
                                             </div>
                                         </div>

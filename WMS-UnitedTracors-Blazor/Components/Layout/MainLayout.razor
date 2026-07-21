@@ -1,4 +1,6 @@
 @inherits LayoutComponentBase
+@inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Navigation
 
 <div class="min-h-screen" style="background: linear-gradient(rgba(245,244,240,0.82), rgba(245,244,240,0.82)), url('/images/bg/ut.png') center center / 140% no-repeat fixed;">
     <NavMenu />
@@ -9,5 +11,8 @@
     </main>
 
     <!-- Global Cart Modal -->
-    <WMS_UnitedTracors_Blazor.Components.Shared.CartCheckout @rendermode="InteractiveServer" />
+    <WMS_UnitedTracors_Blazor.Components.Shared.CartCheckout />
+
+    <!-- First Login Profile Completion Modal -->
+    <WMS_UnitedTracors_Blazor.Components.Shared.FirstLoginModal />
 </div>

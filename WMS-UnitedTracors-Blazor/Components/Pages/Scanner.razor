@@ -1,4 +1,4 @@
-﻿@page "/scan"
+@page "/scan"
 @page "/Scanner"
 @using Microsoft.AspNetCore.Components.Authorization
 @using UT_WMSDotnet.Models
@@ -106,7 +106,8 @@
         </div>
 
         <div class="p-5">
-            <EditForm Model="Model" OnValidSubmit="HandleSubmit" id="transactionForm">
+            <EditForm Model="Model" OnValidSubmit="HandleSubmit" FormName="ScannerForm" id="transactionForm">
+                <AntiforgeryToken />
                 @* Type *@
                 <div class="mb-4">
                     <label class="block text-[0.6rem] font-bold tracking-wider uppercase text-[#a09e99] mb-1.5">Tipe Transaksi</label>

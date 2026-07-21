@@ -268,13 +268,13 @@
                                                         <span class="text-xs font-bold @(step.Status == "DONE" ? "text-[#1a7a30]" : step.Status == "ACTIVE" ? "text-blue-600" : step.Status == "WARNING" ? "text-[#d94040]" : "text-gray-500")">@step.Name</span>
                                                         <span class="text-[10px] text-gray-400 leading-tight">
                                                             @if (step.Status == "DONE") {
-                                                                <span>Selesai dilakukan</span>
+                                                                <span>@(string.IsNullOrEmpty(step.ApproverName) ? "Selesai dilakukan" : $"Reviewed By {step.ApproverName}")</span>
                                                             } else if (step.Status == "ACTIVE") {
                                                                 <span>Sedang diproses</span>
                                                             } else if (step.Status == "WARNING") {
                                                                 <span>Butuh perhatian / revisi</span>
                                                             } else {
-                                                                <span>Menunggu antrean</span>
+                                                                <span>Sedang diproses</span>
                                                             }
                                                         </span>
                                                         @if (step.CompletedAt.HasValue) {
@@ -474,10 +474,19 @@
                                                             }
                                                         </td>
                                                         <td class="px-4 py-3 align-middle">
-                                                            @if (item.Approver != null) {
-                                                                <div class="text-xs font-bold text-[#1a1a1a]">@item.Approver.name</div>
-                                                                <div class="text-[9px] text-gray-500">@item.Approver.role</div>
-                                                            } else {
+                                                            @if (item.StaffInventoryApprover != null) {
+                                                                <div class="text-[10px] text-gray-600">Staff Inv: <span class="font-bold text-[#1a1a1a]">@item.StaffInventoryApprover.name</span></div>
+                                                            }
+                                                            @if (item.AdminApprover != null) {
+                                                                <div class="text-[10px] text-gray-600">Admin: <span class="font-bold text-[#1a1a1a]">@item.AdminApprover.name</span></div>
+                                                            }
+                                                            @if (item.ManagerApprover != null) {
+                                                                <div class="text-[10px] text-gray-600">Manager: <span class="font-bold text-[#1a1a1a]">@item.ManagerApprover.name</span></div>
+                                                            }
+                                                            @if (item.StaffInventoryApprover == null && item.AdminApprover == null && item.ManagerApprover == null && item.Approver != null) {
+                                                                <div class="text-[10px] text-gray-600">Reviewer: <span class="font-bold text-[#1a1a1a]">@item.Approver.name</span></div>
+                                                            }
+                                                            @if (item.Approver == null && item.StaffInventoryApprover == null) {
                                                                 <span class="text-gray-400 text-xs">-</span>
                                                             }
                                                         </td>
@@ -806,6 +815,7 @@
         public string Name { get; set; } = "";
         public string Status { get; set; } = "";
         public DateTime? CompletedAt { get; set; }
+        public string? ApproverName { get; set; }
     }
 
     private List<TrackingStep> GetGroupSteps(List<Transaction> groupItems)
@@ -949,6 +959,17 @@
                 steps.Add(new TrackingStep { Name = "Pengembalian", Status = "PENDING" });
             }
         }
+
+        foreach (var step in steps)
+        {
+            if (step.Status == "DONE" || step.Status == "WARNING")
+            {
+                if (step.Name == "Approval Staff Inv") step.ApproverName = firstItem.StaffInventoryApprover?.name ?? (firstItem.Approver?.role?.Contains("staff") == true ? firstItem.Approver.name : null);
+                else if (step.Name == "Approval Admin") step.ApproverName = firstItem.AdminApprover?.name ?? (firstItem.Approver?.role?.Contains("admin") == true ? firstItem.Approver.name : null);
+                else if (step.Name == "Approval Manager") step.ApproverName = firstItem.ManagerApprover?.name ?? (firstItem.Approver?.role?.Contains("manager") == true ? firstItem.Approver.name : null);
+            }
+        }
+
         return steps;
     }
 }

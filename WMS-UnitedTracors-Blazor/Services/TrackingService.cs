@@ -32,6 +32,9 @@ public class TrackingService
             .Include(t => t.ProductVariant)
             .Include(t => t.Requester)
             .Include(t => t.Approver)
+            .Include(t => t.StaffInventoryApprover)
+            .Include(t => t.AdminApprover)
+            .Include(t => t.ManagerApprover)
             .Include(t => t.Division)
             .Where(t => t.type == "OUT");
 
