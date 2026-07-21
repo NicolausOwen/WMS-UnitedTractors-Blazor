@@ -170,6 +170,22 @@ app.MapPost("/Logout", async (HttpContext context) =>
     await Microsoft.AspNetCore.Authentication.AuthenticationHttpContextExtensions.SignOutAsync(context, Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme);
     return Results.Redirect("/login");
 }).AllowAnonymous().DisableAntiforgery();
+app.MapPost("/api/auth/complete-profile", async (HttpContext context, [Microsoft.AspNetCore.Mvc.FromForm] string name, WMS_UnitedTracors_Blazor.Services.AuthService authService, UT_WMSDotnet.Data.ApplicationDbContext dbContext) =>
+{
+    var userIdString = context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    if (int.TryParse(userIdString, out int userId))
+    {
+        var user = await dbContext.Users.FindAsync(userId);
+        if (user != null)
+        {
+            user.name = name;
+            await dbContext.SaveChangesAsync();
+            var principal = await authService.CreateClaimsPrincipalAsync(dbContext, user, false);
+            await Microsoft.AspNetCore.Authentication.AuthenticationHttpContextExtensions.SignInAsync(context, Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme, principal);
+        }
+    }
+    return Results.Redirect("/");
+}).RequireAuthorization().DisableAntiforgery();
 
 app.MapGet("/auth/microsoft", () =>
 {

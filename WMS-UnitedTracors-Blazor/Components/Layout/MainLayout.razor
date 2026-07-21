@@ -1,4 +1,6 @@
 @inherits LayoutComponentBase
+@inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Navigation
 
 <div class="min-h-screen" style="background: linear-gradient(rgba(245,244,240,0.82), rgba(245,244,240,0.82)), url('/images/bg/ut.png') center center / 140% no-repeat fixed;">
     <NavMenu />
@@ -14,5 +16,3 @@
     <!-- First Login Profile Completion Modal -->
     <WMS_UnitedTracors_Blazor.Components.Shared.FirstLoginModal />
 </div>
-
-
