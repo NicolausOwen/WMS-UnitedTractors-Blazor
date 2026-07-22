@@ -72,7 +72,16 @@
                         <div class="space-y-5">
                             @* SKU *@
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1.5">SKU / Barcode ID <span class="text-red-500">*</span></label>
+                                <div class="flex items-center justify-between mb-1.5">
+                                    <label class="block text-sm font-medium text-gray-700">SKU / Barcode ID <span class="text-red-500">*</span></label>
+                                    @if (!string.IsNullOrEmpty(Model.sku))
+                                    {
+                                        <button type="button" @onclick="ShowBarcodeModal" class="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1a1a1a] hover:text-[#e8a000] px-2.5 py-1 rounded bg-[#faf9f5] border border-[#e5e3dc] hover:bg-[#e8a000]/10 transition cursor-pointer shadow-xs">
+                                            <svg class="w-4 h-4 text-[#e8a000]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+                                            Lihat Barcode
+                                        </button>
+                                    }
+                                </div>
                                 <InputText @bind-Value="Model.sku" required class="block w-full py-2 px-3 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-[#e8a000] focus:border-[#e8a000] outline-none transition" />
                                 <ValidationMessage For="@(() => Model.sku)" class="text-red-600 text-xs mt-1 block" />
                             </div>
@@ -385,6 +394,44 @@
         }
     </div>
 </div>
+
+@if (IsBarcodeModalOpen)
+{
+    <div class="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm transition-opacity" @onclick="CloseBarcodeModal">
+        <div class="relative w-full max-w-xl bg-white rounded-2xl shadow-2xl p-6 md:p-8 flex flex-col items-center" @onclick:stopPropagation>
+            <div class="w-full flex justify-between items-center pb-4 border-b border-gray-100 mb-5">
+                <div>
+                    <h3 class="font-bold text-gray-900 text-lg">Barcode Produk</h3>
+                    <p class="text-xs text-gray-400 mt-0.5">Pratinjau barcode untuk SKU: <span class="font-semibold text-gray-700">@Model.sku</span></p>
+                </div>
+                <button type="button" @onclick="CloseBarcodeModal" class="text-gray-400 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg p-2 transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            
+            <div class="bg-gray-50 border border-gray-200 p-8 rounded-2xl flex flex-col items-center justify-center shadow-inner w-full min-h-[220px]">
+                @{
+                    var barcodeDataUrl = GetBarcodeImage(Model.sku, Model.barcode_type);
+                }
+                @if (!string.IsNullOrEmpty(barcodeDataUrl))
+                {
+                    <img src="@barcodeDataUrl" alt="@Model.sku" class="max-w-full h-40 sm:h-48 object-contain mb-4 bg-white p-4 border border-gray-200 rounded-xl shadow-sm transition-transform hover:scale-105" />
+                    <span class="text-lg font-mono font-bold text-gray-900 tracking-widest bg-white px-3 py-1 rounded-lg border border-gray-200 shadow-xs">@Model.sku</span>
+                    <span class="text-xs font-medium text-gray-500 mt-2 bg-gray-200/60 px-2.5 py-0.5 rounded-full">Tipe: @(Model.barcode_type ?? "Code 128")</span>
+                }
+                else
+                {
+                    <span class="text-sm text-gray-500 py-6">Gagal memuat pratinjau barcode.</span>
+                }
+            </div>
+            <div class="mt-6 w-full flex justify-end">
+                <button type="button" @onclick="CloseBarcodeModal" class="px-5 py-2.5 bg-gray-900 text-white text-xs font-bold rounded-xl hover:bg-gray-800 transition cursor-pointer shadow-sm">
+                    Tutup Pratinjau
+                </button>
+            </div>
+        </div>
+    </div>
+}
 
 @code {
     [Parameter]
@@ -703,8 +750,53 @@
         public bool IsHidden { get; set; }
     }
 
-    private void NavigateBack()
+    private bool IsBarcodeModalOpen = false;
+
+    private void ShowBarcodeModal()
     {
-        NavigationManager.NavigateTo("/Product");
+        IsBarcodeModalOpen = true;
+    }
+
+    private void CloseBarcodeModal()
+    {
+        IsBarcodeModalOpen = false;
+    }
+
+    private string GetBarcodeImage(string? sku, string? type)
+    {
+        if (string.IsNullOrEmpty(sku)) return string.Empty;
+        try
+        {
+            var barcodeType = NetBarcode.Type.Code128;
+            if (type == "TYPE_CODE_39") barcodeType = NetBarcode.Type.Code39;
+            else if (type == "TYPE_EAN_13") barcodeType = NetBarcode.Type.EAN13;
+            
+            var barcode = new NetBarcode.Barcode(sku, barcodeType);
+            return $"data:image/png;base64,{barcode.GetBase64Image()}";
+        }
+        catch
+        {
+            try 
+            {
+                var barcode = new NetBarcode.Barcode(sku, NetBarcode.Type.Code128);
+                return $"data:image/png;base64,{barcode.GetBase64Image()}";
+            } 
+            catch 
+            {
+                return string.Empty;
+            }
+        }
+    }
+
+    private async Task NavigateBack()
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("history.back");
+        }
+        catch
+        {
+            NavigationManager.NavigateTo("/Product");
+        }
     }
 }

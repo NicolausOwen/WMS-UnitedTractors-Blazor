@@ -6,6 +6,8 @@
 @inject IJSRuntime JSRuntime
 @layout WMS_UnitedTracors_Blazor.Components.Layout.MainLayout
 
+<WMS_UnitedTracors_Blazor.Components.Shared.LoadingOverlay IsVisible="FirstItem == null" Message="Memuat Bukti Transaksi..." SubMessage="Mohon tunggu sebentar..." />
+
 @if (FirstItem == null)
 {
     <div class="p-8 text-center">Loading...</div>

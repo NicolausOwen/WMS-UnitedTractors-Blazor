@@ -5,6 +5,7 @@
 @using WMS_UnitedTracors_Blazor.Services
 @implements IDisposable
 @inject ProductService ProductService
+@inject DashboardStateService DashboardState
 @inject CartService CartService
 @inject TransactionService TransactionService
 @inject AuthenticationStateProvider AuthStateProvider
@@ -12,6 +13,8 @@
 @rendermode InteractiveServer
 
 <PageTitle>WMS - Borrow Catalog</PageTitle>
+
+<WMS_UnitedTracors_Blazor.Components.Shared.LoadingOverlay IsVisible="IsLoadingData" Message="Memuat Katalog Barang..." SubMessage="Mohon tunggu sebentar..." />
 
 <div class="w-full min-h-screen px-4 md:px-10 py-6 pb-28 md:pb-12 font-sans">
 
@@ -323,6 +326,7 @@
     private System.Threading.CancellationTokenSource? _searchCts;
     private int CurrentPage = 1;
     private int TotalPages = 0;
+    private bool IsLoadingData = false;
 
     private bool ShowProductModal = false;
     private Product? SelectedProduct;
@@ -339,19 +343,41 @@
     protected override async Task OnInitializedAsync()
     {
         CartService.OnChange += StateHasChanged;
+        DashboardState.OnDashboardUpdated += DashboardUpdated;
         await LoadProducts(1);
         Categories = await ProductService.GetCategoriesForCatalogAsync(1);
     }
 
-    public void Dispose() => CartService.OnChange -= StateHasChanged;
+    private async void DashboardUpdated()
+    {
+        await InvokeAsync(async () =>
+        {
+            await LoadProducts(CurrentPage);
+            StateHasChanged();
+        });
+    }
+
+    public void Dispose()
+    {
+        CartService.OnChange -= StateHasChanged;
+        DashboardState.OnDashboardUpdated -= DashboardUpdated;
+    }
 
     private async Task LoadProducts(int page)
     {
-        CurrentPage = page;
-        var (products, _, totalPages) = await ProductService.GetCatalogProductsAsync(1, SelectedCategoryId, SearchQuery, page,
-15);
-        Products = products;
-        TotalPages = totalPages;
+        IsLoadingData = true;
+        StateHasChanged();
+        try
+        {
+            CurrentPage = page;
+            var (products, _, totalPages) = await ProductService.GetCatalogProductsAsync(1, SelectedCategoryId, SearchQuery, page, 15);
+            Products = products;
+            TotalPages = totalPages;
+        }
+        finally
+        {
+            IsLoadingData = false;
+        }
     }
 
     private async Task FilterByCategory(int? catId)

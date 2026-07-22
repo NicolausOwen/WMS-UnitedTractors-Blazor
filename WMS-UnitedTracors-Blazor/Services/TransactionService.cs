@@ -346,7 +346,15 @@ public class TransactionService
                 _ = _emailService.SendEmailAsync(requester.email, "Request Berhasil Dibuat", requesterHtml);
             }
 
-            var allStaffEmails = await GetEmailsWithPermissionAsync(Helpers.Permissions.ApprovalStage1);
+            var catIds = await _context.Transactions
+                .Where(t => t.requester_id == currentUserId && t.type == "OUT")
+                .OrderByDescending(t => t.created_at)
+                .Take(model.items?.Count ?? 1)
+                .Include(t => t.Product)
+                .Select(t => (int?)t.Product.category_id)
+                .Distinct()
+                .ToListAsync();
+            var allStaffEmails = await ApprovalService.GetApproverEmailsForCategoryAndPermissionAsync(_context, Helpers.Permissions.ApprovalStage1, catIds);
 
             if (allStaffEmails.Any())
             {
@@ -1163,14 +1171,15 @@ public class TransactionService
         _context.Transactions.Update(transaction);
         await _context.SaveChangesAsync();
 
-        // Ambil email Staff Inventaris untuk notifikasi resubmission
-        var allStaffEmails = await GetEmailsWithPermissionAsync(Helpers.Permissions.ApprovalStage1);
+        // Ambil email Staff Inventaris yang berhak untuk kategori barang-barang ini
+        var catIds = groupItems.Concat(new[] { transaction }).Select(i => i.Product?.category_id).Distinct();
+        var allStaffEmails = await ApprovalService.GetApproverEmailsForCategoryAndPermissionAsync(_context, Helpers.Permissions.ApprovalStage1, catIds);
 
         if (allStaffEmails.Any())
         {
             string adminMessage = $"Terdapat request WMS (Event: {transaction.event_name ?? "-"}) yang telah <strong>direvisi dan disubmit ulang</strong> oleh pemohon <strong>{transaction.applicant_name ?? transaction.Requester?.name ?? "-"}</strong>. Silakan login ke sistem WMS untuk meninjau kembali.";
             string adminHtml = GetEmailTemplate("Revisi Request Disubmit Ulang", adminMessage);
-            _ = _emailService.SendEmailToMultipleAsync(allStaffEmails!, "Revisi Request (WMS UT)", adminHtml);
+            _ = _emailService.SendEmailToMultipleAsync(allStaffEmails, "Revisi Request (WMS UT)", adminHtml);
         }
 
         return null;
@@ -1179,27 +1188,72 @@ public class TransactionService
     public async Task<string?> CancelRevisionAsync(int id)
     {
         using var _context = _factory.CreateDbContext();
-        var transaction = await _context.Transactions.Include(t => t.Product).Include(t => t.Requester).FirstOrDefaultAsync(t => t.id == id);
+        var transaction = await _context.Transactions
+            .Include(t => t.Product)
+            .Include(t => t.Requester)
+            .FirstOrDefaultAsync(t => t.id == id);
         if (transaction == null || !WorkflowStatuses.IsRevision(transaction.status)) return "Request is not in revision state.";
 
-        var product = transaction.Product;
-        var requester = transaction.Requester;
+        var groupTransactions = await _context.Transactions
+            .Include(t => t.Product)
+            .Include(t => t.Requester)
+            .Where(t => t.group_id == transaction.group_id && WorkflowStatuses.IsRevision(t.status))
+            .ToListAsync();
 
-        if (transaction.request_type == "GIVEAWAY" && requester != null)
+        if (!groupTransactions.Any())
         {
-            int pointsToRefund = (product?.value ?? 0) * (transaction.quantity ?? 0);
-            if (pointsToRefund > 0)
-            {
-                requester.poin += pointsToRefund;
-                _context.Users.Update(requester);
-            }
+            groupTransactions = new List<Transaction> { transaction };
         }
 
-        transaction.status = WorkflowStatuses.Rejected;
-        transaction.rejection_reason = "Cancelled by requester";
-        transaction.updated_at = DateTime.UtcNow;
+        foreach (var tx in groupTransactions)
+        {
+            var product = tx.Product;
+            var requester = tx.Requester;
+            int qty = tx.quantity ?? 0;
 
-        _context.Transactions.Update(transaction);
+            if (product != null && qty > 0)
+            {
+                int stockBefore = product.current_stock;
+                product.current_stock += qty;
+                _context.Products.Update(product);
+
+                _context.StockLogs.Add(new StockLog
+                {
+                    transaction_id = tx.id,
+                    product_id = product.id,
+                    stock_before = stockBefore,
+                    stock_after = product.current_stock,
+                    created_at = DateTime.UtcNow,
+                    updated_at = DateTime.UtcNow
+                });
+
+                if (tx.product_variant_id.HasValue)
+                {
+                    var variant = await _context.ProductVariants.FindAsync(tx.product_variant_id.Value);
+                    if (variant != null)
+                    {
+                        variant.stock += qty;
+                        _context.ProductVariants.Update(variant);
+                    }
+                }
+            }
+
+            if (tx.request_type == "GIVEAWAY" && requester != null && product != null)
+            {
+                int pointsToRefund = product.value * qty;
+                if (pointsToRefund > 0)
+                {
+                    requester.poin += pointsToRefund;
+                    _context.Users.Update(requester);
+                }
+            }
+
+            tx.status = WorkflowStatuses.Rejected;
+            tx.rejection_reason = "Batal Meminjam (Dibatalkan oleh pemohon)";
+            tx.updated_at = DateTime.UtcNow;
+            _context.Transactions.Update(tx);
+        }
+
         await _context.SaveChangesAsync();
         return null;
     }

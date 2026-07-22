@@ -1,14 +1,19 @@
 @page "/MasterData/DamagedGoods"
 @using UT_WMSDotnet.Models
 @using WMS_UnitedTracors_Blazor.Services
+@implements IDisposable
 @inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Navigation
 @inject TransactionService TransactionService
+@inject DashboardStateService DashboardState
 @inject IJSRuntime JSRuntime
+@rendermode InteractiveServer
 @using WMS_UnitedTracors_Blazor.Helpers
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
 
 <PageTitle>WMS - Barang Rusak & Hilang</PageTitle>
+
+<WMS_UnitedTracors_Blazor.Components.Shared.LoadingOverlay IsVisible="IsSubmitting" Message="@LoadingMessage" SubMessage="Mohon tunggu sebentar..." />
 
 <div class="py-8 min-h-screen">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -220,7 +225,17 @@
                 </button>
             </div>
             <div class="p-4 flex justify-center bg-gray-50 min-h-[300px] items-center">
-                <img src="/@selectedPhotoUrl" alt="Foto Pengembalian" class="max-w-full max-h-[70vh] rounded shadow-sm object-contain" />
+                @if (selectedPhotoUrl.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+                {
+                    <a href="@ImageHelper.Resolve(selectedPhotoUrl)" target="_blank" class="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                        Buka Dokumen PDF
+                    </a>
+                }
+                else
+                {
+                    <img src="@ImageHelper.Resolve(selectedPhotoUrl)" alt="Foto Pengembalian" class="max-w-full max-h-[70vh] rounded shadow-sm object-contain" />
+                }
             </div>
         </div>
     </div>
@@ -248,18 +263,30 @@
             Navigation.NavigateTo("/");
             return;
         }
+        DashboardState.OnDashboardUpdated += DashboardUpdated;
         await LoadData();
     }
+
+    private bool IsSubmitting = false;
+    private string LoadingMessage = "Memuat data barang rusak & hilang...";
 
     private async Task LoadData()
     {
         isLoading = true;
-        
-        var result = await TransactionService.GetDamagedGoodsAsync(searchTerm, filterCategory, sortBy, currentPage, pageSize);
-        damagedGoods = result.items;
-        totalPages = result.totalPages;
-        
-        isLoading = false;
+        IsSubmitting = true;
+        LoadingMessage = "Memuat data barang rusak & hilang...";
+        StateHasChanged();
+        try
+        {
+            var result = await TransactionService.GetDamagedGoodsAsync(searchTerm, filterCategory, sortBy, currentPage, pageSize);
+            damagedGoods = result.items;
+            totalPages = result.totalPages;
+        }
+        finally
+        {
+            isLoading = false;
+            IsSubmitting = false;
+        }
     }
 
     private async Task OnFilterChanged()
@@ -305,5 +332,19 @@
     {
         showPhotoModal = false;
         selectedPhotoUrl = "";
+    }
+
+    private async void DashboardUpdated()
+    {
+        await InvokeAsync(async () =>
+        {
+            await LoadData();
+            StateHasChanged();
+        });
+    }
+
+    public void Dispose()
+    {
+        DashboardState.OnDashboardUpdated -= DashboardUpdated;
     }
 }

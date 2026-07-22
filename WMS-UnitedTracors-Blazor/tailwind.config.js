@@ -5,6 +5,28 @@ module.exports = {
     "wwwroot/**/*.html",
     "**/*.{html,razor,cshtml}"
   ],
+  safelist: [
+    // Stepper circle - WARNING (revision) state
+    'border-amber-500',
+    'bg-amber-500',
+    'text-amber-500',
+    'text-amber-600',
+    // Stepper circle - ACTIVE (pulse) state
+    'border-blue-600',
+    'bg-blue-600',
+    'bg-blue-400',
+    'text-blue-600',
+    'text-blue-500',
+    'animate-ping',
+    'animate-pulse',
+    // Stepper circle - DANGER state
+    'border-rose-600',
+    'bg-rose-600',
+    // Grid columns for summary cards
+    'grid-cols-4',
+    'sm:grid-cols-4',
+    'md:grid-cols-4',
+  ],
   theme: {
     extend: {
       colors: {

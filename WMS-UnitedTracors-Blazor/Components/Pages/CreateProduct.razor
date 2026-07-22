@@ -531,9 +531,16 @@
         }
     }
 
-    private void NavigateBack()
+    private async Task NavigateBack()
     {
-        NavigationManager.NavigateTo("/Product");
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("history.back");
+        }
+        catch
+        {
+            NavigationManager.NavigateTo("/Product");
+        }
     }
 
     public class VariantGroupUI

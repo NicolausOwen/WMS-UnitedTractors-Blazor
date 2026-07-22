@@ -70,6 +70,8 @@
             Log in
         </button>
 
+        @* Microsoft login feature hidden temporarily for future use *@
+        @*
         <a href="/auth/microsoft" class="w-full flex items-center justify-center gap-3 px-4 py-2.5 bg-white border border-gray-300 rounded-[10px] text-sm font-bold text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 transition-all duration-200 no-underline">
             <svg class="w-4 h-4" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg">
                 <path fill="#f25022" d="M10 0H0v10h10V0z"/>
@@ -79,8 +81,17 @@
             </svg>
             Sign in with Microsoft
         </a>
+        *@
     </div>
 </form>
+
+<div id="loginLoadingOverlay" class="hidden fixed inset-0 z-[999999] flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm transition-all duration-300">
+    <div class="bg-white p-6 rounded-2xl shadow-2xl flex flex-col items-center max-w-xs w-full text-center border border-[#e5e3dc]">
+        <div class="w-12 h-12 border-4 border-[#e8a000] border-t-transparent rounded-full animate-spin mb-4"></div>
+        <h4 class="font-bold text-[#1a1a1a] text-base mb-1">Memproses Login...</h4>
+        <p class="text-xs text-[#8a8880]">Mohon tunggu sebentar, sedang memuat sistem...</p>
+    </div>
+</div>
 
 <script>
     (function() {
@@ -98,15 +109,37 @@
                 eyeSlashIcon.classList.toggle('hidden');
             });
         }
+
+        var form = document.querySelector('form[action="/api/auth/login"]');
+        var msBtn = document.querySelector('a[href="/auth/microsoft"]');
+        var overlay = document.getElementById('loginLoadingOverlay');
+
+        if (form && overlay) {
+            form.addEventListener('submit', function() {
+                overlay.classList.remove('hidden');
+            });
+        }
+
+        if (msBtn && overlay) {
+            msBtn.addEventListener('click', function() {
+                overlay.classList.remove('hidden');
+            });
+        }
     })();
 </script>
 
 @code {
+    [Parameter]
     [SupplyParameterFromQuery]
-    private string? error { get; set; }
+    public string? error { get; set; }
 
+    [Parameter]
     [SupplyParameterFromQuery]
-    private string? errorMessage { get; set; }
+    public string? errorMessage { get; set; }
+
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public string? ReturnUrl { get; set; }
 
     private bool IsError => error == "1";
 }

@@ -123,7 +123,10 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseCookiePolicy();
 
@@ -187,6 +190,10 @@ app.MapPost("/api/auth/complete-profile", async (HttpContext context, [Microsoft
     return Results.Redirect("/");
 }).RequireAuthorization().DisableAntiforgery();
 
+// Microsoft OAuth Endpoints (Disabled for now)
+app.MapGet("/auth/microsoft", () => Results.Redirect("/login?errorMessage=Fitur+Login+Microsoft+saat+ini+belum+aktif.")).AllowAnonymous();
+app.MapGet("/auth/microsoft/callback", () => Results.Redirect("/login?errorMessage=Fitur+Login+Microsoft+saat+ini+belum+aktif.")).AllowAnonymous();
+/*
 app.MapGet("/auth/microsoft", () =>
 {
     var properties = new Microsoft.AspNetCore.Authentication.AuthenticationProperties { RedirectUri = "/auth/microsoft/callback" };
@@ -239,6 +246,7 @@ app.MapGet("/auth/microsoft/callback", async (
 
     return Results.Redirect("/");
 }).AllowAnonymous();
+*/
 
 
 // =======================

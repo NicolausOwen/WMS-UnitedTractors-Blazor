@@ -9,6 +9,8 @@
 
 <PageTitle>WMS - Laporan Peminjaman Barang</PageTitle>
 
+<WMS_UnitedTracors_Blazor.Components.Shared.LoadingOverlay IsVisible="IsSubmitting" Message="@LoadingMessage" SubMessage="Mohon tunggu sebentar..." />
+
 <div class="py-12 min-h-screen font-sans">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
@@ -157,24 +159,37 @@
         await LoadData();
     }
 
+    private bool IsSubmitting = false;
+    private string LoadingMessage = "Memuat data laporan peminjaman...";
+
     private async Task LoadData()
     {
-        var query = DbContext.Transactions
-            .Include(t => t.Product)
-            .Include(t => t.Requester)
-            .Include(t => t.Division)
-            .Where(t => t.type == "OUT" && t.request_type == "BORROW")
-            .AsQueryable();
-
-        if (StartDate.HasValue) query = query.Where(t => t.created_at >= StartDate.Value.Date);
-        if (EndDate.HasValue)
+        IsSubmitting = true;
+        LoadingMessage = "Memuat data laporan peminjaman...";
+        StateHasChanged();
+        try
         {
-            var end = EndDate.Value.Date.AddDays(1);
-            query = query.Where(t => t.created_at < end);
-        }
-        if (!string.IsNullOrEmpty(Status)) query = query.Where(t => t.status == Status);
+            var query = DbContext.Transactions
+                .Include(t => t.Product)
+                .Include(t => t.Requester)
+                .Include(t => t.Division)
+                .Where(t => t.type == "OUT" && t.request_type == "BORROW")
+                .AsQueryable();
 
-        Transactions = await query.OrderByDescending(t => t.created_at).ToListAsync();
+            if (StartDate.HasValue) query = query.Where(t => t.created_at >= StartDate.Value.Date);
+            if (EndDate.HasValue)
+            {
+                var end = EndDate.Value.Date.AddDays(1);
+                query = query.Where(t => t.created_at < end);
+            }
+            if (!string.IsNullOrEmpty(Status)) query = query.Where(t => t.status == Status);
+
+            Transactions = await query.OrderByDescending(t => t.created_at).ToListAsync();
+        }
+        finally
+        {
+            IsSubmitting = false;
+        }
     }
 
     private async Task Print()

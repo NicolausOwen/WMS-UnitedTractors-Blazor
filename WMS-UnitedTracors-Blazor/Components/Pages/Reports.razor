@@ -12,6 +12,8 @@
 
 <PageTitle>WMS - Laporan Stok</PageTitle>
 
+<WMS_UnitedTracors_Blazor.Components.Shared.LoadingOverlay IsVisible="IsSubmitting" Message="@LoadingMessage" SubMessage="Mohon tunggu sebentar..." />
+
 <div class="py-12 min-h-screen font-sans">
     <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
         <div class="mb-6">
@@ -465,9 +467,22 @@
         await LoadData();
     }
 
+    private bool IsSubmitting = false;
+    private string LoadingMessage = "Memuat data laporan...";
+
     private async Task LoadData()
     {
-        Summary = await ReportService.GetSummaryAsync(StartDate, EndDate);
-        ExecSummary = await ReportService.GetExecutiveSummaryAsync(StartDate, EndDate);
+        IsSubmitting = true;
+        LoadingMessage = "Memuat data laporan...";
+        StateHasChanged();
+        try
+        {
+            Summary = await ReportService.GetSummaryAsync(StartDate, EndDate);
+            ExecSummary = await ReportService.GetExecutiveSummaryAsync(StartDate, EndDate);
+        }
+        finally
+        {
+            IsSubmitting = false;
+        }
     }
 }

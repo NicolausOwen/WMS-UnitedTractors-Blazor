@@ -1,4 +1,4 @@
-﻿@page "/Unit"
+@page "/Unit"
 @using UT_WMSDotnet.Models
 @using UT_WMSDotnet.ViewModels
 @using WMS_UnitedTracors_Blazor.Services
@@ -10,6 +10,8 @@
 @rendermode InteractiveServer
 
 <PageTitle>WMS - Units</PageTitle>
+
+<LoadingOverlay IsVisible="IsSubmitting" Message="@LoadingMessage" SubMessage="Mohon tunggu sebentar..." />
 
 <div class="py-8 min-h-screen">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -250,6 +252,8 @@
     private string? ErrorMessage;
     private string? SuccessMessage;
     private bool CanManage = false;
+    private bool IsSubmitting = false;
+    private string LoadingMessage = "Memuat data...";
 
     private bool ShowProductsModal = false;
     private string ModalTitle = "";
@@ -278,10 +282,20 @@
 
     private async Task LoadData(int page)
     {
-        CurrentPage = page;
-        var result = await UnitService.GetUnitsAsync(CurrentPage, 10);
-        UnitsList = result.Units;
-        TotalPages = result.TotalPages;
+        IsSubmitting = true;
+        LoadingMessage = "Memuat data unit...";
+        StateHasChanged();
+        try
+        {
+            CurrentPage = page;
+            var result = await UnitService.GetUnitsAsync(CurrentPage, 10);
+            UnitsList = result.Units;
+            TotalPages = result.TotalPages;
+        }
+        finally
+        {
+            IsSubmitting = false;
+        }
     }
 
     private async Task SaveUnit()
@@ -294,18 +308,28 @@
 
         ErrorMessage = null;
         SuccessMessage = null;
+        IsSubmitting = true;
+        LoadingMessage = "Menyimpan unit baru...";
+        StateHasChanged();
 
-        string? error = await UnitService.CreateUnitAsync(Model);
-
-        if (error != null)
+        try
         {
-            ErrorMessage = error;
+            string? error = await UnitService.CreateUnitAsync(Model);
+
+            if (error != null)
+            {
+                ErrorMessage = error;
+            }
+            else
+            {
+                SuccessMessage = "Unit berhasil ditambahkan.";
+                Model = new UnitViewModel(); // Reset form
+                await LoadData(CurrentPage);
+            }
         }
-        else
+        finally
         {
-            SuccessMessage = "Unit berhasil ditambahkan.";
-            Model = new UnitViewModel(); // Reset form
-            await LoadData(CurrentPage);
+            IsSubmitting = false;
         }
     }
 
@@ -332,18 +356,28 @@
 
         ErrorMessage = null;
         SuccessMessage = null;
+        IsSubmitting = true;
+        LoadingMessage = "Menyimpan perubahan unit...";
+        StateHasChanged();
 
-        string? error = await UnitService.UpdateUnitAsync(id, EditModel);
-
-        if (error != null)
+        try
         {
-            ErrorMessage = error;
+            string? error = await UnitService.UpdateUnitAsync(id, EditModel);
+
+            if (error != null)
+            {
+                ErrorMessage = error;
+            }
+            else
+            {
+                SuccessMessage = "Unit berhasil diupdate.";
+                EditingUnitId = null;
+                await LoadData(CurrentPage);
+            }
         }
-        else
+        finally
         {
-            SuccessMessage = "Unit berhasil diupdate.";
-            EditingUnitId = null;
-            await LoadData(CurrentPage);
+            IsSubmitting = false;
         }
     }
 
@@ -352,9 +386,19 @@
         bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "Apakah Anda yakin ingin menghapus unit ini?");
         if (confirmed)
         {
-            await UnitService.DeleteUnitAsync(id);
-            SuccessMessage = "Unit berhasil dihapus.";
-            await LoadData(CurrentPage);
+            IsSubmitting = true;
+            LoadingMessage = "Menghapus unit...";
+            StateHasChanged();
+            try
+            {
+                await UnitService.DeleteUnitAsync(id);
+                SuccessMessage = "Unit berhasil dihapus.";
+                await LoadData(CurrentPage);
+            }
+            finally
+            {
+                IsSubmitting = false;
+            }
         }
     }
 }

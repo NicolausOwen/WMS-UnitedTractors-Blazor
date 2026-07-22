@@ -1,4 +1,4 @@
-﻿@page "/Category"
+@page "/Category"
 @using UT_WMSDotnet.Models
 @using UT_WMSDotnet.ViewModels
 @using WMS_UnitedTracors_Blazor.Services
@@ -10,6 +10,8 @@
 @rendermode InteractiveServer
 
 <PageTitle>WMS - Categories</PageTitle>
+
+<LoadingOverlay IsVisible="IsSubmitting" Message="@LoadingMessage" SubMessage="Mohon tunggu sebentar..." />
 
 <div class="py-8 min-h-screen">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -261,6 +263,8 @@
     private string? ErrorMessage;
     private string? SuccessMessage;
     private bool CanManage = false;
+    private bool IsSubmitting = false;
+    private string LoadingMessage = "Memuat data...";
 
     private bool ShowProductsModal = false;
     private string ModalTitle = "";
@@ -289,10 +293,20 @@
 
     private async Task LoadData(int page)
     {
-        CurrentPage = page;
-        var result = await CategoryService.GetCategoriesAsync(CurrentPage, 10);
-        CategoriesList = result.Categories;
-        TotalPages = result.TotalPages;
+        IsSubmitting = true;
+        LoadingMessage = "Memuat data kategori...";
+        StateHasChanged();
+        try
+        {
+            CurrentPage = page;
+            var result = await CategoryService.GetCategoriesAsync(CurrentPage, 10);
+            CategoriesList = result.Categories;
+            TotalPages = result.TotalPages;
+        }
+        finally
+        {
+            IsSubmitting = false;
+        }
     }
 
     private async Task SaveCategory()
@@ -305,18 +319,28 @@
 
         ErrorMessage = null;
         SuccessMessage = null;
+        IsSubmitting = true;
+        LoadingMessage = "Menyimpan kategori baru...";
+        StateHasChanged();
 
-        string? error = await CategoryService.CreateCategoryAsync(Model);
-
-        if (error != null)
+        try
         {
-            ErrorMessage = error;
+            string? error = await CategoryService.CreateCategoryAsync(Model);
+
+            if (error != null)
+            {
+                ErrorMessage = error;
+            }
+            else
+            {
+                SuccessMessage = "Kategori berhasil ditambahkan.";
+                Model = new CategoryViewModel(); // Reset form
+                await LoadData(CurrentPage);
+            }
         }
-        else
+        finally
         {
-            SuccessMessage = "Kategori berhasil ditambahkan.";
-            Model = new CategoryViewModel(); // Reset form
-            await LoadData(CurrentPage);
+            IsSubmitting = false;
         }
     }
 
@@ -343,18 +367,28 @@
 
         ErrorMessage = null;
         SuccessMessage = null;
+        IsSubmitting = true;
+        LoadingMessage = "Menyimpan perubahan kategori...";
+        StateHasChanged();
 
-        string? error = await CategoryService.UpdateCategoryAsync(id, EditModel);
-
-        if (error != null)
+        try
         {
-            ErrorMessage = error;
+            string? error = await CategoryService.UpdateCategoryAsync(id, EditModel);
+
+            if (error != null)
+            {
+                ErrorMessage = error;
+            }
+            else
+            {
+                SuccessMessage = "Kategori berhasil diupdate.";
+                EditingCategoryId = null;
+                await LoadData(CurrentPage);
+            }
         }
-        else
+        finally
         {
-            SuccessMessage = "Kategori berhasil diupdate.";
-            EditingCategoryId = null;
-            await LoadData(CurrentPage);
+            IsSubmitting = false;
         }
     }
 
@@ -363,9 +397,19 @@
         bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "Apakah Anda yakin ingin menghapus kategori ini?");
         if (confirmed)
         {
-            await CategoryService.DeleteCategoryAsync(id);
-            SuccessMessage = "Kategori berhasil dihapus.";
-            await LoadData(CurrentPage);
+            IsSubmitting = true;
+            LoadingMessage = "Menghapus kategori...";
+            StateHasChanged();
+            try
+            {
+                await CategoryService.DeleteCategoryAsync(id);
+                SuccessMessage = "Kategori berhasil dihapus.";
+                await LoadData(CurrentPage);
+            }
+            finally
+            {
+                IsSubmitting = false;
+            }
         }
     }
 }

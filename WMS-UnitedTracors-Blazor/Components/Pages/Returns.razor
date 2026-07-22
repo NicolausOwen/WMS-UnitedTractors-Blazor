@@ -14,6 +14,8 @@
 
 <PageTitle>WMS - Tracking & Returns</PageTitle>
 
+<WMS_UnitedTracors_Blazor.Components.Shared.LoadingOverlay IsVisible="IsLoadingData" Message="@LoadingMessage" SubMessage="Mohon tunggu sebentar..." />
+
 <div class="py-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
@@ -416,44 +418,57 @@
         selectedReturnPhoto = e.File;
     }
 
+    private bool IsLoadingData = false;
+    private string LoadingMessage = "Memuat data pengembalian...";
+
     private async Task LoadData(int page)
     {
-        var result = await TransactionService.GetHistoryAsync(CurrentUserId, UserRole, "OUT", null, null, 1, 1000);
-        
-        var filtered = result.Transactions.Where(t => t.request_type == "BORROW" && t.status == "APPROVED").ToList();
-        
-        if (!string.IsNullOrWhiteSpace(SearchQuery))
+        IsLoadingData = true;
+        LoadingMessage = "Memuat data pengembalian...";
+        StateHasChanged();
+        try
         {
-            filtered = filtered.Where(t => t.Product != null && 
-                (t.Product.name.Contains(SearchQuery, StringComparison.OrdinalIgnoreCase) || 
-                 t.Product.sku.Contains(SearchQuery, StringComparison.OrdinalIgnoreCase))).ToList();
-        }
-        
-        if (StatusFilter == "pending")
-        {
-            filtered = filtered.Where(t => t.quantity > t.returned_quantity).ToList();
-        }
-        else if (StatusFilter == "returned")
-        {
-            filtered = filtered.Where(t => t.returned_quantity >= t.quantity).ToList();
-        }
-        
-        int pageSize = 20;
-        int totalItems = filtered.Count;
-        TotalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
-        if (TotalPages < 1) TotalPages = 1;
-        
-        CurrentPage = Math.Min(page, TotalPages);
-        if (CurrentPage < 1) CurrentPage = 1;
-        
-        var paginatedTransactions = filtered
-            .Skip((CurrentPage - 1) * pageSize)
-            .Take(pageSize)
-            .ToList();
+            var result = await TransactionService.GetHistoryAsync(CurrentUserId, UserRole, "OUT", null, null, 1, 1000);
             
-        GroupedUsages = paginatedTransactions
-            .GroupBy(t => t.group_id)
-            .ToDictionary(g => g.Key, g => g.ToList());
+            var filtered = result.Transactions.Where(t => t.request_type == "BORROW" && t.status == "APPROVED").ToList();
+            
+            if (!string.IsNullOrWhiteSpace(SearchQuery))
+            {
+                filtered = filtered.Where(t => t.Product != null && 
+                    (t.Product.name.Contains(SearchQuery, StringComparison.OrdinalIgnoreCase) || 
+                     t.Product.sku.Contains(SearchQuery, StringComparison.OrdinalIgnoreCase))).ToList();
+            }
+            
+            if (StatusFilter == "pending")
+            {
+                filtered = filtered.Where(t => t.quantity > t.returned_quantity).ToList();
+            }
+            else if (StatusFilter == "returned")
+            {
+                filtered = filtered.Where(t => t.returned_quantity >= t.quantity).ToList();
+            }
+            
+            int pageSize = 20;
+            int totalItems = filtered.Count;
+            TotalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+            if (TotalPages < 1) TotalPages = 1;
+            
+            CurrentPage = Math.Min(page, TotalPages);
+            if (CurrentPage < 1) CurrentPage = 1;
+            
+            var paginatedTransactions = filtered
+                .Skip((CurrentPage - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+                
+            GroupedUsages = paginatedTransactions
+                .GroupBy(t => t.group_id)
+                .ToDictionary(g => g.Key, g => g.ToList());
+        }
+        finally
+        {
+            IsLoadingData = false;
+        }
     }
 
     private void ToggleGroup(string groupId)

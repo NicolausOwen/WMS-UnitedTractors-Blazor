@@ -2,6 +2,7 @@
 @using UT_WMSDotnet.Models
 @using WMS_UnitedTracors_Blazor.Services
 @inject ProductService ProductService
+@inject DashboardStateService DashboardState
 @inject CategoryService CategoryService
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthStateProvider
@@ -10,6 +11,8 @@
 @implements IDisposable
 
 <PageTitle>WMS - Products</PageTitle>
+
+<WMS_UnitedTracors_Blazor.Components.Shared.LoadingOverlay IsVisible="IsLoadingData" Message="@LoadingMessage" SubMessage="Mohon tunggu sebentar..." />
 
 <header class="bg-transparent">
     <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
@@ -83,17 +86,62 @@
                 <table class="w-full text-left table-auto">
                     <thead>
                         <tr class="bg-[#1a1a1a]">
-                            <th class="px-3.5 py-3 text-[0.68rem] font-semibold tracking-wider uppercase text-[#c8c5bc]">Product</th>
-                            <th class="px-3 py-3 text-[0.68rem] font-semibold tracking-wider uppercase text-[#c8c5bc]">SKU / Barcode</th>
-                            <th class="px-3 py-3 text-[0.68rem] font-semibold tracking-wider uppercase text-[#c8c5bc]">Category</th>
-                            <th class="px-3 py-3 text-[0.68rem] font-semibold tracking-wider uppercase text-[#c8c5bc]">Location</th>
-                            <th class="px-3 py-3 text-[0.68rem] font-semibold tracking-wider uppercase text-[#c8c5bc]">Stock</th>
-                            <th class="px-3 py-3 text-[0.68rem] font-semibold tracking-wider uppercase text-[#c8c5bc]">Points</th>
-                            <th class="px-3 py-3 text-[0.68rem] font-semibold tracking-wider uppercase text-[#c8c5bc]">Status</th>
-                            <th class="px-3 py-3 text-[0.68rem] font-semibold tracking-wider uppercase text-[#c8c5bc]">Updated</th>
+                            <th class="px-3.5 py-3 text-[0.68rem] font-semibold tracking-wider uppercase text-[#c8c5bc] cursor-pointer select-none hover:text-white transition" @onclick='() => SortBy("name")'>
+                                <div class="flex items-center gap-1">
+                                    <span>Product</span>
+                                    <span class="text-[#e8a000] text-[10px]">@GetSortIcon("name")</span>
+                                </div>
+                            </th>
+                            <th class="px-3 py-3 text-[0.68rem] font-semibold tracking-wider uppercase text-[#c8c5bc] cursor-pointer select-none hover:text-white transition" @onclick='() => SortBy("sku")'>
+                                <div class="flex items-center gap-1">
+                                    <span>SKU</span>
+                                    <span class="text-[#e8a000] text-[10px]">@GetSortIcon("sku")</span>
+                                </div>
+                            </th>
+                            <th class="px-3 py-3 text-[0.68rem] font-semibold tracking-wider uppercase text-[#c8c5bc] cursor-pointer select-none hover:text-white transition" @onclick='() => SortBy("category")'>
+                                <div class="flex items-center gap-1">
+                                    <span>Category</span>
+                                    <span class="text-[#e8a000] text-[10px]">@GetSortIcon("category")</span>
+                                </div>
+                            </th>
+                            <th class="px-3 py-3 text-[0.68rem] font-semibold tracking-wider uppercase text-[#c8c5bc] cursor-pointer select-none hover:text-white transition" @onclick='() => SortBy("location")'>
+                                <div class="flex items-center gap-1">
+                                    <span>Location</span>
+                                    <span class="text-[#e8a000] text-[10px]">@GetSortIcon("location")</span>
+                                </div>
+                            </th>
+                            <th class="px-3 py-3 text-[0.68rem] font-semibold tracking-wider uppercase text-[#c8c5bc] cursor-pointer select-none hover:text-white transition" @onclick='() => SortBy("stock")'>
+                                <div class="flex items-center gap-1">
+                                    <span>Stock</span>
+                                    <span class="text-[#e8a000] text-[10px]">@GetSortIcon("stock")</span>
+                                </div>
+                            </th>
+                            <th class="px-3 py-3 text-[0.68rem] font-semibold tracking-wider uppercase text-[#c8c5bc] cursor-pointer select-none hover:text-white transition" @onclick='() => SortBy("points")'>
+                                <div class="flex items-center gap-1">
+                                    <span>Points</span>
+                                    <span class="text-[#e8a000] text-[10px]">@GetSortIcon("points")</span>
+                                </div>
+                            </th>
+                            <th class="px-3 py-3 text-[0.68rem] font-semibold tracking-wider uppercase text-[#c8c5bc] cursor-pointer select-none hover:text-white transition" @onclick='() => SortBy("status")'>
+                                <div class="flex items-center gap-1">
+                                    <span>Status</span>
+                                    <span class="text-[#e8a000] text-[10px]">@GetSortIcon("status")</span>
+                                </div>
+                            </th>
+                            <th class="px-3 py-3 text-[0.68rem] font-semibold tracking-wider uppercase text-[#c8c5bc] cursor-pointer select-none hover:text-white transition" @onclick='() => SortBy("updated")'>
+                                <div class="flex items-center gap-1">
+                                    <span>Updated</span>
+                                    <span class="text-[#e8a000] text-[10px]">@GetSortIcon("updated")</span>
+                                </div>
+                            </th>
                             @if (IsSuperAdmin)
                             {
-                                <th class="px-3 py-3 text-[0.68rem] font-semibold tracking-wider uppercase text-[#c8c5bc] text-center">Visibility</th>
+                                <th class="px-3 py-3 text-[0.68rem] font-semibold tracking-wider uppercase text-[#c8c5bc] text-center cursor-pointer select-none hover:text-white transition" @onclick='() => SortBy("hide")'>
+                                    <div class="flex items-center justify-center gap-1">
+                                        <span>Hide</span>
+                                        <span class="text-[#e8a000] text-[10px]">@GetSortIcon("hide")</span>
+                                    </div>
+                                </th>
                             }
                             @if (IsAdmin)
                             {
@@ -152,23 +200,7 @@
                                         </div>
                                     </td>
                                     <td class="px-3 py-3">
-                                        @{
-                                            var barcodeImg = GetBarcodeImage(product.sku, product.barcode_type);
-                                        }
-                                        @if (!string.IsNullOrEmpty(barcodeImg))
-                                        {
-                                            <div class="inline-block bg-white p-0.5 border border-gray-100 rounded cursor-pointer hover:ring-1 ring-gray-900 transition" @onclick="() => OpenImageModal(barcodeImg, product.sku)">
-                                                <img src="@barcodeImg" alt="@product.sku" class="h-6 object-contain" />
-                                            </div>
-                                            <div class="text-[9px] text-gray-500 font-mono mt-0.5 truncate max-w-[100px]">@product.sku</div>
-                                        }
-                                        else
-                                        {
-                                            <code class="text-[10px] font-medium text-gray-700 bg-gray-100 px-1.5 py-0.5 rounded">@product.sku</code>
-                                            <div class="text-[9px] text-gray-400 mt-0.5">
-                                                @product.barcode_type
-                                            </div>
-                                        }
+                                        <code class="text-xs font-mono font-bold text-gray-800 bg-gray-100 px-2 py-1 rounded border border-gray-200/60">@(product.sku ?? "-")</code>
                                     </td>
                                     <td class="px-3 py-3">
                                         @if (product.Category != null)
@@ -314,21 +346,8 @@
 
                             <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs border-t border-b border-gray-100/70 py-2.5 bg-gray-50/50 px-3 rounded-lg text-left">
                                 <div>
-                                    <span class="text-[10px] text-gray-400 font-semibold uppercase tracking-wider block mb-0.5">SKU / Barcode</span>
-                                    @{
-                                        var barcodeImgMob = GetBarcodeImage(product.sku, product.barcode_type);
-                                    }
-                                    @if (!string.IsNullOrEmpty(barcodeImgMob))
-                                    {
-                                        <div class="inline-block bg-white p-1 border border-gray-100 rounded cursor-pointer hover:ring-2 ring-gray-900 transition" @onclick="() => OpenImageModal(barcodeImgMob, product.sku)">
-                                            <img src="@barcodeImgMob" alt="@product.sku" class="h-6 object-contain" />
-                                        </div>
-                                        <div class="mt-0.5 text-[9px] text-gray-500 font-mono">@product.sku</div>
-                                    }
-                                    else
-                                    {
-                                        <code class="text-xs font-bold text-gray-700 bg-gray-200/60 px-1.5 py-0.5 rounded">@product.sku</code>
-                                    }
+                                    <span class="text-[10px] text-gray-400 font-semibold uppercase tracking-wider block mb-0.5">SKU</span>
+                                    <code class="text-xs font-mono font-bold text-gray-700 bg-gray-200/60 px-1.5 py-0.5 rounded">@(product.sku ?? "-")</code>
                                 </div>
                                 <div>
                                     <span class="text-[10px] text-gray-400 font-semibold uppercase tracking-wider block mb-0.5">Category</span>
@@ -449,6 +468,70 @@
     private string? ErrorMessage;
     private bool IsAdmin = false;
     private bool IsSuperAdmin = false;
+
+    private List<Product>? RawProducts;
+    private string? SortColumn = null;
+    private string SortDirection = "none"; // "asc", "desc", "none"
+
+    private void SortBy(string column)
+    {
+        if (SortColumn != column)
+        {
+            SortColumn = column;
+            SortDirection = "asc";
+        }
+        else
+        {
+            if (SortDirection == "asc")
+            {
+                SortDirection = "desc";
+            }
+            else if (SortDirection == "desc")
+            {
+                SortColumn = null;
+                SortDirection = "none";
+            }
+            else
+            {
+                SortDirection = "asc";
+            }
+        }
+        ApplySorting();
+    }
+
+    private string GetSortIcon(string column)
+    {
+        if (SortColumn != column || SortDirection == "none")
+            return "↕";
+        return SortDirection == "asc" ? "▲" : "▼";
+    }
+
+    private void ApplySorting()
+    {
+        if (RawProducts == null) return;
+
+        if (string.IsNullOrEmpty(SortColumn) || SortDirection == "none")
+        {
+            Products = new List<Product>(RawProducts);
+            return;
+        }
+
+        bool isAsc = SortDirection == "asc";
+
+        Products = SortColumn switch
+        {
+            "name" => isAsc ? RawProducts.OrderBy(p => p.name).ToList() : RawProducts.OrderByDescending(p => p.name).ToList(),
+            "sku" => isAsc ? RawProducts.OrderBy(p => p.sku).ToList() : RawProducts.OrderByDescending(p => p.sku).ToList(),
+            "category" => isAsc ? RawProducts.OrderBy(p => p.Category?.name ?? "").ToList() : RawProducts.OrderByDescending(p => p.Category?.name ?? "").ToList(),
+            "location" => isAsc ? RawProducts.OrderBy(p => p.Location?.name ?? "").ToList() : RawProducts.OrderByDescending(p => p.Location?.name ?? "").ToList(),
+            "stock" => isAsc ? RawProducts.OrderBy(p => p.current_stock).ToList() : RawProducts.OrderByDescending(p => p.current_stock).ToList(),
+            "points" => isAsc ? RawProducts.OrderBy(p => p.value).ToList() : RawProducts.OrderByDescending(p => p.value).ToList(),
+            "status" => isAsc ? RawProducts.OrderBy(p => p.current_stock > 0).ToList() : RawProducts.OrderByDescending(p => p.current_stock > 0).ToList(),
+            "updated" => isAsc ? RawProducts.OrderBy(p => p.updated_at).ToList() : RawProducts.OrderByDescending(p => p.updated_at).ToList(),
+            "hide" => isAsc ? RawProducts.OrderByDescending(p => p.is_hidden == 1).ToList() : RawProducts.OrderBy(p => p.is_hidden == 1).ToList(),
+            _ => new List<Product>(RawProducts)
+        };
+    }
 
     private bool ShowImageModal = false;
     private string? ModalImageUrl;
@@ -583,11 +666,14 @@
 
         var catResult = await CategoryService.GetCategoriesAsync(1, 100);
         Categories = catResult.Categories;
+        DashboardState.OnDashboardUpdated += DashboardUpdated;
         await LoadProducts(1);
     }
 
     private bool _isFetching = false;
     private bool _needsFetch = false;
+    private bool IsLoadingData = false;
+    private string LoadingMessage = "Memuat data produk...";
 
     private async Task LoadProducts(int page)
     {
@@ -596,6 +682,9 @@
         
         if (_isFetching) return;
         _isFetching = true;
+        IsLoadingData = true;
+        LoadingMessage = "Memuat data produk...";
+        StateHasChanged();
 
         try
         {
@@ -603,14 +692,16 @@
             {
                 _needsFetch = false;
                 var result = await ProductService.GetProductsAsync(SelectedCategoryId, SearchQuery, CurrentPage, PageSize, includeHidden: IsAdmin);
-                Products = result.Products;
+                RawProducts = result.Products;
                 TotalItems = result.TotalItems;
                 TotalPages = result.TotalPages;
+                ApplySorting();
             }
         }
         finally
         {
             _isFetching = false;
+            IsLoadingData = false;
         }
     }
 
@@ -636,9 +727,19 @@
         _searchTimer?.Start();
     }
 
+    private async void DashboardUpdated()
+    {
+        await InvokeAsync(async () =>
+        {
+            await LoadProducts(CurrentPage);
+            StateHasChanged();
+        });
+    }
+
     public void Dispose()
     {
         _searchTimer?.Dispose();
+        DashboardState.OnDashboardUpdated -= DashboardUpdated;
     }
 
     private async Task DeleteProduct(int id)
@@ -648,20 +749,30 @@
         {
             ErrorMessage = null;
             SuccessMessage = null;
-            var success = await ProductService.DeleteProductAsync(id);
-            if (success)
+            IsLoadingData = true;
+            LoadingMessage = "Menghapus produk...";
+            StateHasChanged();
+            try
             {
-                SuccessMessage = "Product deleted successfully.";
-                await LoadProducts(CurrentPage);
-                _ = Task.Delay(3000).ContinueWith(_ =>
+                var success = await ProductService.DeleteProductAsync(id);
+                if (success)
                 {
-                    SuccessMessage = null;
-                    InvokeAsync(StateHasChanged);
-                });
+                    SuccessMessage = "Produk berhasil dihapus.";
+                    await LoadProducts(CurrentPage);
+                    _ = Task.Delay(3000).ContinueWith(_ =>
+                    {
+                        SuccessMessage = null;
+                        InvokeAsync(StateHasChanged);
+                    });
+                }
+                else
+                {
+                    ErrorMessage = "Gagal menghapus produk.";
+                }
             }
-            else
+            finally
             {
-                ErrorMessage = "Gagal menghapus produk.";
+                IsLoadingData = false;
             }
         }
     }
@@ -669,20 +780,30 @@
     private async Task ToggleVisibility(Product product)
     {
         bool newStatus = product.is_hidden == 0;
-        var success = await ProductService.ToggleProductVisibilityAsync(product.id, newStatus);
-        if (success)
+        IsLoadingData = true;
+        LoadingMessage = "Mengubah visibilitas produk...";
+        StateHasChanged();
+        try
         {
-            product.is_hidden = newStatus ? 1 : 0;
-            StateHasChanged();
-        }
-        else
-        {
-            ErrorMessage = "Failed to update product visibility.";
-            _ = Task.Delay(3000).ContinueWith(_ =>
+            var success = await ProductService.ToggleProductVisibilityAsync(product.id, newStatus);
+            if (success)
             {
-                ErrorMessage = null;
-                InvokeAsync(StateHasChanged);
-            });
+                product.is_hidden = newStatus ? 1 : 0;
+                StateHasChanged();
+            }
+            else
+            {
+                ErrorMessage = "Gagal mengubah visibilitas produk.";
+                _ = Task.Delay(3000).ContinueWith(_ =>
+                {
+                    ErrorMessage = null;
+                    InvokeAsync(StateHasChanged);
+                });
+            }
+        }
+        finally
+        {
+            IsLoadingData = false;
         }
     }
 }

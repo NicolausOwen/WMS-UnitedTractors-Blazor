@@ -79,6 +79,67 @@ public class ApprovalService
             .GroupBy(t => t.group_id)
             .ToDictionary(g => g.Key, g => g.ToList());
 
+        // ── BATCH GROUP-GATE FILTER ───────────────────────────────────────────
+        // group_id is a [NotMapped] computed property (MD5 hash), so we cannot
+        // filter by it in SQL. Instead we load all active transactions for the
+        // same requester_ids, then group them by group_id in C# memory.
+        if (groupedApprovals.Any())
+        {
+            var requesterIdsInQueue = transactions
+                .Select(t => t.requester_id)
+                .Distinct()
+                .ToList();
+
+            // Load all active transactions for those requesters (not permanently rejected, not completed).
+            var candidateSiblings = await _context.Transactions
+                .Where(t => requesterIdsInQueue.Contains(t.requester_id) &&
+                            t.status != WorkflowStatuses.Completed &&
+                            !(t.status == WorkflowStatuses.Rejected && t.last_revision_stage == null))
+                .ToListAsync();
+
+            // Group them by computed group_id (in-memory — this is fine since it's a C# computed property).
+            var siblingsByGroup = candidateSiblings
+                .GroupBy(t => t.group_id)
+                .ToDictionary(g => g.Key, g => g.ToList());
+
+            // Helper: compute stage level (lower = earlier in flow).
+            static int GetStageLevel(string? status) => status switch
+            {
+                WorkflowStatuses.PendingStaffInventory => 1,
+                "REVISION_BY_STAFF_INVENTORY"          => 1,
+                WorkflowStatuses.Pending               => 1, // legacy BORROW pending
+                WorkflowStatuses.PendingAdmin          => 2,
+                "REVISION_BY_ADMIN"                    => 2,
+                WorkflowStatuses.PendingManager        => 3,
+                "REVISION_BY_MANAGER"                  => 3,
+                WorkflowStatuses.Revision              => 3,
+                _                                      => 99 // handover/approved/completed → not blocking
+            };
+
+            // Filter each group: only show items whose stage == the minimum stage of all siblings.
+            var filteredApprovals = new Dictionary<string, List<Transaction>>();
+            foreach (var (groupId, items) in groupedApprovals)
+            {
+                if (!siblingsByGroup.TryGetValue(groupId, out var siblings) || siblings.Count <= 1)
+                {
+                    // Single-item groups are never blocked.
+                    filteredApprovals[groupId] = items;
+                    continue;
+                }
+
+                // Minimum active stage across ALL siblings in this batch.
+                int minLevel = siblings.Min(s => GetStageLevel(s.status));
+
+                // Only expose items whose current status is at that minimum level.
+                var allowed = items.Where(item => GetStageLevel(item.status) == minLevel).ToList();
+                if (allowed.Any())
+                    filteredApprovals[groupId] = allowed;
+                // If no items pass the filter, omit the group from the dashboard.
+            }
+            groupedApprovals = filteredApprovals;
+        }
+        // ─────────────────────────────────────────────────────────────────────
+
         var pendingReturns = new List<Transaction>();
         var pendingProfileRequests = new List<ProfileRequest>();
         var groupedHandovers = new Dictionary<string, List<Transaction>>();
@@ -550,18 +611,13 @@ public class ApprovalService
             try
             {
                 var categoryId = transaction.Product?.category_id;
-                var userRoles = await _context.UserAdminRoles
-                    .Include(uar => uar.User)
-                    .Include(uar => uar.AdminRole)
-                    .Where(uar => uar.CategoryId == categoryId || uar.CategoryId == null)
-                    .ToListAsync();
+                if (!categoryId.HasValue && transaction.product_id > 0)
+                {
+                    var prod = await _context.Products.FindAsync(transaction.product_id);
+                    categoryId = prod?.category_id;
+                }
 
-                var admins = userRoles
-                    .Where(uar => Permissions.Resolve(uar.User?.role, uar.AdminRole?.Permissions).Contains(Permissions.ApprovalHandover))
-                    .Select(uar => uar.User?.email)
-                    .Where(e => !string.IsNullOrEmpty(e))
-                    .Distinct()
-                    .ToList();
+                var admins = await GetApproverEmailsForCategoryAndPermissionAsync(_context, Permissions.ApprovalHandover, new List<int?> { categoryId });
 
                 if (admins.Any())
                 {
@@ -885,40 +941,22 @@ public class ApprovalService
 
     private async Task NotifyNextApproversAsync(ApplicationDbContext context, Transaction transaction, string nextStage)
     {
-        var emails = new List<string>();
-        
         var categoryId = transaction.Product?.category_id;
-        
-        if (nextStage == WorkflowStatuses.PendingAdmin)
+        if (!categoryId.HasValue && transaction.product_id > 0)
         {
-            var userRoles = await context.UserAdminRoles
-                .Include(uar => uar.User)
-                .Include(uar => uar.AdminRole)
-                .Where(uar => uar.CategoryId == categoryId || uar.CategoryId == null)
-                .ToListAsync();
-
-            emails = userRoles
-                .Where(uar => Permissions.Resolve(uar.User?.role, uar.AdminRole?.Permissions).Contains(Permissions.ApprovalStage2))
-                .Select(uar => uar.User?.email)
-                .Where(e => !string.IsNullOrEmpty(e))
-                .Distinct()
-                .ToList();
+            var prod = await context.Products.FindAsync(transaction.product_id);
+            categoryId = prod?.category_id;
         }
-        else if (nextStage == WorkflowStatuses.PendingManager)
+
+        string requiredPerm = nextStage switch
         {
-            var userRoles = await context.UserAdminRoles
-                .Include(uar => uar.User)
-                .Include(uar => uar.AdminRole)
-                .Where(uar => uar.CategoryId == categoryId || uar.CategoryId == null)
-                .ToListAsync();
+            WorkflowStatuses.PendingStaffInventory => Permissions.ApprovalStage1,
+            WorkflowStatuses.PendingAdmin => Permissions.ApprovalStage2,
+            WorkflowStatuses.PendingManager => Permissions.ApprovalManager,
+            _ => Permissions.ApprovalStage2
+        };
 
-            emails = userRoles
-                .Where(uar => Permissions.Resolve(uar.User?.role, uar.AdminRole?.Permissions).Contains(Permissions.ApprovalManager))
-                .Select(uar => uar.User?.email)
-                .Where(e => !string.IsNullOrEmpty(e))
-                .Distinct()
-                .ToList();
-        }
+        var emails = await GetApproverEmailsForCategoryAndPermissionAsync(context, requiredPerm, new List<int?> { categoryId });
 
         if (emails.Any())
         {
@@ -934,12 +972,73 @@ public class ApprovalService
                                  $"Silakan login ke sistem WMS untuk melakukan persetujuan pada menu Approval.";
                                  
             string html = GetEmailTemplate(mailTitle, mailMessage);
-            var validEmails = emails.Where(e => !string.IsNullOrWhiteSpace(e)).Distinct().ToList();
-            if (validEmails.Any())
+            _ = _emailService.SendEmailToMultipleAsync(emails, "Notifikasi Persetujuan Request (WMS UT)", html);
+        }
+    }
+
+    /// <summary>
+    /// Mengambil email approver yang berwenang untuk permission dan kategori tertentu.
+    /// Admin yang hanya diberi akses ke kategori X tidak akan menerima notifikasi email untuk kategori Y.
+    /// </summary>
+    public static async Task<List<string>> GetApproverEmailsForCategoryAndPermissionAsync(
+        ApplicationDbContext context,
+        string requiredPermission,
+        IEnumerable<int?> categoryIds)
+    {
+        var validCategoryIds = categoryIds
+            .Where(c => c.HasValue)
+            .Select(c => c!.Value)
+            .Distinct()
+            .ToList();
+
+        var allUsers = await context.Users
+            .Where(u => !string.IsNullOrEmpty(u.email))
+            .ToListAsync();
+
+        var allAdminRoles = await context.AdminRoles
+            .Where(r => r.IsActive)
+            .ToDictionaryAsync(r => r.RoleName);
+
+        var allUserAdminRoles = await context.UserAdminRoles
+            .ToListAsync();
+
+        var userAdminRolesGrouped = allUserAdminRoles
+            .GroupBy(uar => uar.UserId)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        var resultEmails = new List<string>();
+
+        foreach (var user in allUsers)
+        {
+            if (string.IsNullOrWhiteSpace(user.email)) continue;
+
+            allAdminRoles.TryGetValue(user.role ?? "", out var roleModel);
+            var userPerms = Permissions.Resolve(user.role, roleModel?.Permissions);
+
+            if (!userPerms.Contains(requiredPermission))
+                continue;
+
+            bool isSuperAdmin = Permissions.All.All(p => userPerms.Contains(p));
+
+            userAdminRolesGrouped.TryGetValue(user.id, out var uRoles);
+            uRoles ??= new List<UserAdminRole>();
+
+            bool isGlobalAdmin = isSuperAdmin || uRoles.Any(uar => uar.CategoryId == null);
+
+            if (isGlobalAdmin)
             {
-                _ = _emailService.SendEmailToMultipleAsync(validEmails, "Notifikasi Persetujuan Request (WMS UT)", html);
+                resultEmails.Add(user.email);
+                continue;
+            }
+
+            // Jika bukan Global Admin, pastikan user memiliki UserAdminRole untuk salah satu kategori item
+            if (validCategoryIds.Any(catId => uRoles.Any(uar => uar.CategoryId == catId)))
+            {
+                resultEmails.Add(user.email);
             }
         }
+
+        return resultEmails.Distinct().ToList();
     }
 
     public async Task NotifyBatchResultAsync(List<(Transaction item, string action, string? reason)> itemsProcessed)

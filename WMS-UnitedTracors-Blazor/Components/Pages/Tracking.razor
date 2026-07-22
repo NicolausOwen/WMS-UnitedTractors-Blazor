@@ -161,7 +161,7 @@
                 {
                     var groupId = group.Key;
                     var groupItems = group.Value;
-                    var firstItem = groupItems.First();
+                    var firstItem = GetEffectiveGroupItem(groupItems);
                     var borrowItemsOnly = groupItems.Where(i => i.request_type == "BORROW").ToList();
                     var giveawayItemsOnly = groupItems.Where(i => i.request_type == "GIVEAWAY").ToList();
                     var hasBorrow = borrowItemsOnly.Any();
@@ -1171,9 +1171,44 @@
         return hasStaffNote || hasAdminNote || hasManagerNote;
     }
 
+    private static int GetStatusPriority(string? status)
+    {
+        if (string.IsNullOrEmpty(status)) return 0;
+        return status switch
+        {
+            "REVISION_BY_STAFF_INVENTORY" => 1,
+            "PENDING_STAFF_INVENTORY" => 2,
+            "REVISION_BY_ADMIN" => 3,
+            "PENDING_ADMIN" => 4,
+            "REVISION_BY_MANAGER" => 5,
+            "REVISION" => 5,
+            "PENDING_MANAGER" => 6,
+            "WAITING_HANDOVER" => 7,
+            "WAITING_ADMIN_HANDOVER" => 7,
+            "WAITING_HANDOVER_CONFIRM" => 7,
+            "WAITING_DOCUMENTATION" => 8,
+            "DOCUMENTATION_OVERDUE" => 8,
+            "APPROVED" => 8,
+            "RETURN_DRAFT" => 8,
+            "WAITING_RETURN_CONFIRM" => 8,
+            "COMPLETED" => 9,
+            "REJECTED" => 99,
+            _ => 2
+        };
+    }
+
+    private static Transaction GetEffectiveGroupItem(List<Transaction> groupItems)
+    {
+        if (!groupItems.Any()) return new Transaction();
+        var activeItems = groupItems.Where(i => i.status != "REJECTED").ToList();
+        if (!activeItems.Any()) activeItems = groupItems;
+
+        return activeItems.OrderBy(i => GetStatusPriority(i.status)).First();
+    }
+
     private List<TrackingStep> GetGroupSteps(List<Transaction> groupItems)
     {
-        var firstItem = groupItems.First();
+        var firstItem = GetEffectiveGroupItem(groupItems);
         var steps = new List<TrackingStep>();
         steps.Add(new TrackingStep { Name = "Pengajuan", Status = "DONE", CompletedAt = firstItem.created_at });
 

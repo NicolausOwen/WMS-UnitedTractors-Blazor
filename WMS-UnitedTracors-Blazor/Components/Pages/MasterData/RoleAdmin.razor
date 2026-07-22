@@ -9,6 +9,8 @@
 
 <PageTitle>WMS - Role Admin Management</PageTitle>
 
+<WMS_UnitedTracors_Blazor.Components.Shared.LoadingOverlay IsVisible="IsSubmitting" Message="@LoadingMessage" SubMessage="Mohon tunggu sebentar..." />
+
 <div class="py-8 min-h-screen">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         
@@ -303,12 +305,25 @@
         await LoadData(1);
     }
 
+    private bool IsSubmitting = false;
+    private string LoadingMessage = "Memuat data role admin...";
+
     private async Task LoadData(int page)
     {
-        CurrentPage = page;
-        var result = await AdminRoleService.GetAdminRolesAsync(SearchQuery, SortColumn, SortDescending, CurrentPage, PageSize);
-        RolesList = result.Roles;
-        TotalPages = result.TotalPages;
+        IsSubmitting = true;
+        LoadingMessage = "Memuat data role admin...";
+        StateHasChanged();
+        try
+        {
+            CurrentPage = page;
+            var result = await AdminRoleService.GetAdminRolesAsync(SearchQuery, SortColumn, SortDescending, CurrentPage, PageSize);
+            RolesList = result.Roles;
+            TotalPages = result.TotalPages;
+        }
+        finally
+        {
+            IsSubmitting = false;
+        }
     }
 
     private async Task OnSearchKeyUp(KeyboardEventArgs e)
@@ -372,26 +387,37 @@
         }
 
         ModalErrorMessage = null;
-        string? error;
+        IsSubmitting = true;
+        LoadingMessage = "Menyimpan role admin...";
+        StateHasChanged();
 
-        if (IsEditMode)
+        try
         {
-            error = await AdminRoleService.UpdateAdminRoleAsync(EditingRoleId, Model, CurrentUsername);
-        }
-        else
-        {
-            error = await AdminRoleService.CreateAdminRoleAsync(Model, CurrentUsername);
-        }
+            string? error;
 
-        if (error != null)
-        {
-            ModalErrorMessage = error;
+            if (IsEditMode)
+            {
+                error = await AdminRoleService.UpdateAdminRoleAsync(EditingRoleId, Model, CurrentUsername);
+            }
+            else
+            {
+                error = await AdminRoleService.CreateAdminRoleAsync(Model, CurrentUsername);
+            }
+
+            if (error != null)
+            {
+                ModalErrorMessage = error;
+            }
+            else
+            {
+                SuccessMessage = IsEditMode ? "Role admin berhasil diperbarui." : "Role admin baru berhasil ditambahkan.";
+                ShowModal = false;
+                await LoadData(CurrentPage);
+            }
         }
-        else
+        finally
         {
-            SuccessMessage = IsEditMode ? "Role admin berhasil diperbarui." : "Role admin baru berhasil ditambahkan.";
-            ShowModal = false;
-            await LoadData(CurrentPage);
+            IsSubmitting = false;
         }
     }
 
@@ -409,15 +435,25 @@
         bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Apakah Anda yakin ingin menghapus Role \"{role.RoleName}\"?");
         if (confirmed)
         {
-            var error = await AdminRoleService.DeleteAdminRoleAsync(role.Id);
-            if (error != null)
+            IsSubmitting = true;
+            LoadingMessage = "Menghapus role admin...";
+            StateHasChanged();
+            try
             {
-                ErrorMessage = error;
+                var error = await AdminRoleService.DeleteAdminRoleAsync(role.Id);
+                if (error != null)
+                {
+                    ErrorMessage = error;
+                }
+                else
+                {
+                    SuccessMessage = "Role admin berhasil dihapus.";
+                    await LoadData(CurrentPage);
+                }
             }
-            else
+            finally
             {
-                SuccessMessage = "Role admin berhasil dihapus.";
-                await LoadData(CurrentPage);
+                IsSubmitting = false;
             }
         }
     }

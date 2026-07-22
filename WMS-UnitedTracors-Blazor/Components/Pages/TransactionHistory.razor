@@ -9,10 +9,13 @@
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthStateProvider
 @inject DashboardStateService DashboardState
+@inject IJSRuntime JSRuntime
 @implements IDisposable
 @rendermode InteractiveServer
 
 <PageTitle>WMS - Transaction History</PageTitle>
+
+<WMS_UnitedTracors_Blazor.Components.Shared.LoadingOverlay IsVisible="IsLoading" Message="Memuat Riwayat Transaksi..." SubMessage="Mohon tunggu sebentar..." />
 
 <div class="py-8 md:py-12 min-h-screen font-sans">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -240,11 +243,12 @@
                                             {
                                                 var step = steps[i];
                                                 <div class="flex items-start gap-4 relative z-10">
-                                                    <!-- Circle indicator wrapper -->
+                                                     <!-- Circle indicator wrapper -->
                                                     <div class="w-4 h-4 flex items-center justify-center shrink-0 mt-0.5 bg-white border rounded-full z-10
                                                         @(step.Status == "DONE" ? "border-emerald-600" :
                                                           step.Status == "ACTIVE" ? "border-blue-600 animate-pulse" :
-                                                          step.Status == "WARNING" ? "border-rose-600" :
+                                                          step.Status == "WARNING" ? "border-amber-500 animate-pulse" :
+                                                          step.Status == "DANGER" ? "border-rose-600" :
                                                           "border-gray-300")">
                                                         @if (step.Status == "DONE") {
                                                             <div class="w-full h-full rounded-full bg-[#1a7a30] flex items-center justify-center shrink-0">
@@ -256,8 +260,12 @@
                                                                 <span class="relative inline-flex rounded-full h-2 w-2 bg-blue-600"></span>
                                                             </span>
                                                         } else if (step.Status == "WARNING") {
-                                                            <div class="w-full h-full rounded-full bg-[#d94040] flex items-center justify-center shrink-0">
+                                                            <div class="w-full h-full rounded-full bg-amber-500 flex items-center justify-center shrink-0 animate-pulse">
                                                                 <svg class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                                            </div>
+                                                        } else if (step.Status == "DANGER") {
+                                                            <div class="w-full h-full rounded-full bg-[#d94040] flex items-center justify-center shrink-0">
+                                                                <svg class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/></svg>
                                                             </div>
                                                         } else {
                                                             <div class="w-1.5 h-1.5 rounded-full bg-gray-300"></div>
@@ -265,14 +273,16 @@
                                                     </div>
                                                     <!-- Text Info -->
                                                     <div class="flex flex-col min-w-0">
-                                                        <span class="text-xs font-bold @(step.Status == "DONE" ? "text-[#1a7a30]" : step.Status == "ACTIVE" ? "text-blue-600" : step.Status == "WARNING" ? "text-[#d94040]" : "text-gray-500")">@step.Name</span>
+                                                        <span class="text-xs font-bold @(step.Status == "DONE" ? "text-[#1a7a30]" : step.Status == "ACTIVE" ? "text-blue-600" : step.Status == "WARNING" ? "text-amber-600" : step.Status == "DANGER" ? "text-[#d94040]" : "text-gray-500")">@step.Name</span>
                                                         <span class="text-[10px] text-gray-400 leading-tight">
                                                             @if (step.Status == "DONE") {
                                                                 <span>@(string.IsNullOrEmpty(step.ApproverName) ? "Selesai dilakukan" : $"Reviewed By {step.ApproverName}")</span>
                                                             } else if (step.Status == "ACTIVE") {
                                                                 <span>Sedang diproses</span>
                                                             } else if (step.Status == "WARNING") {
-                                                                <span>Butuh perhatian / revisi</span>
+                                                                <span class="text-amber-600 font-semibold">Revisi</span>
+                                                            } else if (step.Status == "DANGER") {
+                                                                <span class="text-rose-600 font-semibold">Ditolak</span>
                                                             } else {
                                                                 <span>Sedang diproses</span>
                                                             }
@@ -570,29 +580,9 @@
                     </div>
                 }
 
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Nama Pemohon</label>
-                        <input type="text" @bind="RevisionModel.applicant_name" class="w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] border border-[#e5e3dc] rounded-lg outline-none focus:border-[#e8a000]" />
-                    </div>
-                    <div>
-                        <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">NRP</label>
-                        <input type="text" @bind="RevisionModel.applicant_nrp" class="w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] border border-[#e5e3dc] rounded-lg outline-none focus:border-[#e8a000]" />
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Kuantitas</label>
-                        <input type="number" @bind="RevisionModel.quantity" class="w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] border border-[#e5e3dc] rounded-lg outline-none focus:border-[#e8a000]" />
-                    </div>
-                    <div>
-                        <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Division</label>
-                        <select @bind="RevisionModel.division_id" class="w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] border border-[#e5e3dc] rounded-lg outline-none focus:border-[#e8a000]">
-                            <option value="">Select Division</option>
-                            @foreach(var div in Divisions) { <option value="@div.id">@div.name</option> }
-                        </select>
-                    </div>
+                <div>
+                    <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Kuantitas</label>
+                    <input type="number" @bind="RevisionModel.quantity" class="w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] border border-[#e5e3dc] rounded-lg outline-none focus:border-[#e8a000]" />
                 </div>
 
                 <div>
@@ -607,12 +597,18 @@
     }
   </ChildContent>
   <Footer>
-        <button type="button" @onclick="CloseRevisionModal" class="px-5 py-2.5 text-sm font-bold text-gray-600 hover:text-gray-900 bg-white border border-[#e5e3dc] rounded-xl transition">Batal</button>
-        <button type="button" @onclick="SubmitRevision" class="px-6 py-2.5 bg-[#e8a000] hover:bg-[#d49300] active:scale-[0.98] text-[#1a1a1a] text-sm font-bold tracking-wider rounded-xl transition shadow-sm">Kirim Perbaikan</button>
+        <button type="button" @onclick="CloseRevisionModal" class="px-5 py-2.5 text-sm font-bold text-gray-600 hover:text-gray-900 bg-white border border-[#e5e3dc] rounded-xl transition cursor-pointer">Kembali</button>
+        <button type="button" @onclick="CancelBorrowFromRevision" disabled="@IsSubmitting" class="px-5 py-2.5 bg-red-600 hover:bg-red-700 active:scale-[0.98] text-white text-sm font-bold tracking-wider rounded-xl transition shadow-sm disabled:opacity-50 cursor-pointer">
+            Batal Meminjam
+        </button>
+        <button type="button" @onclick="SubmitRevision" disabled="@IsSubmitting" class="px-6 py-2.5 bg-[#e8a000] hover:bg-[#d49300] active:scale-[0.98] text-[#1a1a1a] text-sm font-bold tracking-wider rounded-xl transition shadow-sm disabled:opacity-50 cursor-pointer">
+            @(IsSubmitting ? "Mengirim..." : "Kirim Perbaikan")
+        </button>
   </Footer>
 </Modal>
 
 @code {
+    private bool IsSubmitting = false;
     private List<Transaction>? Transactions;
     private Dictionary<string, List<Transaction>> GroupedTransactions = new();
     private HashSet<string> ExpandedGroups = new();
@@ -810,6 +806,39 @@
         }
     }
 
+    private async Task CancelBorrowFromRevision()
+    {
+        if (RevisionItem == null) return;
+
+        bool confirm = await JSRuntime.InvokeAsync<bool>("confirm", "Apakah Anda yakin ingin membatalkan peminjaman ini? Barang tidak jadi di-request dan stok akan dikembalikan ke WMS.");
+        if (!confirm) return;
+
+        IsSubmitting = true;
+        ModalErrorMessage = null;
+        try
+        {
+            var error = await TransactionService.CancelRevisionAsync(RevisionItem.id);
+            if (error != null)
+            {
+                ModalErrorMessage = error;
+            }
+            else
+            {
+                SuccessMessage = "Permintaan berhasil dibatalkan dan stok telah dikembalikan ke WMS.";
+                await LoadData(CurrentPage);
+                CloseRevisionModal();
+            }
+        }
+        catch (Exception ex)
+        {
+            ModalErrorMessage = "Terjadi kesalahan: " + ex.Message;
+        }
+        finally
+        {
+            IsSubmitting = false;
+        }
+    }
+
     public class TrackingStep
     {
         public string Name { get; set; } = "";
@@ -818,9 +847,44 @@
         public string? ApproverName { get; set; }
     }
 
+    private static int GetStatusPriority(string? status)
+    {
+        if (string.IsNullOrEmpty(status)) return 0;
+        return status switch
+        {
+            "REVISION_BY_STAFF_INVENTORY" => 1,
+            "PENDING_STAFF_INVENTORY" => 2,
+            "REVISION_BY_ADMIN" => 3,
+            "PENDING_ADMIN" => 4,
+            "REVISION_BY_MANAGER" => 5,
+            "REVISION" => 5,
+            "PENDING_MANAGER" => 6,
+            "WAITING_HANDOVER" => 7,
+            "WAITING_ADMIN_HANDOVER" => 7,
+            "WAITING_HANDOVER_CONFIRM" => 7,
+            "WAITING_DOCUMENTATION" => 8,
+            "DOCUMENTATION_OVERDUE" => 8,
+            "APPROVED" => 8,
+            "RETURN_DRAFT" => 8,
+            "WAITING_RETURN_CONFIRM" => 8,
+            "COMPLETED" => 9,
+            "REJECTED" => 99,
+            _ => 2
+        };
+    }
+
+    private static Transaction GetEffectiveGroupItem(List<Transaction> groupItems)
+    {
+        if (!groupItems.Any()) return new Transaction();
+        var activeItems = groupItems.Where(i => i.status != "REJECTED").ToList();
+        if (!activeItems.Any()) activeItems = groupItems;
+
+        return activeItems.OrderBy(i => GetStatusPriority(i.status)).First();
+    }
+
     private List<TrackingStep> GetGroupSteps(List<Transaction> groupItems)
     {
-        var firstItem = groupItems.First();
+        var firstItem = GetEffectiveGroupItem(groupItems);
         var steps = new List<TrackingStep>();
         steps.Add(new TrackingStep { Name = "Pengajuan", Status = "DONE", CompletedAt = firstItem.created_at });
 

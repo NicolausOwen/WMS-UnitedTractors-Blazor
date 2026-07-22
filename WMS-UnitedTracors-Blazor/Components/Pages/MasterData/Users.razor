@@ -13,6 +13,8 @@
 
 <PageTitle>WMS - Users</PageTitle>
 
+<WMS_UnitedTracors_Blazor.Components.Shared.LoadingOverlay IsVisible="IsSubmitting" Message="@LoadingMessage" SubMessage="Mohon tunggu sebentar..." />
+
 <div class="py-8 min-h-screen">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         
@@ -431,6 +433,8 @@
     private bool IsSuperAdmin = false;
     private int CurrentUserId = 0;
     private string? UserRole;
+    private bool IsSubmitting = false;
+    private string LoadingMessage = "Memuat data...";
 
     protected override async Task OnInitializedAsync()
     {
@@ -455,10 +459,20 @@
 
     private async Task LoadData(int page)
     {
-        CurrentPage = page;
-        var result = await UserService.GetUsersAsync("", CurrentPage, 10);
-        UsersList = result.Users;
-        TotalPages = result.TotalPages;
+        IsSubmitting = true;
+        LoadingMessage = "Memuat data pengguna...";
+        StateHasChanged();
+        try
+        {
+            CurrentPage = page;
+            var result = await UserService.GetUsersAsync("", CurrentPage, 10);
+            UsersList = result.Users;
+            TotalPages = result.TotalPages;
+        }
+        finally
+        {
+            IsSubmitting = false;
+        }
     }
 
     private async Task SaveUser()
@@ -471,18 +485,28 @@
 
         ErrorMessage = null;
         SuccessMessage = null;
+        IsSubmitting = true;
+        LoadingMessage = "Menyimpan akun pengguna baru...";
+        StateHasChanged();
 
-        string? error = null; try { error = await UserService.CreateUserAsync(CreateModel); } catch (Exception ex) { error = $"CRASH: {ex.Message} {ex.InnerException?.Message}"; }
-
-        if (error != null)
+        try
         {
-            ErrorMessage = error;
+            string? error = null; try { error = await UserService.CreateUserAsync(CreateModel); } catch (Exception ex) { error = $"CRASH: {ex.Message} {ex.InnerException?.Message}"; }
+
+            if (error != null)
+            {
+                ErrorMessage = error;
+            }
+            else
+            {
+                SuccessMessage = "User berhasil ditambahkan.";
+                CreateModel = new UserCreateViewModel { role = RoleNames.Count > 0 ? RoleNames[0] : "User" };
+                await LoadData(CurrentPage);
+            }
         }
-        else
+        finally
         {
-            SuccessMessage = "User berhasil ditambahkan.";
-            CreateModel = new UserCreateViewModel { role = RoleNames.Count > 0 ? RoleNames[0] : "User" };
-            await LoadData(CurrentPage);
+            IsSubmitting = false;
         }
     }
 
@@ -518,25 +542,29 @@
 
         ErrorMessage = null;
         SuccessMessage = null;
+        IsSubmitting = true;
+        LoadingMessage = "Menyimpan perubahan data pengguna...";
+        StateHasChanged();
 
-        // If password is provided, we should update it. In the UserUpdateViewModel, we might need a password field.
-        // Wait, the UserUpdateViewModel I defined didn't have password. But let's check what UserService does.
-        // Wait, UserService.UpdateUserAsync might need custom logic for password.
-        // I will just pass the EditModel and if I need to update the password I will just leave it up to the existing API.
-        // Let's assume UserUpdateViewModel has a password field? If not, the old code didn't update it directly via this endpoint anyway, or maybe it did. Let's just leave EditPassword unhandled for now if it doesn't compile, or add it.
-
-        EditModel.password = EditPassword;
-        string? error = null; try { error = await UserService.UpdateUserAsync(id, EditModel, CurrentUserId, UserRole); } catch (Exception ex) { error = $"CRASH: {ex.Message} {ex.InnerException?.Message}"; }
-
-        if (error != null)
+        try
         {
-            ErrorMessage = error;
+            EditModel.password = EditPassword;
+            string? error = null; try { error = await UserService.UpdateUserAsync(id, EditModel, CurrentUserId, UserRole); } catch (Exception ex) { error = $"CRASH: {ex.Message} {ex.InnerException?.Message}"; }
+
+            if (error != null)
+            {
+                ErrorMessage = error;
+            }
+            else
+            {
+                SuccessMessage = "User berhasil diupdate.";
+                EditingUserId = null;
+                await LoadData(CurrentPage);
+            }
         }
-        else
+        finally
         {
-            SuccessMessage = "User berhasil diupdate.";
-            EditingUserId = null;
-            await LoadData(CurrentPage);
+            IsSubmitting = false;
         }
     }
 
@@ -547,6 +575,10 @@
 
         ErrorMessage = null;
         SuccessMessage = null;
+        IsSubmitting = true;
+        LoadingMessage = "Menghapus akun pengguna...";
+        StateHasChanged();
+
         try
         {
             var error = await UserService.DeleteUserAsync(id, CurrentUserId);
@@ -563,6 +595,10 @@
         catch (Exception ex)
         {
             ErrorMessage = "Gagal menghapus user: " + ex.Message;
+        }
+        finally
+        {
+            IsSubmitting = false;
         }
     }
 }
