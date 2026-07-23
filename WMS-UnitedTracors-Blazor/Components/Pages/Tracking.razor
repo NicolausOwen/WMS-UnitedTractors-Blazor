@@ -1271,17 +1271,17 @@
                 {
                     steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE", CompletedAt = firstItem.updated_at });
                     steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE", CompletedAt = firstItem.updated_at });
-                    steps.Add(new TrackingStep { Name = "Approval Manager", Status = "WARNING", CompletedAt = firstItem.updated_at });
+                    steps.Add(new TrackingStep { Name = "Approval Manager", Status = "DANGER", CompletedAt = firstItem.updated_at });
                 }
                 else if (isAdmin)
                 {
                     steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE", CompletedAt = firstItem.updated_at });
-                    steps.Add(new TrackingStep { Name = "Approval Admin", Status = "WARNING", CompletedAt = firstItem.updated_at });
+                    steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DANGER", CompletedAt = firstItem.updated_at });
                     steps.Add(new TrackingStep { Name = "Approval Manager", Status = "PENDING" });
                 }
                 else
                 {
-                    steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "WARNING", CompletedAt = firstItem.updated_at });
+                    steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DANGER", CompletedAt = firstItem.updated_at });
                     steps.Add(new TrackingStep { Name = "Approval Admin", Status = "PENDING" });
                     steps.Add(new TrackingStep { Name = "Approval Manager", Status = "PENDING" });
                 }
@@ -1377,11 +1377,11 @@
                 if (isAdmin)
                 {
                     steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE", CompletedAt = firstItem.updated_at });
-                    steps.Add(new TrackingStep { Name = "Approval Admin", Status = "WARNING", CompletedAt = firstItem.updated_at });
+                    steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DANGER", CompletedAt = firstItem.updated_at });
                 }
                 else
                 {
-                    steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "WARNING", CompletedAt = firstItem.updated_at });
+                    steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DANGER", CompletedAt = firstItem.updated_at });
                     steps.Add(new TrackingStep { Name = "Approval Admin", Status = "PENDING" });
                 }
                 steps.Add(new TrackingStep { Name = "Berita Acara Serah Terima", Status = "PENDING" });
