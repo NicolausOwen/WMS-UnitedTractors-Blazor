@@ -36,9 +36,6 @@ public class DbSeeder
         await SeedTableAsync<User>("users.json");
         await SeedTableAsync<UserAdminRole>("user_admin_roles.json");
 
-        // await SeedTableAsync<Transaction>("transactions.json");
-        // await SeedTableAsync<StockLog>("stock_logs.json");
-
         _logger.LogInformation("Proses seeding selesai.");
     }
 

@@ -125,26 +125,48 @@
 
             @if (TotalPages > 1)
             {
-                <div class="px-6 py-4 border-t border-[#f0ede5] flex justify-center">
-                    <div class="flex items-center gap-1 bg-[#f9f8f6] p-1.5 rounded-lg border border-[#e5e3dc]">
-                        <button @onclick="() => LoadProducts(CurrentPage - 1)" disabled="@(CurrentPage == 1)"
-                                class="w-8 h-8 flex items-center justify-center rounded text-[#5a5855] hover:bg-white disabled:opacity-30 transition-all">
+                <div class="px-6 py-4 border-t border-[#f0ede5] bg-[#faf9f6] flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="text-xs text-[#8a8880] font-medium text-center sm:text-left">
+                        Menampilkan <span class="font-bold text-[#1a1a1a]">@((CurrentPage - 1) * PageSize + 1)</span> - <span class="font-bold text-[#1a1a1a]">@(Math.Min(CurrentPage * PageSize, TotalItems))</span> dari <span class="font-bold text-[#1a1a1a]">@TotalItems</span> barang
+                    </div>
+                    <div class="flex items-center gap-1 bg-white p-1.5 rounded-xl border border-[#e5e3dc] shadow-sm">
+                        <button type="button" @onclick="() => LoadProducts(1)" disabled="@(CurrentPage == 1)" title="Halaman Pertama"
+                                class="w-8 h-8 flex items-center justify-center rounded-lg text-[#5a5855] hover:bg-[#f5f4f0] disabled:opacity-30 disabled:hover:bg-transparent transition-all cursor-pointer">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                            </svg>
+                        </button>
+                        <button type="button" @onclick="() => LoadProducts(CurrentPage - 1)" disabled="@(CurrentPage == 1)" title="Halaman Sebelumnya"
+                                class="w-8 h-8 flex items-center justify-center rounded-lg text-[#5a5855] hover:bg-[#f5f4f0] disabled:opacity-30 disabled:hover:bg-transparent transition-all cursor-pointer">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                             </svg>
                         </button>
-                        @for (int i = 1; i <= TotalPages; i++)
+                        @foreach (var pageNum in GetPageNumbers())
                         {
-                            int p = i;
-                            <button @onclick="() => LoadProducts(p)"
-                                    class="w-8 h-8 flex items-center justify-center rounded text-xs font-bold transition-all @(CurrentPage == p ? "bg-[#1a1a1a] text-white" : "text-[#5a5855] hover:bg-white")">
-                                @p
-                            </button>
+                            if (pageNum.HasValue)
+                            {
+                                int p = pageNum.Value;
+                                <button type="button" @onclick="() => LoadProducts(p)"
+                                        class="w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-all cursor-pointer @(CurrentPage == p ? "bg-[#1a1a1a] text-white shadow-sm" : "text-[#5a5855] hover:bg-[#f5f4f0]")">
+                                    @p
+                                </button>
+                            }
+                            else
+                            {
+                                <span class="w-8 h-8 flex items-center justify-center text-xs font-bold text-[#8a8880] select-none">...</span>
+                            }
                         }
-                        <button @onclick="() => LoadProducts(CurrentPage + 1)" disabled="@(CurrentPage == TotalPages)"
-                                class="w-8 h-8 flex items-center justify-center rounded text-[#5a5855] hover:bg-white disabled:opacity-30 transition-all">
+                        <button type="button" @onclick="() => LoadProducts(CurrentPage + 1)" disabled="@(CurrentPage == TotalPages)" title="Halaman Selanjutnya"
+                                class="w-8 h-8 flex items-center justify-center rounded-lg text-[#5a5855] hover:bg-[#f5f4f0] disabled:opacity-30 disabled:hover:bg-transparent transition-all cursor-pointer">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                            </svg>
+                        </button>
+                        <button type="button" @onclick="() => LoadProducts(TotalPages)" disabled="@(CurrentPage == TotalPages)" title="Halaman Terakhir"
+                                class="w-8 h-8 flex items-center justify-center rounded-lg text-[#5a5855] hover:bg-[#f5f4f0] disabled:opacity-30 disabled:hover:bg-transparent transition-all cursor-pointer">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7m-8-14l7 7-7 7" />
                             </svg>
                         </button>
                     </div>
@@ -326,6 +348,8 @@
     private System.Threading.CancellationTokenSource? _searchCts;
     private int CurrentPage = 1;
     private int TotalPages = 0;
+    private int TotalItems = 0;
+    private const int PageSize = 15;
     private bool IsLoadingData = false;
 
     private bool ShowProductModal = false;
@@ -370,14 +394,38 @@
         try
         {
             CurrentPage = page;
-            var (products, _, totalPages) = await ProductService.GetCatalogProductsAsync(1, SelectedCategoryId, SearchQuery, page, 15);
+            var (products, totalItems, totalPages) = await ProductService.GetCatalogProductsAsync(1, SelectedCategoryId, SearchQuery, page, PageSize);
             Products = products;
+            TotalItems = totalItems;
             TotalPages = totalPages;
         }
         finally
         {
             IsLoadingData = false;
         }
+    }
+
+    private List<int?> GetPageNumbers()
+    {
+        var pages = new List<int?>();
+        if (TotalPages <= 7)
+        {
+            for (int i = 1; i <= TotalPages; i++) pages.Add(i);
+            return pages;
+        }
+
+        pages.Add(1);
+        int start = Math.Max(2, CurrentPage - 1);
+        int end = Math.Min(TotalPages - 1, CurrentPage + 1);
+
+        if (start > 2) pages.Add(null);
+
+        for (int i = start; i <= end; i++) pages.Add(i);
+
+        if (end < TotalPages - 1) pages.Add(null);
+
+        pages.Add(TotalPages);
+        return pages;
     }
 
     private async Task FilterByCategory(int? catId)
