@@ -363,7 +363,11 @@
                                                         <span class="block text-[10px] font-bold text-[#8a8880] uppercase tracking-wider">Progress Return</span>
                                                         <span class="text-xs font-bold text-[#1a1a1a] flex items-center gap-1.5 mt-1.5">
                                                             <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                                            @(borrowItemsOnly.Count(i => (i.returned_quantity ?? 0) >= (i.quantity ?? 0)))/@(borrowItemsOnly.Count) Item Kembali
+                                                            @{
+                                                                var activeBorrowCard = borrowItemsOnly.Where(i => i.status != WorkflowStatuses.Rejected).ToList();
+                                                                if (!activeBorrowCard.Any()) activeBorrowCard = borrowItemsOnly;
+                                                            }
+                                                            @(activeBorrowCard.Count(i => (i.returned_quantity ?? 0) >= (i.quantity ?? 0)))/@(activeBorrowCard.Count) Item Kembali
                                                         </span>
                                                     </div>
                                                     <div class="bg-[#fafbfc] p-3 rounded-xl border border-[#e5e3dc]/50">
@@ -426,7 +430,7 @@
                                                       </div>
                                                   </div>
                                              }
-                                            @if (canHandover || canGiveawayHandover || canUploadDocumentation || groupItems.Any(i => i.returned_quantity > 0 || (i.pending_return_quantity > 0 && i.is_return_draft == 0)))
+                                            @if (canHandover || canGiveawayHandover || canUploadDocumentation)
                                             {
                                                 <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[#f0ede5]">
                                                     <span class="text-xs font-bold text-[#8a8880]">Aksi Grup:</span>
@@ -476,13 +480,6 @@
                                                                 Upload Dokumentasi
                                                             </button>
                                                         }
-                                                        @if (groupItems.Any(i => i.returned_quantity > 0 || (i.pending_return_quantity > 0 && i.is_return_draft == 0)))
-                                                        {
-                                                            <a href="/api/pdf/receipt-return/@firstItem.group_id" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-2 bg-white border border-[#b8e8c0] text-[#1a7a30] hover:bg-[#eef9f0] rounded-lg text-xs font-bold transition shadow-sm">
-                                                                <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                                                                PDF Bukti Pengembalian
-                                                            </a>
-                                                        }
                                                     </div>
                                                 </div>
                                             }
@@ -498,10 +495,6 @@
                                                     </div>
                                                     <div>
                                                         <h4 class="text-sm font-extrabold text-[#d97706]">Permintaan Membutuhkan Revisi</h4>
-                                                        @if (!string.IsNullOrEmpty(firstItem.rejection_reason))
-                                                        {
-                                                            <p class="text-xs text-[#92400e] font-medium mt-0.5">Catatan/Alasan Staff: <span class="italic font-bold">"@firstItem.rejection_reason"</span></p>
-                                                        }
                                                         <p class="text-[11px] text-[#b45309] mt-1">Silakan klik tombol "Revisi" pada tabel item di bawah untuk memasukkan kembali pengajuan ke keranjang dan memperbaikinya.</p>
                                                     </div>
                                                 </div>
@@ -579,7 +572,7 @@
                                                             <th class="px-4 py-2.5 text-[0.65rem] font-bold tracking-wider uppercase text-[#8a8780]">Product</th>
                                                             <th class="px-4 py-2.5 text-[0.65rem] font-bold tracking-wider uppercase text-[#8a8780] w-20">Qty</th>
                                                             <th class="px-4 py-2.5 text-[0.65rem] font-bold tracking-wider uppercase text-[#8a8780] w-44">Status Detail</th>
-                                                            <th class="px-4 py-2.5 text-[0.65rem] font-bold tracking-wider uppercase text-[#8a8780] w-36">Approved By</th>
+                                                            <th class="px-4 py-2.5 text-[0.65rem] font-bold tracking-wider uppercase text-[#8a8780] w-44">Reviewed By</th>
                                                             <th class="px-4 py-2.5 text-[0.65rem] font-bold tracking-wider uppercase text-[#8a8780] w-40">Bukti Serah Terima</th>
                                                             <th class="px-4 py-2.5 text-[0.65rem] font-bold tracking-wider uppercase text-[#8a8780] text-right w-36">Aksi</th>
                                                         </tr>
@@ -675,8 +668,8 @@
                                                                         } else {
                                                                             <span class="inline-flex items-center px-1.5 py-0.5 border border-[#b8e8c0] rounded text-[9px] font-bold bg-[#eef9f0] text-[#1a7a30]">Selesai / Diterima</span>
                                                                         }
-                                                                    } else if (usage.status == "REJECTED") {
-                                                                        @if (!string.IsNullOrEmpty(usage.last_revision_stage) || IsRevisionStatus(usage.status))
+                                                                    } else if (usage.status == "REJECTED" || usage.status.StartsWith("REJECTED")) {
+                                                                        @if (!string.IsNullOrEmpty(usage.last_revision_stage))
                                                                         {
                                                                             <div class="space-y-1">
                                                                                 <span class="inline-flex items-center px-1.5 py-0.5 border border-[#fde68a] rounded text-[9px] font-bold bg-[#fffbeb] text-[#d97706]">Butuh Revisi</span>
@@ -699,37 +692,47 @@
                                                                     }
                                                                 </td>
                                                                 <td class="px-4 py-3 align-middle text-xs">
-                                                                     <div class="space-y-1">
-                                                                         @if (usage.status != "PENDING_STAFF_INVENTORY" && usage.status != "REJECTED_BY_STAFF_INVENTORY")
+                                                                     @{
+                                                                         var reviewers = new List<(string Name, string Role)>();
+
+                                                                         if (usage.StaffInventoryApprover != null)
                                                                          {
-                                                                             <div class="text-[11px] leading-tight flex items-center gap-1">
-                                                                                 <span class="font-bold text-[#e8a000] text-[10px] uppercase">Staff Inv:</span> 
-                                                                                 <span class="text-[#1a1a1a] font-semibold">@(usage.Approver?.role?.Contains("staff") == true ? usage.Approver.name : "Disetujui")</span>
-                                                                             </div>
+                                                                             reviewers.Add(FormatReviewer(usage.StaffInventoryApprover, "Staff Inventoris"));
                                                                          }
-                                                                         @if (usage.status == "PENDING_MANAGER" || usage.status == "WAITING_HANDOVER" || usage.status == "WAITING_ADMIN_HANDOVER" || usage.status == "WAITING_DOCUMENTATION" || usage.status == "APPROVED" || usage.status == "COMPLETED")
+                                                                         if (usage.AdminApprover != null)
                                                                          {
-                                                                             <div class="text-[11px] leading-tight flex items-center gap-1">
-                                                                                 <span class="font-bold text-[#e8a000] text-[10px] uppercase">Admin:</span> 
-                                                                                 <span class="text-[#1a1a1a] font-semibold">@(usage.Approver?.role?.Contains("admin") == true ? usage.Approver.name : "Disetujui")</span>
-                                                                             </div>
+                                                                             reviewers.Add(FormatReviewer(usage.AdminApprover, "Admin CorpU"));
                                                                          }
-                                                                         @if (usage.request_type == "GIVEAWAY" && (usage.status == "WAITING_HANDOVER" || usage.status == "WAITING_ADMIN_HANDOVER" || usage.status == "WAITING_DOCUMENTATION" || usage.status == "APPROVED" || usage.status == "COMPLETED"))
+                                                                         if (usage.ManagerApprover != null)
                                                                          {
-                                                                             <div class="text-[11px] leading-tight flex items-center gap-1">
-                                                                                 <span class="font-bold text-[#e8a000] text-[10px] uppercase">Manager:</span> 
-                                                                                 <span class="text-[#1a1a1a] font-semibold">@(usage.Approver?.role?.Contains("manager") == true ? usage.Approver.name : "Disetujui")</span>
-                                                                             </div>
+                                                                             reviewers.Add(FormatReviewer(usage.ManagerApprover, "CorpU Dept Head"));
                                                                          }
-                                                                         @if (usage.status == "PENDING_STAFF_INVENTORY" || usage.status == "PENDING_ADMIN" || usage.status == "PENDING")
+
+                                                                         if (!reviewers.Any() && usage.Approver != null && usage.status != "PENDING" && usage.status != "PENDING_STAFF_INVENTORY" && usage.status != "PENDING_ADMIN" && usage.status != "PENDING_MANAGER")
                                                                          {
-                                                                             <span class="text-gray-400 text-[10px] italic">Menunggu Approval</span>
+                                                                             reviewers.Add(FormatReviewer(usage.Approver));
                                                                          }
-                                                                         @if (usage.Approver != null && usage.status != "PENDING_STAFF_INVENTORY" && usage.status != "PENDING_ADMIN" && usage.status != "PENDING")
-                                                                         {
-                                                                             <div class="text-[9px] text-gray-400 font-medium">Penyetuju Akhir: @usage.Approver.name</div>
-                                                                         }
-                                                                     </div>
+                                                                     }
+
+                                                                     @if (reviewers.Any())
+                                                                     {
+                                                                         <div class="space-y-1.5">
+                                                                             @foreach (var rev in reviewers)
+                                                                             {
+                                                                                 <div>
+                                                                                     <div class="font-bold text-[#1a1a1a] text-xs leading-tight">@rev.Name</div>
+                                                                                     @if (!string.IsNullOrEmpty(rev.Role))
+                                                                                     {
+                                                                                         <div class="text-[10px] text-gray-500 font-medium leading-tight">@rev.Role</div>
+                                                                                     }
+                                                                                 </div>
+                                                                             }
+                                                                         </div>
+                                                                     }
+                                                                     else
+                                                                     {
+                                                                         <span class="text-gray-400 text-[10px] italic">Menunggu Review</span>
+                                                                     }
                                                                 </td>
                                                                 <td class="px-4 py-3 align-middle">
                                                                     @{
@@ -779,7 +782,7 @@
                                                                         var canReturn = (usage.status == "APPROVED" || usage.status == "WAITING_HANDOVER_CONFIRM") && usage.request_type == "BORROW" && usage.returned_quantity < usage.quantity && (usage.pending_return_quantity ?? 0) == 0;
                                                                         var isReturnDraft = usage.status == "APPROVED" && usage.request_type == "BORROW" && (usage.pending_return_quantity ?? 0) > 0 && usage.is_return_draft == 1;
                                                                         var canManageDraft = isReturnDraft && (usage.requester_id == CurrentUserId || userPrincipal.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.ApprovalHandover));
-                                                                        var canRevise = (usage.requester_id == CurrentUserId) && (usage.status == "REVISION" || usage.status == "REVISION_BY_STAFF_INVENTORY" || usage.status == "REVISION_BY_ADMIN" || usage.status == "REVISION_BY_MANAGER");
+                                                                        var canRevise = (usage.requester_id == CurrentUserId) && (IsRevisionStatus(usage.status) || (usage.status == "REJECTED" && !string.IsNullOrEmpty(usage.last_revision_stage)));
                                                                         var hasAction = canReturn || canManageDraft || canRevise;
                                                                     }
                                                                     @if (canReturn)
@@ -1255,10 +1258,19 @@
     }
   </ChildContent>
   <Footer>
-        <button type="button" @onclick="CloseRevisionModal" class="px-5 py-2.5 text-sm font-bold text-gray-600 hover:text-gray-900 bg-white border border-[#e5e3dc] rounded-xl transition">Batal</button>
-        <button type="button" @onclick="SubmitRevision" disabled="@IsSubmitting" class="px-6 py-2.5 bg-[#e8a000] hover:bg-[#d49300] active:scale-[0.98] text-[#1a1a1a] text-sm font-bold tracking-wider rounded-xl transition shadow-sm disabled:opacity-50">
-            @(IsSubmitting ? "Mengirim..." : "Kirim Perbaikan")
-        </button>
+        <div class="flex items-center justify-between w-full">
+            <button type="button" @onclick="CloseRevisionModal" class="px-5 py-2.5 text-sm font-bold text-gray-600 hover:text-gray-900 bg-white border border-[#e5e3dc] rounded-xl transition">
+                Kembali
+            </button>
+            <div class="flex items-center gap-2">
+                <button type="button" @onclick='() => AskConfirm("Batalkan Pemesanan?", "Apakah Anda yakin ingin membatalkan pengajuan barang ini?", CancelRevisionFromModal, "Ya, Batalkan")' disabled="@IsSubmitting" class="px-5 py-2.5 text-sm font-bold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xl transition disabled:opacity-50">
+                    Batalkan Pemesanan
+                </button>
+                <button type="button" @onclick="SubmitRevision" disabled="@IsSubmitting" class="px-6 py-2.5 bg-[#e8a000] hover:bg-[#d49300] active:scale-[0.98] text-[#1a1a1a] text-sm font-bold tracking-wider rounded-xl transition shadow-sm disabled:opacity-50">
+                    @(IsSubmitting ? "Mengirim..." : "Kirim Perbaikan")
+                </button>
+            </div>
+        </div>
   </Footer>
 </Modal>
 
@@ -1366,8 +1378,12 @@
         borrowItemsOnly = groupItems.Where(i => i.request_type == "BORROW").ToList();
         giveawayItemsOnly = groupItems.Where(i => i.request_type == "GIVEAWAY").ToList();
         hasBorrow = borrowItemsOnly.Any();
-        totalItems = hasBorrow ? borrowItemsOnly.Sum(i => i.quantity ?? 0) : groupItems.Sum(i => i.quantity ?? 0);
-        totalReturned = hasBorrow ? borrowItemsOnly.Sum(i => i.returned_quantity ?? 0) : groupItems.Sum(i => i.returned_quantity ?? 0);
+        var activeBorrowVars = borrowItemsOnly.Where(i => i.status != WorkflowStatuses.Rejected).ToList();
+        var activeVars = hasBorrow ? (activeBorrowVars.Any() ? activeBorrowVars : borrowItemsOnly) : groupItems.Where(i => i.status != WorkflowStatuses.Rejected).ToList();
+        if (!activeVars.Any()) activeVars = hasBorrow ? borrowItemsOnly : groupItems;
+
+        totalItems = activeVars.Sum(i => i.quantity ?? 0);
+        totalReturned = activeVars.Sum(i => i.returned_quantity ?? 0);
         allReturned = totalItems > 0 && totalReturned >= totalItems;
         isGiveaway = !hasBorrow;
         status = firstItem.status ?? "";
@@ -1377,6 +1393,8 @@
         handoverDone = hasBorrow && borrowItemsOnly.Any(i => i.status == "APPROVED" && !string.IsNullOrEmpty(i.handover_photo));
         canHandover = false; 
         isWaitingUserConfirm = hasBorrow && borrowItemsOnly.Any(i =>
+            i.status != WorkflowStatuses.Rejected &&
+            (i.returned_quantity ?? 0) < (i.quantity ?? 0) &&
             (i.status == "WAITING_HANDOVER_CONFIRM" ||
              (i.status == "APPROVED" && i.handover_timestamp.HasValue && (WibHelper.Now - i.handover_timestamp.Value).TotalHours < 24)) &&
             (i.handover_uploaded_by == "SI" || string.IsNullOrEmpty(i.handover_uploaded_by)));
@@ -1660,6 +1678,7 @@
         }
 
         GroupedUsages = finalGrouped;
+        CalculateVariables();
 
         // Default state: semua grup collapse, biarkan user expand manual.
         ExpandedGroupIds.Clear();
@@ -2210,6 +2229,38 @@
             {
                 SuccessMessage = "Revision submitted successfully.";
                 await LoadData();
+                CalculateVariables();
+                CloseRevisionModal();
+            }
+        }
+        catch (Exception ex)
+        {
+            ModalErrorMessage = "Terjadi kesalahan: " + ex.Message;
+        }
+        finally
+        {
+            IsSubmitting = false;
+        }
+    }
+
+    private async Task CancelRevisionFromModal()
+    {
+        if (RevisionItem == null) return;
+        
+        IsSubmitting = true;
+        ModalErrorMessage = null;
+        try
+        {
+            var error = await TransactionService.CancelRevisionAsync(RevisionItem.id);
+            if (error != null) 
+            {
+                ModalErrorMessage = error;
+            }
+            else
+            {
+                SuccessMessage = "Permintaan berhasil dibatalkan.";
+                await LoadData();
+                CalculateVariables();
                 CloseRevisionModal();
             }
         }
@@ -2231,6 +2282,31 @@
         public string? ApproverName { get; set; }
         /// <summary>Optional small progress hint shown below the status label, e.g. "2/5 item dikembalikan".</summary>
         public string? SubLabel { get; set; }
+    }
+
+    private static (string Name, string Role) FormatReviewer(User? user, string fallbackRole = "")
+    {
+        if (user == null) return ("-", fallbackRole);
+        string rawName = user.name ?? "-";
+        string role = !string.IsNullOrEmpty(user.role) ? user.role : fallbackRole;
+
+        if (rawName.Contains("(") && rawName.EndsWith(")"))
+        {
+            int idx = rawName.IndexOf("(");
+            string namePart = rawName.Substring(0, idx).Trim();
+            string rolePart = rawName.Substring(idx + 1, rawName.Length - idx - 2).Trim();
+            return (namePart, rolePart);
+        }
+
+        string displayRole = role switch
+        {
+            "staff_inventory" or "staff" => "Staff Inventoris",
+            "admin" => "Admin CorpU",
+            "manager" or "dept_head" => "CorpU Dept Head",
+            _ => role
+        };
+
+        return (rawName, displayRole);
     }
 
     private static bool IsRevisionStatus(string? status) =>
@@ -2421,12 +2497,17 @@
                 steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE", CompletedAt = firstItem.updated_at });
                 steps.Add(new TrackingStep { Name = "Berita Acara Serah Terima", Status = "DONE", CompletedAt = firstItem.handover_timestamp ?? firstItem.handover_approved_at ?? firstItem.updated_at });
 
-                int fullyReturnedItems = groupItems.Count(i => (i.returned_quantity ?? 0) >= (i.quantity ?? 1) && (i.quantity ?? 0) > 0);
-                int partiallyReturnedItems = groupItems.Count(i => (i.returned_quantity ?? 0) > 0 && (i.returned_quantity ?? 0) < (i.quantity ?? 1));
-                int totalItems = groupItems.Count;
-                bool allFullyReturned = totalReturned >= totalQty && totalQty > 0;
-                bool anyReturned = totalReturned > 0;
-                bool anyPendingReturn = groupItems.Any(i => (i.pending_return_quantity ?? 0) > 0);
+                var activeGroupItems = groupItems.Where(i => i.status != WorkflowStatuses.Rejected).ToList();
+                if (!activeGroupItems.Any()) activeGroupItems = groupItems;
+
+                int fullyReturnedItems = activeGroupItems.Count(i => (i.returned_quantity ?? 0) >= (i.quantity ?? 1) && (i.quantity ?? 0) > 0);
+                int partiallyReturnedItems = activeGroupItems.Count(i => (i.returned_quantity ?? 0) > 0 && (i.returned_quantity ?? 0) < (i.quantity ?? 1));
+                int totalItemsCount = activeGroupItems.Count;
+                int activeTotalQty = activeGroupItems.Sum(i => i.quantity ?? 0);
+                int activeTotalReturned = activeGroupItems.Sum(i => i.returned_quantity ?? 0);
+                bool allFullyReturned = activeTotalReturned >= activeTotalQty && activeTotalQty > 0;
+                bool anyReturned = activeTotalReturned > 0;
+                bool anyPendingReturn = activeGroupItems.Any(i => (i.pending_return_quantity ?? 0) > 0);
 
                 if (allFullyReturned) {
                     steps.Add(new TrackingStep { Name = "Masa Peminjaman", Status = "DONE", CompletedAt = firstItem.returned_at ?? firstItem.updated_at });
@@ -2434,16 +2515,16 @@
                         Name = "Pengembalian",
                         Status = "DONE",
                         CompletedAt = firstItem.returned_at ?? firstItem.updated_at,
-                        SubLabel = $"Semua {totalReturned}/{totalQty} unit dikembalikan"
+                        SubLabel = $"Semua {activeTotalReturned}/{activeTotalQty} unit dikembalikan"
                     });
                 } else if (anyReturned) {
                     string returnLabel;
                     if (partiallyReturnedItems > 0 && fullyReturnedItems > 0) {
-                        returnLabel = $"{fullyReturnedItems} produk selesai, {partiallyReturnedItems} sebagian ({totalReturned}/{totalQty} unit)";
+                        returnLabel = $"{fullyReturnedItems} produk selesai, {partiallyReturnedItems} sebagian ({activeTotalReturned}/{activeTotalQty} unit)";
                     } else if (partiallyReturnedItems > 0) {
-                        returnLabel = $"Sebagian dikembalikan ({totalReturned}/{totalQty} unit)";
+                        returnLabel = $"Sebagian dikembalikan ({activeTotalReturned}/{activeTotalQty} unit)";
                     } else {
-                        returnLabel = $"{fullyReturnedItems}/{totalItems} produk dikembalikan ({totalReturned}/{totalQty} unit)";
+                        returnLabel = $"{fullyReturnedItems}/{totalItemsCount} produk dikembalikan ({activeTotalReturned}/{activeTotalQty} unit)";
                     }
                     steps.Add(new TrackingStep { Name = "Masa Peminjaman", Status = "ACTIVE" });
                     steps.Add(new TrackingStep {

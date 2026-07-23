@@ -372,47 +372,87 @@ app.MapGet("/api/pdf/receipt/{groupId}", async (string groupId, WMS_UnitedTracor
 
 app.MapGet("/api/pdf/receipt-request/{groupId}", async (string groupId, WMS_UnitedTracors_Blazor.Services.TransactionService transactionService, WMS_UnitedTracors_Blazor.Services.PdfReceiptService pdfService, IWebHostEnvironment env) =>
 {
-    var transactions = await transactionService.GetTransactionsByGroupIdAsync(groupId);
-    if (!transactions.Any()) return Results.NotFound();
-    
-    var pdfBytes = pdfService.GenerateReceiptRequest(transactions, env.WebRootPath);
-    return Results.File(pdfBytes, "application/pdf", enableRangeProcessing: true);
+    try
+    {
+        var transactions = await transactionService.GetTransactionsByGroupIdAsync(groupId);
+        if (!transactions.Any()) return Results.NotFound("Transaksi tidak ditemukan untuk group_id: " + groupId);
+        
+        var pdfBytes = pdfService.GenerateReceiptRequest(transactions, env.WebRootPath);
+        if (pdfBytes.Length == 0) return Results.Problem("PDF Bytes bernilai 0 / data kosong.");
+        return Results.File(pdfBytes, "application/pdf", enableRangeProcessing: true);
+    }
+    catch (Exception ex)
+    {
+        return Results.Text(ex.ToString(), contentType: "text/plain", statusCode: 500);
+    }
 });
 
 app.MapGet("/api/pdf/receipt-approval/{groupId}", async (string groupId, WMS_UnitedTracors_Blazor.Services.TransactionService transactionService, WMS_UnitedTracors_Blazor.Services.PdfReceiptService pdfService, IWebHostEnvironment env) =>
 {
-    var transactions = await transactionService.GetTransactionsByGroupIdAsync(groupId);
-    if (!transactions.Any()) return Results.NotFound();
-    
-    var pdfBytes = pdfService.GenerateReceiptApproval(transactions, env.WebRootPath);
-    return Results.File(pdfBytes, "application/pdf", enableRangeProcessing: true);
+    try
+    {
+        var transactions = await transactionService.GetTransactionsByGroupIdAsync(groupId);
+        if (!transactions.Any()) return Results.NotFound("Transaksi tidak ditemukan untuk group_id: " + groupId);
+        
+        var pdfBytes = pdfService.GenerateReceiptApproval(transactions, env.WebRootPath);
+        if (pdfBytes.Length == 0) return Results.Problem("PDF Bytes bernilai 0 / data kosong.");
+        return Results.File(pdfBytes, "application/pdf", enableRangeProcessing: true);
+    }
+    catch (Exception ex)
+    {
+        return Results.Text(ex.ToString(), contentType: "text/plain", statusCode: 500);
+    }
 });
 
 app.MapGet("/api/pdf/receipt-handover/{groupId}", async (string groupId, WMS_UnitedTracors_Blazor.Services.TransactionService transactionService, WMS_UnitedTracors_Blazor.Services.PdfReceiptService pdfService, IWebHostEnvironment env) =>
 {
-    var transactions = await transactionService.GetTransactionsByGroupIdAsync(groupId);
-    if (!transactions.Any()) return Results.NotFound();
-    
-    var pdfBytes = pdfService.GenerateReceiptHandover(transactions, env.WebRootPath);
-    return Results.File(pdfBytes, "application/pdf", enableRangeProcessing: true);
+    try
+    {
+        var transactions = await transactionService.GetTransactionsByGroupIdAsync(groupId);
+        if (!transactions.Any()) return Results.NotFound("Transaksi tidak ditemukan untuk group_id: " + groupId);
+        
+        var pdfBytes = pdfService.GenerateReceiptHandover(transactions, env.WebRootPath);
+        if (pdfBytes.Length == 0) return Results.Problem("PDF Bytes bernilai 0 / data kosong.");
+        return Results.File(pdfBytes, "application/pdf", enableRangeProcessing: true);
+    }
+    catch (Exception ex)
+    {
+        return Results.Text(ex.ToString(), contentType: "text/plain", statusCode: 500);
+    }
 });
 
 app.MapGet("/api/pdf/receipt-documentation/{groupId}", async (string groupId, WMS_UnitedTracors_Blazor.Services.TransactionService transactionService, WMS_UnitedTracors_Blazor.Services.PdfReceiptService pdfService, IWebHostEnvironment env) =>
 {
-    var transactions = await transactionService.GetTransactionsByGroupIdAsync(groupId);
-    if (!transactions.Any()) return Results.NotFound();
+    try
+    {
+        var transactions = await transactionService.GetTransactionsByGroupIdAsync(groupId);
+        if (!transactions.Any()) return Results.NotFound("Transaksi tidak ditemukan untuk group_id: " + groupId);
 
-    var pdfBytes = pdfService.GenerateReceiptDocumentation(transactions, env.WebRootPath);
-    return Results.File(pdfBytes, "application/pdf", enableRangeProcessing: true);
+        var pdfBytes = pdfService.GenerateReceiptDocumentation(transactions, env.WebRootPath);
+        if (pdfBytes.Length == 0) return Results.Problem("PDF Bytes bernilai 0 / data kosong.");
+        return Results.File(pdfBytes, "application/pdf", enableRangeProcessing: true);
+    }
+    catch (Exception ex)
+    {
+        return Results.Text(ex.ToString(), contentType: "text/plain", statusCode: 500);
+    }
 });
 
 app.MapGet("/api/pdf/receipt-return/{groupId}", async (string groupId, WMS_UnitedTracors_Blazor.Services.TransactionService transactionService, WMS_UnitedTracors_Blazor.Services.PdfReceiptService pdfService, IWebHostEnvironment env) =>
 {
-    var transactions = await transactionService.GetTransactionsByGroupIdAsync(groupId);
-    if (!transactions.Any()) return Results.NotFound();
-    
-    var pdfBytes = pdfService.GenerateReturnReceipt(transactions, env.WebRootPath);
-    return Results.File(pdfBytes, "application/pdf", enableRangeProcessing: true);
+    try
+    {
+        var transactions = await transactionService.GetTransactionsByGroupIdAsync(groupId);
+        if (!transactions.Any()) return Results.NotFound("Transaksi tidak ditemukan untuk group_id: " + groupId);
+        
+        var pdfBytes = pdfService.GenerateReturnReceipt(transactions, env.WebRootPath);
+        if (pdfBytes.Length == 0) return Results.Problem("PDF Bytes bernilai 0 / data kosong.");
+        return Results.File(pdfBytes, "application/pdf", enableRangeProcessing: true);
+    }
+    catch (Exception ex)
+    {
+        return Results.Text(ex.ToString(), contentType: "text/plain", statusCode: 500);
+    }
 });
 
 // =======================
