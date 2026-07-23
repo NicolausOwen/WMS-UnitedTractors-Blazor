@@ -636,6 +636,8 @@ public class ApprovalService
                 // Jangan menggagalkan transaksi jika pengiriman email notifikasi gagal
             }
 
+            _ = NotifyUserAsync(transaction, "Pengembalian Barang Selesai", $"Pengembalian barang <strong>{transaction.Product?.name ?? "Barang"}</strong> sejumlah {qty} unit telah disetujui dan diverifikasi. Terima kasih.");
+
             _dashboardState.NotifyDashboardUpdated();
             return null;
         }
@@ -778,6 +780,9 @@ public class ApprovalService
 
         _context.Transactions.Update(transaction);
         await _context.SaveChangesAsync();
+
+        _ = NotifyUserAsync(transaction, "Pengembalian Barang Ditolak", $"Pengajuan pengembalian barang Anda ditolak oleh Admin. Alasan: {rejectionReason}");
+
         _dashboardState.NotifyDashboardUpdated();
         return null;
     }
@@ -960,9 +965,22 @@ public class ApprovalService
 
         if (emails.Any())
         {
-            var productName = transaction.Product?.name ?? "Barang";
+            var productName = transaction.Product?.name;
+            if (string.IsNullOrEmpty(productName) && transaction.product_id > 0)
+            {
+                var prod = await context.Products.FindAsync(transaction.product_id);
+                productName = prod?.name;
+            }
+            productName ??= "Barang";
+
             var eventName = transaction.event_name ?? "Tanpa Nama Event";
-            var applicant = transaction.applicant_name ?? "User";
+            var applicant = transaction.applicant_name;
+            if (string.IsNullOrEmpty(applicant) && transaction.requester_id > 0)
+            {
+                var user = await context.Users.FindAsync(transaction.requester_id);
+                applicant = user?.name;
+            }
+            applicant ??= "User";
             
             string mailTitle = "Notifikasi Persetujuan Request WMS";
             string mailMessage = $"Ada request baru yang membutuhkan persetujuan Anda.<br/><br/>" +
@@ -1025,13 +1043,14 @@ public class ApprovalService
 
             bool isGlobalAdmin = isSuperAdmin || uRoles.Any(uar => uar.CategoryId == null);
 
-            if (isGlobalAdmin)
+            // Staff Inventaris (ApprovalStage1) menerima semua notifikasi tanpa filter kategori.
+            if (isGlobalAdmin || requiredPermission == Permissions.ApprovalStage1)
             {
                 resultEmails.Add(user.email);
                 continue;
             }
 
-            // Jika bukan Global Admin, pastikan user memiliki UserAdminRole untuk salah satu kategori item
+            // Jika bukan Global Admin dan bukan Staff Inventoris, pastikan user memiliki UserAdminRole untuk salah satu kategori item
             if (validCategoryIds.Any(catId => uRoles.Any(uar => uar.CategoryId == catId)))
             {
                 resultEmails.Add(user.email);
@@ -1045,6 +1064,9 @@ public class ApprovalService
     {
         if (itemsProcessed == null || !itemsProcessed.Any()) return;
 
+        using var context = _factory.CreateDbContext();
+
+        // 1. Kirim notifikasi ringkasan ke Pemohon (Requester)
         var grouped = itemsProcessed.GroupBy(x => new { x.item.requester_id, x.item.event_name, x.item.group_id });
 
         foreach (var group in grouped)
@@ -1054,52 +1076,70 @@ public class ApprovalService
             var requesterEmail = firstItem.Requester?.email;
             if (string.IsNullOrWhiteSpace(requesterEmail))
             {
-                using var context = _factory.CreateDbContext();
                 var user = await context.Users.FindAsync(firstItem.requester_id);
                 requesterEmail = user?.email;
             }
 
-            if (string.IsNullOrWhiteSpace(requesterEmail)) continue;
-
-            string eventName = firstItem.event_name ?? "Tanpa Nama Event";
-            
-            var sb = new System.Text.StringBuilder();
-            sb.AppendLine($"<p>Berikut adalah hasil proses persetujuan untuk request Event: <strong>{eventName}</strong></p>");
-            sb.AppendLine("<ul style='list-style-type: none; padding-left: 0;'>");
-            
-            foreach(var (item, action, reason) in group)
+            if (!string.IsNullOrWhiteSpace(requesterEmail))
             {
-                string productName = item.Product?.name ?? "Barang";
-                string statusText = "";
+                string eventName = firstItem.event_name ?? "Tanpa Nama Event";
                 
-                if (action == "APPROVE") 
+                var sb = new System.Text.StringBuilder();
+                sb.AppendLine($"<p>Berikut adalah hasil proses persetujuan untuk request Event: <strong>{eventName}</strong></p>");
+                sb.AppendLine("<ul style='list-style-type: none; padding-left: 0;'>");
+                
+                foreach(var (item, action, reason) in group)
                 {
-                    if (item.status == WorkflowStatuses.PendingAdmin || item.status == WorkflowStatuses.PendingManager)
-                        statusText = "<span style='color: #1a6b8a; font-weight: bold;'>DISETUJUI (Menunggu Tahap Selanjutnya)</span>";
-                    else
-                        statusText = "<span style='color: #1a7a30; font-weight: bold;'>DISETUJUI FINAL</span>";
-                }
-                else if (action == "REJECT")
-                {
-                    statusText = $"<span style='color: #d94040; font-weight: bold;'>DITOLAK</span> (Alasan: {reason})";
-                }
-                else if (action == "REVISE")
-                {
-                    statusText = $"<span style='color: #e8a000; font-weight: bold;'>DIREVISI</span> (Catatan: {reason})";
-                }
-                else 
-                {
-                    statusText = action;
-                }
-                                    
-                sb.AppendLine($"<li style='margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 8px;'>");
-                sb.AppendLine($"<strong>{productName}</strong> ({item.quantity} unit)<br/>Status: {statusText}");
-                sb.AppendLine($"</li>");
-            }
-            sb.AppendLine("</ul>");
+                    string productName = item.Product?.name;
+                    if (string.IsNullOrEmpty(productName) && item.product_id > 0)
+                    {
+                        var prod = await context.Products.FindAsync(item.product_id);
+                        productName = prod?.name;
+                    }
+                    productName ??= "Barang";
 
-            var htmlMessage = GetEmailTemplate("Update Status Request WMS", sb.ToString());
-            await _emailService.SendEmailAsync(requesterEmail, "Update Request WMS", htmlMessage);
+                    string statusText = "";
+                    
+                    if (action == "APPROVE") 
+                    {
+                        if (item.status == WorkflowStatuses.PendingAdmin || item.status == WorkflowStatuses.PendingManager)
+                            statusText = "<span style='color: #1a6b8a; font-weight: bold;'>DISETUJUI (Menunggu Tahap Selanjutnya)</span>";
+                        else
+                            statusText = "<span style='color: #1a7a30; font-weight: bold;'>DISETUJUI FINAL</span>";
+                    }
+                    else if (action == "REJECT")
+                    {
+                        statusText = $"<span style='color: #d94040; font-weight: bold;'>DITOLAK</span> (Alasan: {reason})";
+                    }
+                    else if (action == "REVISE")
+                    {
+                        statusText = $"<span style='color: #e8a000; font-weight: bold;'>DIREVISI</span> (Catatan: {reason})";
+                    }
+                    else 
+                    {
+                        statusText = action;
+                    }
+                                        
+                    sb.AppendLine($"<li style='margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 8px;'>");
+                    sb.AppendLine($"<strong>{productName}</strong> ({item.quantity} unit)<br/>Status: {statusText}");
+                    sb.AppendLine($"</li>");
+                }
+                sb.AppendLine("</ul>");
+
+                var htmlMessage = GetEmailTemplate("Update Status Request WMS", sb.ToString());
+                await _emailService.SendEmailAsync(requesterEmail, "Update Request WMS", htmlMessage);
+            }
+        }
+
+        // 2. Kirim notifikasi ke Approver tahap selanjutnya (Admin / PIC / Infra / Manager) untuk item yang disetujui
+        var approvedItemsPendingNextStage = itemsProcessed
+            .Where(x => x.action == "APPROVE" && (x.item.status == WorkflowStatuses.PendingAdmin || x.item.status == WorkflowStatuses.PendingManager))
+            .Select(x => x.item)
+            .ToList();
+
+        foreach (var item in approvedItemsPendingNextStage)
+        {
+            await NotifyNextApproversAsync(context, item, item.status!);
         }
     }
 

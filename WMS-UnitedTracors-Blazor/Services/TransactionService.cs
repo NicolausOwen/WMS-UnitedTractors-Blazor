@@ -665,6 +665,14 @@ public class TransactionService
 
                 await _context.SaveChangesAsync();
                 await dbTransaction.CommitAsync();
+
+                var requester = await _context.Users.FindAsync(transaction.requester_id);
+                if (requester != null && !string.IsNullOrWhiteSpace(requester.email))
+                {
+                    string html = GetEmailTemplate("Pengembalian Barang Selesai", $"Pengembalian barang <strong>{transaction.Product.name}</strong> sejumlah {returnQty} unit telah diproses secara manual oleh Admin (Force Return) dengan status: {status}.");
+                    _ = _emailService.SendEmailAsync(requester.email, "Pengembalian Barang Selesai", html);
+                }
+
                 _dashboardState.NotifyDashboardUpdated();
                 return null;
             }
@@ -1385,6 +1393,27 @@ public class TransactionService
         }
 
         await _context.SaveChangesAsync();
+
+        var firstItem = matched.First();
+        var requester = firstItem.Requester;
+        if (requester != null && !string.IsNullOrWhiteSpace(requester.email))
+        {
+            var eventName = firstItem.event_name ?? "-";
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine($"<p>Barang untuk request Event <strong>{eventName}</strong> telah disiapkan dan sedang dalam proses serah terima.</p>");
+            sb.AppendLine("<ul style='list-style-type: none; padding-left: 0;'>");
+            foreach (var item in matched)
+            {
+                var pName = item.Product?.name ?? "Barang";
+                sb.AppendLine($"<li style='margin-bottom: 8px;'><strong>{pName}</strong> ({item.quantity} unit)</li>");
+            }
+            sb.AppendLine("</ul>");
+            sb.AppendLine("<p>Silakan ambil barang dan lakukan konfirmasi penerimaan melalui aplikasi.</p>");
+
+            var htmlMessage = GetEmailTemplate("Barang Siap Diserahkan", sb.ToString());
+            _ = _emailService.SendEmailAsync(requester.email, "Barang Siap Diserahkan (WMS UT)", htmlMessage);
+        }
+
         return null;
     }
 
