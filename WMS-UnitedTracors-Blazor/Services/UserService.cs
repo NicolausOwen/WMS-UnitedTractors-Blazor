@@ -68,6 +68,23 @@ public class UserService
 
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
+
+        // Sync with AdminRole if matching RoleName exists
+        var adminRole = await _context.AdminRoles.FirstOrDefaultAsync(r => r.RoleName == model.role);
+        if (adminRole != null)
+        {
+            _context.UserAdminRoles.Add(new UserAdminRole
+            {
+                Id = Guid.NewGuid(),
+                AdminRoleId = adminRole.Id,
+                UserId = user.id,
+                CategoryId = null,
+                CreatedAt = DateTime.UtcNow,
+                CreatedBy = "System"
+            });
+            await _context.SaveChangesAsync();
+        }
+
         return null;
     }
 
@@ -92,6 +109,7 @@ public class UserService
                 return "Anda tidak bisa mengubah role sendiri ke role tanpa izin Kelola User (mencegah terkunci dari menu User).";
         }
 
+        var oldRole = user.role;
         user.name = model.name;
         user.nrp = model.nrp;
         user.email = model.email;
@@ -107,6 +125,31 @@ public class UserService
         user.updated_at = DateTime.UtcNow;
 
         _context.Update(user);
+
+        // If role string changed, update UserAdminRoles mapping
+        if (oldRole != model.role)
+        {
+            var existingAssignments = await _context.UserAdminRoles.Where(uar => uar.UserId == id).ToListAsync();
+            if (existingAssignments.Any())
+            {
+                _context.UserAdminRoles.RemoveRange(existingAssignments);
+            }
+
+            var newAdminRole = await _context.AdminRoles.FirstOrDefaultAsync(r => r.RoleName == model.role);
+            if (newAdminRole != null)
+            {
+                _context.UserAdminRoles.Add(new UserAdminRole
+                {
+                    Id = Guid.NewGuid(),
+                    AdminRoleId = newAdminRole.Id,
+                    UserId = id,
+                    CategoryId = null,
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedBy = "System"
+                });
+            }
+        }
+
         await _context.SaveChangesAsync();
         return null;
     }

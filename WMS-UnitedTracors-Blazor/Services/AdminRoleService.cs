@@ -215,6 +215,17 @@ public class AdminRoleService
     public async Task<string?> AssignUserToRoleAsync(Guid roleId, int userId, List<int>? categoryIds, string createdBy)
     {
         using var _context = _factory.CreateDbContext();
+        var role = await _context.AdminRoles.FindAsync(roleId);
+        if (role == null) return "Role tidak ditemukan.";
+
+        var user = await _context.Users.FindAsync(userId);
+        if (user != null)
+        {
+            user.role = role.RoleName;
+            user.updated_at = DateTime.UtcNow;
+            _context.Users.Update(user);
+        }
+
         if (categoryIds == null || !categoryIds.Any())
         {
             var isAssigned = await _context.UserAdminRoles.AnyAsync(uar => uar.AdminRoleId == roleId && uar.UserId == userId && uar.CategoryId == null);
@@ -323,6 +334,21 @@ public class AdminRoleService
         if (!mappings.Any()) return "User tidak terasosiasi dengan Role ini.";
 
         _context.UserAdminRoles.RemoveRange(mappings);
+
+        // Update user.role string if no other role assignments exist
+        var remainingOtherRole = await _context.UserAdminRoles
+            .Include(uar => uar.AdminRole)
+            .Where(uar => uar.UserId == userId && uar.AdminRoleId != roleId)
+            .FirstOrDefaultAsync();
+
+        var user = await _context.Users.FindAsync(userId);
+        if (user != null)
+        {
+            user.role = remainingOtherRole?.AdminRole?.RoleName ?? "staff";
+            user.updated_at = DateTime.UtcNow;
+            _context.Users.Update(user);
+        }
+
         await _context.SaveChangesAsync();
         return null;
     }
@@ -334,6 +360,15 @@ public class AdminRoleService
     public async Task<string?> ReplaceUserAssignmentsInRoleAsync(Guid roleId, int userId, List<int>? newCategoryIds, string updatedBy)
     {
         using var _context = _factory.CreateDbContext();
+        var role = await _context.AdminRoles.FindAsync(roleId);
+
+        var user = await _context.Users.FindAsync(userId);
+        if (user != null && role != null)
+        {
+            user.role = role.RoleName;
+            user.updated_at = DateTime.UtcNow;
+            _context.Users.Update(user);
+        }
 
         // Remove all existing
         var existing = await _context.UserAdminRoles
@@ -424,5 +459,117 @@ public class AdminRoleService
             .OrderBy(r => r.RoleName)
             .Select(r => r.RoleName)
             .ToListAsync();
+    }
+
+    /// <summary>Daftar CategoryId yang di-assign untuk user (null / 0 mewakili Global / All Categories).</summary>
+    public async Task<List<int>> GetUserCategoryAssignmentsAsync(int userId)
+    {
+        using var _context = _factory.CreateDbContext();
+        var catIds = await _context.UserAdminRoles
+            .Where(uar => uar.UserId == userId && uar.CategoryId.HasValue)
+            .Select(uar => uar.CategoryId!.Value)
+            .ToListAsync();
+
+        var hasGlobal = await _context.UserAdminRoles.AnyAsync(uar => uar.UserId == userId && uar.CategoryId == null);
+        if (hasGlobal || !catIds.Any())
+        {
+            return new List<int> { 0 };
+        }
+
+        return catIds;
+    }
+
+    /// <summary>Map userId -> List of assigned category names (or "All Categories (Global)") for batch rendering in Users.razor.</summary>
+    public async Task<Dictionary<int, List<string>>> GetUserCategoryNamesMapAsync(List<int> userIds)
+    {
+        using var _context = _factory.CreateDbContext();
+        var assignments = await _context.UserAdminRoles
+            .Where(uar => userIds.Contains(uar.UserId))
+            .Include(uar => uar.Category)
+            .ToListAsync();
+
+        var result = new Dictionary<int, List<string>>();
+        foreach (var userId in userIds)
+        {
+            var userAssignments = assignments.Where(a => a.UserId == userId).ToList();
+            if (!userAssignments.Any())
+            {
+                result[userId] = new List<string> { "All Categories (Global)" };
+            }
+            else
+            {
+                var names = new List<string>();
+                bool hasGlobal = false;
+                foreach (var a in userAssignments)
+                {
+                    if (a.CategoryId.HasValue && a.Category != null)
+                    {
+                        names.Add(a.Category.name);
+                    }
+                    else
+                    {
+                        hasGlobal = true;
+                    }
+                }
+
+                if (hasGlobal || !names.Any())
+                {
+                    result[userId] = new List<string> { "All Categories (Global)" };
+                }
+                else
+                {
+                    result[userId] = names.Distinct().ToList();
+                }
+            }
+        }
+        return result;
+    }
+
+    /// <summary>Menyimpan penugasan kategori untuk user secara atomic berdasarkan roleName.</summary>
+    public async Task<string?> SaveUserCategoryAssignmentsAsync(int userId, string roleName, List<int>? categoryIds, string updatedBy)
+    {
+        using var _context = _factory.CreateDbContext();
+        var adminRole = await _context.AdminRoles.FirstOrDefaultAsync(r => r.RoleName == roleName);
+        
+        // Remove existing assignments for this user
+        var existing = await _context.UserAdminRoles.Where(uar => uar.UserId == userId).ToListAsync();
+        if (existing.Any())
+        {
+            _context.UserAdminRoles.RemoveRange(existing);
+        }
+
+        if (adminRole != null)
+        {
+            if (categoryIds == null || !categoryIds.Any() || categoryIds.Contains(0))
+            {
+                _context.UserAdminRoles.Add(new UserAdminRole
+                {
+                    Id = Guid.NewGuid(),
+                    AdminRoleId = adminRole.Id,
+                    UserId = userId,
+                    CategoryId = null,
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedBy = updatedBy
+                });
+            }
+            else
+            {
+                foreach (var catId in categoryIds.Distinct())
+                {
+                    _context.UserAdminRoles.Add(new UserAdminRole
+                    {
+                        Id = Guid.NewGuid(),
+                        AdminRoleId = adminRole.Id,
+                        UserId = userId,
+                        CategoryId = catId,
+                        CreatedAt = DateTime.UtcNow,
+                        CreatedBy = updatedBy
+                    });
+                }
+            }
+        }
+
+        await _context.SaveChangesAsync();
+        return null;
     }
 }
