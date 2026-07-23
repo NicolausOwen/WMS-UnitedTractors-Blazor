@@ -1,7 +1,7 @@
 # Inventory System
 
 <p align="center">
-  <img src="WMS-UnitedTracors-Blazor/wwwroot/img/incorp.png" alt="Inventory System Logo" width="300" />
+  <img src="WMS-UnitedTracors-Blazor/wwwroot/img/incorp.png" alt="Inventory System Logo" width="500" />
 </p>
 
 <p align="center">
