@@ -1333,12 +1333,17 @@
                 steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE", CompletedAt = firstItem.updated_at });
                 steps.Add(new TrackingStep { Name = "Berita Acara Serah Terima", Status = "DONE", CompletedAt = firstItem.handover_timestamp ?? firstItem.handover_approved_at ?? firstItem.updated_at });
 
-                int fullyReturnedItems = groupItems.Count(i => (i.returned_quantity ?? 0) >= (i.quantity ?? 1) && (i.quantity ?? 0) > 0);
-                int partiallyReturnedItems = groupItems.Count(i => (i.returned_quantity ?? 0) > 0 && (i.returned_quantity ?? 0) < (i.quantity ?? 1));
-                int totalItems = groupItems.Count;
-                bool allFullyReturned = totalReturned >= totalQty && totalQty > 0;
-                bool anyReturned = totalReturned > 0;
-                bool anyPendingReturn = groupItems.Any(i => (i.pending_return_quantity ?? 0) > 0);
+                var activeGroupItems = groupItems.Where(i => i.status != WorkflowStatuses.Rejected).ToList();
+                if (!activeGroupItems.Any()) activeGroupItems = groupItems;
+
+                int fullyReturnedItems = activeGroupItems.Count(i => (i.returned_quantity ?? 0) >= (i.quantity ?? 1) && (i.quantity ?? 0) > 0);
+                int partiallyReturnedItems = activeGroupItems.Count(i => (i.returned_quantity ?? 0) > 0 && (i.returned_quantity ?? 0) < (i.quantity ?? 1));
+                int totalItemsCount = activeGroupItems.Count;
+                int activeTotalQty = activeGroupItems.Sum(i => i.quantity ?? 0);
+                int activeTotalReturned = activeGroupItems.Sum(i => i.returned_quantity ?? 0);
+                bool allFullyReturned = activeTotalReturned >= activeTotalQty && activeTotalQty > 0;
+                bool anyReturned = activeTotalReturned > 0;
+                bool anyPendingReturn = activeGroupItems.Any(i => (i.pending_return_quantity ?? 0) > 0);
 
                 if (allFullyReturned) {
                     steps.Add(new TrackingStep { Name = "Masa Peminjaman", Status = "DONE", CompletedAt = firstItem.returned_at ?? firstItem.updated_at });
@@ -1346,16 +1351,16 @@
                         Name = "Pengembalian",
                         Status = "DONE",
                         CompletedAt = firstItem.returned_at ?? firstItem.updated_at,
-                        SubLabel = $"Semua {totalReturned}/{totalQty} unit dikembalikan"
+                        SubLabel = $"Semua {activeTotalReturned}/{activeTotalQty} unit dikembalikan"
                     });
                 } else if (anyReturned) {
                     string returnLabel;
                     if (partiallyReturnedItems > 0 && fullyReturnedItems > 0) {
-                        returnLabel = $"{fullyReturnedItems} produk selesai, {partiallyReturnedItems} sebagian ({totalReturned}/{totalQty} unit)";
+                        returnLabel = $"{fullyReturnedItems} produk selesai, {partiallyReturnedItems} sebagian ({activeTotalReturned}/{activeTotalQty} unit)";
                     } else if (partiallyReturnedItems > 0) {
-                        returnLabel = $"Sebagian dikembalikan ({totalReturned}/{totalQty} unit)";
+                        returnLabel = $"Sebagian dikembalikan ({activeTotalReturned}/{activeTotalQty} unit)";
                     } else {
-                        returnLabel = $"{fullyReturnedItems}/{totalItems} produk dikembalikan ({totalReturned}/{totalQty} unit)";
+                        returnLabel = $"{fullyReturnedItems}/{totalItemsCount} produk dikembalikan ({activeTotalReturned}/{activeTotalQty} unit)";
                     }
                     steps.Add(new TrackingStep { Name = "Masa Peminjaman", Status = "ACTIVE" });
                     steps.Add(new TrackingStep {

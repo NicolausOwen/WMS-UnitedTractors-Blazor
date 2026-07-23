@@ -363,7 +363,11 @@
                                                         <span class="block text-[10px] font-bold text-[#8a8880] uppercase tracking-wider">Progress Return</span>
                                                         <span class="text-xs font-bold text-[#1a1a1a] flex items-center gap-1.5 mt-1.5">
                                                             <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                                            @(borrowItemsOnly.Count(i => (i.returned_quantity ?? 0) >= (i.quantity ?? 0)))/@(borrowItemsOnly.Count) Item Kembali
+                                                            @{
+                                                                var activeBorrowCard = borrowItemsOnly.Where(i => i.status != WorkflowStatuses.Rejected).ToList();
+                                                                if (!activeBorrowCard.Any()) activeBorrowCard = borrowItemsOnly;
+                                                            }
+                                                            @(activeBorrowCard.Count(i => (i.returned_quantity ?? 0) >= (i.quantity ?? 0)))/@(activeBorrowCard.Count) Item Kembali
                                                         </span>
                                                     </div>
                                                     <div class="bg-[#fafbfc] p-3 rounded-xl border border-[#e5e3dc]/50">
@@ -1374,8 +1378,12 @@
         borrowItemsOnly = groupItems.Where(i => i.request_type == "BORROW").ToList();
         giveawayItemsOnly = groupItems.Where(i => i.request_type == "GIVEAWAY").ToList();
         hasBorrow = borrowItemsOnly.Any();
-        totalItems = hasBorrow ? borrowItemsOnly.Sum(i => i.quantity ?? 0) : groupItems.Sum(i => i.quantity ?? 0);
-        totalReturned = hasBorrow ? borrowItemsOnly.Sum(i => i.returned_quantity ?? 0) : groupItems.Sum(i => i.returned_quantity ?? 0);
+        var activeBorrowVars = borrowItemsOnly.Where(i => i.status != WorkflowStatuses.Rejected).ToList();
+        var activeVars = hasBorrow ? (activeBorrowVars.Any() ? activeBorrowVars : borrowItemsOnly) : groupItems.Where(i => i.status != WorkflowStatuses.Rejected).ToList();
+        if (!activeVars.Any()) activeVars = hasBorrow ? borrowItemsOnly : groupItems;
+
+        totalItems = activeVars.Sum(i => i.quantity ?? 0);
+        totalReturned = activeVars.Sum(i => i.returned_quantity ?? 0);
         allReturned = totalItems > 0 && totalReturned >= totalItems;
         isGiveaway = !hasBorrow;
         status = firstItem.status ?? "";
@@ -2489,12 +2497,17 @@
                 steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE", CompletedAt = firstItem.updated_at });
                 steps.Add(new TrackingStep { Name = "Berita Acara Serah Terima", Status = "DONE", CompletedAt = firstItem.handover_timestamp ?? firstItem.handover_approved_at ?? firstItem.updated_at });
 
-                int fullyReturnedItems = groupItems.Count(i => (i.returned_quantity ?? 0) >= (i.quantity ?? 1) && (i.quantity ?? 0) > 0);
-                int partiallyReturnedItems = groupItems.Count(i => (i.returned_quantity ?? 0) > 0 && (i.returned_quantity ?? 0) < (i.quantity ?? 1));
-                int totalItems = groupItems.Count;
-                bool allFullyReturned = totalReturned >= totalQty && totalQty > 0;
-                bool anyReturned = totalReturned > 0;
-                bool anyPendingReturn = groupItems.Any(i => (i.pending_return_quantity ?? 0) > 0);
+                var activeGroupItems = groupItems.Where(i => i.status != WorkflowStatuses.Rejected).ToList();
+                if (!activeGroupItems.Any()) activeGroupItems = groupItems;
+
+                int fullyReturnedItems = activeGroupItems.Count(i => (i.returned_quantity ?? 0) >= (i.quantity ?? 1) && (i.quantity ?? 0) > 0);
+                int partiallyReturnedItems = activeGroupItems.Count(i => (i.returned_quantity ?? 0) > 0 && (i.returned_quantity ?? 0) < (i.quantity ?? 1));
+                int totalItemsCount = activeGroupItems.Count;
+                int activeTotalQty = activeGroupItems.Sum(i => i.quantity ?? 0);
+                int activeTotalReturned = activeGroupItems.Sum(i => i.returned_quantity ?? 0);
+                bool allFullyReturned = activeTotalReturned >= activeTotalQty && activeTotalQty > 0;
+                bool anyReturned = activeTotalReturned > 0;
+                bool anyPendingReturn = activeGroupItems.Any(i => (i.pending_return_quantity ?? 0) > 0);
 
                 if (allFullyReturned) {
                     steps.Add(new TrackingStep { Name = "Masa Peminjaman", Status = "DONE", CompletedAt = firstItem.returned_at ?? firstItem.updated_at });
@@ -2502,16 +2515,16 @@
                         Name = "Pengembalian",
                         Status = "DONE",
                         CompletedAt = firstItem.returned_at ?? firstItem.updated_at,
-                        SubLabel = $"Semua {totalReturned}/{totalQty} unit dikembalikan"
+                        SubLabel = $"Semua {activeTotalReturned}/{activeTotalQty} unit dikembalikan"
                     });
                 } else if (anyReturned) {
                     string returnLabel;
                     if (partiallyReturnedItems > 0 && fullyReturnedItems > 0) {
-                        returnLabel = $"{fullyReturnedItems} produk selesai, {partiallyReturnedItems} sebagian ({totalReturned}/{totalQty} unit)";
+                        returnLabel = $"{fullyReturnedItems} produk selesai, {partiallyReturnedItems} sebagian ({activeTotalReturned}/{activeTotalQty} unit)";
                     } else if (partiallyReturnedItems > 0) {
-                        returnLabel = $"Sebagian dikembalikan ({totalReturned}/{totalQty} unit)";
+                        returnLabel = $"Sebagian dikembalikan ({activeTotalReturned}/{activeTotalQty} unit)";
                     } else {
-                        returnLabel = $"{fullyReturnedItems}/{totalItems} produk dikembalikan ({totalReturned}/{totalQty} unit)";
+                        returnLabel = $"{fullyReturnedItems}/{totalItemsCount} produk dikembalikan ({activeTotalReturned}/{activeTotalQty} unit)";
                     }
                     steps.Add(new TrackingStep { Name = "Masa Peminjaman", Status = "ACTIVE" });
                     steps.Add(new TrackingStep {
