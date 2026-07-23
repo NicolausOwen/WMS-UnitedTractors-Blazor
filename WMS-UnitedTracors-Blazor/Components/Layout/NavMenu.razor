@@ -198,19 +198,16 @@
         </NavLink>
         <div class="flex items-center gap-2">
             <WMS_UnitedTracors_Blazor.Components.Shared.CartWidget />
-            @if (!IsStaffOrUser)
-            {
-                <button class="ut-topbar-btn w-[34px] h-[34px] rounded-lg border border-[#2a2a2a] hover:border-[#c98d00] bg-none text-[#8a8780] hover:text-[#e8a000] hover:bg-[rgba(232,160,0,0.08)] flex items-center justify-center cursor-pointer transition-colors duration-150" id="utMenuBtn" onclick="utToggleDrawer()" aria-label="Toggle menu">
-                    <svg id="utIconMenu" class="w-5 h-5 stroke-current fill-none stroke-[2]" viewBox="0 0 24 24">
-                        <line x1="3" y1="6" x2="21" y2="6"/>
-                        <line x1="3" y1="12" x2="21" y2="12"/>
-                        <line x1="3" y1="18" x2="21" y2="18"/>
-                    </svg>
-                    <svg id="utIconClose" class="w-5 h-5 stroke-current fill-none stroke-[2]" viewBox="0 0 24 24" style="display:none;">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                </button>
-            }
+            <button class="ut-topbar-btn w-[34px] h-[34px] rounded-lg border border-[#2a2a2a] hover:border-[#c98d00] bg-none text-[#8a8780] hover:text-[#e8a000] hover:bg-[rgba(232,160,0,0.08)] flex items-center justify-center cursor-pointer transition-colors duration-150" id="utMenuBtn" onclick="utToggleDrawer()" aria-label="Toggle menu">
+                <svg id="utIconMenu" class="w-5 h-5 stroke-current fill-none stroke-[2]" viewBox="0 0 24 24">
+                    <line x1="3" y1="6" x2="21" y2="6"/>
+                    <line x1="3" y1="12" x2="21" y2="12"/>
+                    <line x1="3" y1="18" x2="21" y2="18"/>
+                </svg>
+                <svg id="utIconClose" class="w-5 h-5 stroke-current fill-none stroke-[2]" viewBox="0 0 24 24" style="display:none;">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
         </div>
     </div>
 

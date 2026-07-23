@@ -210,7 +210,7 @@ public class DashboardService
                     Badge = "Menunggu Serah Terima",
                     Description = $"Menunggu Staff Inventoris mengunggah bukti serah terima untuk {t.quantity}x {(t.Product != null ? t.Product.name : "")}",
                     Date = t.created_at,
-                    BtnUrl = "Tracking",
+                    BtnUrl = $"/tracking-detail/{t.group_id}",
                     BtnText = "Cek Tracking"
                 });
             }
@@ -224,7 +224,7 @@ public class DashboardService
                     Badge = "Berita Acara Serah Terima",
                     Description = $"Barang telah diserahkan. Harap cek kecocokan fisik untuk {t.quantity}x {(t.Product != null ? t.Product.name : "")}.",
                     Date = t.created_at,
-                    BtnUrl = "Tracking",
+                    BtnUrl = $"/tracking-detail/{t.group_id}",
                     BtnText = "Cek / Return"
                 });
             }
@@ -239,7 +239,7 @@ public class DashboardService
                     Badge = isOverdue ? "Dokumentasi Overdue" : "Menunggu Dokumentasi",
                     Description = $"Unggah bukti dokumentasi foto untuk {t.quantity}x {(t.Product != null ? t.Product.name : "")}",
                     Date = t.created_at,
-                    BtnUrl = "Tracking",
+                    BtnUrl = $"/tracking-detail/{t.group_id}",
                     BtnText = "Upload Foto"
                 });
             }
@@ -253,7 +253,7 @@ public class DashboardService
                     Badge = "Butuh Revisi",
                     Description = $"Revisi request {(t.Product != null ? t.Product.name : "")}. Alasan: {t.rejection_reason}",
                     Date = t.created_at,
-                    BtnUrl = "Tracking",
+                    BtnUrl = $"/tracking-detail/{t.group_id}",
                     BtnText = "Revisi"
                 });
             }
@@ -268,7 +268,7 @@ public class DashboardService
                     Badge = isOverdue ? "Overdue" : "Dipinjam",
                     Description = $"Kembalikan {t.quantity - (t.returned_quantity ?? 0)}x {(t.Product != null ? t.Product.name : "")}. {(t.expected_return_date.HasValue ? "Tenggat: " + t.expected_return_date.Value.ToString("dd MMM yyyy") : "")}",
                     Date = t.created_at,
-                    BtnUrl = "Tracking",
+                    BtnUrl = $"/tracking-detail/{t.group_id}",
                     BtnText = "Kembalikan"
                 });
             }
@@ -298,7 +298,7 @@ public class DashboardService
                     Badge = "Menunggu Approval",
                     Description = $"Persetujuan pengajuan {t.request_type} dari {t.Requester?.name ?? "User"} untuk {t.quantity}x {(t.Product != null ? t.Product.name : "")}",
                     Date = t.created_at,
-                    BtnUrl = "Approvals",
+                    BtnUrl = $"/approval-detail/{t.group_id}",
                     BtnText = "Proses"
                 });
             }
@@ -324,7 +324,7 @@ public class DashboardService
                     Badge = "Butuh Serah Terima",
                     Description = $"Kirim bukti berita acara serah terima untuk {t.quantity}x {(t.Product != null ? t.Product.name : "")} (Penerima: {t.Requester?.name ?? "User"})",
                     Date = t.created_at,
-                    BtnUrl = "Approvals",
+                    BtnUrl = $"/approval-detail/{t.group_id}",
                     BtnText = "Isi Bukti"
                 });
             }
@@ -350,7 +350,7 @@ public class DashboardService
                     Badge = "Disputed",
                     Description = $"User {t.Requester?.name} mengklaim belum menerima {t.quantity}x {(t.Product != null ? t.Product.name : "")}. Alasan: {t.rejection_reason}",
                     Date = t.created_at,
-                    BtnUrl = "Approvals",
+                    BtnUrl = $"/approval-detail/{t.group_id}",
                     BtnText = "Verifikasi"
                 });
             }
@@ -376,7 +376,7 @@ public class DashboardService
                     Badge = "Return Pending",
                     Description = $"Persetujuan pengembalian {t.pending_return_quantity}x {(t.Product != null ? t.Product.name : "")} dari {t.Requester?.name}",
                     Date = t.created_at,
-                    BtnUrl = "Approvals",
+                    BtnUrl = $"/approval-detail/{t.group_id}",
                     BtnText = "Verifikasi Return"
                 });
             }
@@ -406,7 +406,7 @@ public class DashboardService
                     Badge = "Menunggu Approval TL",
                     Description = $"Persetujuan pengajuan {t.request_type} dari {t.Requester?.name ?? "User"} untuk {t.quantity}x {(t.Product != null ? t.Product.name : "")}",
                     Date = t.created_at,
-                    BtnUrl = "Approvals",
+                    BtnUrl = $"/approval-detail/{t.group_id}",
                     BtnText = "Proses"
                 });
             }
@@ -432,7 +432,7 @@ public class DashboardService
                     Badge = "Verifikasi Bukti",
                     Description = $"Verifikasi bukti serah terima untuk {t.quantity}x {(t.Product != null ? t.Product.name : "")} (Penerima: {t.Requester?.name ?? "User"})",
                     Date = t.created_at,
-                    BtnUrl = "Approvals",
+                    BtnUrl = $"/approval-detail/{t.group_id}",
                     BtnText = "Verifikasi"
                 });
             }
@@ -461,7 +461,7 @@ public class DashboardService
                     Badge = "Menunggu Approval Manager",
                     Description = $"Persetujuan pengajuan {t.request_type} dari {t.Requester?.name ?? "User"} untuk {t.quantity}x {(t.Product != null ? t.Product.name : "")}",
                     Date = t.created_at,
-                    BtnUrl = "Approvals",
+                    BtnUrl = $"/approval-detail/{t.group_id}",
                     BtnText = "Proses"
                 });
             }

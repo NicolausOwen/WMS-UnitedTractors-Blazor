@@ -829,8 +829,20 @@
                                                 {
                                                     <div class="bg-white rounded-xl border border-[#e5e3dc] p-4 shadow-sm space-y-3">
                                                         <!-- Name, SKU, Qty -->
-                                                        <div class="flex justify-between items-start gap-2">
-                                                            <div>
+                                                        <div class="flex items-start gap-3">
+                                                            @if (usage.Product != null && !string.IsNullOrEmpty(usage.Product.image))
+                                                            {
+                                                                <div class="w-12 h-12 rounded border border-[#e5e3dc] overflow-hidden shrink-0 bg-white shadow-sm">
+                                                                    <img src="@ImageHelper.Resolve(usage.Product.image)" class="w-full h-full object-cover" />
+                                                                </div>
+                                                            }
+                                                            else if (usage.ProductVariant != null && !string.IsNullOrEmpty(usage.ProductVariant.image))
+                                                            {
+                                                                <div class="w-12 h-12 rounded border border-[#e5e3dc] overflow-hidden shrink-0 bg-white shadow-sm">
+                                                                    <img src="@ImageHelper.Resolve(usage.ProductVariant.image)" class="w-full h-full object-cover" />
+                                                                </div>
+                                                            }
+                                                            <div class="flex-1 min-w-0">
                                                                 <h5 class="text-xs font-bold text-[#1a1a1a]">@(usage.Product?.name ?? "-")</h5>
                                                                 @if(usage.ProductVariant != null) {
                                                                     var variantTexts = new List<string>();

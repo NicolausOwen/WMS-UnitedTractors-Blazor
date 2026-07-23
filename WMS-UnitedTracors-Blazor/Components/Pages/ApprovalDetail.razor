@@ -309,21 +309,20 @@
                             </div>
                         }
                     </div>
-
                     <!-- Bottom Batch Actions -->
-                    <div class="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-2xl flex items-center justify-between shadow-sm">
-                        <span class="text-xs font-bold text-gray-600">@SelectedItems.Count item terpilih</span>
-                        <div class="flex items-center gap-2">
+                    <div class="mt-4 p-2.5 min-[375px]:p-3 bg-gray-50 border border-gray-200 rounded-2xl flex items-center justify-between gap-1 shadow-sm">
+                        <span class="text-[9px] min-[375px]:text-[10px] min-[480px]:text-xs font-bold text-gray-600 shrink-0">@SelectedItems.Count item terpilih</span>
+                        <div class="flex items-center gap-0.5 min-[375px]:gap-1 min-[480px]:gap-3 shrink">
                             <button type="button" @onclick='() => PromptBatchAction("REVISE")' disabled="@(IsProcessing || SelectedItems.Count == 0)"
-                                    class="px-4 py-2 border text-xs font-extrabold rounded-xl transition disabled:opacity-50 @(SelectedItems.Count > 0 ? "border-amber-200 text-amber-600 hover:bg-amber-50 cursor-pointer" : "border-gray-200 text-gray-400 bg-gray-100 cursor-not-allowed")">
+                                    class="px-1 py-1 min-[375px]:px-1.5 min-[375px]:py-1 min-[480px]:px-3 min-[480px]:py-2 text-[8px] min-[375px]:text-[9px] min-[480px]:text-xs font-extrabold border rounded-lg transition disabled:opacity-50 text-center whitespace-nowrap @(SelectedItems.Count > 0 ? "border-amber-200 text-amber-600 hover:bg-amber-50 cursor-pointer" : "border-gray-200 text-gray-400 bg-gray-100 cursor-not-allowed")">
                                 Revisi Terpilih
                             </button>
                             <button type="button" @onclick='() => PromptBatchAction("REJECT")' disabled="@(IsProcessing || SelectedItems.Count == 0)"
-                                    class="px-4 py-2 border text-xs font-extrabold rounded-xl transition disabled:opacity-50 @(SelectedItems.Count > 0 ? "border-red-200 text-red-600 hover:bg-red-50 cursor-pointer" : "border-gray-200 text-gray-400 bg-gray-100 cursor-not-allowed")">
+                                    class="px-1 py-1 min-[375px]:px-1.5 min-[375px]:py-1 min-[480px]:px-3 min-[480px]:py-2 text-[8px] min-[375px]:text-[9px] min-[480px]:text-xs font-extrabold border rounded-lg transition disabled:opacity-50 text-center whitespace-nowrap @(SelectedItems.Count > 0 ? "border-red-200 text-red-600 hover:bg-red-50 cursor-pointer" : "border-gray-200 text-gray-400 bg-gray-100 cursor-not-allowed")">
                                 Tolak Terpilih
                             </button>
                             <button type="button" @onclick='() => PromptBatchAction("APPROVE")' disabled="@(IsProcessing || SelectedItems.Count == 0)"
-                                    class="px-4 py-2 text-xs font-extrabold rounded-xl transition disabled:opacity-50 @(SelectedItems.Count > 0 ? "bg-[#1a7a30] text-white hover:bg-[#16692a] shadow-sm cursor-pointer" : "bg-gray-200 text-gray-400 cursor-not-allowed")">
+                                    class="px-1 py-1.5 min-[375px]:px-1.5 min-[375px]:py-1 min-[480px]:px-3 min-[480px]:py-2 text-[8px] min-[375px]:text-[9px] min-[480px]:text-xs font-extrabold rounded-lg transition disabled:opacity-50 text-center whitespace-nowrap @(SelectedItems.Count > 0 ? "bg-[#1a7a30] text-white hover:bg-[#16692a] shadow-sm cursor-pointer" : "bg-gray-200 text-gray-400 cursor-not-allowed")">
                                 Setujui Terpilih
                             </button>
                         </div>
@@ -663,17 +662,17 @@
                 {
                     steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE", CompletedAt = firstItem.updated_at });
                     steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE", CompletedAt = firstItem.updated_at });
-                    steps.Add(new TrackingStep { Name = "Approval Manager", Status = "WARNING", CompletedAt = firstItem.updated_at });
+                    steps.Add(new TrackingStep { Name = "Approval Manager", Status = "DANGER", CompletedAt = firstItem.updated_at });
                 }
                 else if (isAdmin)
                 {
                     steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE", CompletedAt = firstItem.updated_at });
-                    steps.Add(new TrackingStep { Name = "Approval Admin", Status = "WARNING", CompletedAt = firstItem.updated_at });
+                    steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DANGER", CompletedAt = firstItem.updated_at });
                     steps.Add(new TrackingStep { Name = "Approval Manager", Status = "PENDING" });
                 }
                 else
                 {
-                    steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "WARNING", CompletedAt = firstItem.updated_at });
+                    steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DANGER", CompletedAt = firstItem.updated_at });
                     steps.Add(new TrackingStep { Name = "Approval Admin", Status = "PENDING" });
                     steps.Add(new TrackingStep { Name = "Approval Manager", Status = "PENDING" });
                 }
@@ -728,11 +727,11 @@
                 if (isAdmin)
                 {
                     steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE", CompletedAt = firstItem.updated_at });
-                    steps.Add(new TrackingStep { Name = "Approval Admin", Status = "WARNING", CompletedAt = firstItem.updated_at });
+                    steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DANGER", CompletedAt = firstItem.updated_at });
                 }
                 else
                 {
-                    steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "WARNING", CompletedAt = firstItem.updated_at });
+                    steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DANGER", CompletedAt = firstItem.updated_at });
                     steps.Add(new TrackingStep { Name = "Approval Admin", Status = "PENDING" });
                 }
                 steps.Add(new TrackingStep { Name = "Berita Acara Serah Terima", Status = "PENDING" });
