@@ -177,6 +177,8 @@
                     // Tombol upload hanya saat menunggu bukti dari user (WAITING_HANDOVER), bukan saat menunggu verifikasi admin.
                     var canHandover = false; // Hanya SI yang bisa mengunggah bukti serah terima melalui Dashboard Approval
                     var isWaitingUserConfirm = hasBorrow && borrowItemsOnly.Any(i =>
+                        i.status != WorkflowStatuses.Rejected &&
+                        (i.returned_quantity ?? 0) < (i.quantity ?? 0) &&
                         (i.status == "WAITING_HANDOVER_CONFIRM" ||
                          (i.status == "APPROVED" && i.handover_timestamp.HasValue && (WibHelper.Now - i.handover_timestamp.Value).TotalHours < 24)) &&
                         (i.handover_uploaded_by == "SI" || string.IsNullOrEmpty(i.handover_uploaded_by)));

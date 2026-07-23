@@ -1054,7 +1054,8 @@ public class TransactionService
     {
         using var _context = _factory.CreateDbContext();
         var transaction = await _context.Transactions.Include(t => t.Product).Include(t => t.Requester).FirstOrDefaultAsync(t => t.id == id);
-        if (transaction == null || !WorkflowStatuses.IsRevision(transaction.status)) return "Request is not in revision state.";
+        if (transaction == null || (!WorkflowStatuses.IsRevision(transaction.status) && !(transaction.status == "REJECTED" && !string.IsNullOrEmpty(transaction.last_revision_stage)))) 
+            return "Request is not in revision state.";
 
         int newQty = model.quantity ?? transaction.quantity ?? 0;
         string newRequestType = model.request_type ?? transaction.request_type ?? "BORROW";
@@ -1140,9 +1141,12 @@ public class TransactionService
 
         // Update shared fields and status for all items in the same group
         string groupId = transaction.group_id;
-        var groupItems = await _context.Transactions
-            .Where(t => (t.group_id == groupId || (t.created_at == transaction.created_at && t.requester_id == transaction.requester_id)) && t.id != transaction.id)
+        var candidateGroupItems = await _context.Transactions
+            .Where(t => t.requester_id == transaction.requester_id && t.id != transaction.id)
             .ToListAsync();
+        var groupItems = candidateGroupItems
+            .Where(t => t.group_id == groupId || t.created_at == transaction.created_at)
+            .ToList();
 
         foreach (var item in groupItems)
         {
@@ -1153,7 +1157,7 @@ public class TransactionService
             item.division_id = model.division_id ?? item.division_id;
             item.documentation_link = model.documentation_link;
 
-            if (WorkflowStatuses.IsRevision(item.status) || item.status == WorkflowStatuses.Rejected)
+            if (WorkflowStatuses.IsRevision(item.status))
             {
                 item.status = newResubmittedStatus;
                 item.rejection_reason = null;
@@ -1197,67 +1201,57 @@ public class TransactionService
             .Include(t => t.Product)
             .Include(t => t.Requester)
             .FirstOrDefaultAsync(t => t.id == id);
-        if (transaction == null || !WorkflowStatuses.IsRevision(transaction.status)) return "Request is not in revision state.";
+        if (transaction == null) return "Transaction not found.";
 
-        var groupTransactions = await _context.Transactions
-            .Include(t => t.Product)
-            .Include(t => t.Requester)
-            .Where(t => t.group_id == transaction.group_id && WorkflowStatuses.IsRevision(t.status))
-            .ToListAsync();
+        if (transaction.status == WorkflowStatuses.Rejected && string.IsNullOrEmpty(transaction.last_revision_stage))
+            return null;
 
-        if (!groupTransactions.Any())
+        var product = transaction.Product;
+        var requester = transaction.Requester;
+        int qty = transaction.quantity ?? 0;
+
+        if (product != null && qty > 0)
         {
-            groupTransactions = new List<Transaction> { transaction };
-        }
+            int stockBefore = product.current_stock;
+            product.current_stock += qty;
+            _context.Products.Update(product);
 
-        foreach (var tx in groupTransactions)
-        {
-            var product = tx.Product;
-            var requester = tx.Requester;
-            int qty = tx.quantity ?? 0;
-
-            if (product != null && qty > 0)
+            _context.StockLogs.Add(new StockLog
             {
-                int stockBefore = product.current_stock;
-                product.current_stock += qty;
-                _context.Products.Update(product);
+                transaction_id = transaction.id,
+                product_id = product.id,
+                stock_before = stockBefore,
+                stock_after = product.current_stock,
+                created_at = DateTime.UtcNow,
+                updated_at = DateTime.UtcNow
+            });
 
-                _context.StockLogs.Add(new StockLog
+            if (transaction.product_variant_id.HasValue)
+            {
+                var variant = await _context.ProductVariants.FindAsync(transaction.product_variant_id.Value);
+                if (variant != null)
                 {
-                    transaction_id = tx.id,
-                    product_id = product.id,
-                    stock_before = stockBefore,
-                    stock_after = product.current_stock,
-                    created_at = DateTime.UtcNow,
-                    updated_at = DateTime.UtcNow
-                });
-
-                if (tx.product_variant_id.HasValue)
-                {
-                    var variant = await _context.ProductVariants.FindAsync(tx.product_variant_id.Value);
-                    if (variant != null)
-                    {
-                        variant.stock += qty;
-                        _context.ProductVariants.Update(variant);
-                    }
+                    variant.stock += qty;
+                    _context.ProductVariants.Update(variant);
                 }
             }
-
-            if (tx.request_type == "GIVEAWAY" && requester != null && product != null)
-            {
-                int pointsToRefund = product.value * qty;
-                if (pointsToRefund > 0)
-                {
-                    requester.poin += pointsToRefund;
-                    _context.Users.Update(requester);
-                }
-            }
-
-            tx.status = WorkflowStatuses.Rejected;
-            tx.rejection_reason = "Batal Meminjam (Dibatalkan oleh pemohon)";
-            tx.updated_at = DateTime.UtcNow;
-            _context.Transactions.Update(tx);
         }
+
+        if (transaction.request_type == "GIVEAWAY" && requester != null && product != null)
+        {
+            int pointsToRefund = product.value * qty;
+            if (pointsToRefund > 0)
+            {
+                requester.poin += pointsToRefund;
+                _context.Users.Update(requester);
+            }
+        }
+
+        transaction.status = WorkflowStatuses.Rejected;
+        transaction.rejection_reason = "Dibatalkan oleh pemohon";
+        transaction.last_revision_stage = null;
+        transaction.updated_at = DateTime.UtcNow;
+        _context.Transactions.Update(transaction);
 
         await _context.SaveChangesAsync();
         return null;
@@ -1343,7 +1337,20 @@ public class TransactionService
             .Include(t => t.Division)
             .ToListAsync();
 
-        return allTransactions.Where(t => t.group_id == groupId).ToList();
+        var matched = allTransactions.Where(t => string.Equals(t.group_id, groupId, StringComparison.OrdinalIgnoreCase)).ToList();
+        if (!matched.Any())
+        {
+            if (int.TryParse(groupId, out int txId))
+            {
+                var target = allTransactions.FirstOrDefault(t => t.id == txId);
+                if (target != null)
+                {
+                    matched = allTransactions.Where(t => t.requester_id == target.requester_id && t.created_at == target.created_at).ToList();
+                }
+            }
+        }
+
+        return matched;
     }
 
     public async Task<string?> SubmitHandoverBatchAsync(string groupId, string? photoPath, string? notes)

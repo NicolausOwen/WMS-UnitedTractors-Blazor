@@ -7,6 +7,7 @@ using UT_WMSDotnet.Models;
 using System;
 using System.Collections.Generic;
 using System.Text.Json;
+using WMS_UnitedTracors_Blazor.Helpers;
 
 namespace WMS_UnitedTracors_Blazor.Services
 {
@@ -19,6 +20,7 @@ namespace WMS_UnitedTracors_Blazor.Services
 
         public byte[] GenerateReceiptRequest(List<Transaction> items, string wwwrootPath)
         {
+            if (items == null || !items.Any()) return Array.Empty<byte>();
             var firstItem = items.First();
             string title = "Form Permintaan Pengadaan / Pengeluaran Material";
             return GenerateDocument(items, firstItem, title, wwwrootPath,
@@ -35,9 +37,12 @@ namespace WMS_UnitedTracors_Blazor.Services
 
         public byte[] GenerateReceiptApproval(List<Transaction> items, string wwwrootPath)
         {
-            var firstItem = items.First();
+            if (items == null || !items.Any()) return Array.Empty<byte>();
+            var validItems = items.Where(i => i.status != WorkflowStatuses.Rejected).ToList();
+            var displayItems = validItems.Any() ? validItems : items;
+            var firstItem = displayItems.First();
             string title = "Form Persetujuan Pengeluaran Material";
-            return GenerateDocument(items, firstItem, title, wwwrootPath,
+            return GenerateDocument(displayItems, firstItem, title, wwwrootPath,
                 sig1Title: "Diketahui",
                 sig1Name: "Ilona Kirana Saradella",
                 sig1Role: "Team Leader KM & Infrastructure",
@@ -51,9 +56,12 @@ namespace WMS_UnitedTracors_Blazor.Services
 
         public byte[] GenerateReceiptHandover(List<Transaction> items, string wwwrootPath)
         {
-            var firstItem = items.First();
+            if (items == null || !items.Any()) return Array.Empty<byte>();
+            var validItems = items.Where(i => i.status != WorkflowStatuses.Rejected).ToList();
+            var displayItems = validItems.Any() ? validItems : items;
+            var firstItem = displayItems.First();
             string title = firstItem.request_type == "GIVEAWAY" ? "Form Penyerahan Souvenir CorpU" : "Form Penyerahan Peminjaman Barang CorpU";
-            return GenerateDocument(items, firstItem, title, wwwrootPath,
+            return GenerateDocument(displayItems, firstItem, title, wwwrootPath,
                 sig1Title: "Yang Menyerahkan",
                 sig1Name: "Ilona Kirana Saradella",
                 sig1Role: "Admin CorpU",
@@ -63,15 +71,18 @@ namespace WMS_UnitedTracors_Blazor.Services
                 sig3Title: "Penerima",
                 sig3Name: !string.IsNullOrEmpty(firstItem.applicant_name) ? firstItem.applicant_name : (firstItem.Requester?.name ?? "-"),
                 sig3Role: "Associate CorpU",
-                proofImagePaths: ResolveProofImagePaths(firstItem.handover_photo, wwwrootPath),
+                proofImagePaths: ResolveProofImagePathsForItems(displayItems, i => i.handover_photo, wwwrootPath),
                 proofLabel: "Bukti Serah Terima");
         }
 
         public byte[] GenerateReceiptDocumentation(List<Transaction> items, string wwwrootPath)
         {
-            var firstItem = items.First();
+            if (items == null || !items.Any()) return Array.Empty<byte>();
+            var validItems = items.Where(i => i.status != WorkflowStatuses.Rejected).ToList();
+            var displayItems = validItems.Any() ? validItems : items;
+            var firstItem = displayItems.First();
             string title = "Form Dokumentasi Giveaway CorpU";
-            return GenerateDocument(items, firstItem, title, wwwrootPath,
+            return GenerateDocument(displayItems, firstItem, title, wwwrootPath,
                 sig1Title: "Pemohon",
                 sig1Name: !string.IsNullOrEmpty(firstItem.applicant_name) ? firstItem.applicant_name : (firstItem.Requester?.name ?? "-"),
                 sig1Role: "Associate CorpU",
@@ -81,15 +92,18 @@ namespace WMS_UnitedTracors_Blazor.Services
                 sig3Title: "Arsip CorpU",
                 sig3Name: "Ahmad Anwari",
                 sig3Role: "CorpU Dept Head",
-                proofImagePaths: ResolveProofImagePaths(firstItem.documentation_photo, wwwrootPath),
+                proofImagePaths: ResolveProofImagePathsForItems(displayItems, i => i.documentation_photo, wwwrootPath),
                 proofLabel: "Bukti Dokumentasi");
         }
 
         public byte[] GenerateReceipt(List<Transaction> items, string wwwrootPath)
         {
-            var firstItem = items.First();
+            if (items == null || !items.Any()) return Array.Empty<byte>();
+            var validItems = items.Where(i => i.status != WorkflowStatuses.Rejected).ToList();
+            var displayItems = validItems.Any() ? validItems : items;
+            var firstItem = displayItems.First();
             string title = "Tanda Terima Peminjaman Barang";
-            return GenerateDocument(items, firstItem, title, wwwrootPath,
+            return GenerateDocument(displayItems, firstItem, title, wwwrootPath,
                 sig1Title: "Yang Menyerahkan",
                 sig1Name: "Admin CorpU",
                 sig1Role: "",
@@ -103,9 +117,12 @@ namespace WMS_UnitedTracors_Blazor.Services
 
         public byte[] GenerateReturnReceipt(List<Transaction> items, string wwwrootPath)
         {
-            var firstItem = items.First();
+            if (items == null || !items.Any()) return Array.Empty<byte>();
+            var validItems = items.Where(i => i.status != WorkflowStatuses.Rejected).ToList();
+            var displayItems = validItems.Any() ? validItems : items;
+            var firstItem = displayItems.First();
             string title = "Berita Acara Pengembalian Barang";
-            return GenerateDocument(items, firstItem, title, wwwrootPath,
+            return GenerateDocument(displayItems, firstItem, title, wwwrootPath,
                 sig1Title: "Yang Mengembalikan",
                 sig1Name: !string.IsNullOrEmpty(firstItem.applicant_name) ? firstItem.applicant_name : (firstItem.Requester?.name ?? "-"),
                 sig1Role: "Associate CorpU",
@@ -115,8 +132,26 @@ namespace WMS_UnitedTracors_Blazor.Services
                 sig3Title: "Yang Menerima",
                 sig3Name: "Ilona Kirana Saradella",
                 sig3Role: "Admin CorpU",
-                proofImagePaths: ResolveProofImagePaths(firstItem.return_photo, wwwrootPath),
+                proofImagePaths: ResolveProofImagePathsForItems(displayItems, i => i.return_photo, wwwrootPath),
                 proofLabel: "Bukti Pengembalian");
+        }
+
+        private static List<string> ResolveProofImagePathsForItems(IEnumerable<Transaction> items, Func<Transaction, string?> selector, string wwwrootPath)
+        {
+            var paths = new List<string>();
+            foreach (var item in items)
+            {
+                var rawStr = selector(item);
+                if (!string.IsNullOrWhiteSpace(rawStr))
+                {
+                    var resolved = ResolveProofImagePaths(rawStr, wwwrootPath);
+                    foreach (var p in resolved)
+                    {
+                        if (!paths.Contains(p)) paths.Add(p);
+                    }
+                }
+            }
+            return paths;
         }
 
         // Resolve list path foto bukti ke path fisik
@@ -145,11 +180,13 @@ namespace WMS_UnitedTracors_Blazor.Services
             {
                 var rel = item.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
                 string full;
+                string? subPath = null;
+
                 if (rel.StartsWith("storage" + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) || 
                     rel.Equals("storage", StringComparison.OrdinalIgnoreCase))
                 {
-                    var appRoot = Directory.GetParent(wwwrootPath.TrimEnd(Path.DirectorySeparatorChar))?.FullName ?? string.Empty;
-                    var subPath = rel.Substring("storage".Length).TrimStart(Path.DirectorySeparatorChar);
+                    var appRoot = Directory.GetParent(wwwrootPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar))?.FullName ?? string.Empty;
+                    subPath = rel.Substring("storage".Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
                     full = Path.Combine(appRoot, "Storage", subPath);
                 }
                 else
@@ -157,10 +194,26 @@ namespace WMS_UnitedTracors_Blazor.Services
                     full = Path.Combine(wwwrootPath, rel);
                 }
 
-                var ext = Path.GetExtension(full).ToLowerInvariant();
-                if ((ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".webp") && File.Exists(full))
+                string targetPath = "";
+                if (File.Exists(full))
                 {
-                    result.Add(full);
+                    targetPath = full;
+                }
+                else
+                {
+                    var fb1 = Path.Combine(wwwrootPath, "storage", subPath ?? "");
+                    var fb2 = Path.Combine(wwwrootPath, rel);
+                    if (File.Exists(fb1)) targetPath = fb1;
+                    else if (File.Exists(fb2)) targetPath = fb2;
+                }
+
+                if (!string.IsNullOrEmpty(targetPath))
+                {
+                    var ext = Path.GetExtension(targetPath).ToLowerInvariant();
+                    if (ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".webp")
+                    {
+                        if (!result.Contains(targetPath)) result.Add(targetPath);
+                    }
                 }
             }
 
@@ -297,7 +350,7 @@ namespace WMS_UnitedTracors_Blazor.Services
                         }
 
                         // Foot border & Signatures aligned flush to bottom
-                        column.Item().AlignBottom().Column(bottomCol =>
+                        column.Item().ExtendVertical().AlignBottom().Column(bottomCol =>
                         {
                             bottomCol.Item().LineHorizontal(1.5f).LineColor(Colors.Black);
                             bottomCol.Item().Row(row =>
