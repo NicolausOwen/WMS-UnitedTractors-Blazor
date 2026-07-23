@@ -1,0 +1,308 @@
+@page "/User/Edit/{Id:int}"
+@using UT_WMSDotnet.Models
+@using UT_WMSDotnet.ViewModels
+@using WMS_UnitedTracors_Blazor.Services
+@using System.Security.Claims
+@inject UserService UserService
+@inject DivisionService DivisionService
+@inject CategoryService CategoryService
+@inject AdminRoleService AdminRoleService
+@inject NavigationManager Navigation
+@inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthStateProvider
+@rendermode InteractiveServer
+
+<PageTitle>WMS - Edit User</PageTitle>
+
+<WMS_UnitedTracors_Blazor.Components.Shared.LoadingOverlay IsVisible="IsSubmitting" Message="Menyimpan perubahan akun pengguna..." SubMessage="Mohon tunggu sebentar..." />
+
+<div class="py-8 min-h-screen">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        @* Back Link / Breadcrumbs *@
+        <div class="mb-4">
+            <button type="button" @onclick="GoBack" class="inline-flex items-center gap-1 text-xs font-bold text-gray-500 hover:text-gray-800 transition bg-transparent border-none cursor-pointer">
+                <svg class="w-4 h-4 stroke-current fill-none stroke-[2]" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                Back to User List
+            </button>
+        </div>
+
+        @if (!string.IsNullOrEmpty(ErrorMessage))
+        {
+            <div class="mb-6 flex items-center gap-3 bg-[#fef0f0] border border-[#f8c0c0] text-[#d94040] px-4 py-3 rounded-lg text-sm" role="alert">
+                <svg class="w-4 h-4 shrink-0 text-[#d94040]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                @ErrorMessage
+            </div>
+        }
+
+        @if (IsLoading)
+        {
+            <div class="bg-white rounded-xl border border-[#e5e3dc] p-12 text-center shadow-sm">
+                <p class="text-gray-500 text-sm">Loading user details...</p>
+            </div>
+        }
+        else if (TargetUser == null)
+        {
+            <div class="bg-white rounded-xl border border-[#e5e3dc] p-12 text-center shadow-sm">
+                <h3 class="text-lg font-bold text-[#d94040]">User Not Found</h3>
+                <p class="text-xs text-gray-500 mt-2">The requested user ID does not exist or has been removed.</p>
+            </div>
+        }
+        else
+        {
+            <div class="bg-white rounded-xl border border-[#e5e3dc] shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-[#f0ede5] bg-[#faf9f5] flex justify-between items-center">
+                    <div>
+                        <h3 class="text-sm font-bold text-[#1a1a1a] font-syne">Edit User: @TargetUser.name</h3>
+                        <p class="text-[0.72rem] text-[#8a8880] mt-0.5">Update user information, credentials, role, and category scope assignment.</p>
+                    </div>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#f5f4f0] border border-[#e5e3dc] text-gray-700">
+                        ID: #@TargetUser.id
+                    </span>
+                </div>
+                
+                <form @onsubmit="UpdateUser" class="p-6 space-y-6">
+                    
+                    @* Section 1: Account Details *@
+                    <div>
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-[#8a8880] mb-3 pb-2 border-b border-[#f0ede5]">Informasi Akun</h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Full Name <span class="text-red-500">*</span></label>
+                                <input type="text" @bind="EditModel.name" required
+                                       class="block w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
+                            </div>
+                            <div>
+                                <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Email Address <span class="text-red-500">*</span></label>
+                                <input type="email" @bind="EditModel.email" required
+                                       class="block w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
+                            </div>
+                            <div>
+                                <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">NRP <span class="text-gray-400 font-normal font-sans">(Optional)</span></label>
+                                <input type="text" @bind="EditModel.nrp"
+                                       class="block w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
+                            </div>
+                            <div>
+                                <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">New Password <span class="text-gray-400 font-normal font-sans">(Kosongkan jika tidak diubah)</span></label>
+                                <input type="password" @bind="EditPassword" placeholder="New Password"
+                                       class="block w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
+                            </div>
+                            <div>
+                                <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Poin</label>
+                                <input type="number" @bind="EditModel.poin" placeholder="Poin"
+                                       class="block w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
+                            </div>
+                        </div>
+                    </div>
+
+                    @* Section 2: Role, Division & Category Scope *@
+                    <div>
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-[#8a8880] mb-3 pb-2 border-b border-[#f0ede5]">Organisasi & Hak Akses</h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Division <span class="text-red-500">*</span></label>
+                                <select @bind="EditModel.division_id" class="block w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
+                                    <option value="">-- No Division --</option>
+                                    @if (DivisionsList != null)
+                                    {
+                                        foreach (var division in DivisionsList)
+                                        {
+                                            <option value="@(division.Id)">@(division.Name)</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Role <span class="text-red-500">*</span></label>
+                                <select @bind="EditModel.role" required class="block w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
+                                    @if (!string.IsNullOrEmpty(EditModel.role) && !RoleNames.Contains(EditModel.role))
+                                    {
+                                        <option value="@EditModel.role">@EditModel.role (legacy)</option>
+                                    }
+                                    @foreach (var r in RoleNames)
+                                    {
+                                        <option value="@r">@r</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="sm:col-span-2">
+                                <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Category Scope (Akses Kategori)</label>
+                                <div class="bg-[#faf9f5] border border-[#e5e3dc] rounded-xl p-4 space-y-2">
+                                    <label class="flex items-center gap-2.5 cursor-pointer text-xs text-gray-800 font-bold">
+                                        <input type="checkbox" checked="@(EditCategoryIds.Contains(0))" @onchange="@(e => ToggleCategory(0, e.Value))" class="rounded border-gray-300 text-[#e8a000] focus:ring-[#e8a000]" />
+                                        <span>All Categories (Global)</span>
+                                    </label>
+                                    <p class="text-[0.68rem] text-gray-500 mb-2">Pilih "All Categories" jika user memiliki akses penuh ke seluruh kategori produk.</p>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 max-h-48 overflow-y-auto pt-2 border-t border-[#e5e3dc]">
+                                        @if (CategoriesList != null)
+                                        {
+                                            foreach (var cat in CategoriesList)
+                                            {
+                                                <label class="flex items-center gap-2 cursor-pointer text-xs text-gray-700 select-none @(EditCategoryIds.Contains(0) ? "opacity-50" : "")">
+                                                    <input type="checkbox" checked="@(EditCategoryIds.Contains(cat.Id))" @onchange="@(e => ToggleCategory(cat.Id, e.Value))" disabled="@(EditCategoryIds.Contains(0))" class="rounded border-gray-300 text-[#e8a000] focus:ring-[#e8a000] disabled:opacity-50" />
+                                                    <span>@cat.Name</span>
+                                                </label>
+                                            }
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    @* Action Buttons *@
+                    <div class="flex items-center justify-end gap-3 pt-4 border-t border-[#f0ede5]">
+                        <button type="button" @onclick="GoBack" class="px-4 py-2 bg-white border border-[#e5e3dc] hover:bg-[#f0ede5] text-[#3a3835] text-xs font-bold rounded-lg transition cursor-pointer">
+                            Cancel
+                        </button>
+                        <button type="submit" class="px-5 py-2 bg-[#e8a000] hover:bg-[#d49300] text-[#1a1a1a] text-xs font-bold rounded-lg transition active:scale-95 cursor-pointer shadow-sm">
+                            Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private User? TargetUser;
+    private UserUpdateViewModel EditModel = new();
+    private List<DivisionDto>? DivisionsList;
+    private List<CategoryDto>? CategoriesList;
+    private List<string> RoleNames = new();
+    private List<int> EditCategoryIds = new() { 0 };
+    private string? EditPassword;
+
+    private string? ErrorMessage;
+    private bool IsLoading = true;
+    private bool IsSubmitting = false;
+
+    private int CurrentUserId = 0;
+    private string? UserRole;
+    private string CurrentUsername = "System";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity != null && user.Identity.IsAuthenticated)
+        {
+            if (int.TryParse(user.FindFirst(ClaimTypes.NameIdentifier)?.Value, out int id))
+                CurrentUserId = id;
+            UserRole = user.FindFirst(ClaimTypes.Role)?.Value;
+            CurrentUsername = user.FindFirst(ClaimTypes.Name)?.Value ?? "System";
+        }
+
+        if (!user.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.UsersManage))
+        {
+            Navigation.NavigateTo("/User");
+            return;
+        }
+
+        var divsResult = await DivisionService.GetDivisionsAsync(1, 100);
+        DivisionsList = divsResult.Divisions;
+
+        var catsResult = await CategoryService.GetCategoriesAsync(1, 1000);
+        CategoriesList = catsResult.Categories;
+
+        RoleNames = await AdminRoleService.GetActiveRoleNamesAsync();
+
+        await LoadUserData();
+    }
+
+    private async Task LoadUserData()
+    {
+        IsLoading = true;
+        TargetUser = await UserService.GetUserByIdAsync(Id);
+
+        if (TargetUser != null)
+        {
+            EditModel = new UserUpdateViewModel
+            {
+                name = TargetUser.name ?? "",
+                email = TargetUser.email ?? "",
+                nrp = TargetUser.nrp,
+                poin = TargetUser.poin,
+                role = TargetUser.role ?? (RoleNames.Count > 0 ? RoleNames[0] : "User"),
+                division_id = TargetUser.division_id
+            };
+            EditCategoryIds = await AdminRoleService.GetUserCategoryAssignmentsAsync(TargetUser.id);
+        }
+
+        IsLoading = false;
+    }
+
+    private void ToggleCategory(int categoryId, object? isCheckedObj)
+    {
+        bool isChecked = isCheckedObj is bool b && b;
+        if (categoryId == 0)
+        {
+            if (isChecked)
+            {
+                EditCategoryIds.Clear();
+                EditCategoryIds.Add(0);
+            }
+            else
+            {
+                EditCategoryIds.Remove(0);
+            }
+        }
+        else
+        {
+            if (isChecked)
+            {
+                EditCategoryIds.Remove(0);
+                if (!EditCategoryIds.Contains(categoryId))
+                    EditCategoryIds.Add(categoryId);
+            }
+            else
+            {
+                EditCategoryIds.Remove(categoryId);
+            }
+        }
+    }
+
+    private async Task UpdateUser()
+    {
+        if (string.IsNullOrWhiteSpace(EditModel.name) || string.IsNullOrWhiteSpace(EditModel.email))
+        {
+            ErrorMessage = "Nama dan Email wajib diisi.";
+            return;
+        }
+
+        ErrorMessage = null;
+        IsSubmitting = true;
+
+        try
+        {
+            EditModel.password = EditPassword;
+            var error = await UserService.UpdateUserAsync(Id, EditModel, CurrentUserId, UserRole);
+            if (error != null)
+            {
+                ErrorMessage = error;
+            }
+            else
+            {
+                await AdminRoleService.SaveUserCategoryAssignmentsAsync(Id, EditModel.role, EditCategoryIds, CurrentUsername);
+                Navigation.NavigateTo("/User");
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Gagal memperbarui user: " + ex.Message;
+        }
+        finally
+        {
+            IsSubmitting = false;
+        }
+    }
+
+    private void GoBack()
+    {
+        Navigation.NavigateTo("/User");
+    }
+}

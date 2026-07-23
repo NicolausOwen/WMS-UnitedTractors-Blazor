@@ -374,7 +374,7 @@ public class ApprovalService
         transaction.updated_at = DateTime.UtcNow;
         transaction.last_revision_stage = null;
 
-        ApplyStageNotes(transaction, stageBefore, rejectionReason);
+        ApplyStageNotes(transaction, stageBefore, rejectionReason, currentUserId);
 
         if (transaction.type == "OUT" && transaction.Product != null)
         {
@@ -533,7 +533,7 @@ public class ApprovalService
         transaction.updated_at = DateTime.UtcNow;
         transaction.last_revision_stage = WorkflowStatuses.GetRevisionStage(transaction.status);
 
-        ApplyStageNotes(transaction, stageBefore, revisionReason);
+        ApplyStageNotes(transaction, stageBefore, revisionReason, currentUserId);
 
         _context.Transactions.Update(transaction);
         await _context.SaveChangesAsync();
@@ -1133,13 +1133,22 @@ public class ApprovalService
             _ => WorkflowStatuses.Revision
         };
 
-    private static void ApplyStageNotes(Transaction t, string? stageBefore, string? notes)
+    private static void ApplyStageNotes(Transaction t, string? stageBefore, string? notes, int? approverId = null)
     {
         switch (stageBefore)
         {
-            case WorkflowStatuses.PendingStaffInventory: t.staff_inventory_notes = notes; break;
-            case WorkflowStatuses.PendingManager: t.manager_notes = notes; break;
-            default: t.admin_notes = notes; break; // PendingAdmin / legacy Pending
+            case WorkflowStatuses.PendingStaffInventory: 
+                t.staff_inventory_notes = notes; 
+                if (approverId.HasValue) t.staff_inventory_approver_id = approverId;
+                break;
+            case WorkflowStatuses.PendingManager: 
+                t.manager_notes = notes; 
+                if (approverId.HasValue) t.manager_approver_id = approverId;
+                break;
+            default: 
+                t.admin_notes = notes; 
+                if (approverId.HasValue) t.admin_approver_id = approverId;
+                break; // PendingAdmin / legacy Pending
         }
     }
 

@@ -2,10 +2,8 @@
 @using UT_WMSDotnet.ViewModels
 @using WMS_UnitedTracors_Blazor.Services
 @inject AdminRoleService AdminRoleService
-@inject CategoryService CategoryService
 @inject NavigationManager Navigation
 @inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthStateProvider
-@inject IJSRuntime JSRuntime
 @rendermode InteractiveServer
 
 <PageTitle>WMS - Role Admin Details</PageTitle>
@@ -39,134 +37,79 @@
         {
             <div class="space-y-6">
                 
-                @* Top Section: Role Info & Assign Form *@
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    
-                    @* Details Card *@
-                    <div class="bg-white rounded-xl border border-[#e5e3dc] shadow-sm overflow-hidden flex flex-col">
-                        <div class="px-6 py-4 border-b border-[#f0ede5] bg-[#faf9f5]">
-                            <h3 class="text-sm font-bold text-[#1a1a1a] font-syne">Role Configuration</h3>
-                            <p class="text-[0.72rem] text-[#8a8880] mt-0.5">Specifications of this role configuration.</p>
-                        </div>
-                        <div class="p-6 space-y-4 text-xs flex-1">
+                @* Top Section: Role Configuration Info *@
+                <div class="bg-white rounded-xl border border-[#e5e3dc] shadow-sm overflow-hidden flex flex-col">
+                    <div class="px-6 py-4 border-b border-[#f0ede5] bg-[#faf9f5]">
+                        <h3 class="text-sm font-bold text-[#1a1a1a] font-syne">Role Configuration</h3>
+                        <p class="text-[0.72rem] text-[#8a8880] mt-0.5">Specifications of this role configuration.</p>
+                    </div>
+                    <div class="p-6 space-y-4 text-xs">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <span class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-0.5">Role Name</span>
                                 <span class="font-bold text-sm text-gray-900">@Role.RoleName</span>
                             </div>
-                            
                             <div>
                                 <span class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-0.5">Description</span>
                                 <p class="text-gray-700 leading-relaxed">@(Role.Description ?? "No description provided.")</p>
                             </div>
+                        </div>
 
-                            <div class="flex justify-between items-center py-2 border-y border-[#f0ede5]">
-                                <div>
-                                    <span class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-0.5">Status</span>
-                                    @if (Role.IsActive)
-                                    {
-                                        <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-bold bg-[#eef9f0] border border-[#b8e8c0] text-[#1a7a30] text-[10px]">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-[#1a7a30]"></span> Active
-                                        </span>
-                                    }
-                                    else
-                                    {
-                                        <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-bold bg-[#fef0f0] border border-[#f8c0c0] text-[#d94040] text-[10px]">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-[#d94040]"></span> Inactive
-                                        </span>
-                                    }
-                                </div>
-                                <div class="text-right">
-                                    <span class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-0.5">Total Users</span>
-                                    <span class="font-bold text-gray-900 text-sm">@Role.TotalUser</span>
-                                </div>
+                        <div class="flex justify-between items-center py-2 border-y border-[#f0ede5]">
+                            <div>
+                                <span class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-0.5">Status</span>
+                                @if (Role.IsActive)
+                                {
+                                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-bold bg-[#eef9f0] border border-[#b8e8c0] text-[#1a7a30] text-[10px]">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-[#1a7a30]"></span> Active
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-bold bg-[#fef0f0] border border-[#f8c0c0] text-[#d94040] text-[10px]">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-[#d94040]"></span> Inactive
+                                    </span>
+                                }
                             </div>
+                            <div class="text-right">
+                                <span class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-0.5">Total Users</span>
+                                <span class="font-bold text-gray-900 text-sm">@Role.TotalUser</span>
+                            </div>
+                        </div>
 
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <span class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880]">Created Date</span>
-                                    <span class="text-gray-600 font-medium">@Role.CreatedAt.ToLocalTime().ToString("dd MMM yyyy, HH:mm")</span>
-                                    <span class="block text-[10px] text-gray-400">by @(Role.CreatedBy ?? "System")</span>
-                                </div>
-                                <div>
-                                    <span class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880]">Updated Date</span>
-                                    <span class="text-gray-600 font-medium">@Role.UpdatedAt.ToLocalTime().ToString("dd MMM yyyy, HH:mm")</span>
-                                    <span class="block text-[10px] text-gray-400">by @(Role.UpdatedBy ?? "System")</span>
-                                </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <span class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880]">Created Date</span>
+                                <span class="text-gray-600 font-medium">@Role.CreatedAt.ToLocalTime().ToString("dd MMM yyyy, HH:mm")</span>
+                                <span class="block text-[10px] text-gray-400">by @(Role.CreatedBy ?? "System")</span>
+                            </div>
+                            <div>
+                                <span class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880]">Updated Date</span>
+                                <span class="text-gray-600 font-medium">@Role.UpdatedAt.ToLocalTime().ToString("dd MMM yyyy, HH:mm")</span>
+                                <span class="block text-[10px] text-gray-400">by @(Role.UpdatedBy ?? "System")</span>
                             </div>
                         </div>
                     </div>
-
-                    @* Assign User Card *@
-                    @if (Role.IsActive)
-                    {
-                        <div class="bg-white rounded-xl border border-[#e5e3dc] shadow-sm overflow-hidden flex flex-col">
-                            <div class="px-6 py-4 border-b border-[#f0ede5] bg-[#faf9f5]">
-                                <h3 class="text-sm font-bold text-[#1a1a1a] font-syne">Assign User</h3>
-                                <p class="text-[0.72rem] text-[#8a8880] mt-0.5">Associate a user and optional category to this role.</p>
-                            </div>
-                            <div class="p-6 space-y-4 flex-1">
-                                @if (!string.IsNullOrEmpty(AssignErrorMessage))
-                                {
-                                    <div class="flex items-center gap-2 bg-[#fef0f0] border border-[#f8c0c0] text-[#d94040] p-3 rounded-lg text-xs" role="alert">
-                                        <svg class="w-4.5 h-4.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                        @AssignErrorMessage
-                                    </div>
-                                }
-
-                                <div>
-                                    <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Select User <span class="text-red-500">*</span></label>
-                                    <select @bind="SelectedUserIdToAssign" class="block w-full px-3 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
-                                        <option value="0">-- Choose User --</option>
-                                        @if (UnassignedUsers != null)
-                                        {
-                                            foreach (var user in UnassignedUsers)
-                                            {
-                                                <option value="@user.Id">@user.Name (@(user.Nrp ?? "No NRP"))</option>
-                                            }
-                                        }
-                                    </select>
-                                </div>
-                                
-                                <div>
-                                    <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Select Category (Optional)</label>
-                                    <div class="space-y-2 max-h-40 overflow-y-auto border border-[#e5e3dc] rounded-lg p-3 bg-white">
-                                        <label class="flex items-center gap-2 cursor-pointer">
-                                            <input type="checkbox" checked="@(SelectedCategoryIdsToAssign.Contains(0))" @onchange="@(e => ToggleCategorySelection(0, e.Value))" class="rounded border-gray-300 text-[#e8a000] focus:ring-[#e8a000]" />
-                                            <span class="text-xs text-gray-700">All Categories (Global)</span>
-                                        </label>
-                                        @if (Categories != null)
-                                        {
-                                            foreach (var cat in Categories)
-                                            {
-                                                <label class="flex items-center gap-2 cursor-pointer @(SelectedCategoryIdsToAssign.Contains(0) ? "opacity-50" : "")">
-                                                    <input type="checkbox" checked="@(SelectedCategoryIdsToAssign.Contains(cat.Id))" @onchange="@(e => ToggleCategorySelection(cat.Id, e.Value))" disabled="@(SelectedCategoryIdsToAssign.Contains(0))" class="rounded border-gray-300 text-[#e8a000] focus:ring-[#e8a000] disabled:opacity-50" />
-                                                    <span class="text-xs text-gray-700">@cat.Name</span>
-                                                </label>
-                                            }
-                                        }
-                                    </div>
-                                    <p class="text-[0.65rem] text-gray-500 mt-1">If "All Categories" is selected, admin can track and approve all items.</p>
-                                </div>
-
-                                <button type="button" @onclick="AssignUser" disabled="@(SelectedUserIdToAssign == 0)"
-                                        class="w-full py-2 bg-[#e8a000] hover:bg-[#d49300] disabled:bg-gray-200 disabled:text-gray-400 text-[#1a1a1a] text-xs font-bold rounded-lg transition active:scale-95 cursor-pointer whitespace-nowrap shadow-sm mt-auto">
-                                    Assign User
-                                </button>
-                            </div>
-                        </div>
-                    }
                 </div>
 
                 @* Permissions Card (Full Width) *@
                 <div class="bg-white rounded-xl border border-[#e5e3dc] shadow-sm overflow-hidden">
-                    <div class="px-6 py-4 border-b border-[#f0ede5] bg-[#faf9f5] flex items-center justify-between gap-3">
+                    <div class="px-6 py-4 border-b border-[#f0ede5] bg-[#faf9f5] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                         <div>
-                            <h3 class="text-sm font-bold text-[#1a1a1a] font-syne">Permissions</h3>
-                            <p class="text-[0.72rem] text-[#8a8880] mt-0.5">Atur apa saja yang boleh dilakukan role ini (mengikuti urutan alur proses).</p>
+                            <h3 class="text-sm font-bold text-[#1a1a1a] font-syne">Permissions Matrix (Role-Based Access)</h3>
+                            <p class="text-[0.72rem] text-[#8a8880] mt-0.5">Atur hak akses untuk role ini. Perubahan izin di sini akan langsung berlaku secara masal untuk semua user dengan role <strong>@Role.RoleName</strong>.</p>
                         </div>
-                        <button type="button" @onclick="SavePermissions" class="px-4 py-2 bg-[#e8a000] hover:bg-[#d49300] text-[#1a1a1a] text-xs font-bold rounded-lg transition active:scale-95 cursor-pointer shrink-0">
-                            Save Permissions
-                        </button>
+                        <div class="flex items-center gap-2 shrink-0">
+                            <button type="button" @onclick="SelectAllPermissions" class="px-3 py-1.5 bg-[#f5f4f0] hover:bg-[#eae8e0] text-[#1a1a1a] text-xs font-semibold rounded-lg border border-[#e5e3dc] transition cursor-pointer">
+                                Select All
+                            </button>
+                            <button type="button" @onclick="DeselectAllPermissions" class="px-3 py-1.5 bg-[#f5f4f0] hover:bg-[#eae8e0] text-[#1a1a1a] text-xs font-semibold rounded-lg border border-[#e5e3dc] transition cursor-pointer">
+                                Clear All
+                            </button>
+                            <button type="button" @onclick="SavePermissions" class="px-4 py-2 bg-[#e8a000] hover:bg-[#d49300] text-[#1a1a1a] text-xs font-bold rounded-lg transition active:scale-95 cursor-pointer shrink-0 shadow-sm">
+                                Save Permissions
+                            </button>
+                        </div>
                     </div>
                     @if (!string.IsNullOrEmpty(PermSavedMessage))
                     {
@@ -178,152 +121,27 @@
                     <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
                         @foreach (var group in WMS_UnitedTracors_Blazor.Helpers.Permissions.Catalog.GroupBy(d => d.Group))
                         {
-                            <div>
-                                <h4 class="text-[0.62rem] font-bold uppercase tracking-wider text-[#8a8880] mb-3 pb-2 border-b border-[#f0ede5]">@group.Key</h4>
+                            var groupName = group.Key;
+                            <div class="bg-[#faf9f5] p-4 rounded-xl border border-[#f0ede5]">
+                                <div class="flex justify-between items-center mb-3 pb-2 border-b border-[#e5e3dc]">
+                                    <h4 class="text-[0.68rem] font-bold uppercase tracking-wider text-[#1a1a1a]">@groupName</h4>
+                                    <div class="flex items-center gap-2 text-[10px]">
+                                        <button type="button" @onclick="() => ToggleGroup(groupName, true)" class="text-[#e8a000] hover:underline font-bold">Select Group</button>
+                                        <span class="text-gray-300">|</span>
+                                        <button type="button" @onclick="() => ToggleGroup(groupName, false)" class="text-gray-500 hover:underline font-medium">Clear</button>
+                                    </div>
+                                </div>
                                 <div class="space-y-2.5">
                                     @foreach (var def in group.OrderBy(d => d.Order))
                                     {
-                                        <label class="flex items-center gap-2.5 cursor-pointer text-sm text-gray-700 hover:text-gray-900">
+                                        <label class="flex items-center gap-2.5 cursor-pointer text-xs text-gray-700 hover:text-gray-900 select-none">
                                             <input type="checkbox" checked="@SelectedPermissions.Contains(def.Key)" @onchange="@(e => TogglePerm(def.Key, e.Value))" class="rounded border-gray-300 text-[#e8a000] focus:ring-[#e8a000]" />
-                                            @def.Label
+                                            <span>@def.Label</span>
                                         </label>
                                     }
                                 </div>
                             </div>
                         }
-                    </div>
-                </div>
-
-                @* Bottom Section: Users list (Full Width) *@
-                <div class="bg-white rounded-xl border border-[#e5e3dc] shadow-sm overflow-hidden">
-                    <div class="px-6 py-4 border-b border-[#f0ede5] bg-[#faf9f5]">
-                        <h3 class="text-sm font-bold text-[#1a1a1a] font-syne">Assigned Users</h3>
-                        <p class="text-[0.72rem] text-[#8a8880] mt-0.5">List of users currently mapped to this role.</p>
-                    </div>
-                    
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="bg-[#1a1a1a]">
-                                    <th class="px-6 py-3.5 text-[0.68rem] font-bold tracking-wider uppercase text-[#c8c5bc] w-12">#</th>
-                                    <th class="px-6 py-3.5 text-[0.68rem] font-bold tracking-wider uppercase text-[#c8c5bc]">User Name</th>
-                                    <th class="px-6 py-3.5 text-[0.68rem] font-bold tracking-wider uppercase text-[#c8c5bc]">NRP</th>
-                                    <th class="px-6 py-3.5 text-[0.68rem] font-bold tracking-wider uppercase text-[#c8c5bc]">Email</th>
-                                    <th class="px-6 py-3.5 text-[0.68rem] font-bold tracking-wider uppercase text-[#c8c5bc]">Division</th>
-                                    <th class="px-6 py-3.5 text-[0.68rem] font-bold tracking-wider uppercase text-[#c8c5bc]">Category Assignment</th>
-                                    <th class="px-6 py-3.5 text-[0.68rem] font-bold tracking-wider uppercase text-[#c8c5bc] w-24"></th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-[#f0ede5]">
-                                @if (AssignedUsers == null || !AssignedUsers.Any())
-                                {
-                                    <tr>
-                                        <td colspan="7" class="px-6 py-12 text-center text-xs text-gray-500">
-                                            No users assigned to this role yet.
-                                        </td>
-                                    </tr>
-                                }
-                                else
-                                {
-                                    var grouped = AssignedUsers
-                                        .GroupBy(u => u.Id)
-                                        .Select(g => new {
-                                            User = g.First(),
-                                            AllAssignments = g.ToList()
-                                        })
-                                        .ToList();
-                                    int index = 0;
-                                    foreach (var grp in grouped)
-                                    {
-                                        index++;
-                                        var user = grp.User;
-                                        <tr class="hover:bg-[#faf9f5] border-b border-[#f0ede5] transition-colors duration-100">
-                                            <td class="px-6 py-4 text-xs text-gray-400 align-middle">@index</td>
-                                            <td class="px-6 py-4 text-xs font-semibold text-[#1a1a1a] align-middle">@user.Name</td>
-                                            <td class="px-6 py-4 text-xs text-gray-600 align-middle">@(user.Nrp ?? "--")</td>
-                                            <td class="px-6 py-4 text-xs text-gray-600 align-middle">@user.Email</td>
-                                            <td class="px-6 py-4 text-xs text-gray-600 align-middle">@(user.DivisionName ?? "--")</td>
-                                            <td class="px-6 py-4 text-xs text-gray-600 align-middle">
-                                                @if (EditingUserId == user.Id)
-                                                {
-                                                    @* Inline edit form – all categories for this user *@
-                                                    <div class="flex flex-col gap-1.5">
-                                                        <label class="flex items-center gap-1.5 text-[10px] font-semibold text-gray-700 cursor-pointer">
-                                                            <input type="checkbox"
-                                                                   checked="@EditingCategoryIds.Contains(0)"
-                                                                   @onchange="(e) => ToggleEditCategory(0, e.Value)" />
-                                                            All Categories (Global)
-                                                        </label>
-                                                        @if (Categories != null)
-                                                        {
-                                                            foreach (var cat in Categories)
-                                                            {
-                                                                var catId = cat.Id;
-                                                                <label class="flex items-center gap-1.5 text-[10px] font-semibold text-gray-700 cursor-pointer">
-                                                                    <input type="checkbox"
-                                                                           checked="@EditingCategoryIds.Contains(catId)"
-                                                                           @onchange="(e) => ToggleEditCategory(catId, e.Value)" />
-                                                                    @cat.Name
-                                                                </label>
-                                                            }
-                                                        }
-                                                    </div>
-                                                }
-                                                else
-                                                {
-                                                    @* Show all assigned category badges in one row *@
-                                                    <div class="flex flex-wrap gap-1">
-                                                        @foreach (var assignment in grp.AllAssignments)
-                                                        {
-                                                            @if (assignment.CategoryId.HasValue)
-                                                            {
-                                                                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-bold bg-[#eef9f0] border border-[#b8e8c0] text-[#1a7a30] text-[10px]">
-                                                                    @assignment.CategoryName
-                                                                </span>
-                                                            }
-                                                            else
-                                                            {
-                                                                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-bold bg-[#f5f4f0] border border-[#e5e3dc] text-gray-600 text-[10px]">
-                                                                    All Categories (Global)
-                                                                </span>
-                                                            }
-                                                        }
-                                                    </div>
-                                                }
-                                            </td>
-                                            <td class="px-6 py-4 text-right align-middle">
-                                                @if (EditingUserId == user.Id)
-                                                {
-                                                    <div class="flex items-center justify-end gap-1.5">
-                                                        <button type="button" @onclick="SaveEditUser"
-                                                                class="text-[10px] font-bold text-white px-2.5 py-1 rounded bg-[#1a7a30] hover:bg-[#155e25] border border-[#1a7a30] transition cursor-pointer">
-                                                            Save
-                                                        </button>
-                                                        <button type="button" @onclick="CloseEditRow"
-                                                                class="text-[10px] font-bold text-gray-600 px-2.5 py-1 rounded bg-[#f5f4f0] border border-[#e5e3dc] hover:bg-[#eae8e0] transition cursor-pointer">
-                                                            Cancel
-                                                        </button>
-                                                    </div>
-                                                }
-                                                else
-                                                {
-                                                    <div class="flex items-center justify-end gap-1.5">
-                                                        <button type="button" @onclick="() => OpenEditRow(grp.AllAssignments)"
-                                                                class="text-[10px] font-bold text-[#1a6b8a] hover:text-[#145878] px-2.5 py-1 rounded bg-[#e0f2fe] border border-[#bae6fd] hover:bg-[#bae6fd] transition cursor-pointer">
-                                                            Edit
-                                                        </button>
-                                                        <button type="button" @onclick="() => RemoveUser(user)"
-                                                                class="text-[10px] font-bold text-[#d94040] hover:text-[#b83535] px-2.5 py-1 rounded bg-[#fef0f0] border border-[#f8c0c0] hover:bg-[#fee2e2] transition cursor-pointer">
-                                                            Remove
-                                                        </button>
-                                                    </div>
-                                                }
-                                            </td>
-                                        </tr>
-                                    }
-                                }
-                            </tbody>
-                        </table>
                     </div>
                 </div>
                 
@@ -337,19 +155,6 @@
     public Guid Id { get; set; }
 
     private AdminRoleDto? Role;
-    private List<UserAssignmentDto>? AssignedUsers;
-    private List<UserAssignmentDto>? UnassignedUsers;
-    private List<WMS_UnitedTracors_Blazor.Services.CategoryDto>? Categories;
-
-    private int SelectedUserIdToAssign = 0;
-    private List<int> SelectedCategoryIdsToAssign = new() { 0 };
-    private string? AssignErrorMessage;
-
-    // ── Inline Edit State ──
-    private int EditingUserId = 0;
-    private List<int> EditingCategoryIds = new() { 0 };
-    private string? EditErrorMessage;
-
     private HashSet<string> SelectedPermissions = new();
     private string? PermSavedMessage;
 
@@ -363,6 +168,32 @@
         else SelectedPermissions.Remove(key);
     }
 
+    private void SelectAllPermissions()
+    {
+        PermSavedMessage = null;
+        foreach (var def in WMS_UnitedTracors_Blazor.Helpers.Permissions.Catalog)
+        {
+            SelectedPermissions.Add(def.Key);
+        }
+    }
+
+    private void DeselectAllPermissions()
+    {
+        PermSavedMessage = null;
+        SelectedPermissions.Clear();
+    }
+
+    private void ToggleGroup(string groupName, bool select)
+    {
+        PermSavedMessage = null;
+        var groupItems = WMS_UnitedTracors_Blazor.Helpers.Permissions.Catalog.Where(d => d.Group == groupName);
+        foreach (var item in groupItems)
+        {
+            if (select) SelectedPermissions.Add(item.Key);
+            else SelectedPermissions.Remove(item.Key);
+        }
+    }
+
     private async Task SavePermissions()
     {
         var err = await AdminRoleService.UpdateRolePermissionsAsync(Id, SelectedPermissions.ToList(), CurrentUsername);
@@ -373,7 +204,6 @@
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
-        
 
         if (!user.HasPermission(WMS_UnitedTracors_Blazor.Helpers.Permissions.RolesManage))
         {
@@ -382,8 +212,6 @@
         }
 
         CurrentUsername = user.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ?? "System";
-        var catResult = await CategoryService.GetCategoriesAsync(1, 1000);
-        Categories = catResult.Categories;
         await LoadRoleData();
     }
 
@@ -394,169 +222,9 @@
         
         if (Role != null)
         {
-            AssignedUsers = await AdminRoleService.GetAssignedUsersAsync(Id);
-            UnassignedUsers = await AdminRoleService.GetUnassignedUsersAsync(Id);
             SelectedPermissions = new HashSet<string>(await AdminRoleService.GetRolePermissionsAsync(Id));
         }
         IsLoading = false;
-    }
-
-    private void ToggleCategorySelection(int categoryId, object? isCheckedObj)
-    {
-        bool isChecked = isCheckedObj is bool b && b;
-        if (categoryId == 0)
-        {
-            if (isChecked)
-            {
-                SelectedCategoryIdsToAssign.Clear();
-                SelectedCategoryIdsToAssign.Add(0);
-            }
-            else
-            {
-                SelectedCategoryIdsToAssign.Remove(0);
-            }
-        }
-        else
-        {
-            if (isChecked)
-            {
-                SelectedCategoryIdsToAssign.Remove(0);
-                if (!SelectedCategoryIdsToAssign.Contains(categoryId))
-                    SelectedCategoryIdsToAssign.Add(categoryId);
-            }
-            else
-            {
-                SelectedCategoryIdsToAssign.Remove(categoryId);
-            }
-        }
-    }
-
-    private async Task AssignUser()
-    {
-        if (SelectedUserIdToAssign == 0) return;
-
-        AssignErrorMessage = null;
-        
-        List<int>? categoryIds = null;
-        if (!SelectedCategoryIdsToAssign.Contains(0) && SelectedCategoryIdsToAssign.Any())
-        {
-            categoryIds = SelectedCategoryIdsToAssign.ToList();
-        }
-
-        var error = await AdminRoleService.AssignUserToRoleAsync(Id, SelectedUserIdToAssign, categoryIds, CurrentUsername);
-        
-        if (error != null)
-        {
-            AssignErrorMessage = error;
-        }
-        else
-        {
-            SelectedUserIdToAssign = 0;
-            SelectedCategoryIdsToAssign = new() { 0 };
-            await LoadRoleData();
-        }
-    }
-
-    private async Task RemoveUser(UserAssignmentDto user)
-    {
-        AssignErrorMessage = null;
-        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Apakah Anda yakin ingin menghapus User \"{user.Name}\" dari Role ini? Semua assignment kategorinya akan dihapus.");
-        
-        if (confirmed)
-        {
-            var error = await AdminRoleService.RemoveAllUserAssignmentsFromRoleAsync(Id, user.Id);
-            if (error != null)
-            {
-                AssignErrorMessage = error;
-            }
-            else
-            {
-                await LoadRoleData();
-            }
-        }
-    }
-
-    private void OpenEditRow(List<UserAssignmentDto> assignments)
-    {
-        var first = assignments.First();
-        EditingUserId = first.Id;
-        EditErrorMessage = null;
-        // Pre-populate from ALL current assignments for this user
-        var hasGlobal = assignments.Any(a => !a.CategoryId.HasValue);
-        if (hasGlobal)
-        {
-            EditingCategoryIds = new List<int> { 0 };
-        }
-        else
-        {
-            EditingCategoryIds = assignments
-                .Where(a => a.CategoryId.HasValue)
-                .Select(a => a.CategoryId!.Value)
-                .ToList();
-        }
-    }
-
-    private void CloseEditRow()
-    {
-        EditingUserId = 0;
-        EditingCategoryIds = new List<int> { 0 };
-        EditErrorMessage = null;
-    }
-
-    private void ToggleEditCategory(int categoryId, object? isCheckedObj)
-    {
-        bool isChecked = isCheckedObj is bool b && b;
-        if (categoryId == 0)
-        {
-            if (isChecked)
-            {
-                EditingCategoryIds.Clear();
-                EditingCategoryIds.Add(0);
-            }
-            else
-            {
-                EditingCategoryIds.Remove(0);
-            }
-        }
-        else
-        {
-            if (isChecked)
-            {
-                EditingCategoryIds.Remove(0);
-                if (!EditingCategoryIds.Contains(categoryId))
-                    EditingCategoryIds.Add(categoryId);
-            }
-            else
-            {
-                EditingCategoryIds.Remove(categoryId);
-            }
-        }
-    }
-
-    private async Task SaveEditUser()
-    {
-        if (EditingUserId == 0) return;
-        EditErrorMessage = null;
-
-        List<int>? newCategoryIds = null;
-        if (!EditingCategoryIds.Contains(0) && EditingCategoryIds.Any())
-        {
-            newCategoryIds = EditingCategoryIds.ToList();
-        }
-
-        // Full replace: remove all old assignments for this user then create new ones
-        var error = await AdminRoleService.ReplaceUserAssignmentsInRoleAsync(
-            Id, EditingUserId, newCategoryIds, CurrentUsername);
-
-        if (error != null)
-        {
-            EditErrorMessage = error;
-        }
-        else
-        {
-            CloseEditRow();
-            await LoadRoleData();
-        }
     }
 
     private void GoBack()

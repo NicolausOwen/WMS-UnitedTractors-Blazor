@@ -411,11 +411,7 @@ public class TransactionService
             .Where(t =>
                 t.status == WorkflowStatuses.Rejected ||
                 t.status == WorkflowStatuses.Approved ||
-                t.status == WorkflowStatuses.Completed ||
-                t.status == WorkflowStatuses.Revision ||
-                t.status == WorkflowStatuses.RevisionByStaffInventory ||
-                t.status == WorkflowStatuses.RevisionByAdmin ||
-                t.status == WorkflowStatuses.RevisionByManager)
+                t.status == WorkflowStatuses.Completed)
             .AsQueryable();
 
         // Pemohon biasa (tanpa izin approval/kelola) hanya melihat riwayatnya sendiri.
@@ -1120,9 +1116,10 @@ public class TransactionService
 
         _context.Users.Update(requester);
 
+        string newResubmittedStatus = GetResubmittedStatus(transaction);
         transaction.quantity = newQty;
         transaction.request_type = newRequestType;
-        transaction.status = GetResubmittedStatus(transaction);
+        transaction.status = newResubmittedStatus;
         transaction.updated_at = DateTime.UtcNow;
         transaction.rejection_reason = null;
         transaction.last_revision_stage = null;
@@ -1141,13 +1138,13 @@ public class TransactionService
 
         _context.Transactions.Update(transaction);
 
-        // Update shared fields for all items in the same group to prevent splitting
+        // Update shared fields and status for all items in the same group
         string groupId = transaction.group_id;
         var groupItems = await _context.Transactions
-            .Where(t => t.created_at == transaction.created_at && t.requester_id == transaction.requester_id && t.id != transaction.id)
+            .Where(t => (t.group_id == groupId || (t.created_at == transaction.created_at && t.requester_id == transaction.requester_id)) && t.id != transaction.id)
             .ToListAsync();
 
-        foreach (var item in groupItems.Where(t => t.group_id == groupId))
+        foreach (var item in groupItems)
         {
             item.applicant_name = model.applicant_name;
             item.applicant_nrp = model.applicant_nrp;
@@ -1155,7 +1152,15 @@ public class TransactionService
             item.event_date = model.event_date;
             item.division_id = model.division_id ?? item.division_id;
             item.documentation_link = model.documentation_link;
-            // Notes are NOT updated here to preserve original item notes
+
+            if (WorkflowStatuses.IsRevision(item.status) || item.status == WorkflowStatuses.Rejected)
+            {
+                item.status = newResubmittedStatus;
+                item.rejection_reason = null;
+                item.last_revision_stage = null;
+                item.updated_at = DateTime.UtcNow;
+            }
+
             _context.Transactions.Update(item);
         }
 
@@ -1284,8 +1289,20 @@ public class TransactionService
 
     private static string GetResubmittedStatus(Transaction transaction)
     {
-        // Selalu kembali ke tahap pertama (Staff Inventaris)
-        return WorkflowStatuses.PendingStaffInventory;
+        var stage = transaction.last_revision_stage ?? 
+            (transaction.status switch {
+                WorkflowStatuses.RevisionByStaffInventory => "STAFF_INVENTORY",
+                WorkflowStatuses.RevisionByAdmin => "ADMIN",
+                WorkflowStatuses.RevisionByManager => "MANAGER",
+                _ => "STAFF_INVENTORY"
+            });
+
+        return stage switch
+        {
+            "MANAGER" => WorkflowStatuses.PendingManager,
+            "ADMIN" => WorkflowStatuses.PendingAdmin,
+            _ => WorkflowStatuses.PendingStaffInventory
+        };
     }
 
     public async Task<string?> DeleteTransactionAsync(int id)

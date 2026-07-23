@@ -280,9 +280,9 @@
                                                             } else if (step.Status == "ACTIVE") {
                                                                 <span>Sedang diproses</span>
                                                             } else if (step.Status == "WARNING") {
-                                                                <span class="text-amber-600 font-semibold">Revisi</span>
+                                                                <span class="text-amber-600 font-semibold">Revisi @(string.IsNullOrEmpty(step.ApproverName) ? "" : $"oleh {step.ApproverName}")</span>
                                                             } else if (step.Status == "DANGER") {
-                                                                <span class="text-rose-600 font-semibold">Ditolak</span>
+                                                                <span class="text-rose-600 font-semibold">Ditolak @(string.IsNullOrEmpty(step.ApproverName) ? "" : $"oleh {step.ApproverName}")</span>
                                                             } else {
                                                                 <span>Sedang diproses</span>
                                                             }
@@ -514,10 +514,7 @@
                                                             } else if (item.status == "APPROVED" || item.status == "COMPLETED") {
                                                                 <span class="inline-flex items-center px-1.5 py-0.5 border border-[#b8e8c0] rounded text-[9px] font-bold bg-[#eef9f0] text-[#1a7a30]">APPROVED</span>
                                                             } else if (item.status == "REVISION" || item.status == "REVISION_BY_STAFF_INVENTORY" || item.status == "REVISION_BY_ADMIN" || item.status == "REVISION_BY_MANAGER") {
-                                                                <div class="flex flex-col gap-1.5 items-end">
-                                                                    <span class="inline-flex items-center px-1.5 py-0.5 border border-[#bae6fd] rounded text-[9px] font-bold bg-[#e0f2fe] text-[#1a6b8a]">REVISION</span>
-                                                                    <button @onclick="() => OpenRevisionModal(item)" class="text-[9px] font-bold bg-[#e8a000] text-[#1a1a1a] px-2 py-1 rounded shadow-sm hover:bg-[#d49300] active:scale-95 transition">Revise Now</button>
-                                                                </div>
+                                                                <span class="inline-flex items-center px-1.5 py-0.5 border border-[#bae6fd] rounded text-[9px] font-bold bg-[#e0f2fe] text-[#1a6b8a]">REVISION</span>
                                                             } else if (item.status == "REJECTED") {
                                                                 <span class="inline-flex items-center px-1.5 py-0.5 border border-[#f8c0c0] rounded text-[9px] font-bold bg-[#fef0f0] text-[#d94040]">REJECTED</span>
                                                             } else if (item.status == "WAITING_HANDOVER" || item.status == "WAITING_ADMIN_HANDOVER" || item.status == "WAITING_HANDOVER_CONFIRM") {
@@ -557,55 +554,7 @@
     </div>
 </div>
 
-<Modal Show="@(ShowRevisionModal && RevisionItem != null)" Title="Revisi Permintaan" Size="xl" OnClose="CloseRevisionModal">
-  <ChildContent>
-    @if (RevisionItem != null)
-    {
-                <div class="p-4 bg-[#fffbeb] border border-[#fde68a] text-[#92400e] text-xs rounded-xl flex items-start gap-3">
-                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                    <div>
-                        <div class="font-bold">Alasan Revisi dari Admin:</div>
-                        <div class="mt-1 italic">"@RevisionItem.rejection_reason"</div>
-                    </div>
-                </div>
 
-                @if (!string.IsNullOrEmpty(ModalErrorMessage))
-                {
-                    <div class="p-4 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl flex items-start gap-3 mt-4">
-                        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        <div>
-                            <div class="font-bold">Gagal Mengirim Perbaikan</div>
-                            <div class="mt-1">@ModalErrorMessage</div>
-                        </div>
-                    </div>
-                }
-
-                <div>
-                    <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Kuantitas</label>
-                    <input type="number" @bind="RevisionModel.quantity" class="w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] border border-[#e5e3dc] rounded-lg outline-none focus:border-[#e8a000]" />
-                </div>
-
-                <div>
-                    <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Event / Program</label>
-                    <input type="text" @bind="RevisionModel.event_name" class="w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] border border-[#e5e3dc] rounded-lg outline-none focus:border-[#e8a000]" />
-                </div>
-
-                <div>
-                    <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Catatan Perbaikan (Opsional)</label>
-                    <textarea @bind="RevisionModel.notes" rows="3" class="w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] border border-[#e5e3dc] rounded-lg outline-none focus:border-[#e8a000]" placeholder="Tambahkan catatan..."></textarea>
-                </div>
-    }
-  </ChildContent>
-  <Footer>
-        <button type="button" @onclick="CloseRevisionModal" class="px-5 py-2.5 text-sm font-bold text-gray-600 hover:text-gray-900 bg-white border border-[#e5e3dc] rounded-xl transition cursor-pointer">Kembali</button>
-        <button type="button" @onclick="CancelBorrowFromRevision" disabled="@IsSubmitting" class="px-5 py-2.5 bg-red-600 hover:bg-red-700 active:scale-[0.98] text-white text-sm font-bold tracking-wider rounded-xl transition shadow-sm disabled:opacity-50 cursor-pointer">
-            Batal Meminjam
-        </button>
-        <button type="button" @onclick="SubmitRevision" disabled="@IsSubmitting" class="px-6 py-2.5 bg-[#e8a000] hover:bg-[#d49300] active:scale-[0.98] text-[#1a1a1a] text-sm font-bold tracking-wider rounded-xl transition shadow-sm disabled:opacity-50 cursor-pointer">
-            @(IsSubmitting ? "Mengirim..." : "Kirim Perbaikan")
-        </button>
-  </Footer>
-</Modal>
 
 @code {
     private bool IsSubmitting = false;
@@ -649,10 +598,6 @@
     private string? ErrorMessage { get; set; }
     private string? SuccessMessage { get; set; }
     private string? ModalErrorMessage { get; set; }
-
-    private bool ShowRevisionModal = false;
-    private Transaction? RevisionItem;
-    private UT_WMSDotnet.ViewModels.TransactionRequestViewModel RevisionModel = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -763,81 +708,7 @@
         await Task.CompletedTask;
     }
 
-    private void OpenRevisionModal(Transaction item)
-    {
-        RevisionItem = item;
-        ModalErrorMessage = null;
-        RevisionModel = new UT_WMSDotnet.ViewModels.TransactionRequestViewModel
-        {
-            applicant_name = item.applicant_name,
-            applicant_nrp = item.applicant_nrp,
-            event_name = item.event_name,
-            event_date = item.event_date,
-            quantity = item.quantity,
-            request_type = item.request_type,
-            division_id = item.division_id,
-            documentation_link = item.documentation_link,
-            notes = item.notes
-        };
-        ShowRevisionModal = true;
-    }
 
-    private void CloseRevisionModal()
-    {
-        ShowRevisionModal = false;
-        RevisionItem = null;
-    }
-
-    private async Task SubmitRevision()
-    {
-        if (RevisionItem == null) return;
-        ModalErrorMessage = null;
-        
-        var error = await TransactionService.UpdateRevisionAsync(RevisionItem.id, RevisionModel);
-        if (error != null) 
-        {
-            ModalErrorMessage = error;
-        }
-        else
-        {
-            SuccessMessage = "Revision submitted successfully.";
-            await LoadData(CurrentPage);
-            CloseRevisionModal();
-        }
-    }
-
-    private async Task CancelBorrowFromRevision()
-    {
-        if (RevisionItem == null) return;
-
-        bool confirm = await JSRuntime.InvokeAsync<bool>("confirm", "Apakah Anda yakin ingin membatalkan peminjaman ini? Barang tidak jadi di-request dan stok akan dikembalikan ke WMS.");
-        if (!confirm) return;
-
-        IsSubmitting = true;
-        ModalErrorMessage = null;
-        try
-        {
-            var error = await TransactionService.CancelRevisionAsync(RevisionItem.id);
-            if (error != null)
-            {
-                ModalErrorMessage = error;
-            }
-            else
-            {
-                SuccessMessage = "Permintaan berhasil dibatalkan dan stok telah dikembalikan ke WMS.";
-                await LoadData(CurrentPage);
-                CloseRevisionModal();
-            }
-        }
-        catch (Exception ex)
-        {
-            ModalErrorMessage = "Terjadi kesalahan: " + ex.Message;
-        }
-        finally
-        {
-            IsSubmitting = false;
-        }
-    }
 
     public class TrackingStep
     {
@@ -939,25 +810,27 @@
                 steps.Add(new TrackingStep { Name = "Berita Acara Serah Terima", Status = "DONE", CompletedAt = firstItem.handover_timestamp ?? firstItem.handover_approved_at ?? firstItem.updated_at });
                 steps.Add(new TrackingStep { Name = "Dokumentasi User", Status = "DONE", CompletedAt = firstItem.documentation_uploaded_at ?? firstItem.updated_at });
             } else if (firstItem.status == "REJECTED") {
-                var approverRole = firstItem.Approver?.role?.ToLowerInvariant() ?? "";
-                bool isManager = approverRole.Contains("manager") || !string.IsNullOrEmpty(firstItem.manager_notes);
-                bool isAdmin = approverRole.Contains("admin") || !string.IsNullOrEmpty(firstItem.admin_notes);
+                bool isStaffInv = !string.IsNullOrEmpty(firstItem.staff_inventory_notes) ||
+                                 (firstItem.staff_inventory_approver_id.HasValue && !firstItem.admin_approver_id.HasValue && !firstItem.manager_approver_id.HasValue) ||
+                                 (firstItem.Approver?.role?.Contains("staff") == true && string.IsNullOrEmpty(firstItem.admin_notes) && string.IsNullOrEmpty(firstItem.manager_notes));
+                bool isManager = !string.IsNullOrEmpty(firstItem.manager_notes) || firstItem.manager_approver_id.HasValue || (firstItem.Approver?.role?.Contains("manager") == true && firstItem.StaffInventoryApprover != null && firstItem.AdminApprover != null);
+                bool isAdmin = !isStaffInv && !isManager;
                 
                 if (isManager)
                 {
                     steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE", CompletedAt = firstItem.updated_at });
                     steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE", CompletedAt = firstItem.updated_at });
-                    steps.Add(new TrackingStep { Name = "Approval Manager", Status = "WARNING", CompletedAt = firstItem.updated_at });
+                    steps.Add(new TrackingStep { Name = "Approval Manager", Status = "DANGER", CompletedAt = firstItem.updated_at });
                 }
                 else if (isAdmin)
                 {
                     steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE", CompletedAt = firstItem.updated_at });
-                    steps.Add(new TrackingStep { Name = "Approval Admin", Status = "WARNING", CompletedAt = firstItem.updated_at });
+                    steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DANGER", CompletedAt = firstItem.updated_at });
                     steps.Add(new TrackingStep { Name = "Approval Manager", Status = "PENDING" });
                 }
                 else
                 {
-                    steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "WARNING", CompletedAt = firstItem.updated_at });
+                    steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DANGER", CompletedAt = firstItem.updated_at });
                     steps.Add(new TrackingStep { Name = "Approval Admin", Status = "PENDING" });
                     steps.Add(new TrackingStep { Name = "Approval Manager", Status = "PENDING" });
                 }
@@ -1006,17 +879,20 @@
                     steps.Add(new TrackingStep { Name = "Pengembalian", Status = "ACTIVE" });
                 }
             } else if (firstItem.status == "REJECTED") {
-                var approverRole = firstItem.Approver?.role?.ToLowerInvariant() ?? "";
-                bool isAdmin = approverRole.Contains("admin") || !string.IsNullOrEmpty(firstItem.admin_notes);
+                bool isStaffInv = !string.IsNullOrEmpty(firstItem.staff_inventory_notes) ||
+                                 (firstItem.staff_inventory_approver_id.HasValue && !firstItem.admin_approver_id.HasValue && !firstItem.manager_approver_id.HasValue) ||
+                                 (firstItem.Approver?.role?.Contains("staff") == true && string.IsNullOrEmpty(firstItem.admin_notes) && string.IsNullOrEmpty(firstItem.manager_notes));
+                bool isManager = !string.IsNullOrEmpty(firstItem.manager_notes) || firstItem.manager_approver_id.HasValue || (firstItem.Approver?.role?.Contains("manager") == true && firstItem.StaffInventoryApprover != null && firstItem.AdminApprover != null);
+                bool isAdmin = !isStaffInv && !isManager;
                 
                 if (isAdmin)
                 {
                     steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE", CompletedAt = firstItem.updated_at });
-                    steps.Add(new TrackingStep { Name = "Approval Admin", Status = "WARNING", CompletedAt = firstItem.updated_at });
+                    steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DANGER", CompletedAt = firstItem.updated_at });
                 }
                 else
                 {
-                    steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "WARNING", CompletedAt = firstItem.updated_at });
+                    steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DANGER", CompletedAt = firstItem.updated_at });
                     steps.Add(new TrackingStep { Name = "Approval Admin", Status = "PENDING" });
                 }
                 steps.Add(new TrackingStep { Name = "Berita Acara Serah Terima", Status = "PENDING" });
@@ -1026,11 +902,14 @@
 
         foreach (var step in steps)
         {
-            if (step.Status == "DONE" || step.Status == "WARNING")
+            if (step.Status == "DONE" || step.Status == "WARNING" || step.Status == "DANGER")
             {
-                if (step.Name == "Approval Staff Inv") step.ApproverName = firstItem.StaffInventoryApprover?.name ?? (firstItem.Approver?.role?.Contains("staff") == true ? firstItem.Approver.name : null);
-                else if (step.Name == "Approval Admin") step.ApproverName = firstItem.AdminApprover?.name ?? (firstItem.Approver?.role?.Contains("admin") == true ? firstItem.Approver.name : null);
-                else if (step.Name == "Approval Manager") step.ApproverName = firstItem.ManagerApprover?.name ?? (firstItem.Approver?.role?.Contains("manager") == true ? firstItem.Approver.name : null);
+                if (step.Name == "Approval Staff Inv")
+                    step.ApproverName = firstItem.StaffInventoryApprover?.name ?? (step.Status == "DANGER" ? firstItem.Approver?.name : (firstItem.Approver?.role?.Contains("staff") == true ? firstItem.Approver?.name : null));
+                else if (step.Name == "Approval Admin")
+                    step.ApproverName = firstItem.AdminApprover?.name ?? (step.Status == "DANGER" ? firstItem.Approver?.name : (firstItem.Approver?.role?.Contains("admin") == true ? firstItem.Approver?.name : null));
+                else if (step.Name == "Approval Manager")
+                    step.ApproverName = firstItem.ManagerApprover?.name ?? (step.Status == "DANGER" ? firstItem.Approver?.name : (firstItem.Approver?.role?.Contains("manager") == true ? firstItem.Approver?.name : null));
             }
         }
 

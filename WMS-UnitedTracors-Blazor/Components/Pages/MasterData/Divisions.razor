@@ -46,13 +46,14 @@
                     <p class="text-[0.72rem] text-[#8a8880] mt-0.5">Add a new division or department for users and transactions.</p>
                 </div>
                 <div class="px-6 py-5">
-                    <form @onsubmit="SaveDivision" class="flex flex-col sm:flex-row gap-3">
-                        <div class="flex-1">
+                    <form @onsubmit="SaveDivision" class="flex flex-col sm:flex-row gap-3 items-end">
+                        <div class="flex-1 w-full">
                             <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Name <span class="text-red-500">*</span></label>
                             <input type="text" @bind="Model.name" required placeholder="Division name (e.g. IT Department)"
                                    class="block w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
                         </div>
-                        <div class="flex-1">
+                        <div class="flex-1 w-full">
+                            <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Description <span class="text-gray-400 font-normal font-sans">(Optional)</span></label>
                             <input type="text" @bind="Model.description" placeholder="Description (optional)"
                                    class="block w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
                         </div>

@@ -135,6 +135,13 @@
             if (localStorage.getItem('ut-sidebar-collapsed') == '1') {
                 document.body.classList.add('ut-collapsed');
             }
+
+            // Auto-close mobile drawer when any link inside it is clicked
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('#utDrawer a')) {
+                    utCloseDrawer();
+                }
+            });
         });
 
         // ── ESC closes drawer ───────────────────────────────────────

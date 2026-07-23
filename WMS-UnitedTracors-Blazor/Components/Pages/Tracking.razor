@@ -1263,25 +1263,27 @@
                 steps.Add(new TrackingStep { Name = "Berita Acara Serah Terima", Status = "DONE", CompletedAt = firstItem.handover_timestamp ?? firstItem.handover_approved_at ?? firstItem.updated_at });
                 steps.Add(new TrackingStep { Name = "Dokumentasi User", Status = "DONE", CompletedAt = firstItem.documentation_uploaded_at ?? firstItem.updated_at });
             } else if (firstItem.status == "REJECTED") {
-                var approverRole = firstItem.Approver?.role?.ToLowerInvariant() ?? "";
-                bool isManager = approverRole.Contains("manager") || !string.IsNullOrEmpty(firstItem.manager_notes);
-                bool isAdmin = approverRole.Contains("admin") || !string.IsNullOrEmpty(firstItem.admin_notes);
+                bool isStaffInv = !string.IsNullOrEmpty(firstItem.staff_inventory_notes) ||
+                                 (firstItem.staff_inventory_approver_id.HasValue && !firstItem.admin_approver_id.HasValue && !firstItem.manager_approver_id.HasValue) ||
+                                 (firstItem.Approver?.role?.Contains("staff") == true && string.IsNullOrEmpty(firstItem.admin_notes) && string.IsNullOrEmpty(firstItem.manager_notes));
+                bool isManager = !string.IsNullOrEmpty(firstItem.manager_notes) || firstItem.manager_approver_id.HasValue || (firstItem.Approver?.role?.Contains("manager") == true && firstItem.StaffInventoryApprover != null && firstItem.AdminApprover != null);
+                bool isAdmin = !isStaffInv && !isManager;
                 
                 if (isManager)
                 {
                     steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE", CompletedAt = firstItem.updated_at });
                     steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DONE", CompletedAt = firstItem.updated_at });
-                    steps.Add(new TrackingStep { Name = "Approval Manager", Status = "WARNING", CompletedAt = firstItem.updated_at });
+                    steps.Add(new TrackingStep { Name = "Approval Manager", Status = "DANGER", CompletedAt = firstItem.updated_at });
                 }
                 else if (isAdmin)
                 {
                     steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE", CompletedAt = firstItem.updated_at });
-                    steps.Add(new TrackingStep { Name = "Approval Admin", Status = "WARNING", CompletedAt = firstItem.updated_at });
+                    steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DANGER", CompletedAt = firstItem.updated_at });
                     steps.Add(new TrackingStep { Name = "Approval Manager", Status = "PENDING" });
                 }
                 else
                 {
-                    steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "WARNING", CompletedAt = firstItem.updated_at });
+                    steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DANGER", CompletedAt = firstItem.updated_at });
                     steps.Add(new TrackingStep { Name = "Approval Admin", Status = "PENDING" });
                     steps.Add(new TrackingStep { Name = "Approval Manager", Status = "PENDING" });
                 }
@@ -1371,17 +1373,20 @@
                     steps.Add(new TrackingStep { Name = "Pengembalian", Status = "PENDING" });
                 }
             } else if (firstItem.status == "REJECTED") {
-                var approverRole = firstItem.Approver?.role?.ToLowerInvariant() ?? "";
-                bool isAdmin = approverRole.Contains("admin") || !string.IsNullOrEmpty(firstItem.admin_notes);
+                bool isStaffInv = !string.IsNullOrEmpty(firstItem.staff_inventory_notes) ||
+                                 (firstItem.staff_inventory_approver_id.HasValue && !firstItem.admin_approver_id.HasValue && !firstItem.manager_approver_id.HasValue) ||
+                                 (firstItem.Approver?.role?.Contains("staff") == true && string.IsNullOrEmpty(firstItem.admin_notes) && string.IsNullOrEmpty(firstItem.manager_notes));
+                bool isManager = !string.IsNullOrEmpty(firstItem.manager_notes) || firstItem.manager_approver_id.HasValue || (firstItem.Approver?.role?.Contains("manager") == true && firstItem.StaffInventoryApprover != null && firstItem.AdminApprover != null);
+                bool isAdmin = !isStaffInv && !isManager;
                 
                 if (isAdmin)
                 {
                     steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DONE", CompletedAt = firstItem.updated_at });
-                    steps.Add(new TrackingStep { Name = "Approval Admin", Status = "WARNING", CompletedAt = firstItem.updated_at });
+                    steps.Add(new TrackingStep { Name = "Approval Admin", Status = "DANGER", CompletedAt = firstItem.updated_at });
                 }
                 else
                 {
-                    steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "WARNING", CompletedAt = firstItem.updated_at });
+                    steps.Add(new TrackingStep { Name = "Approval Staff Inv", Status = "DANGER", CompletedAt = firstItem.updated_at });
                     steps.Add(new TrackingStep { Name = "Approval Admin", Status = "PENDING" });
                 }
                 steps.Add(new TrackingStep { Name = "Berita Acara Serah Terima", Status = "PENDING" });
@@ -1392,11 +1397,14 @@
 
         foreach (var step in steps)
         {
-            if (step.Status == "DONE" || step.Status == "WARNING")
+            if (step.Status == "DONE" || step.Status == "WARNING" || step.Status == "DANGER")
             {
-                if (step.Name == "Approval Staff Inv") step.ApproverName = firstItem.StaffInventoryApprover?.name ?? (firstItem.Approver?.role?.Contains("staff") == true ? firstItem.Approver.name : null);
-                else if (step.Name == "Approval Admin") step.ApproverName = firstItem.AdminApprover?.name ?? (firstItem.Approver?.role?.Contains("admin") == true ? firstItem.Approver.name : null);
-                else if (step.Name == "Approval Manager") step.ApproverName = firstItem.ManagerApprover?.name ?? (firstItem.Approver?.role?.Contains("manager") == true ? firstItem.Approver.name : null);
+                if (step.Name == "Approval Staff Inv")
+                    step.ApproverName = firstItem.StaffInventoryApprover?.name ?? (step.Status == "DANGER" ? firstItem.Approver?.name : (firstItem.Approver?.role?.Contains("staff") == true ? firstItem.Approver?.name : null));
+                else if (step.Name == "Approval Admin")
+                    step.ApproverName = firstItem.AdminApprover?.name ?? (step.Status == "DANGER" ? firstItem.Approver?.name : (firstItem.Approver?.role?.Contains("admin") == true ? firstItem.Approver?.name : null));
+                else if (step.Name == "Approval Manager")
+                    step.ApproverName = firstItem.ManagerApprover?.name ?? (step.Status == "DANGER" ? firstItem.Approver?.name : (firstItem.Approver?.role?.Contains("manager") == true ? firstItem.Approver?.name : null));
             }
         }
 
