@@ -190,6 +190,8 @@ public class TransactionService
         var user = await _context.Users.FindAsync(currentUserId);
         if (user == null) return "Unauthorized.";
 
+        List<int?> createdCategoryIds = new List<int?>();
+
         var strategy = _context.Database.CreateExecutionStrategy();
         var result = await strategy.ExecuteAsync(async () =>
         {
@@ -295,6 +297,7 @@ public class TransactionService
 
                         _context.Transactions.Add(transaction);
                         createdTransactions.Add((transaction, product, item.quantity, item.product_variant_id, stockBefore));
+                        createdCategoryIds.Add(product.category_id);
                     }
                 }
 
@@ -346,14 +349,7 @@ public class TransactionService
                 _ = _emailService.SendEmailAsync(requester.email, "Request Berhasil Dibuat", requesterHtml);
             }
 
-            var catIds = await _context.Transactions
-                .Where(t => t.requester_id == currentUserId && t.type == "OUT")
-                .OrderByDescending(t => t.created_at)
-                .Take(model.items?.Count ?? 1)
-                .Include(t => t.Product)
-                .Select(t => (int?)t.Product.category_id)
-                .Distinct()
-                .ToListAsync();
+            var catIds = createdCategoryIds.Distinct().ToList();
             var allStaffEmails = await ApprovalService.GetApproverEmailsForCategoryAndPermissionAsync(_context, Helpers.Permissions.ApprovalStage1, catIds);
 
             if (allStaffEmails.Any())
@@ -1177,7 +1173,23 @@ public class TransactionService
         await _context.SaveChangesAsync();
 
         // Ambil email Staff Inventaris yang berhak untuk kategori barang-barang ini
-        var catIds = groupItems.Concat(new[] { transaction }).Select(i => i.Product?.category_id).Distinct();
+        var catIdsList = new List<int?>();
+        foreach (var item in groupItems.Concat(new[] { transaction }))
+        {
+            if (item.Product?.category_id != null)
+            {
+                catIdsList.Add(item.Product.category_id);
+            }
+            else if (item.product_id > 0)
+            {
+                var prod = await _context.Products.FindAsync(item.product_id);
+                if (prod?.category_id != null)
+                {
+                    catIdsList.Add(prod.category_id);
+                }
+            }
+        }
+        var catIds = catIdsList.Where(c => c.HasValue).Distinct().ToList();
         var allStaffEmails = await ApprovalService.GetApproverEmailsForCategoryAndPermissionAsync(_context, Helpers.Permissions.ApprovalStage1, catIds);
 
         if (allStaffEmails.Any())
