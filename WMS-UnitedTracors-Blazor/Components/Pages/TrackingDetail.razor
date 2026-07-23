@@ -121,9 +121,9 @@
                                                         } else if (step.Status == "ACTIVE") {
                                                             <span>Diproses</span>
                                                         } else if (step.Status == "WARNING") {
-                                                            <span class="text-amber-600 font-semibold">Revisi</span>
+                                                            <span class="text-amber-600 font-semibold">Revisi @(string.IsNullOrEmpty(step.ApproverName) ? "" : $"oleh {step.ApproverName}")</span>
                                                         } else if (step.Status == "DANGER") {
-                                                            <span class="text-rose-600 font-semibold">Ditolak</span>
+                                                            <span class="text-rose-600 font-semibold">Ditolak @(string.IsNullOrEmpty(step.ApproverName) ? "" : $"oleh {step.ApproverName}")</span>
                                                         } else {
                                                             <span>Sedang diproses</span>
                                                         }
@@ -199,9 +199,9 @@
                                                     } else if (step.Status == "ACTIVE") {
                                                         <span>Sedang diproses</span>
                                                     } else if (step.Status == "WARNING") {
-                                                        <span class="text-amber-600 font-semibold">Revisi</span>
+                                                        <span class="text-amber-600 font-semibold">Revisi @(string.IsNullOrEmpty(step.ApproverName) ? "" : $"oleh {step.ApproverName}")</span>
                                                     } else if (step.Status == "DANGER") {
-                                                        <span class="text-rose-600 font-semibold">Ditolak</span>
+                                                        <span class="text-rose-600 font-semibold">Ditolak @(string.IsNullOrEmpty(step.ApproverName) ? "" : $"oleh {step.ApproverName}")</span>
                                                     } else {
                                                         <span>Sedang diproses</span>
                                                     }
@@ -1244,8 +1244,8 @@
 
 
                 <div>
-                    <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Event / Program</label>
-                    <input type="text" @bind="RevisionModel.event_name" class="w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] border border-[#e5e3dc] rounded-lg outline-none focus:border-[#e8a000]" />
+                    <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Event / Program <span class="text-xs text-gray-400 font-normal">(Tidak dapat diubah)</span></label>
+                    <input type="text" value="@RevisionModel.event_name" readonly disabled class="w-full px-3.5 py-2 text-[0.82rem] bg-gray-100 border border-[#e5e3dc] rounded-lg outline-none text-gray-500 cursor-not-allowed select-none" />
                 </div>
 
                 <div>
@@ -2353,9 +2353,11 @@
                 steps.Add(new TrackingStep { Name = "Berita Acara Serah Terima", Status = "DONE", CompletedAt = firstItem.handover_timestamp ?? firstItem.handover_approved_at ?? firstItem.updated_at });
                 steps.Add(new TrackingStep { Name = "Dokumentasi User", Status = "DONE", CompletedAt = firstItem.documentation_uploaded_at ?? firstItem.updated_at });
             } else if (effectiveStatus == "REJECTED") {
-                var approverRole = firstItem.Approver?.role?.ToLowerInvariant() ?? "";
-                bool isManager = approverRole.Contains("manager") || !string.IsNullOrEmpty(firstItem.manager_notes);
-                bool isAdmin = approverRole.Contains("admin") || !string.IsNullOrEmpty(firstItem.admin_notes);
+                bool isStaffInv = !string.IsNullOrEmpty(firstItem.staff_inventory_notes) ||
+                                 (firstItem.staff_inventory_approver_id.HasValue && !firstItem.admin_approver_id.HasValue && !firstItem.manager_approver_id.HasValue) ||
+                                 (firstItem.Approver?.role?.Contains("staff") == true && string.IsNullOrEmpty(firstItem.admin_notes) && string.IsNullOrEmpty(firstItem.manager_notes));
+                bool isManager = !string.IsNullOrEmpty(firstItem.manager_notes) || firstItem.manager_approver_id.HasValue || (firstItem.Approver?.role?.Contains("manager") == true && firstItem.StaffInventoryApprover != null && firstItem.AdminApprover != null);
+                bool isAdmin = !isStaffInv && !isManager;
                 
                 if (isManager)
                 {
@@ -2461,8 +2463,11 @@
                     steps.Add(new TrackingStep { Name = "Pengembalian", Status = "PENDING" });
                 }
             } else if (effectiveStatus == "REJECTED") {
-                var approverRole = firstItem.Approver?.role?.ToLowerInvariant() ?? "";
-                bool isAdmin = approverRole.Contains("admin") || !string.IsNullOrEmpty(firstItem.admin_notes);
+                bool isStaffInv = !string.IsNullOrEmpty(firstItem.staff_inventory_notes) ||
+                                 (firstItem.staff_inventory_approver_id.HasValue && !firstItem.admin_approver_id.HasValue && !firstItem.manager_approver_id.HasValue) ||
+                                 (firstItem.Approver?.role?.Contains("staff") == true && string.IsNullOrEmpty(firstItem.admin_notes) && string.IsNullOrEmpty(firstItem.manager_notes));
+                bool isManager = !string.IsNullOrEmpty(firstItem.manager_notes) || firstItem.manager_approver_id.HasValue || (firstItem.Approver?.role?.Contains("manager") == true && firstItem.StaffInventoryApprover != null && firstItem.AdminApprover != null);
+                bool isAdmin = !isStaffInv && !isManager;
                 
                 if (isAdmin)
                 {
@@ -2482,11 +2487,14 @@
 
         foreach (var step in steps)
         {
-            if (step.Status == "DONE" || step.Status == "WARNING")
+            if (step.Status == "DONE" || step.Status == "WARNING" || step.Status == "DANGER")
             {
-                if (step.Name == "Approval Staff Inv") step.ApproverName = firstItem.StaffInventoryApprover?.name ?? (firstItem.Approver?.role?.Contains("staff") == true ? firstItem.Approver.name : null);
-                else if (step.Name == "Approval Admin") step.ApproverName = firstItem.AdminApprover?.name ?? (firstItem.Approver?.role?.Contains("admin") == true ? firstItem.Approver.name : null);
-                else if (step.Name == "Approval Manager") step.ApproverName = firstItem.ManagerApprover?.name ?? (firstItem.Approver?.role?.Contains("manager") == true ? firstItem.Approver.name : null);
+                if (step.Name == "Approval Staff Inv")
+                    step.ApproverName = firstItem.StaffInventoryApprover?.name ?? (step.Status == "DANGER" ? firstItem.Approver?.name : (firstItem.Approver?.role?.Contains("staff") == true ? firstItem.Approver?.name : null));
+                else if (step.Name == "Approval Admin")
+                    step.ApproverName = firstItem.AdminApprover?.name ?? (step.Status == "DANGER" ? firstItem.Approver?.name : (firstItem.Approver?.role?.Contains("admin") == true ? firstItem.Approver?.name : null));
+                else if (step.Name == "Approval Manager")
+                    step.ApproverName = firstItem.ManagerApprover?.name ?? (step.Status == "DANGER" ? firstItem.Approver?.name : (firstItem.Approver?.role?.Contains("manager") == true ? firstItem.Approver?.name : null));
             }
         }
 
