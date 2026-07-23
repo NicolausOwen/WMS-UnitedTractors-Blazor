@@ -63,7 +63,7 @@ namespace WMS_UnitedTracors_Blazor.Services
                 sig3Title: "Penerima",
                 sig3Name: !string.IsNullOrEmpty(firstItem.applicant_name) ? firstItem.applicant_name : (firstItem.Requester?.name ?? "-"),
                 sig3Role: "Associate CorpU",
-                proofImagePath: ResolveProofImagePath(firstItem.handover_photo, wwwrootPath),
+                proofImagePaths: ResolveProofImagePaths(firstItem.handover_photo, wwwrootPath),
                 proofLabel: "Bukti Serah Terima");
         }
 
@@ -81,7 +81,7 @@ namespace WMS_UnitedTracors_Blazor.Services
                 sig3Title: "Arsip CorpU",
                 sig3Name: "Ahmad Anwari",
                 sig3Role: "CorpU Dept Head",
-                proofImagePath: ResolveProofImagePath(firstItem.documentation_photo, wwwrootPath),
+                proofImagePaths: ResolveProofImagePaths(firstItem.documentation_photo, wwwrootPath),
                 proofLabel: "Bukti Dokumentasi");
         }
 
@@ -115,57 +115,68 @@ namespace WMS_UnitedTracors_Blazor.Services
                 sig3Title: "Yang Menerima",
                 sig3Name: "Ilona Kirana Saradella",
                 sig3Role: "Admin CorpU",
-                proofImagePath: ResolveProofImagePath(firstItem.return_photo, wwwrootPath),
+                proofImagePaths: ResolveProofImagePaths(firstItem.return_photo, wwwrootPath),
                 proofLabel: "Bukti Pengembalian");
         }
 
-        // Resolve path foto bukti (handover/return) ke path fisik; null jika tidak ada / bukan gambar.
-        private static string? ResolveProofImagePath(string? stored, string wwwrootPath)
+        // Resolve list path foto bukti ke path fisik
+        private static List<string> ResolveProofImagePaths(string? stored, string wwwrootPath)
         {
-            if (string.IsNullOrWhiteSpace(stored)) return null;
-            if (stored == "forced-by-admin") return null;
+            var result = new List<string>();
+            if (string.IsNullOrWhiteSpace(stored) || stored == "forced-by-admin") return result;
 
+            var rawList = new List<string>();
             var resolved = stored.Trim();
             if (resolved.StartsWith("["))
             {
                 try
                 {
                     var parsed = JsonSerializer.Deserialize<List<string>>(resolved);
-                    resolved = parsed?.FirstOrDefault(x => !string.IsNullOrWhiteSpace(x)) ?? string.Empty;
+                    if (parsed != null) rawList.AddRange(parsed.Where(x => !string.IsNullOrWhiteSpace(x)));
                 }
-                catch
-                {
-                    resolved = string.Empty;
-                }
-            }
-
-            if (string.IsNullOrWhiteSpace(resolved)) return null;
-
-            var rel = resolved.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
-            string full;
-            if (rel.StartsWith("storage" + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) || 
-                rel.Equals("storage", StringComparison.OrdinalIgnoreCase))
-            {
-                var appRoot = Directory.GetParent(wwwrootPath.TrimEnd(Path.DirectorySeparatorChar))?.FullName ?? string.Empty;
-                var subPath = rel.Substring("storage".Length).TrimStart(Path.DirectorySeparatorChar);
-                full = Path.Combine(appRoot, "Storage", subPath);
+                catch { }
             }
             else
             {
-                full = Path.Combine(wwwrootPath, rel);
+                rawList.Add(resolved);
             }
 
-            var ext = Path.GetExtension(full).ToLowerInvariant();
-            if (ext != ".jpg" && ext != ".jpeg" && ext != ".png" && ext != ".webp") return null;
-            return File.Exists(full) ? full : null;
+            foreach (var item in rawList)
+            {
+                var rel = item.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
+                string full;
+                if (rel.StartsWith("storage" + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) || 
+                    rel.Equals("storage", StringComparison.OrdinalIgnoreCase))
+                {
+                    var appRoot = Directory.GetParent(wwwrootPath.TrimEnd(Path.DirectorySeparatorChar))?.FullName ?? string.Empty;
+                    var subPath = rel.Substring("storage".Length).TrimStart(Path.DirectorySeparatorChar);
+                    full = Path.Combine(appRoot, "Storage", subPath);
+                }
+                else
+                {
+                    full = Path.Combine(wwwrootPath, rel);
+                }
+
+                var ext = Path.GetExtension(full).ToLowerInvariant();
+                if ((ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".webp") && File.Exists(full))
+                {
+                    result.Add(full);
+                }
+            }
+
+            return result;
         }
 
         private byte[] GenerateDocument(List<Transaction> items, Transaction firstItem, string title, string wwwrootPath,
             string sig1Title, string sig1Name, string sig1Role,
             string sig2Title, string sig2Name, string sig2Role,
             string sig3Title, string sig3Name, string sig3Role,
-            string? proofImagePath = null, string? proofLabel = null)
+            List<string>? proofImagePaths = null, string? proofLabel = null)
         {
+            var images = proofImagePaths ?? new List<string>();
+            var mainPagePhotos = images.Take(4).ToList();
+            var extraPhotos = images.Skip(4).ToList();
+
             var document = Document.Create(container =>
             {
                 container.Page(page =>
@@ -258,74 +269,75 @@ namespace WMS_UnitedTracors_Blazor.Services
                                 table.Cell().BorderBottom(1).BorderLeft(1.5f).BorderColor(Colors.Black).Padding(4).AlignCenter().Text(item.event_date?.ToString("dd/MM/yyyy") ?? "-");
                                 idx++;
                             }
-
-                            // Empty rows to fill space (at least 10 rows like old_laravel)
-                            for(int i = items.Count; i < 10; i++)
-                            {
-                                table.Cell().BorderBottom(1).BorderColor(Colors.Black).Padding(4).Text("");
-                                table.Cell().BorderBottom(1).BorderLeft(1.5f).BorderColor(Colors.Black).Padding(4).Text("");
-                                table.Cell().BorderBottom(1).BorderLeft(1.5f).BorderColor(Colors.Black).Padding(4).Text("");
-                                table.Cell().BorderBottom(1).BorderLeft(1.5f).BorderColor(Colors.Black).Padding(4).Text("");
-                                table.Cell().BorderBottom(1).BorderLeft(1.5f).BorderColor(Colors.Black).Padding(4).Text("");
-                            }
                         });
 
-                        // Proof photo (Bukti Serah Terima / Pengembalian), jika ada
-                        if (!string.IsNullOrEmpty(proofImagePath))
+                        // Proof photos (Bukti Serah Terima / Pengembalian), jika ada
+                        if (mainPagePhotos.Any())
                         {
                             column.Item().LineHorizontal(1.5f).LineColor(Colors.Black);
-                            column.Item().Padding(8).Row(r =>
+                            column.Item().Padding(8).Column(c =>
                             {
-                                r.AutoItem().Width(180).Column(c =>
+                                c.Item().Text(proofLabel ?? "Bukti Foto").Bold().FontSize(9);
+                                c.Item().PaddingTop(4).Row(r =>
                                 {
-                                    c.Item().Text(proofLabel ?? "Bukti Foto").Bold().FontSize(9);
-                                    c.Item().PaddingTop(4).Width(180).MaxHeight(180).Image(proofImagePath).FitArea();
+                                    float maxH = mainPagePhotos.Count switch
+                                    {
+                                        1 => 150f,
+                                        2 => 130f,
+                                        3 => 110f,
+                                        _ => 90f
+                                    };
+
+                                    foreach (var imgPath in mainPagePhotos)
+                                    {
+                                        r.AutoItem().PaddingRight(8).MaxHeight(maxH).Image(imgPath).FitArea();
+                                    }
                                 });
-                                r.RelativeItem();
                             });
                         }
 
-                        // Foot border before signatures
-                        column.Item().LineHorizontal(1.5f).LineColor(Colors.Black);
-
-                        // Signatures
-                        column.Item().Row(row =>
+                        // Foot border & Signatures aligned flush to bottom
+                        column.Item().AlignBottom().Column(bottomCol =>
                         {
-                            row.RelativeItem(4).Padding(10).Column(col => 
+                            bottomCol.Item().LineHorizontal(1.5f).LineColor(Colors.Black);
+                            bottomCol.Item().Row(row =>
                             {
-                                col.Item().Text("Catatan:").Bold().FontSize(10);
-                                col.Item().PaddingTop(2).Text(!string.IsNullOrEmpty(firstItem.notes) ? firstItem.notes : "-").FontSize(9).FontColor(Colors.Grey.Darken2);
-                            });
-
-                            row.RelativeItem(6).BorderLeft(1.5f).BorderColor(Colors.Black).Column(col =>
-                            {
-                                col.Item().BorderBottom(1).BorderColor(Colors.Black).PaddingVertical(5).PaddingHorizontal(8).AlignRight()
-                                   .Text($"Jakarta, {firstItem.created_at.ToString("dd MMMM yyyy", new System.Globalization.CultureInfo("id-ID"))}").Bold().FontSize(9);
-
-                                col.Item().Table(t =>
+                                row.RelativeItem(4).Padding(10).Column(col => 
                                 {
-                                    t.ColumnsDefinition(c =>
+                                    col.Item().Text("Catatan:").Bold().FontSize(10);
+                                    col.Item().PaddingTop(2).Text(!string.IsNullOrEmpty(firstItem.notes) ? firstItem.notes : "-").FontSize(9).FontColor(Colors.Grey.Darken2);
+                                });
+
+                                row.RelativeItem(6).BorderLeft(1.5f).BorderColor(Colors.Black).Column(col =>
+                                {
+                                    col.Item().BorderBottom(1).BorderColor(Colors.Black).PaddingVertical(5).PaddingHorizontal(8).AlignRight()
+                                       .Text($"Jakarta, {firstItem.created_at.ToString("dd MMMM yyyy", new System.Globalization.CultureInfo("id-ID"))}").Bold().FontSize(9);
+
+                                    col.Item().Table(t =>
                                     {
-                                        c.RelativeColumn();
-                                        c.RelativeColumn();
-                                        c.RelativeColumn();
-                                    });
+                                        t.ColumnsDefinition(c =>
+                                        {
+                                            c.RelativeColumn();
+                                            c.RelativeColumn();
+                                            c.RelativeColumn();
+                                        });
 
-                                    t.Cell().BorderBottom(1).BorderColor(Colors.Black).PaddingVertical(5).AlignCenter().Text(sig1Title).Bold();
-                                    t.Cell().BorderBottom(1).BorderLeft(1).BorderColor(Colors.Black).PaddingVertical(5).AlignCenter().Text(sig2Title).Bold();
-                                    t.Cell().BorderBottom(1).BorderLeft(1).BorderColor(Colors.Black).PaddingVertical(5).AlignCenter().Text(sig3Title).Bold();
+                                        t.Cell().BorderBottom(1).BorderColor(Colors.Black).PaddingVertical(5).AlignCenter().Text(sig1Title).Bold();
+                                        t.Cell().BorderBottom(1).BorderLeft(1).BorderColor(Colors.Black).PaddingVertical(5).AlignCenter().Text(sig2Title).Bold();
+                                        t.Cell().BorderBottom(1).BorderLeft(1).BorderColor(Colors.Black).PaddingVertical(5).AlignCenter().Text(sig3Title).Bold();
 
-                                    t.Cell().Height(80).PaddingBottom(6).AlignBottom().AlignCenter().Column(c => {
-                                        c.Item().Text(sig1Name).Bold().Underline();
-                                        c.Item().Text(sig1Role).FontSize(8).FontColor(Colors.Grey.Darken2);
-                                    });
-                                    t.Cell().BorderLeft(1).BorderColor(Colors.Black).Height(80).PaddingBottom(6).AlignBottom().AlignCenter().Column(c => {
-                                        c.Item().Text(sig2Name).Bold().Underline();
-                                        c.Item().Text(sig2Role).FontSize(8).FontColor(Colors.Grey.Darken2);
-                                    });
-                                    t.Cell().BorderLeft(1).BorderColor(Colors.Black).Height(80).PaddingBottom(6).AlignBottom().AlignCenter().Column(c => {
-                                        c.Item().Text(sig3Name).Bold().Underline();
-                                        c.Item().Text(sig3Role).FontSize(8).FontColor(Colors.Grey.Darken2);
+                                        t.Cell().Height(80).PaddingBottom(6).AlignBottom().AlignCenter().Column(c => {
+                                            c.Item().Text(sig1Name).Bold().Underline();
+                                            c.Item().Text(sig1Role).FontSize(8).FontColor(Colors.Grey.Darken2);
+                                        });
+                                        t.Cell().BorderLeft(1).BorderColor(Colors.Black).Height(80).PaddingBottom(6).AlignBottom().AlignCenter().Column(c => {
+                                            c.Item().Text(sig2Name).Bold().Underline();
+                                            c.Item().Text(sig2Role).FontSize(8).FontColor(Colors.Grey.Darken2);
+                                        });
+                                        t.Cell().BorderLeft(1).BorderColor(Colors.Black).Height(80).PaddingBottom(6).AlignBottom().AlignCenter().Column(c => {
+                                            c.Item().Text(sig3Name).Bold().Underline();
+                                            c.Item().Text(sig3Role).FontSize(8).FontColor(Colors.Grey.Darken2);
+                                        });
                                     });
                                 });
                             });
@@ -333,6 +345,38 @@ namespace WMS_UnitedTracors_Blazor.Services
 
                     });
                 });
+
+                // Halaman 2: Lampiran Foto Tambahan jika foto lebih dari 4
+                if (extraPhotos.Any())
+                {
+                    container.Page(page =>
+                    {
+                        page.Size(PageSizes.A4.Landscape());
+                        page.Margin(20, QuestPDF.Infrastructure.Unit.Point);
+                        page.PageColor(Colors.White);
+                        page.DefaultTextStyle(x => x.FontSize(9).FontFamily(Fonts.Arial).FontColor(Colors.Black));
+
+                        page.Header().BorderBottom(1.5f).BorderColor(Colors.Black).PaddingBottom(6).Row(row =>
+                        {
+                            row.RelativeItem().Text($"Lampiran {proofLabel ?? "Bukti Foto"} Tambahan - Dokumen No: UT/WMS/SND/{firstItem.id}").Bold().FontSize(11);
+                        });
+
+                        page.Content().PaddingTop(10).Table(t =>
+                        {
+                            t.ColumnsDefinition(c =>
+                            {
+                                c.RelativeColumn();
+                                c.RelativeColumn();
+                                c.RelativeColumn();
+                            });
+
+                            foreach (var imgPath in extraPhotos)
+                            {
+                                t.Cell().Padding(6).MaxHeight(220).Image(imgPath).FitArea();
+                            }
+                        });
+                    });
+                }
             });
 
             return document.GeneratePdf();
