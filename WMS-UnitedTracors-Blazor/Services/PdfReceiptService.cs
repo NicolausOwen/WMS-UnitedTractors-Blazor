@@ -227,8 +227,23 @@ namespace WMS_UnitedTracors_Blazor.Services
             List<string>? proofImagePaths = null, string? proofLabel = null)
         {
             var images = proofImagePaths ?? new List<string>();
-            var mainPagePhotos = images.Take(4).ToList();
-            var extraPhotos = images.Skip(4).ToList();
+
+            // Jika daftar barang lebih dari 3 item, pindahkan foto ke halaman lampiran agar tanda tangan dipastikan tetap di halaman pertama.
+            bool hasManyItems = items.Count > 3;
+
+            List<string> mainPagePhotos;
+            List<string> extraPhotos;
+
+            if (hasManyItems)
+            {
+                mainPagePhotos = new List<string>();
+                extraPhotos = images;
+            }
+            else
+            {
+                mainPagePhotos = images.Take(3).ToList();
+                extraPhotos = images.Skip(3).ToList();
+            }
 
             var document = Document.Create(container =>
             {
