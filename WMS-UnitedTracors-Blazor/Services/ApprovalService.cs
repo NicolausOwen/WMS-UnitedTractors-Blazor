@@ -940,7 +940,7 @@ public class ApprovalService
         if (!string.IsNullOrWhiteSpace(requesterEmail))
         {
             var htmlMessage = GetEmailTemplate(subject, message);
-            await _emailService.SendEmailAsync(requesterEmail, subject, htmlMessage);
+            _ = _emailService.SendEmailAsync(requesterEmail, subject, htmlMessage);
         }
     }
 
@@ -1127,7 +1127,7 @@ public class ApprovalService
                 sb.AppendLine("</ul>");
 
                 var htmlMessage = GetEmailTemplate("Update Status Request WMS", sb.ToString());
-                await _emailService.SendEmailAsync(requesterEmail, "Update Request WMS", htmlMessage);
+                _ = _emailService.SendEmailAsync(requesterEmail, "Update Request WMS", htmlMessage);
             }
         }
 

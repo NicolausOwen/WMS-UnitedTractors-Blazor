@@ -529,6 +529,18 @@
                 if (totalRet >= totalQty) continue;
             }
 
+            // Skip fully completed giveaway events
+            if (firstItem.request_type == "GIVEAWAY" && firstItem.status == "COMPLETED")
+            {
+                continue;
+            }
+
+            // Skip permanently rejected events (Not a revision request)
+            if (firstItem.status == "REJECTED" && string.IsNullOrEmpty(firstItem.last_revision_stage))
+            {
+                continue;
+            }
+
             bool matchesCriteria = true;
 
             if (!string.IsNullOrEmpty(ProductSearch))
