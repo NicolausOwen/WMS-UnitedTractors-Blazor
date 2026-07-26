@@ -12,6 +12,21 @@
 @inject IJSRuntime JSRuntime
 @rendermode InteractiveServer
 
+<style>
+    @@media (max-width: 545px) {
+        .custom-mobile-header {
+            flex-direction: column-reverse !important;
+            align-items: stretch !important;
+        }
+        .custom-mobile-search-container {
+            width: 100% !important;
+        }
+        .custom-mobile-search-input {
+            width: 100% !important;
+        }
+    }
+</style>
+
 <PageTitle>WMS - Borrow Catalog</PageTitle>
 
 <WMS_UnitedTracors_Blazor.Components.Shared.LoadingOverlay IsVisible="IsLoadingData" Message="Memuat Katalog Barang..." SubMessage="Mohon tunggu sebentar..." />
@@ -23,7 +38,7 @@
         <p class="text-sm text-[#8a8880] mt-1">Items available for borrowing and return</p>
     </div>
 
-    <div class="sticky top-[60px] md:top-0 bg-[#f5f4f0] py-3 -mx-4 px-4 md:-mx-10 md:px-10 border-b border-[#e5e3dc] flex flex-row items-center justify-between gap-3 mb-6 transition-all duration-200" style="z-index: 40;">
+    <div class="sticky top-[60px] md:top-0 bg-[#f5f4f0] py-3 -mx-4 px-4 md:-mx-10 md:px-10 border-b border-[#e5e3dc] flex flex-row items-center justify-between gap-3 mb-6 transition-all duration-200 custom-mobile-header" style="z-index: 40;">
         <div class="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 flex-1 min-w-0 [&::-webkit-scrollbar]:hidden"
              style="scrollbar-width: none;">
             <button @onclick="() => FilterByCategory(null)"
@@ -41,7 +56,7 @@
                 }
             }
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 custom-mobile-search-container">
             <!-- Header Cart Button (Desktop Only) -->
             <button type="button" @onclick="CartService.ShowCart" class="hidden md:flex items-center justify-center w-[38px] h-[38px] rounded-full bg-[#e8a000] hover:bg-[#d49300] border border-[#d49300]/20 text-[#1a1a1a] transition-all shadow-sm cursor-pointer relative shrink-0" title="Keranjang" aria-label="Buka Keranjang">
                 <svg class="w-5 h-5 text-[#1a1a1a]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -54,7 +69,7 @@
                     </span>
                 }
             </button>
-            <div class="w-44 sm:w-60 md:w-72 shrink-0 relative">
+            <div class="w-44 sm:w-60 md:w-72 shrink-0 relative custom-mobile-search-input">
                 <input type="text" value="@SearchQuery" @oninput="OnSearchInput" placeholder="Cari nama barang atau SKU..."
                        class="w-full pl-10 pr-4 py-2 bg-[#f9f8f6] border border-[#e5e3dc] rounded-full text-sm font-semibold text-[#5a5855] focus:outline-none focus:ring-2 focus:ring-[#3b82f6] focus:bg-white transition-all shadow-sm" />
                 <svg class="w-4 h-4 text-[#8a8880] absolute left-3.5 top-1/2 -translate-y-1/2" fill="none"
