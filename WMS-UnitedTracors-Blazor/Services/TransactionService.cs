@@ -354,9 +354,9 @@ public class TransactionService
 
             if (allStaffEmails.Any())
             {
-                string adminMessage = $"Terdapat request peminjaman/pengambilan barang baru dari <strong>{model.applicant_name ?? requester?.name}</strong>. Silakan login ke sistem WMS untuk meninjau dan melakukan persetujuan pada tahap Staff Inventoris.";
+                string adminMessage = $"Terdapat request peminjaman/pengambilan barang baru dari <strong>{model.applicant_name ?? requester?.name}</strong>. Silakan login ke sistem InCorp untuk meninjau dan melakukan persetujuan pada tahap Staff Inventoris.";
                 string adminHtml = GetEmailTemplate("Request Baru Menunggu Persetujuan", adminMessage);
-                _ = _emailService.SendEmailToMultipleAsync(allStaffEmails, "Request Baru (WMS UT)", adminHtml);
+                _ = _emailService.SendEmailToMultipleAsync(allStaffEmails, "Request Baru (InCorp)", adminHtml);
             }
         }
 
@@ -369,7 +369,7 @@ public class TransactionService
         <div style='font-family: ""Segoe UI"", Arial, sans-serif; background-color: #f4f4f5; padding: 40px 20px;'>
             <div style='max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #e4e4e7;'>
                 <div style='background-color: #fdc300; padding: 25px; text-align: center; border-bottom: 4px solid #e8a000;'>
-                    <h1 style='color: #18181b; margin: 0; font-size: 24px; font-weight: 800; letter-spacing: 0.5px;'>UT WMS</h1>
+                    <h1 style='color: #18181b; margin: 0; font-size: 24px; font-weight: 800; letter-spacing: 0.5px;'>InCorp</h1>
                 </div>
                 <div style='padding: 35px 30px; color: #3f3f46; line-height: 1.6;'>
                     <h2 style='color: #18181b; margin-top: 0; font-size: 20px; font-weight: 600;'>{title}</h2>
@@ -1206,9 +1206,9 @@ public class TransactionService
 
         if (allStaffEmails.Any())
         {
-            string adminMessage = $"Terdapat request WMS (Event: {transaction.event_name ?? "-"}) yang telah <strong>direvisi dan disubmit ulang</strong> oleh pemohon <strong>{transaction.applicant_name ?? transaction.Requester?.name ?? "-"}</strong>. Silakan login ke sistem WMS untuk meninjau kembali.";
+            string adminMessage = $"Terdapat request InCorp (Event: {transaction.event_name ?? "-"}) yang telah <strong>direvisi dan disubmit ulang</strong> oleh pemohon <strong>{transaction.applicant_name ?? transaction.Requester?.name ?? "-"}</strong>. Silakan login ke sistem InCorp untuk meninjau kembali.";
             string adminHtml = GetEmailTemplate("Revisi Request Disubmit Ulang", adminMessage);
-            _ = _emailService.SendEmailToMultipleAsync(allStaffEmails, "Revisi Request (WMS UT)", adminHtml);
+            _ = _emailService.SendEmailToMultipleAsync(allStaffEmails, "Revisi Request (InCorp)", adminHtml);
         }
 
         return null;
@@ -1418,7 +1418,7 @@ public class TransactionService
             sb.AppendLine("<p>Silakan ambil barang dan lakukan konfirmasi penerimaan melalui aplikasi.</p>");
 
             var htmlMessage = GetEmailTemplate("Barang Siap Diserahkan", sb.ToString());
-            _ = _emailService.SendEmailAsync(requester.email, "Barang Siap Diserahkan (WMS UT)", htmlMessage);
+            _ = _emailService.SendEmailAsync(requester.email, "Barang Siap Diserahkan (InCorp)", htmlMessage);
         }
 
         return null;

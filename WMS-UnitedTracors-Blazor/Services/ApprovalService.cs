@@ -629,7 +629,7 @@ public class ApprovalService
                     string mailTitle = "Notifikasi Pengembalian Barang";
                     string mailMessage = $"Barang <strong>{product}</strong> sejumlah {qty} unit yang dipinjam oleh {applicant} telah dikembalikan dalam kondisi <strong>{condition}</strong>. Pengembalian telah diverifikasi oleh Staff Inventoris.";
                     string html = GetEmailTemplate(mailTitle, mailMessage);
-                    _ = _emailService.SendEmailToMultipleAsync(admins, "Notifikasi Pengembalian Barang (WMS UT)", html);
+                    _ = _emailService.SendEmailToMultipleAsync(admins, "Notifikasi Pengembalian Barang (InCorp)", html);
                 }
             }
             catch (Exception)
@@ -1011,11 +1011,11 @@ public class ApprovalService
             sb.AppendLine("</ul><br/>");
             
             string baseUrl = _configuration["AppUrl"]?.TrimEnd('/') ?? "https://localhost:7100";
-            sb.AppendLine($"Silakan login ke sistem WMS (<a href='{baseUrl}'>Dashboard Approval</a>) untuk meninjau detail dan melakukan persetujuan.");
+            sb.AppendLine($"Silakan login ke sistem InCorp (<a href='{baseUrl}'>Dashboard Approval</a>) untuk meninjau detail dan melakukan persetujuan.");
                                  
-            string mailTitle = "Tindakan Diperlukan: Request WMS Menunggu Persetujuan Anda";
+            string mailTitle = "Tindakan Diperlukan: Request InCorp Menunggu Persetujuan Anda";
             string html = GetEmailTemplate(mailTitle, sb.ToString());
-            _ = _emailService.SendEmailToMultipleAsync(emails, "Tindakan Diperlukan: Request WMS Menunggu Persetujuan Anda", html);
+            _ = _emailService.SendEmailToMultipleAsync(emails, "Tindakan Diperlukan: Request InCorp Menunggu Persetujuan Anda", html);
         }
     }
 
@@ -1158,8 +1158,8 @@ public class ApprovalService
                 }
                 sb.AppendLine("</ul>");
 
-                var htmlMessage = GetEmailTemplate("Update Status Request WMS", sb.ToString());
-                _ = _emailService.SendEmailAsync(requesterEmail, "Update Request WMS", htmlMessage);
+                var htmlMessage = GetEmailTemplate("Update Status Request InCorp", sb.ToString());
+                _ = _emailService.SendEmailAsync(requesterEmail, "Update Request InCorp", htmlMessage);
             }
         }
 
@@ -1189,7 +1189,7 @@ public class ApprovalService
         <div style='font-family: ""Segoe UI"", Arial, sans-serif; background-color: #f4f4f5; padding: 40px 20px;'>
             <div style='max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #e4e4e7;'>
                 <div style='background-color: #fdc300; padding: 25px; text-align: center; border-bottom: 4px solid #e8a000;'>
-                    <h1 style='color: #18181b; margin: 0; font-size: 24px; font-weight: 800; letter-spacing: 0.5px;'>UT WMS</h1>
+                    <h1 style='color: #18181b; margin: 0; font-size: 24px; font-weight: 800; letter-spacing: 0.5px;'>InCorp</h1>
                 </div>
                 <div style='padding: 35px 30px; color: #3f3f46; line-height: 1.6;'>
                     <h2 style='color: #18181b; margin-top: 0; font-size: 20px; font-weight: 600;'>{title}</h2>
