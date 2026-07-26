@@ -1,5 +1,5 @@
-using Azure;
-using Azure.Communication.Email;
+using System.Net;
+using System.Net.Mail;
 using Microsoft.Extensions.Options;
 
 namespace WMS_UnitedTracors_Blazor.Services;
@@ -20,9 +20,9 @@ public class EmailService : IEmailService
     {
         _ = Task.Run(async () =>
         {
-            if (string.IsNullOrWhiteSpace(toEmail) || string.IsNullOrWhiteSpace(_smtpSettings.ConnectionString))
+            if (string.IsNullOrWhiteSpace(toEmail) || string.IsNullOrWhiteSpace(_smtpSettings.Host))
             {
-                _logger.LogWarning("Email not sent to {ToEmail}. ConnectionString not configured.", toEmail);
+                _logger.LogWarning("Email not sent to {ToEmail}. SMTP Host not configured.", toEmail);
                 return;
             }
 
@@ -36,29 +36,30 @@ public class EmailService : IEmailService
                 {
                     try
                     {
-                        var emailClient = new EmailClient(_smtpSettings.ConnectionString);
-                        var emailContent = new EmailContent(subject)
+                        using var client = new SmtpClient(_smtpSettings.Host, _smtpSettings.Port)
                         {
-                            Html = body
+                            UseDefaultCredentials = false,
+                            Credentials = new NetworkCredential(_smtpSettings.Username, _smtpSettings.Password),
+                            EnableSsl = _smtpSettings.EnableSsl,
+                            DeliveryMethod = SmtpDeliveryMethod.Network
                         };
 
-                        var emailMessage = new EmailMessage(
-                            senderAddress: _smtpSettings.FromEmail,
-                            content: emailContent,
-                            recipients: new EmailRecipients(new List<EmailAddress> { new EmailAddress(toEmail) })
-                        );
+                        var mailMessage = new MailMessage
+                        {
+                            From = new MailAddress(_smtpSettings.FromEmail, _smtpSettings.FromName),
+                            Subject = subject,
+                            Body = body,
+                            IsBodyHtml = true
+                        };
+                        mailMessage.To.Add(toEmail);
 
-                        EmailSendOperation emailSendOperation = await emailClient.SendAsync(
-                            WaitUntil.Started,
-                            emailMessage);
-
-                        await Task.Delay(2000); // Ensures a 2 second gap between emails globally to respect Azure free tier rate limits
-                        _logger.LogInformation("Email sent successfully to {ToEmail} with subject: {Subject}. OperationId: {OperationId}", toEmail, subject, emailSendOperation.Id);
+                        await client.SendMailAsync(mailMessage);
+                        _logger.LogInformation("Email sent successfully to {ToEmail} with subject: {Subject}", toEmail, subject);
                         return; // Success, exit loop
                     }
-                    catch (RequestFailedException ex) when (ex.Status == 429)
+                    catch (SmtpException ex)
                     {
-                        _logger.LogWarning("Rate limit (429) hit when sending email to {ToEmail}. Retrying in {Delay}ms... (Attempt {Attempt} of {MaxRetries})", toEmail, delayMs, i + 1, maxRetries);
+                        _logger.LogWarning("SMTP Exception hit when sending email to {ToEmail}. Retrying in {Delay}ms... (Attempt {Attempt} of {MaxRetries}). Error: {Error}", toEmail, delayMs, i + 1, maxRetries, ex.Message);
                         if (i == maxRetries - 1)
                         {
                             _logger.LogError(ex, "Max retries reached. Error sending email to {ToEmail}", toEmail);
@@ -72,7 +73,7 @@ public class EmailService : IEmailService
                     catch (Exception ex)
                     {
                         _logger.LogError(ex, "Error sending email to {ToEmail}", toEmail);
-                        break; // Don't retry on non-429 errors
+                        break; 
                     }
                 }
             }
@@ -90,11 +91,13 @@ public class EmailService : IEmailService
         _ = Task.Run(async () =>
         {
             var validEmails = toEmails.Where(e => !string.IsNullOrWhiteSpace(e)).Distinct().ToList();
-            if (!validEmails.Any() || string.IsNullOrWhiteSpace(_smtpSettings.ConnectionString))
+            if (!validEmails.Any() || string.IsNullOrWhiteSpace(_smtpSettings.Host))
             {
-                _logger.LogWarning("Multiple email not sent. Targets empty or ConnectionString not configured.");
+                _logger.LogWarning("Multiple email not sent. Targets empty or SMTP Host not configured.");
                 return;
             }
+            
+            _logger.LogInformation("DEBUG EMAIL: Will send email with subject '{Subject}' to {Count} recipients: {Emails}", subject, validEmails.Count, string.Join(", ", validEmails));
 
             int maxRetries = 3;
             int delayMs = 2000;
@@ -106,31 +109,38 @@ public class EmailService : IEmailService
                 {
                     try
                     {
-                        var emailClient = new EmailClient(_smtpSettings.ConnectionString);
-                        var emailContent = new EmailContent(subject)
+                        using var client = new SmtpClient(_smtpSettings.Host, _smtpSettings.Port)
                         {
-                            Html = body
+                            UseDefaultCredentials = false,
+                            Credentials = new NetworkCredential(_smtpSettings.Username, _smtpSettings.Password),
+                            EnableSsl = _smtpSettings.EnableSsl,
+                            DeliveryMethod = SmtpDeliveryMethod.Network
                         };
 
-                        var emailAddresses = validEmails.Select(e => new EmailAddress(e)).ToList();
+                        var mailMessage = new MailMessage
+                        {
+                            From = new MailAddress(_smtpSettings.FromEmail, _smtpSettings.FromName),
+                            Subject = subject,
+                            Body = body,
+                            IsBodyHtml = true
+                        };
 
-                        var emailMessage = new EmailMessage(
-                            senderAddress: _smtpSettings.FromEmail,
-                            content: emailContent,
-                            recipients: new EmailRecipients(emailAddresses)
-                        );
+                        // CC all valid emails so they all get the email
+                        foreach (var email in validEmails)
+                        {
+                            mailMessage.Bcc.Add(email); 
+                        }
+                        
+                        // We need at least one To recipient, usually the sender themselves for bulk bcc
+                        mailMessage.To.Add(_smtpSettings.FromEmail);
 
-                        EmailSendOperation emailSendOperation = await emailClient.SendAsync(
-                            WaitUntil.Started,
-                            emailMessage);
-
-                        await Task.Delay(2000); // Ensures a 2 second gap between emails globally to respect Azure free tier rate limits
-                        _logger.LogInformation("Email sent successfully to {Count} recipients with subject: {Subject}. OperationId: {OperationId}", validEmails.Count, subject, emailSendOperation.Id);
+                        await client.SendMailAsync(mailMessage);
+                        _logger.LogInformation("Email sent successfully to {Count} recipients with subject: {Subject}", validEmails.Count, subject);
                         return; // Success, exit loop
                     }
-                    catch (RequestFailedException ex) when (ex.Status == 429)
+                    catch (SmtpException ex)
                     {
-                        _logger.LogWarning("Rate limit (429) hit when sending multiple emails. Retrying in {Delay}ms... (Attempt {Attempt} of {MaxRetries})", delayMs, i + 1, maxRetries);
+                        _logger.LogWarning("SMTP Exception hit when sending multiple emails. Retrying in {Delay}ms... (Attempt {Attempt} of {MaxRetries}). Error: {Error}", delayMs, i + 1, maxRetries, ex.Message);
                         if (i == maxRetries - 1)
                         {
                             _logger.LogError(ex, "Max retries reached. Error sending email to multiple recipients.");

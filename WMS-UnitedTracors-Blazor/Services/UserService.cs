@@ -46,6 +46,7 @@ public class UserService
 
     public async Task<string?> CreateUserAsync(UserCreateViewModel model)
     {
+        if (!string.IsNullOrEmpty(model.role)) model.role = model.role.ToLowerInvariant();
         using var _context = _factory.CreateDbContext();
         if (await _context.Users.AnyAsync(u => u.email == model.email))
             return "Email sudah digunakan.";
@@ -94,6 +95,7 @@ public class UserService
 
     public async Task<string?> UpdateUserAsync(int id, UserUpdateViewModel model, int currentUserId, string? currentUserRole)
     {
+        if (!string.IsNullOrEmpty(model.role)) model.role = model.role.ToLowerInvariant();
         using var _context = _factory.CreateDbContext();
         var user = await _context.Users.FindAsync(id);
         if (user == null) return "User tidak ditemukan.";

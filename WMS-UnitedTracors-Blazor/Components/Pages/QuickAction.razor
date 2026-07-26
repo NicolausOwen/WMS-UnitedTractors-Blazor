@@ -1,0 +1,228 @@
+@page "/transaction/quick-action/{Id:int}"
+@using Microsoft.AspNetCore.Authorization
+@using System.Security.Claims
+@using WMS_UnitedTracors_Blazor.Services
+@attribute [Authorize]
+@inject ApprovalService ApprovalService
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthStateProvider
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Aksi Cepat Transaksi | WMS UT</PageTitle>
+
+<div class="max-w-3xl mx-auto py-8 px-4">
+    <div class="bg-white rounded-lg shadow p-6 border-t-4 @GetBorderColor()">
+        <h2 class="text-2xl font-bold mb-4 text-zinc-800">Aksi Cepat Transaksi #@Id</h2>
+        
+        @if (isLoading)
+        {
+            <div class="flex items-center justify-center p-8">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-zinc-900"></div>
+                <span class="ml-3 text-zinc-600">Memproses...</span>
+            </div>
+        }
+        else if (isSuccess)
+        {
+            <div class="bg-green-50 border border-green-200 text-green-700 p-4 rounded-md mb-6">
+                <div class="flex items-center">
+                    <svg class="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                    <span class="font-medium">Berhasil!</span>
+                </div>
+                <p class="mt-2 text-sm">@successMessage</p>
+            </div>
+            
+            <button @onclick="GoToDashboard" class="bg-zinc-800 text-white px-4 py-2 rounded font-medium hover:bg-zinc-700 transition">Kembali ke Beranda</button>
+        }
+        else if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="bg-red-50 border border-red-200 text-red-700 p-4 rounded-md mb-6">
+                <p class="font-medium">Terjadi Kesalahan</p>
+                <p class="text-sm mt-1">@errorMessage</p>
+            </div>
+            
+            <button @onclick="GoToDashboard" class="bg-zinc-800 text-white px-4 py-2 rounded font-medium hover:bg-zinc-700 transition">Kembali ke Beranda</button>
+        }
+        else
+        {
+            @if (Action?.ToLower() == "reject")
+            {
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-zinc-700 mb-1">Alasan Penolakan <span class="text-red-500">*</span></label>
+                    <textarea @bind="notes" class="w-full border-zinc-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 p-2 border" rows="4" placeholder="Masukkan alasan kenapa transaksi ini ditolak..."></textarea>
+                </div>
+                <div class="flex space-x-3">
+                    <button @onclick="SubmitReject" class="bg-red-600 text-white px-4 py-2 rounded font-medium hover:bg-red-700 transition" disabled="@isSubmitting">
+                        @if (isSubmitting) { <span>Menyimpan...</span> } else { <span>Tolak Transaksi</span> }
+                    </button>
+                    <button @onclick="GoToDashboard" class="bg-white border border-zinc-300 text-zinc-700 px-4 py-2 rounded font-medium hover:bg-zinc-50 transition">Batal</button>
+                </div>
+            }
+            else if (Action?.ToLower() == "revise")
+            {
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-zinc-700 mb-1">Catatan Revisi <span class="text-red-500">*</span></label>
+                    <textarea @bind="notes" class="w-full border-zinc-300 rounded-md shadow-sm focus:ring-yellow-500 focus:border-yellow-500 p-2 border" rows="4" placeholder="Masukkan detail apa yang perlu direvisi..."></textarea>
+                </div>
+                <div class="flex space-x-3">
+                    <button @onclick="SubmitRevise" class="bg-yellow-500 text-white px-4 py-2 rounded font-medium hover:bg-yellow-600 transition" disabled="@isSubmitting">
+                        @if (isSubmitting) { <span>Menyimpan...</span> } else { <span>Minta Revisi</span> }
+                    </button>
+                    <button @onclick="GoToDashboard" class="bg-white border border-zinc-300 text-zinc-700 px-4 py-2 rounded font-medium hover:bg-zinc-50 transition">Batal</button>
+                </div>
+            }
+            else
+            {
+                <div class="bg-zinc-50 p-4 rounded-md">
+                    <p class="text-zinc-600">Aksi tidak dikenali atau parameter tidak lengkap.</p>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    [Parameter] [SupplyParameterFromQuery(Name = "action")] public string? Action { get; set; }
+
+    private bool isLoading = true;
+    private bool isSubmitting = false;
+    private bool isSuccess = false;
+    private string? errorMessage;
+    private string? successMessage;
+    private string notes = "";
+
+    private int currentUserId;
+    private string? userRole;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            if (user.Identity?.IsAuthenticated == true)
+            {
+                var idClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (!string.IsNullOrEmpty(idClaim) && int.TryParse(idClaim, out int uid))
+                {
+                    currentUserId = uid;
+                }
+                userRole = user.FindFirst(ClaimTypes.Role)?.Value;
+            }
+
+            if (currentUserId <= 0)
+            {
+                errorMessage = "Sesi Anda tidak valid. Silakan login ulang.";
+                isLoading = false;
+                return;
+            }
+
+            if (Action?.ToLower() == "approve")
+            {
+                await SubmitApprove();
+            }
+            else
+            {
+                isLoading = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Terjadi kesalahan sistem: " + ex.Message;
+            isLoading = false;
+        }
+    }
+
+    private string GetBorderColor()
+    {
+        return Action?.ToLower() switch
+        {
+            "approve" => "border-green-500",
+            "reject" => "border-red-500",
+            "revise" => "border-yellow-500",
+            _ => "border-zinc-300"
+        };
+    }
+
+    private async Task SubmitApprove()
+    {
+        isSubmitting = true;
+        errorMessage = null;
+
+        var result = await ApprovalService.ApproveAsync(Id, null, currentUserId, userRole);
+        
+        if (result == null)
+        {
+            isSuccess = true;
+            successMessage = "Transaksi berhasil disetujui.";
+        }
+        else
+        {
+            errorMessage = result;
+        }
+
+        isSubmitting = false;
+        isLoading = false;
+        StateHasChanged();
+    }
+
+    private async Task SubmitReject()
+    {
+        if (string.IsNullOrWhiteSpace(notes))
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Alasan penolakan wajib diisi!");
+            return;
+        }
+
+        isSubmitting = true;
+        errorMessage = null;
+
+        var result = await ApprovalService.RejectAsync(Id, notes, currentUserId, userRole);
+        
+        if (result == null)
+        {
+            isSuccess = true;
+            successMessage = "Transaksi berhasil ditolak.";
+        }
+        else
+        {
+            errorMessage = result;
+        }
+
+        isSubmitting = false;
+        StateHasChanged();
+    }
+
+    private async Task SubmitRevise()
+    {
+        if (string.IsNullOrWhiteSpace(notes))
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Catatan revisi wajib diisi!");
+            return;
+        }
+
+        isSubmitting = true;
+        errorMessage = null;
+
+        var result = await ApprovalService.RequestRevisionAsync(Id, notes, currentUserId, userRole);
+        
+        if (result == null)
+        {
+            isSuccess = true;
+            successMessage = "Permintaan revisi berhasil dikirim.";
+        }
+        else
+        {
+            errorMessage = result;
+        }
+
+        isSubmitting = false;
+        StateHasChanged();
+    }
+
+    private void GoToDashboard()
+    {
+        Navigation.NavigateTo("/");
+    }
+}

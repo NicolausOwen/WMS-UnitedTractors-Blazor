@@ -150,6 +150,7 @@ public class AdminRoleService
 
     public async Task<string?> CreateAdminRoleAsync(AdminRoleViewModel model, string createdBy)
     {
+        model.RoleName = model.RoleName?.ToLowerInvariant() ?? string.Empty;
         using var _context = _factory.CreateDbContext();
         if (await _context.AdminRoles.AnyAsync(r => r.RoleName == model.RoleName))
         {
@@ -175,6 +176,7 @@ public class AdminRoleService
 
     public async Task<string?> UpdateAdminRoleAsync(Guid id, AdminRoleViewModel model, string updatedBy)
     {
+        model.RoleName = model.RoleName?.ToLowerInvariant() ?? string.Empty;
         using var _context = _factory.CreateDbContext();
         if (await _context.AdminRoles.AnyAsync(r => r.RoleName == model.RoleName && r.Id != id))
         {

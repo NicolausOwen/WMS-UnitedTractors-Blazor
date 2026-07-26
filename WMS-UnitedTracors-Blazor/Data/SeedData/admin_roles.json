@@ -1,7 +1,7 @@
 [
   {
     "Id": "063e920c-626c-4fa8-a8b9-35900bb7b7b7",
-    "RoleName": "Staff Inventoris",
+    "RoleName": "staff inventoris",
     "Description": "Default role for Staff Inventoris",
     "Permissions": "[\"dashboard.view\",\"tracking.view\",\"approval.stage1\",\"approval.handover\",\"products.manage\"]",
     "IsActive": 1,
@@ -12,7 +12,7 @@
   },
   {
     "Id": "0aa48329-85e7-480d-9e62-21cd0dec8e86",
-    "RoleName": "Super Admin",
+    "RoleName": "super admin",
     "Description": "Default role for Super Admin",
     "Permissions": "[\"request.create\",\"tracking.view\",\"approval.stage1\",\"approval.stage2\",\"approval.manager\",\"approval.handover\",\"approval.return\",\"dashboard.view\",\"products.manage\",\"masterdata.manage\",\"reports.view\",\"scanner.use\",\"users.manage\",\"roles.manage\",\"approval.handover_final\"]",
     "IsActive": 1,
@@ -23,7 +23,7 @@
   },
   {
     "Id": "6969448e-153b-43fc-8be0-1dda5927a8a1",
-    "RoleName": "Team Leader Infrastructure",
+    "RoleName": "team leader infrastructure",
     "Description": "Default role for Team Leader Infrastructure",
     "Permissions": "[\"dashboard.view\",\"tracking.view\",\"approval.stage2\",\"approval.return\",\"products.manage\",\"masterdata.manage\",\"approval.handover_final\"]",
     "IsActive": 1,
@@ -34,7 +34,7 @@
   },
   {
     "Id": "d941584b-880a-4d31-aa4c-ca04a29a43d4",
-    "RoleName": "Manager",
+    "RoleName": "manager",
     "Description": "Default role for Manager",
     "Permissions": "[\"dashboard.view\",\"tracking.view\",\"approval.manager\",\"reports.view\"]",
     "IsActive": 1,
@@ -45,7 +45,7 @@
   },
   {
     "Id": "e6ad3624-7c19-48cb-a746-b0f58f13ad31",
-    "RoleName": "User",
+    "RoleName": "user",
     "Description": "Default role for User",
     "Permissions": "[\"dashboard.view\",\"request.create\",\"tracking.view\"]",
     "IsActive": 1,
@@ -56,7 +56,7 @@
   },
   {
     "Id": "ec5f41d3-cec6-4d33-a220-81a18c9e1cfd",
-    "RoleName": "PIC Studio",
+    "RoleName": "pic studio",
     "Description": "Default role for PIC Studio",
     "Permissions": "[\"dashboard.view\",\"tracking.view\",\"approval.stage2\",\"approval.return\",\"products.manage\",\"masterdata.manage\",\"approval.handover_final\"]",
     "IsActive": 1,

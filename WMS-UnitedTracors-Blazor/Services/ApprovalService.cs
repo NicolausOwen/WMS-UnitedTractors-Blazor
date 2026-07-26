@@ -10,12 +10,14 @@ public class ApprovalService
     private readonly IDbContextFactory<ApplicationDbContext> _factory;
     private readonly IEmailService _emailService;
     private readonly DashboardStateService _dashboardState;
+    private readonly IConfiguration _configuration;
 
-    public ApprovalService(IDbContextFactory<ApplicationDbContext> factory, IEmailService emailService, DashboardStateService dashboardState)
+    public ApprovalService(IDbContextFactory<ApplicationDbContext> factory, IEmailService emailService, DashboardStateService dashboardState, IConfiguration configuration)
     {
         _factory = factory;
         _emailService = emailService;
         _dashboardState = dashboardState;
+        _configuration = configuration;
     }
 
     public async Task<(Dictionary<string, List<Transaction>> GroupedApprovals, List<Transaction> PendingReturns, List<ProfileRequest> PendingProfileRequests, Dictionary<string, List<Transaction>> GroupedHandovers, Dictionary<string, List<Transaction>> GroupedDocumentations)> GetApprovalsAsync(int currentUserId, string? userRole)
@@ -261,7 +263,6 @@ public class ApprovalService
             if (sendNotification)
             {
                 await NotifyBatchResultAsync(new List<(Transaction, string, string?)> { (transaction, "APPROVE", null) });
-                await NotifyNextApproversAsync(_context, transaction, WorkflowStatuses.PendingAdmin);
             }
             _dashboardState.NotifyDashboardUpdated();
             return null;
@@ -918,10 +919,6 @@ public class ApprovalService
         if (sendNotification)
         {
             await NotifyBatchResultAsync(new List<(Transaction, string, string?)> { (transaction, "APPROVE", null) });
-            if (nextStage != null)
-            {
-                await NotifyNextApproversAsync(_context, transaction, nextStage);
-            }
         }
 
         return null;
@@ -944,13 +941,20 @@ public class ApprovalService
         }
     }
 
-    private async Task NotifyNextApproversAsync(ApplicationDbContext context, Transaction transaction, string nextStage)
+    private async Task NotifyNextApproversAsync(ApplicationDbContext context, List<Transaction> transactions, string nextStage)
     {
-        var categoryId = transaction.Product?.category_id;
-        if (!categoryId.HasValue && transaction.product_id > 0)
+        if (!transactions.Any()) return;
+
+        var categoryIds = new List<int?>();
+        foreach(var t in transactions)
         {
-            var prod = await context.Products.FindAsync(transaction.product_id);
-            categoryId = prod?.category_id;
+            var cid = t.Product?.category_id;
+            if (!cid.HasValue && t.product_id > 0)
+            {
+                var prod = await context.Products.FindAsync(t.product_id);
+                cid = prod?.category_id;
+            }
+            categoryIds.Add(cid);
         }
 
         string requiredPerm = nextStage switch
@@ -958,39 +962,60 @@ public class ApprovalService
             WorkflowStatuses.PendingStaffInventory => Permissions.ApprovalStage1,
             WorkflowStatuses.PendingAdmin => Permissions.ApprovalStage2,
             WorkflowStatuses.PendingManager => Permissions.ApprovalManager,
+            WorkflowStatuses.WaitingHandover => Permissions.ApprovalHandover,
+            WorkflowStatuses.WaitingHandoverConfirm => Permissions.ApprovalHandoverFinal,
+            WorkflowStatuses.WaitingAdminHandover => Permissions.ApprovalHandover,
             _ => Permissions.ApprovalStage2
         };
 
-        var emails = await GetApproverEmailsForCategoryAndPermissionAsync(context, requiredPerm, new List<int?> { categoryId });
+        var emails = await GetApproverEmailsForCategoryAndPermissionAsync(context, requiredPerm, categoryIds);
 
         if (emails.Any())
         {
-            var productName = transaction.Product?.name;
-            if (string.IsNullOrEmpty(productName) && transaction.product_id > 0)
+            var firstTx = transactions.First();
+            var eventName = firstTx.event_name ?? "Tanpa Nama Event";
+            var applicant = firstTx.applicant_name;
+            if (string.IsNullOrEmpty(applicant) && firstTx.requester_id > 0)
             {
-                var prod = await context.Products.FindAsync(transaction.product_id);
-                productName = prod?.name;
-            }
-            productName ??= "Barang";
-
-            var eventName = transaction.event_name ?? "Tanpa Nama Event";
-            var applicant = transaction.applicant_name;
-            if (string.IsNullOrEmpty(applicant) && transaction.requester_id > 0)
-            {
-                var user = await context.Users.FindAsync(transaction.requester_id);
+                var user = await context.Users.FindAsync(firstTx.requester_id);
                 applicant = user?.name;
             }
             applicant ??= "User";
             
-            string mailTitle = "Notifikasi Persetujuan Request WMS";
-            string mailMessage = $"Ada request baru yang membutuhkan persetujuan Anda.<br/><br/>" +
-                                 $"<strong>Event:</strong> {eventName}<br/>" +
-                                 $"<strong>Pemohon:</strong> {applicant}<br/>" +
-                                 $"<strong>Barang:</strong> {productName} ({transaction.quantity} unit)<br/><br/>" +
-                                 $"Silakan login ke sistem WMS untuk melakukan persetujuan pada menu Approval.";
+            string stageName = nextStage switch
+            {
+                WorkflowStatuses.PendingStaffInventory => "Staff Inventaris",
+                WorkflowStatuses.PendingAdmin => "Admin / PIC",
+                WorkflowStatuses.PendingManager => "Manager",
+                WorkflowStatuses.WaitingHandover => "Handover (Staff Inventaris)",
+                _ => "Approver"
+            };
+
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine($"Ada request baru yang <strong>membutuhkan persetujuan Anda (sebagai {stageName})</strong>.<br/><br/>");
+            sb.AppendLine($"<strong>Event:</strong> {eventName}<br/>");
+            sb.AppendLine($"<strong>Pemohon:</strong> {applicant}<br/>");
+            sb.AppendLine($"<strong>Daftar Barang:</strong><br/>");
+            sb.AppendLine("<ul style='padding-left: 20px;'>");
+            foreach (var t in transactions)
+            {
+                var productName = t.Product?.name;
+                if (string.IsNullOrEmpty(productName) && t.product_id > 0)
+                {
+                    var prod = await context.Products.FindAsync(t.product_id);
+                    productName = prod?.name;
+                }
+                productName ??= "Barang";
+                sb.AppendLine($"<li>{productName} ({t.quantity} unit)</li>");
+            }
+            sb.AppendLine("</ul><br/>");
+            
+            string baseUrl = _configuration["AppUrl"]?.TrimEnd('/') ?? "https://localhost:7100";
+            sb.AppendLine($"Silakan login ke sistem WMS (<a href='{baseUrl}'>Dashboard Approval</a>) untuk meninjau detail dan melakukan persetujuan.");
                                  
-            string html = GetEmailTemplate(mailTitle, mailMessage);
-            _ = _emailService.SendEmailToMultipleAsync(emails, "Notifikasi Persetujuan Request (WMS UT)", html);
+            string mailTitle = "Tindakan Diperlukan: Request WMS Menunggu Persetujuan Anda";
+            string html = GetEmailTemplate(mailTitle, sb.ToString());
+            _ = _emailService.SendEmailToMultipleAsync(emails, "Tindakan Diperlukan: Request WMS Menunggu Persetujuan Anda", html);
         }
     }
 
@@ -1013,9 +1038,16 @@ public class ApprovalService
             .Where(u => !string.IsNullOrEmpty(u.email))
             .ToListAsync();
 
-        var allAdminRoles = await context.AdminRoles
+        var adminRolesList = await context.AdminRoles
             .Where(r => r.IsActive)
-            .ToDictionaryAsync(r => r.RoleName);
+            .ToListAsync();
+            
+        var allAdminRoles = new Dictionary<string, AdminRole>(StringComparer.OrdinalIgnoreCase);
+        foreach (var r in adminRolesList)
+        {
+            if (!string.IsNullOrEmpty(r.RoleName))
+                allAdminRoles[r.RoleName] = r;
+        }
 
         var allUserAdminRoles = await context.UserAdminRoles
             .ToListAsync();
@@ -1131,15 +1163,23 @@ public class ApprovalService
             }
         }
 
-        // 2. Kirim notifikasi ke Approver tahap selanjutnya (Admin / PIC / Infra / Manager) untuk item yang disetujui
+        // 2. Kirim notifikasi ke Approver tahap selanjutnya (Admin / PIC / Infra / Manager / Staff Inventaris) untuk item yang disetujui
         var approvedItemsPendingNextStage = itemsProcessed
-            .Where(x => x.action == "APPROVE" && (x.item.status == WorkflowStatuses.PendingAdmin || x.item.status == WorkflowStatuses.PendingManager))
+            .Where(x => x.action == "APPROVE" && (
+                x.item.status == WorkflowStatuses.PendingAdmin || 
+                x.item.status == WorkflowStatuses.PendingManager ||
+                x.item.status == WorkflowStatuses.WaitingHandover ||
+                x.item.status == WorkflowStatuses.WaitingHandoverConfirm ||
+                x.item.status == WorkflowStatuses.WaitingAdminHandover))
             .Select(x => x.item)
             .ToList();
 
-        foreach (var item in approvedItemsPendingNextStage)
+        var pendingGrouped = approvedItemsPendingNextStage
+            .GroupBy(x => new { x.status, x.requester_id, x.event_name, x.group_id });
+
+        foreach (var pGroup in pendingGrouped)
         {
-            await NotifyNextApproversAsync(context, item, item.status!);
+            await NotifyNextApproversAsync(context, pGroup.ToList(), pGroup.Key.status!);
         }
     }
 
