@@ -1,5 +1,8 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Navigation
+@inject WMS_UnitedTracors_Blazor.Services.UserService UserService
+@implements IDisposable
 @using System.Security.Claims
 
 @{
@@ -412,15 +415,51 @@
 
     protected override async Task OnInitializedAsync()
     {
+        Navigation.LocationChanged += OnLocationChanged;
+        await RefreshUserPoints();
+    }
+
+    private async void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        await InvokeAsync(async () =>
+        {
+            await RefreshUserPoints();
+            StateHasChanged();
+        });
+    }
+
+    private async Task RefreshUserPoints()
+    {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User; userPrincipal = user;
         if (user.Identity != null && user.Identity.IsAuthenticated)
         {
             navUserName = user.FindFirst(ClaimTypes.Name)?.Value ?? "";
             navEmail = user.FindFirst(ClaimTypes.Email)?.Value ?? "";
-            navPoin = user.FindFirst("poin")?.Value ?? "0";
             navRole = user.FindFirst(ClaimTypes.Role)?.Value ?? "";
+
+            if (int.TryParse(user.FindFirst(ClaimTypes.NameIdentifier)?.Value, out int userId))
+            {
+                var dbUser = await UserService.GetUserByIdAsync(userId);
+                if (dbUser != null)
+                {
+                    navPoin = dbUser.poin?.ToString() ?? "0";
+                }
+                else
+                {
+                    navPoin = user.FindFirst("poin")?.Value ?? "0";
+                }
+            }
+            else
+            {
+                navPoin = user.FindFirst("poin")?.Value ?? "0";
+            }
         }
+    }
+
+    public void Dispose()
+    {
+        Navigation.LocationChanged -= OnLocationChanged;
     }
 }
 

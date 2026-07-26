@@ -772,7 +772,7 @@ public class TransactionService
             item.handover_photo = JsonSerializer.Serialize(photoPaths);
             item.handover_notes = notes;
             item.handover_recipient_name = string.IsNullOrWhiteSpace(recipientName) ? (item.applicant_name ?? item.Requester?.name) : recipientName;
-            item.handover_timestamp = handoverTimestamp ?? DateTime.Now;
+            item.handover_timestamp = handoverTimestamp ?? DateTime.SpecifyKind(WibHelper.Now, DateTimeKind.Unspecified);
             item.handover_uploaded_by = uploadedBy;
             item.rejection_reason = null; // bersihkan alasan penolakan sebelumnya (jika re-upload)
             item.updated_at = DateTime.UtcNow;

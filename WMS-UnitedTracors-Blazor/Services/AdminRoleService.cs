@@ -525,11 +525,14 @@ public class AdminRoleService
         return result;
     }
 
-    /// <summary>Menyimpan penugasan kategori untuk user secara atomic berdasarkan roleName.</summary>
     public async Task<string?> SaveUserCategoryAssignmentsAsync(int userId, string roleName, List<int>? categoryIds, string updatedBy)
     {
         using var _context = _factory.CreateDbContext();
         var adminRole = await _context.AdminRoles.FirstOrDefaultAsync(r => r.RoleName == roleName);
+        if (adminRole == null && (roleName == "superadmin" || string.Equals(roleName, "Super Admin", StringComparison.OrdinalIgnoreCase)))
+        {
+            adminRole = await _context.AdminRoles.FirstOrDefaultAsync(r => r.RoleName == "Super Admin" || r.RoleName == "superadmin");
+        }
         
         // Remove existing assignments for this user
         var existing = await _context.UserAdminRoles.Where(uar => uar.UserId == userId).ToListAsync();

@@ -704,7 +704,7 @@
         var firstPending = items.FirstOrDefault(i => i.status == "WAITING_HANDOVER");
         HandoverNotes = items.FirstOrDefault(i => i.status == "WAITING_HANDOVER" && !string.IsNullOrEmpty(i.handover_notes))?.handover_notes;
         HandoverRecipientName = firstPending?.handover_recipient_name ?? firstPending?.applicant_name;
-        HandoverTimestampInput = firstPending?.handover_timestamp ?? DateTime.Now;
+        HandoverTimestampInput = firstPending?.handover_timestamp ?? DateTime.SpecifyKind(WibHelper.Now, DateTimeKind.Unspecified);
         HandoverRequestType = firstPending?.request_type ?? "BORROW";
         HandoverFile = null;
         ModalError = null;

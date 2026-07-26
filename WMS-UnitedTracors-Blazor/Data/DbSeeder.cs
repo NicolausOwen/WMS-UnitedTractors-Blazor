@@ -36,6 +36,43 @@ public class DbSeeder
         await SeedTableAsync<User>("users.json");
         await SeedTableAsync<UserAdminRole>("user_admin_roles.json");
 
+        // Clean up legacy "superadmin" role names to "Super Admin"
+        var superadminUsers = await _context.Users.Where(u => u.role == "superadmin").ToListAsync();
+        if (superadminUsers.Any())
+        {
+            foreach (var u in superadminUsers)
+            {
+                u.role = "Super Admin";
+            }
+            await _context.SaveChangesAsync();
+            _logger.LogInformation($"Berhasil memperbarui {superadminUsers.Count} user dari 'superadmin' ke 'Super Admin'.");
+        }
+
+        // Make sure all "Super Admin" users have the corresponding entry in UserAdminRoles
+        var superAdminRole = await _context.AdminRoles.FirstOrDefaultAsync(r => r.RoleName == "Super Admin");
+        if (superAdminRole != null)
+        {
+            var superAdminUsersList = await _context.Users.Where(u => u.role == "Super Admin").ToListAsync();
+            foreach (var u in superAdminUsersList)
+            {
+                bool hasRoleAssignment = await _context.UserAdminRoles.AnyAsync(uar => uar.UserId == u.id && uar.AdminRoleId == superAdminRole.Id);
+                if (!hasRoleAssignment)
+                {
+                    _context.UserAdminRoles.Add(new UserAdminRole
+                    {
+                        Id = Guid.NewGuid(),
+                        AdminRoleId = superAdminRole.Id,
+                        UserId = u.id,
+                        CategoryId = null,
+                        CreatedAt = DateTime.UtcNow,
+                        CreatedBy = "System"
+                    });
+                    _logger.LogInformation($"Menambahkan pemetaan UserAdminRole untuk user {u.email} ke role 'Super Admin'.");
+                }
+            }
+            await _context.SaveChangesAsync();
+        }
+
         _logger.LogInformation("Proses seeding selesai.");
     }
 

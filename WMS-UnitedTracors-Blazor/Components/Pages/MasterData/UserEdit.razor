@@ -9,6 +9,7 @@
 @inject AdminRoleService AdminRoleService
 @inject NavigationManager Navigation
 @inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthStateProvider
+@inject IJSRuntime JSRuntime
 @rendermode InteractiveServer
 
 <PageTitle>WMS - Edit User</PageTitle>
@@ -89,7 +90,14 @@
                             <div>
                                 <label class="block text-[0.62rem] font-bold tracking-wider uppercase text-[#8a8880] mb-1.5">Poin</label>
                                 <input type="number" @bind="EditModel.poin" placeholder="Poin"
-                                       class="block w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border border-[#e5e3dc] focus:border-[#e8a000] rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]">
+                                       class=@($"block w-full px-3.5 py-2 text-[0.82rem] bg-[#f5f4f0] focus:bg-white border {(string.IsNullOrEmpty(PoinError) ? "border-[#e5e3dc] focus:border-[#e8a000]" : "border-[#d94040] focus:border-[#d94040]")} rounded-lg outline-none transition-colors duration-150 text-[#1a1a1a]")>
+                                @if (!string.IsNullOrEmpty(PoinError))
+                                {
+                                    <div class="mt-1 flex items-start gap-1 bg-[#fef0f0] border border-[#f8c0c0] text-[#d94040] px-2.5 py-1.5 rounded-md text-[10px] font-semibold leading-tight">
+                                        <svg class="w-3.5 h-3.5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                        <span>@PoinError</span>
+                                    </div>
+                                }
                             </div>
                         </div>
                     </div>
@@ -179,6 +187,7 @@
     private string? ErrorMessage;
     private bool IsLoading = true;
     private bool IsSubmitting = false;
+    private string? PoinError;
 
     private int CurrentUserId = 0;
     private string? UserRole;
@@ -272,6 +281,17 @@
         {
             ErrorMessage = "Nama dan Email wajib diisi.";
             return;
+        }
+
+        if (EditModel.poin > 1000)
+        {
+            PoinError = "Poin tidak boleh melebihi 1000.";
+            ErrorMessage = "Periksa kembali input Anda.";
+            return;
+        }
+        else
+        {
+            PoinError = null;
         }
 
         ErrorMessage = null;

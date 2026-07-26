@@ -1947,7 +1947,7 @@
         var firstPending = ApprovalHandoverItems.FirstOrDefault();
         ApprovalHandoverNotes = firstPending?.handover_notes;
         ApprovalHandoverRecipientName = firstPending?.handover_recipient_name ?? firstPending?.applicant_name;
-        ApprovalHandoverTimestampInput = firstPending?.handover_timestamp ?? DateTime.Now;
+        ApprovalHandoverTimestampInput = firstPending?.handover_timestamp ?? DateTime.SpecifyKind(WibHelper.Now, DateTimeKind.Unspecified);
         ApprovalHandoverFiles = new();
         ApprovalHandoverExistingFiles = firstPending != null 
             ? TransactionService.ParseStoredFiles(firstPending.handover_photo)

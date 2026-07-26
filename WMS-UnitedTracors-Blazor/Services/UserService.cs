@@ -71,6 +71,10 @@ public class UserService
 
         // Sync with AdminRole if matching RoleName exists
         var adminRole = await _context.AdminRoles.FirstOrDefaultAsync(r => r.RoleName == model.role);
+        if (adminRole == null && (model.role == "superadmin" || string.Equals(model.role, "Super Admin", StringComparison.OrdinalIgnoreCase)))
+        {
+            adminRole = await _context.AdminRoles.FirstOrDefaultAsync(r => r.RoleName == "Super Admin" || r.RoleName == "superadmin");
+        }
         if (adminRole != null)
         {
             _context.UserAdminRoles.Add(new UserAdminRole
@@ -136,6 +140,10 @@ public class UserService
             }
 
             var newAdminRole = await _context.AdminRoles.FirstOrDefaultAsync(r => r.RoleName == model.role);
+            if (newAdminRole == null && (model.role == "superadmin" || string.Equals(model.role, "Super Admin", StringComparison.OrdinalIgnoreCase)))
+            {
+                newAdminRole = await _context.AdminRoles.FirstOrDefaultAsync(r => r.RoleName == "Super Admin" || r.RoleName == "superadmin");
+            }
             if (newAdminRole != null)
             {
                 _context.UserAdminRoles.Add(new UserAdminRole
