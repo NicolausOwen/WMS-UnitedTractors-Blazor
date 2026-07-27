@@ -104,14 +104,69 @@ public class TrackingService
         }
         else
         {
-            // Approver/Admin -> active in-progress items, scoped by category.
-            query = activeStatusFilter;
+            // Approver/Admin -> active in-progress items (scoped by category) + ALL of their own requests.
             var userAdminRoles = await _context.UserAdminRoles.Where(uar => uar.UserId == currentUserId).ToListAsync();
             bool isGlobalAdmin = isSuperAdmin || userAdminRoles.Any(uar => uar.CategoryId == null);
-            if (!isGlobalAdmin)
+            if (isGlobalAdmin)
+            {
+                query = baseQuery.Where(t =>
+                    (t.request_type == "GIVEAWAY" && (
+                        t.status == WorkflowStatuses.PendingStaffInventory ||
+                        t.status == WorkflowStatuses.PendingAdmin ||
+                        t.status == WorkflowStatuses.PendingManager ||
+                        t.status == WorkflowStatuses.Revision ||
+                        t.status == WorkflowStatuses.RevisionByStaffInventory ||
+                        t.status == WorkflowStatuses.RevisionByAdmin ||
+                        t.status == WorkflowStatuses.RevisionByManager ||
+                        t.status == WorkflowStatuses.WaitingHandover ||
+                        t.status == WorkflowStatuses.WaitingDocumentation ||
+                        t.status == WorkflowStatuses.DocumentationOverdue
+                    )) ||
+                    (t.request_type == "BORROW" && (
+                        t.status == WorkflowStatuses.Pending ||
+                        t.status == WorkflowStatuses.PendingStaffInventory ||
+                        t.status == WorkflowStatuses.PendingAdmin ||
+                        t.status == WorkflowStatuses.Revision ||
+                        t.status == WorkflowStatuses.RevisionByStaffInventory ||
+                        t.status == WorkflowStatuses.RevisionByAdmin ||
+                        t.status == WorkflowStatuses.WaitingHandover ||
+                        t.status == WorkflowStatuses.WaitingHandoverConfirm ||
+                        t.status == WorkflowStatuses.WaitingAdminHandover ||
+                        (t.status == WorkflowStatuses.Approved && (t.returned_quantity == null || t.returned_quantity < t.quantity))
+                    )) ||
+                    t.requester_id == currentUserId
+                );
+            }
+            else
             {
                 var allowedCategoryIds = userAdminRoles.Where(uar => uar.CategoryId != null).Select(uar => uar.CategoryId!.Value).ToList();
-                query = query.Where(t => t.Product != null && t.Product.category_id != null && allowedCategoryIds.Contains(t.Product.category_id.Value));
+                query = baseQuery.Where(t =>
+                    (((t.request_type == "GIVEAWAY" && (
+                        t.status == WorkflowStatuses.PendingStaffInventory ||
+                        t.status == WorkflowStatuses.PendingAdmin ||
+                        t.status == WorkflowStatuses.PendingManager ||
+                        t.status == WorkflowStatuses.Revision ||
+                        t.status == WorkflowStatuses.RevisionByStaffInventory ||
+                        t.status == WorkflowStatuses.RevisionByAdmin ||
+                        t.status == WorkflowStatuses.RevisionByManager ||
+                        t.status == WorkflowStatuses.WaitingHandover ||
+                        t.status == WorkflowStatuses.WaitingDocumentation ||
+                        t.status == WorkflowStatuses.DocumentationOverdue
+                    )) ||
+                    (t.request_type == "BORROW" && (
+                        t.status == WorkflowStatuses.Pending ||
+                        t.status == WorkflowStatuses.PendingStaffInventory ||
+                        t.status == WorkflowStatuses.PendingAdmin ||
+                        t.status == WorkflowStatuses.Revision ||
+                        t.status == WorkflowStatuses.RevisionByStaffInventory ||
+                        t.status == WorkflowStatuses.RevisionByAdmin ||
+                        t.status == WorkflowStatuses.WaitingHandover ||
+                        t.status == WorkflowStatuses.WaitingHandoverConfirm ||
+                        t.status == WorkflowStatuses.WaitingAdminHandover ||
+                        (t.status == WorkflowStatuses.Approved && (t.returned_quantity == null || t.returned_quantity < t.quantity))
+                    ))) && t.Product != null && t.Product.category_id != null && allowedCategoryIds.Contains(t.Product.category_id.Value)) ||
+                    t.requester_id == currentUserId
+                );
             }
         }
 

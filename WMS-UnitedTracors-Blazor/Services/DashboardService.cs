@@ -324,7 +324,7 @@ public class DashboardService
                     Badge = "Butuh Serah Terima",
                     Description = $"Kirim bukti berita acara serah terima untuk {t.quantity}x {(t.Product != null ? t.Product.name : "")} (Penerima: {t.Requester?.name ?? "User"})",
                     Date = t.created_at,
-                    BtnUrl = $"/approval-detail/{t.group_id}",
+                    BtnUrl = $"/Approval?tab=handovers&groupId={t.group_id}",
                     BtnText = "Isi Bukti"
                 });
             }
@@ -350,7 +350,7 @@ public class DashboardService
                     Badge = "Disputed",
                     Description = $"User {t.Requester?.name} mengklaim belum menerima {t.quantity}x {(t.Product != null ? t.Product.name : "")}. Alasan: {t.rejection_reason}",
                     Date = t.created_at,
-                    BtnUrl = $"/approval-detail/{t.group_id}",
+                    BtnUrl = $"/Approval?tab=handovers&groupId={t.group_id}",
                     BtnText = "Verifikasi"
                 });
             }
@@ -376,7 +376,7 @@ public class DashboardService
                     Badge = "Return Pending",
                     Description = $"Persetujuan pengembalian {t.pending_return_quantity}x {(t.Product != null ? t.Product.name : "")} dari {t.Requester?.name}",
                     Date = t.created_at,
-                    BtnUrl = $"/approval-detail/{t.group_id}",
+                    BtnUrl = $"/Approval?tab=returns",
                     BtnText = "Verifikasi Return"
                 });
             }
@@ -432,7 +432,7 @@ public class DashboardService
                     Badge = "Verifikasi Bukti",
                     Description = $"Verifikasi bukti serah terima untuk {t.quantity}x {(t.Product != null ? t.Product.name : "")} (Penerima: {t.Requester?.name ?? "User"})",
                     Date = t.created_at,
-                    BtnUrl = $"/approval-detail/{t.group_id}",
+                    BtnUrl = $"/Approval?tab=handovers&groupId={t.group_id}",
                     BtnText = "Verifikasi"
                 });
             }

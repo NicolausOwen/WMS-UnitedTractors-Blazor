@@ -1552,6 +1552,43 @@
     private string ActiveTab = "new";
     private string? SelectedGroupId;
 
+    [Microsoft.AspNetCore.Components.Parameter]
+    [Microsoft.AspNetCore.Components.SupplyParameterFromQuery(Name = "tab")]
+    public string? TabQuery { get; set; }
+
+    [Microsoft.AspNetCore.Components.Parameter]
+    [Microsoft.AspNetCore.Components.SupplyParameterFromQuery(Name = "groupId")]
+    public string? GroupIdQuery { get; set; }
+
+    private bool _hasAutoOpenedGroupId = false;
+
+    private void ProcessQueryParameters()
+    {
+        if (!string.IsNullOrEmpty(TabQuery))
+        {
+            ActiveTab = TabQuery;
+        }
+
+        if (!string.IsNullOrEmpty(GroupIdQuery) && !_hasAutoOpenedGroupId)
+        {
+            if (ActiveTab == "handovers" && GroupedHandovers != null && GroupedHandovers.TryGetValue(GroupIdQuery, out var handoverItems))
+            {
+                _hasAutoOpenedGroupId = true;
+                var firstItem = handoverItems.FirstOrDefault();
+                if (firstItem != null)
+                {
+                    ActiveCategory = firstItem.request_type == "GIVEAWAY" ? "giveaway" : "borrow";
+                }
+                OpenApprovalHandoverModal(handoverItems);
+            }
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        ProcessQueryParameters();
+    }
+
     private int TotalBorrowCount => 
         (GroupedApprovals?.Values.Count(g => g.FirstOrDefault()?.request_type == "BORROW") ?? 0) +
         (GroupedHandovers?.Values.Count(g => g.Any(i => i.request_type == "BORROW")) ?? 0) +
@@ -1644,6 +1681,7 @@
         }
 
         await LoadData();
+        ProcessQueryParameters();
     }
 
     private async Task LoadData()

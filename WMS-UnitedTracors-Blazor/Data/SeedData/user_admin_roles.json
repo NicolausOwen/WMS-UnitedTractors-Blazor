@@ -24,6 +24,14 @@
     "CategoryId": 1
   },
   {
+    "Id": "29ed9394-6624-434b-bb04-6bd293cb4ebf",
+    "UserId": 1,
+    "AdminRoleId": "6969448e-153b-43fc-8be0-1dda5927a8a1",
+    "CreatedAt": "2026-07-06 08:44:56",
+    "CreatedBy": "System",
+    "CategoryId": 3
+  },
+  {
     "Id": "1bef87d2-62c3-4d48-a142-837b59ad5f79",
     "UserId": 2,
     "AdminRoleId": "d941584b-880a-4d31-aa4c-ca04a29a43d4",
@@ -77,6 +85,6 @@
     "AdminRoleId": "ec5f41d3-cec6-4d33-a220-81a18c9e1cfd",
     "CreatedAt": "2026-07-06 08:44:56",
     "CreatedBy": "System",
-    "CategoryId": 6
+    "CategoryId": 8
   }
 ]

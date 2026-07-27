@@ -450,7 +450,22 @@
         {
             var result = await ApprovalService.GetApprovalsAsync(CurrentUserId, UserRole);
             var allApprovals = result.GroupedApprovals;
-            GroupItems = allApprovals != null && allApprovals.ContainsKey(GroupId) ? allApprovals[GroupId] : new List<Transaction>();
+            if (allApprovals != null && allApprovals.ContainsKey(GroupId))
+            {
+                GroupItems = allApprovals[GroupId];
+            }
+            else if (result.GroupedHandovers != null && result.GroupedHandovers.ContainsKey(GroupId))
+            {
+                Navigation.NavigateTo($"/Approval?tab=handovers&groupId={GroupId}");
+            }
+            else if (result.GroupedDocumentations != null && result.GroupedDocumentations.ContainsKey(GroupId))
+            {
+                Navigation.NavigateTo($"/Approval?tab=documentations");
+            }
+            else
+            {
+                GroupItems = new List<Transaction>();
+            }
         }
         finally
         {
